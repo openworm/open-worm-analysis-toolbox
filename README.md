@@ -7,9 +7,15 @@ Authors: Jim Hokanson, Michael Currie
 
 GitHub Issue: https://github.com/openworm/OpenWorm/issues/82
 
-The Shafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos, and used image processing to capture a wireframe version of the worm’s position over time.  This wireframe version is stored in hundreds of experiment files available on their FTP server. [2]
+Context: The Shafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos, and used image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
 
-A test pipeline that allows us to run a behavioural phenotyping of our virtual worm running the same test statistics the Shafer lab used on their worm data.
+This repository should eventually house a test pipeline for the OpenWorm project to run a behavioural phenotyping of its virtual worm, running the same test statistics the Shafer lab used on their worm data.  This test pipeline will hopefully compare these virtual worm statistics against real worm statistics obtained at the Shafer lab.
+
+
+## Further documentation of worm movement data ##
+
+Located here: https://github.com/JimHokanson/openworm_docs/tree/master/Movement
+
 
 ## Tools used ##
 
@@ -20,11 +26,6 @@ Plotting: matplotlib is a plotting library for the Python programming language a
 File processing: The Shafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the python module H5PY to extract the information from the Shafer Lab files.
 
 The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [.  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
-
-## Further documentation of worm movement data ##
-
-Located here: https://github.com/JimHokanson/openworm_docs/tree/master/Movement
-
 
 
 ## Sources ##
