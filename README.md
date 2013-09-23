@@ -19,9 +19,9 @@ Located here: https://github.com/JimHokanson/openworm_docs/tree/master/Movement
 
 ## Tools used ##
 
-Language: Python
+Language: Python 3.x.  Michael and Jim both use the Spyder IDE, since it is purpose-built for scientific visualization, but this is not required.
 
-Plotting: matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.
+Plotting: matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.  FFMPEG is used for video processing.
 
 File processing: The Shafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the python module H5PY to extract the information from the Shafer Lab files.
 
