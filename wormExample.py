@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" wormExample.py: illustrates the use of the wormpy.video module
+""" wormExample.py: illustrates the use of the wormpy.experiment_file module
     @author: mcurrie
     
 """
