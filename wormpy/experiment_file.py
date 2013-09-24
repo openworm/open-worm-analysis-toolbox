@@ -20,7 +20,8 @@ import h5py
 
 #SPEED_UP = 4
 #DT = 0.05
-
+#TODO refactor wormPosition to skeleton
+#TODO: try-catch block for savetomp3 in case anim is still None
 
 class WormExperimentFile:
     """
