@@ -5,7 +5,7 @@ Date: 2013-09-22
 
 Contributors: @JimHokanson, @MichaelCurrie
 
-**Overall OpenWorm GitHub Milestone**: *#19*  https://github.com/openworm/OpenWorm/issues?milestone=19&state=open
+**Overall OpenWorm Milestone**: *#19*  https://github.com/openworm/OpenWorm/issues?milestone=19&state=open
 
 Context: The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos, and used image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
 
