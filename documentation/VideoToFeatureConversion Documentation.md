@@ -29,6 +29,15 @@ Using the expanded set of base features the Schafer lab has computed a much larg
 
 At some point there needs to be a conversion from the video values to those used during statistical testing. The Schafer lab code excludes data in certain situations, normalizes some values, and appears to quantize the frame data to reduce memory requirements. This process will need to eventually be described.
 
+## 5) Summary Matlab Calls ##
+
+- worm parsing (multiple files)
+- featureProcess.m (part of GUI code, not yet publicly shared ...)
+- worm2histogram.m
+- worm2stats.m (This can be skipped, since the stats are a subset of the histogram)
+- worm2StatsInfo.m
+- wormStats2Matrix.m
+  - wormStatsInfo.m
 
 ## Sources ##
 
