@@ -18,12 +18,17 @@ seg_worm.w.stats.wormStatsInfo.m (old version: wormStatsInfo.m)
      - negative values
 - event types - a variable number of features can be derived, some are listed ...
   - summary statistics
-     - frequency
-     - time ratio (if worm can't travel) - time in event versus total experiment time, if the event occurs multiple times this is presumably a sum of the durations of each event, over the duration of the experiment
-     - ratio.time (equivalent to time ratio)(only if worm can travel during event)
+     - frequency - # of events/(total video time)
+     - timeRatio (if worm can't travel) - time in all events/(total video time)
+     - ratio.time (equivalent to timeRatio)(only if worm can travel during event)
      - ratio.distance (again, only if worm can travel during event, ratio
   - data statistics
      - time - duration???
-     - inter-time - time until next event
+     - inter-time     - time until next event, for the last event this is NaN
      - inter-distance - distance traveled until next event (integrated or absolute???)
      - distance
+  - NOTE: Code for creating these is in event2stats.m or seg_worm.events.events2stats.m
+  - examples
+    - worm.posture.coils - an event without distance
+    - locomotion.motion.forward - event with distance
+- simple data type
