@@ -1,0 +1,5 @@
+Field,Index,Category,IsTimeSeries,Resolution,isZeroBin,Is_Signed,Name,Short Name,Unit,Computation Description,Reference Code
+path.duration.worm,,path,0,,,,,,,,
+path.duration.head,,path,0,,,,,,,,
+path.duration.midbody,,path,0,,,,,,,,
+path.duration.tail,,path,0,,,,,,,,
