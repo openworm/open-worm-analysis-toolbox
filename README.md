@@ -7,7 +7,7 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 **Overall OpenWorm Milestone**: *#19*  https://github.com/openworm/OpenWorm/issues?milestone=19&state=open
 
-Context: The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos, and used image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
+Context: The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos (e.g. http://www.youtube.com/watch?v=5FAiSgl55p0), and used image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
 
 This repository should eventually house a test pipeline for the OpenWorm project to run a behavioural phenotyping of its virtual worm, running the same test statistics the Schafer lab used on their worm data.  This test pipeline will compare these virtual worm statistics against real worm statistics obtained at the Schafer lab.
 
