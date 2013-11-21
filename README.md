@@ -1,8 +1,6 @@
 OpenWorm Movement Validation
 ===================
 
-Date: 2013-09-22
-
 Contributors: @JimHokanson, @MichaelCurrie
 
 **Overall OpenWorm Milestone**: *#19*  https://github.com/openworm/OpenWorm/issues?milestone=19&state=open
