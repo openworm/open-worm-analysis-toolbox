@@ -20,7 +20,6 @@ import h5py
 
 #SPEED_UP = 4
 #DT = 0.05
-#TODO refactor wormPosition to skeleton
 #TODO: try-catch block for savetomp3 in case anim is still None
 
 class WormExperimentFile:
@@ -39,7 +38,7 @@ class WormExperimentFile:
     #    coordinate (0=x, 1=y)
     #   )
     # so shape is approx (23000, 49, 2):
-    wormPosition = None   
+    skeleton = None   
     name = ''        # TODO: add to __init__, grab from wormFile["info"]
     points = None    # this contains our animation data
     anim = None      # this also contains our animation data, as an animation
@@ -56,15 +55,15 @@ class WormExperimentFile:
         # We want to "concatenate" the values of the skeletonX and 
         # skeletonY 2D arrays into a 3D array
         # First let's create a temporary python list of numpy arrays
-        wormPositionTEMP = []
+        skeletonTEMP = []
         
         # loop over all frames; frames are the first dimension of skeletonX
         for frameIndex in range(skeletonX.shape[0]):
-            wormPositionTEMP.append(np.column_stack((skeletonX[frameIndex], 
+            skeletonTEMP.append(np.column_stack((skeletonX[frameIndex], 
                                                      skeletonY[frameIndex])))
 
         # Then let's transform our list into a numpy array
-        self.wormPosition = np.array(wormPositionTEMP)
+        self.skeleton = np.array(skeletonTEMP)
 
     
     def create_animation(self):
@@ -84,7 +83,7 @@ class WormExperimentFile:
         
         #alternatively: marker='o', linestyle='None'
         # the plot starts with all worm position points from frame 0
-        points, = ax.plot(self.wormPosition[0,:,0], self.wormPosition[0,:,1], 
+        points, = ax.plot(self.skeleton[0,:,0], self.skeleton[0,:,1], 
                           color='green', linestyle='point marker', 
                           marker='o', markersize=5) 
 
@@ -95,8 +94,8 @@ class WormExperimentFile:
         
         # inline animation function.  This is called sequentially
         def animate_frame(iFrame):
-            points.set_data(self.wormPosition[iFrame,:,0], 
-                            self.wormPosition[iFrame,:,1])
+            points.set_data(self.skeleton[iFrame,:,0], 
+                            self.skeleton[iFrame,:,1])
             return points,
         
         # let's just run it for a 1/60th subset of the complete number of 
@@ -115,21 +114,21 @@ class WormExperimentFile:
               nanmin returns the min ignoring such NaNs.        
         
         """
-        return (np.nanmin(self.wormPosition[:,:,dimension]), 
-                np.nanmax(self.wormPosition[:,:,dimension]))
+        return (np.nanmin(self.skeleton[:,:,dimension]), 
+                np.nanmax(self.skeleton[:,:,dimension]))
     
     def num_frames(self): 
         # the number of frames in the video
         # ndarray.shape returns a tuple of array dimensions.
         # the frames are along the first dimension i.e. [0].
-        return self.wormPosition.shape[0]
+        return self.skeleton.shape[0]
 
 
     def num_skeleton_points(self): 
         # the number of points in the skeleton of the worm
         # ndarray.shape returns a tuple of array dimensions.
         # the skeletal points are along the first dimension i.e. [1].
-        return self.wormPosition.shape[1]
+        return self.skeleton.shape[1]
 
     def num_valid_frames(self):
         pass  # TODO:
