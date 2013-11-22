@@ -7,16 +7,31 @@ from wormpy import experiment_file
 import os
 
 
+def main():
+  pass
+  # create an animation of our example, and save it
+  #w = example()
+  #w.create_animation()
+  #w.save_to_mp4("worm_animation.mp4")
+  
+  
 
-# let's assume the worm file is in the same directory as this source file
-worm_file_path1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+def example():
+  """
+  This can be called from the python shell, it returns
+  a WormExperimentFile instance loaded with actual example
+  information
+  """
+
+  # let's assume the worm file is in the same directory as this source file
+  worm_file_path = os.path.join(os.path.abspath(os.getcwd()), 
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
-  #u'F:/worm_data/segworm_data/features/798 JU258 on food R_2010_11_25__16_34_17___1___9_features.mat'
 
-w = experiment_file.WormExperimentFile(worm_file_path1)
+  return experiment_file.WormExperimentFile(worm_file_path)
 
-w.create_animation()
 
-#w.create_animation()
-#w.save_to_mp4("worm_animation.mp4")
+if(__name__ == '__main__'):
+  main()
+  
+  
