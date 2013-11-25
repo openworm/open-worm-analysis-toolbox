@@ -39,32 +39,111 @@ class WormExperimentFile:
     #   )
     # so shape is approx (23000, 49, 2):
     skeleton = None   
+    # shape is approx (23000) and gives True if frame was dropped in 
+    # experiment file
+    dropped_frames_mask = None
     name = ''        # TODO: add to __init__, grab from wormFile["info"]
     points = None    # this contains our animation data
     anim = None      # this also contains our animation data, as an animation
     
-    def __init__(self, worm_file_path):
+    def __init__(self):
+      pass
+
+    def load_worm(self, worm_file_path):
         """ Load the worm data into wormFile """
         wormFile = h5py.File(worm_file_path, 'r')
         
-        skeletonX = wormFile["worm"]["posture"]["skeleton"]["x"].value
-        skeletonY = wormFile["worm"]["posture"]["skeleton"]["y"].value
+        x_data = wormFile["worm"]["posture"]["skeleton"]["x"].value
+        y_data = wormFile["worm"]["posture"]["skeleton"]["y"].value
 
         wormFile.close()
 
+        self.combine_skeleton_axes(x_data, y_data)
+
+
+    def combine_skeleton_axes(self, x_data, y_data):
         # We want to "concatenate" the values of the skeletonX and 
         # skeletonY 2D arrays into a 3D array
         # First let's create a temporary python list of numpy arrays
         skeletonTEMP = []
         
         # loop over all frames; frames are the first dimension of skeletonX
-        for frameIndex in range(skeletonX.shape[0]):
-            skeletonTEMP.append(np.column_stack((skeletonX[frameIndex], 
-                                                     skeletonY[frameIndex])))
+        for frameIndex in range(x_data.shape[0]):
+            skeletonTEMP.append(np.column_stack((x_data[frameIndex], 
+                                                     y_data[frameIndex])))
 
         # Then let's transform our list into a numpy array
         self.skeleton = np.array(skeletonTEMP)
 
+
+    def skeletonX(self):
+      """ returns a numpy array of shape (23135, 49) with just X coordinate
+          data
+      """
+      return np.rollaxis(self.skeleton, 2)[0]
+
+    def skeletonY(self):
+      """ returns a numpy array of shape (23135, 49) with just X coordinate
+          data
+      """
+      return np.rollaxis(self.skeleton, 2)[1]
+
+    def dropped_frames_mask(self):
+        # decide which frames are "dropped" by seeing which frames 
+        # have the first skeleton X-coordinate set to NaN
+        return np.isnan(list(frame[0] for frame in self.skeletonX()))
+
+
+    def interpolate_dropped_frames(self):
+      """ Fixes the dropped frames populated by NaN by inserting
+          the most recent valid frame.
+          Which frames are stale-dated (i.e. formerly dropped) is
+          given by self.dropped_frames_mask
+      """
+      # ATTEMPT #1 (LOOP-BASED. VERY SLOW)
+      # we will amend entries in this list to false as we patch up
+      # the skeleton
+      #s = list(self.dropped_frames_mask)
+      #counter = 0 
+      #while(max(s) == True and counter < 500):
+      #  current_frame_to_fix = s.index(True)
+      #  self.skeleton[current_frame_to_fix] = \
+      #    self.skeleton[current_frame_to_fix - 1]
+      #  s[current_frame_to_fix] = False
+      #  counter += 1
+
+      # ATTEMPT #2 (using the numpy.interp function)
+      dropped_frames_mask = self.dropped_frames_mask()
+      
+      # this numpy function returns the array indices of all the True
+      # fields in our mask, giving us a list of just the dropped frames
+      dropped_frames = np.flatnonzero(dropped_frames_mask)
+      # note that the tilde operator flips the True/False values elementwise
+      good_frames = np.flatnonzero(~dropped_frames_mask)
+      
+      # extract just the x-coordinates.  dataX has shape (49, 23135)
+      x_data = np.rollaxis(self.skeletonX(), 1)
+      y_data = np.rollaxis(self.skeletonY(), 1)
+      
+      # interpolate missing data points for each of the worm's 49 
+      # skeleton points
+      for i in range(0, 48):
+        # in each of the x and y axes, replace the NaN entries with 
+        # interpolated entries taken from data in nearby frames
+        x_data[i][dropped_frames_mask] = np.interp(dropped_frames, good_frames, x_data[i][~dropped_frames_mask])
+        y_data[i][dropped_frames_mask] = np.interp(dropped_frames, good_frames, y_data[i][~dropped_frames_mask])
+
+      # change dataX and dataY so their shape is the more familiar (23135, 49)
+      # this is the shape expected by combine_skeleton_axes()
+      x_data = np.rollaxis(x_data, 1)
+      y_data = np.rollaxis(y_data, 1)
+
+      # Create a new instance, with the interpolated results    
+      w = WormExperimentFile()
+      w.combine_skeleton_axes(x_data, y_data)
+      
+      return w
+      
     
     def create_animation(self):
         """ Creates an animation of the worm's position over time.
@@ -81,7 +160,7 @@ class WormExperimentFile:
                          yLim=self.position_limits(1))
         
         
-        #alternatively: marker='o', linestyle='None'
+        # Alternatively: marker='o', linestyle='None'
         # the plot starts with all worm position points from frame 0
         points, = ax.plot(self.skeleton[0,:,0], self.skeleton[0,:,1], 
                           color='green', linestyle='point marker', 
