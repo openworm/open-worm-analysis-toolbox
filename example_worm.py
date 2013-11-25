@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" wormExample.py: illustrates the use of the wormpy.experiment_file module
+""" example_worm.py: illustrates the use of the wormpy.experiment_file module
     @author: mcurrie
     
 """
@@ -10,8 +10,9 @@ import os
 def main():
   pass
   # create an animation of our example, and save it
-  #w = example()
-  #w.create_animation()
+  #w = example_worm()
+  #w.interpolate_dropped_frames()  
+  #w.animate()  
   #w.save_to_mp4("worm_animation.mp4")
   
   #Consider only those frames of the worm that have not been dropped:
@@ -20,7 +21,7 @@ def main():
   #Access just the y-axis elements of the first frame:
   #np.rollaxis(w.skeleton[0], 1)[1]
 
-def example():
+def example_worm():
   """
   This can be called from the python shell, it returns
   a WormExperimentFile instance loaded with actual example
