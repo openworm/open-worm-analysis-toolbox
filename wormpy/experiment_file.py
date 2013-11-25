@@ -126,8 +126,10 @@ class WormExperimentFile:
       y_data = np.rollaxis(self.skeletonY(), 1)
       
       # interpolate missing data points for each of the worm's 49 
-      # skeleton points
-      for i in range(0, 48):
+      # skeleton points (np.shape(self.skeleton)[1] is just telling us the
+      # shape of the skeleton in the dimension that contains the worm's 
+      # points for each given frame)
+      for i in range(0, np.shape(self.skeleton)[1]):
         # in each of the x and y axes, replace the NaN entries with 
         # interpolated entries taken from data in nearby frames
         x_data[i][dropped_frames_mask] = np.interp(dropped_frames, good_frames, x_data[i][~dropped_frames_mask])
