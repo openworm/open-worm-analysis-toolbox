@@ -126,7 +126,7 @@ class WormExperimentFile:
       # note that the tilde operator flips the True/False values elementwise
       good_frames = np.flatnonzero(~dropped_frames_mask)
       
-      # extract just the x-coordinates.  dataX has shape (49, 23135)
+      # extract just the x-coordinates.  x_data has shape (49, 23135)
       x_data = np.rollaxis(self.skeleton_x(), 1)
       y_data = np.rollaxis(self.skeleton_y(), 1)
       
@@ -146,7 +146,7 @@ class WormExperimentFile:
                     good_frames,
                     y_data[i][~dropped_frames_mask])
 
-      # change dataX and dataY so their shape is the more familiar (23135, 49)
+      # change x_data and y_data so their shape is the more familiar (23135, 49)
       # this is the shape expected by combine_skeleton_axes()
       x_data = np.rollaxis(x_data, 1)
       y_data = np.rollaxis(y_data, 1)
