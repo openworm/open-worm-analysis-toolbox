@@ -100,9 +100,9 @@ class WormExperimentFile:
 
 
     def interpolate_dropped_frames(self):
-      """ Fixes the dropped frames populated by NaN by inserting
-          the most recent valid frame.
-          Which frames are stale-dated (i.e. formerly dropped) is
+      """ Fixes the "dropped" frames (i.e. frames that are NaN) 
+          by doing linear interpolation between the nearest valid frames.
+          Which frames are interpolated and not genuine data is
           given by self.dropped_frames_mask
       """
       # ATTEMPT #1 (LOOP-BASED. VERY SLOW)
@@ -146,7 +146,8 @@ class WormExperimentFile:
                     good_frames,
                     y_data[i][~dropped_frames_mask])
 
-      # change x_data and y_data so their shape is the more familiar (23135, 49)
+      # change x_data and y_data so their shape is the more 
+      # familiar (23135, 49)
       # this is the shape expected by combine_skeleton_axes()
       x_data = np.rollaxis(x_data, 1)
       y_data = np.rollaxis(y_data, 1)

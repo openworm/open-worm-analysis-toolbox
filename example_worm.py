@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-""" example_worm.py: illustrates the use of the wormpy.experiment_file module
+""" example_worm.py: illustrates the use of the wormpy.WormExperimentFile
+    module
     @author: mcurrie
-    
 """
-from wormpy import experiment_file
+
+from wormpy import WormExperimentFile
 import os
 
 
@@ -33,7 +34,7 @@ def example_worm():
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
-  w = experiment_file.WormExperimentFile()
+  w = WormExperimentFile.WormExperimentFile()
   w.load_worm(worm_file_path)
 
   return w
