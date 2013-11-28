@@ -21,9 +21,9 @@ class WormFeatures:
   def getMorphologyFeatures(self):
     pass
   
-  def getLocomotionFeatures(self, normalized_worm):
+  def getLocomotionFeatures(self):
     pass
   
-  def getPostureFeatures(self, normalized_worm):
+  def getPostureFeatures(self):
     pass
   

@@ -9,8 +9,8 @@ in the SegwormMatlabClasses GitHub repo.  Original code path:
 """
 
 import os
-import wormpy
-
+from wormpy import WormExperimentFile
+from wormpy import WormFeatures
 
 def main():
   """
@@ -36,7 +36,7 @@ def main():
   
   get_features_rewritten(NORM_PATH)
   """
-  get_features_rewritten()
+  worm = get_features_rewritten()
 
 
 
@@ -50,7 +50,7 @@ def get_features_rewritten(norm_folder = None):
   """
 
   # DEBUG: change to Jim's class later
-  normalized_worm = wormpy.WormExperimentFile()
+  normalized_worm = WormExperimentFile.WormExperimentFile()
 
   # If no folder was specified for the worm, use the 
   # current working directory
@@ -58,7 +58,7 @@ def get_features_rewritten(norm_folder = None):
     norm_folder = os.path.abspath(os.getcwd())
   
   # DEBUG: hardcoded for now.
-  worm_file_path = os.path.join(os.path.abspath(os.getcwd()), 
+  worm_file_path = os.path.join(norm_folder, 
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
@@ -66,7 +66,7 @@ def get_features_rewritten(norm_folder = None):
   
   # use this normalized_worm to calculate features information
   # this features information will be stored in a WormFeatures instance, worm
-  worm = wormpy.WormFeatures.WormFeatures(normalized_worm)
+  worm = WormFeatures.WormFeatures(normalized_worm)
   
   return worm
   
