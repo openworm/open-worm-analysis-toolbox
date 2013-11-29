@@ -4,7 +4,7 @@
     @author: mcurrie
 """
 
-from wormpy import WormExperimentFile
+import wormpy
 import os
 
 
@@ -34,7 +34,7 @@ def example_worm():
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
-  w = WormExperimentFile.WormExperimentFile()
+  w = wormpy.WormExperimentFile()
   w.load_worm(worm_file_path)
 
   return w
