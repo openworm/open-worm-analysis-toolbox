@@ -6,7 +6,7 @@
 
 import wormpy
 import os
-
+import scipy.io
 
 def main():
   pass
@@ -17,14 +17,26 @@ def main():
   #w.save_to_mp4("worm_animation.mp4")
   
   #Consider only those frames of the worm that have not been dropped:
-  # numpy.ma.masked_array(w.skeleton[-w.dropped_frames])
+  # numpy.ma.masked_array(w.skeletons[-w.dropped_frames])
   
   #Access just the y-axis elements of the first frame:
-  #np.rollaxis(w.skeleton[0], 1)[1]
+  #np.rollaxis(w.skeletons[0], 1)[1]
+
+
+def example_eigen_worm_file_path():
+  """
+  This can be called from the python shell.  It returns a path
+  that can be passed to NormalizedWorm.load_eigen_worms
+  """
+  eigen_worm_file_path =  os.path.join(os.path.abspath(os.getcwd()), 
+                                       "masterEigenWorms_N2.mat")
+  #eigen_worm = scipy.io.loadmat(eigen_worm_file_path)
+  return eigen_worm_file_path
+
 
 def example_worm():
   """
-  This can be called from the python shell, it returns
+  This can be called from the python shell.  It returns
   a WormExperimentFile instance loaded with actual example
   information
   """
@@ -34,7 +46,7 @@ def example_worm():
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
-  w = wormpy.WormExperimentFile()
+  w = wormpy.NormalizedWorm()
   w.load_worm(worm_file_path)
 
   return w

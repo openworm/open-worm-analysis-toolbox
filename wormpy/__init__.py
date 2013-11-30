@@ -5,5 +5,6 @@
 
 from wormpy.WormExperimentFile import WormExperimentFile
 from wormpy.WormFeatures import WormFeatures
+from wormpy.NormalizedWorm import NormalizedWorm
 
-__all__ = ['WormExperimentFile', 'WormFeatures']
+__all__ = ['WormExperimentFile', 'WormFeatures', 'NormalizedWorm']

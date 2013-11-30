@@ -37,7 +37,7 @@ class WormExperimentFile:
     #    coordinate (0=x, 1=y)
     #   )
     # so shape is approx (23000, 49, 2):
-    skeleton = None   
+    skeletons = None   
     name = ''        # TODO: add to __init__, grab from wormFile["info"]
     # this contains our animation data
     # TODO: avoid making this a member data element, by
@@ -63,32 +63,32 @@ class WormExperimentFile:
 
 
     def combine_skeleton_axes(self, x_data, y_data):
-        """ We want to "concatenate" the values of the skeleton_x and 
-            skeleton_y 2D arrays into a 3D array
+        """ We want to "concatenate" the values of the skeletons_x and 
+            skeletons_y 2D arrays into a 3D array
             First let's create a temporary python list of numpy arrays
         """
-        skeleton_TEMP = []
+        skeletons_TEMP = []
         
-        # loop over all frames; frames are the first dimension of skeleton_x
+        # loop over all frames; frames are the first dimension of skeletons_x
         for frame_index in range(x_data.shape[0]):
-            skeleton_TEMP.append(np.column_stack((x_data[frame_index], 
+            skeletons_TEMP.append(np.column_stack((x_data[frame_index], 
                                                   y_data[frame_index])))
 
         # Then let's transform our list into a numpy array
-        self.skeleton = np.array(skeleton_TEMP)
+        self.skeletons = np.array(skeletons_TEMP)
 
 
-    def skeleton_x(self):
+    def skeletons_x(self):
       """ returns a numpy array of shape (23135, 49) with just X coordinate
           data
       """
-      return np.rollaxis(self.skeleton, 2)[0]
+      return np.rollaxis(self.skeletons, 2)[0]
 
-    def skeleton_y(self):
+    def skeletons_y(self):
       """ returns a numpy array of shape (23135, 49) with just X coordinate
           data
       """
-      return np.rollaxis(self.skeleton, 2)[1]
+      return np.rollaxis(self.skeletons, 2)[1]
 
     def dropped_frames_mask(self):
       """ decide which frames are "dropped" by seeing which frames 
@@ -96,7 +96,7 @@ class WormExperimentFile:
           returned shape is approx (23000) and gives True if frame 
           was dropped in experiment file
       """
-      return np.isnan(list(frame[0] for frame in self.skeleton_x()))
+      return np.isnan(list(frame[0] for frame in self.skeletons_x()))
 
 
     def interpolate_dropped_frames(self):
@@ -107,13 +107,13 @@ class WormExperimentFile:
       """
       # ATTEMPT #1 (LOOP-BASED. VERY SLOW)
       # we will amend entries in this list to false as we patch up
-      # the skeleton
+      # the skeletons
       #s = list(self.dropped_frames_mask)
       #counter = 0 
       #while(max(s) == True and counter < 500):
       #  current_frame_to_fix = s.index(True)
-      #  self.skeleton[current_frame_to_fix] = \
-      #    self.skeleton[current_frame_to_fix - 1]
+      #  self.skeletons[current_frame_to_fix] = \
+      #    self.skeletons[current_frame_to_fix - 1]
       #  s[current_frame_to_fix] = False
       #  counter += 1
 
@@ -127,14 +127,14 @@ class WormExperimentFile:
       good_frames = np.flatnonzero(~dropped_frames_mask)
       
       # extract just the x-coordinates.  x_data has shape (49, 23135)
-      x_data = np.rollaxis(self.skeleton_x(), 1)
-      y_data = np.rollaxis(self.skeleton_y(), 1)
+      x_data = np.rollaxis(self.skeletons_x(), 1)
+      y_data = np.rollaxis(self.skeletons_y(), 1)
       
       # interpolate missing data points for each of the worm's 49 
-      # skeleton points (np.shape(self.skeleton)[1] is just telling 
+      # skeleton points (np.shape(self.skeletons)[1] is just telling 
       # us the shape of the skeleton in the dimension that contains the worm's 
       # points for each given frame)
-      for i in range(0, np.shape(self.skeleton)[1]):
+      for i in range(0, np.shape(self.skeletons)[1]):
         # in each of the x and y axes, replace the NaN entries with 
         # interpolated entries taken from data in nearby frames
         x_data[i][dropped_frames_mask] = \
@@ -176,9 +176,12 @@ class WormExperimentFile:
         
         # Alternatively: marker='o', linestyle='None'
         # the plot starts with all worm position animation_points from frame 0
-        animation_points, = ax.plot(self.skeleton[0,:,0], self.skeleton[0,:,1], 
-                          color='green', linestyle='point marker', 
-                          marker='o', markersize=5) 
+        animation_points, = ax.plot(self.skeletons[0,:,0], 
+                                    self.skeletons[0,:,1],
+                                    color='green', 
+                                    linestyle='point marker', 
+                                    marker='o', 
+                                    markersize=5) 
 
         # inline initialization function: plot the background of each frame
         def init():
@@ -187,8 +190,8 @@ class WormExperimentFile:
         
         # inline animation function.  This is called sequentially
         def animate_frame(iFrame):
-            animation_points.set_data(self.skeleton[iFrame,:,0], 
-                            self.skeleton[iFrame,:,1])
+            animation_points.set_data(self.skeletons[iFrame,:,0], 
+                            self.skeletons[iFrame,:,1])
             return animation_points,
         
         # let's just run it for a 1/60th subset of the complete number of 
@@ -207,23 +210,23 @@ class WormExperimentFile:
               nanmin returns the min ignoring such NaNs.        
         
         """
-        return (np.nanmin(self.skeleton[:,:,dimension]), 
-                np.nanmax(self.skeleton[:,:,dimension]))
+        return (np.nanmin(self.skeletons[:,:,dimension]), 
+                np.nanmax(self.skeletons[:,:,dimension]))
 
     def num_frames(self): 
         """ the number of frames in the video
             ndarray.shape returns a tuple of array dimensions.
             the frames are along the first dimension i.e. [0].
         """
-        return self.skeleton.shape[0]
+        return self.skeletons.shape[0]
 
 
-    def num_skeleton_points(self): 
-        """ the number of points in the skeleton of the worm
+    def num_skeletons_points(self): 
+        """ the number of points in the skeletons of the worm
             ndarray.shape returns a tuple of array dimensions.
             the skeletal points are along the first dimension i.e. [1].
         """
-        return self.skeleton.shape[1]
+        return self.skeletons.shape[1]
 
     def position(self): 
         """ Return a two-dimensional array with worm's position
