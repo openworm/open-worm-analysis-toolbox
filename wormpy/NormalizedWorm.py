@@ -93,30 +93,35 @@ class NormalizedWorm(WormExperimentFile):
   non_vulva_areas = None # shape is (n) integer
   vental_mode = None     # needed for locomotion.  Not yet implemented?
 
-  def __init__(self, data_path, eigen_worm_file_path):
+
+  structured_data = None  # DEBUG: hold it here for interactive manipulation
+                          #        while I figure out how to use matlab files
+  FIELDS = None           # DEBUG: same with FIELDS
+  data_file = None        # DEBUG: same with data_file
+
+
+  def __init__(self, data_file_path, eigen_worm_file_path):
     """ initialize this instance by loading both the worm and 
     the eigen_worm data
     
     """
     super().__init__()    
-    self.load_normalized_data(data_path)
+    self.load_normalized_data(data_file_path)
     self.load_eigen_worms(eigen_worm_file_path)
     
-  def load_normalized_data(self, data_path):
+  def load_normalized_data(self, data_file_path):
     """ Load the norm_obj.mat file into this class
       
         This is a translation of getObject from Jim's original code
     """
-    data_file_path = os.path.join(os.path.abspath(data_path), 'norm_obj.mat')
-    
     if(not os.path.isfile(data_file_path)):
       raise Exception("Data file not found: " + data_file_path)
     else:
-      data_file = scipy.io.loadmat(data_file_path)
-      structured_data = data_file.values()
+      self.data_file = scipy.io.loadmat(data_file_path)
+      self.structured_data = self.data_file.values()
 
       # NOTE: These are aligned to the order in the files ...
-      FIELDS = ['segmentation_status',
+      self.FIELDS = ['segmentation_status',
                 'vulva_contours',
                 'non_vulva_contours',
                 'skeletons',
@@ -128,15 +133,18 @@ class NormalizedWorm(WormExperimentFile):
                 'tail_areas',
                 'vulva_areas',
                 'non_vulva_areas']
+                
+        
     pass    
     
   def load_normalized_blocks(self, blocks_path):
-    """ Processes all the MatLab data "blocks" created from the raw video
-        into one coherent set of data
-        This is a translation of createObjectFromFiles from Jim's original code
+    """ Processes all the MatLab data "blocks" created from the raw 
+        video into one coherent set of data.  This is a translation 
+        of createObjectFromFiles from Jim's original code.
         
-        EDIT: this appears to be the old way of doing this.  I'll hold off
-        translating these blocks.  I think norm_obj.mat actually maps directly
+        MICHAEL: This appears to be the old way of doing this.
+        I'll hold off translating this "block" processor.  
+        I think norm_obj.mat actually maps directly
         to the structure I need.
     """
     pass

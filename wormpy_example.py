@@ -13,6 +13,7 @@ Here main() simply illustrates the use of classes in the wormpy module.
 
 import os
 import wormpy
+import getpass
 
 def main():
   """
@@ -21,17 +22,11 @@ def main():
     optionally animate it using matplotlib, and also    
     re-create the features information by deriving them from the basic data.
   """
-  # DEFAULT SETTING
-  NORM_PATH = None  
-  # JIM'S TESTING CODE
-  # on PC:
-  #NORM_PATH = 'F:\worm_data\segworm_data\video\testing_with_GUI\.data\mec-4 (u253) off food x_2010_04_21__17_19_20__1_seg\normalized';
-  # on MAC:
-  #NORM_PATH = '/Users/jameshokanson/Dropbox/worm_data/video/testing_with_GUI/.data/mec-4 (u253) off food x_2010_04_21__17_19_20__1_seg/normalized'
   
-  normalized_worm = create_example_normalized_worm(NORM_PATH)
+  # create a normalized worm from a hardcoded example location
+  normalized_worm = example_nw()
   
-  # AT THIS POINT WE COULD ANIMATE THE WORM IF WE WANTED:
+  # AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
   #normalized_worm.interpolate_dropped_frames()  
   #normalized_worm.animate()  
   #normalized_worm.save_to_mp4("worm_animation.mp4")
@@ -45,6 +40,22 @@ def main():
 
 
 
+def get_user_data_path():
+  if(getpass.getuser() == 'Michael'):
+    NORM_PATH = "C:\\Users\\Michael\\Dropbox\\"
+  else:
+    # if it's not Michael, assume it's Jim
+    if(os.name == 'nt'): 
+      # Jim is using Windows
+      NORM_PATH = "F:\\"
+    else:
+      # otherwise, Jim is probably using his Mac
+      NORM_PATH = "//Users//jameshokanson//Dropbox"
+  
+  return NORM_PATH  
+  
+
+
 def get_features(normalized_worm):
   """ 
     INPUT: normalized_worm, an instance of wormpy.NormalizedWorm
@@ -55,6 +66,7 @@ def get_features(normalized_worm):
   worm_features = wormpy.WormFeatures(normalized_worm)
   
   return worm_features
+
 
 
 def example_from_HDF5(base_path = None):
@@ -73,28 +85,31 @@ def example_from_HDF5(base_path = None):
 
   return 
 
-def create_example_normalized_worm(norm_folder = None):
+
+
+def example_nw():
   """
-    This function takes a path, and loads a worm HDF5 experiment file,
-    only looking at the skeleton and other basic information.
+    This function creates a normalized worm from a hardcoded file location
+    
   """
 
-
-  # If no folder was specified for the worm, use the 
-  # current working directory
-  # FIX norm_folder so it's pointing to 
-  # C:\Users\Michael\Dropbox\worm_data\video\testing_with_GUI\.data\mec-4 (u253) off food x_2010_04_21__17_19_20__1_seg\normalized
-  # and fix eigen_worm_file_path to be also eigen_worm_path and be
-  # C:\Users\Michael\Dropbox\worm_data
+  # first let's get a base path depending on whether it's Jim or Michael
+  norm_folder = get_user_data_path()
   
-  if(norm_folder == None):
-    norm_folder = os.path.abspath(os.getcwd())
+  # let's hardcode one example worm
+  norm_folder = os.path.join(norm_folder, 
+                           "worm_data\\video\\testing_with_GUI\\.data\\" +
+                           "mec-4 (u253) off food " +
+                           "x_2010_04_21__17_19_20__1_seg\\normalized")
   
-  eigen_worm_file_path = os.path.join(norm_folder, 
-                               "masterEigenWorms_N2.mat")
-
+  data_file_path = os.path.join(os.path.abspath(norm_folder),
+                                "norm_obj.mat")
+  
+  eigen_worm_file_path = os.path.join(os.path.abspath(norm_folder),
+                                      "masterEigenWorms_N2.mat")
+  
   # create our example instantiation by passing the two file locations
-  normalized_worm = wormpy.NormalizedWorm(worm_file_path,
+  normalized_worm = wormpy.NormalizedWorm(data_file_path,
                                           eigen_worm_file_path)
   
   return normalized_worm
@@ -102,3 +117,8 @@ def create_example_normalized_worm(norm_folder = None):
 
 if(__name__ == '__main__'):
   main()
+  
+  
+  
+  
+  
