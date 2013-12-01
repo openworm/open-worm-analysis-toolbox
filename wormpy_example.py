@@ -5,7 +5,10 @@ Created on Tue Nov 26 22:48:17 2013
 @author: Michael Currie
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:
+SegwormMatlabClasses / 
 +seg_worm / @feature_calculator / get_features_rewritten.m
+
+Here main() simply illustrates the use of classes in the wormpy module.
 """
 
 import os
@@ -33,6 +36,8 @@ def main():
   #normalized_worm.animate()  
   #normalized_worm.save_to_mp4("worm_animation.mp4")
   
+  #  From the basic information in normalized_worm,
+  #  create an instance of WormFeatures, which contains all our features data.
   worm_features = get_features(normalized_worm)
   
   # TODO: do something more useful with the output here than just print...
@@ -52,6 +57,21 @@ def get_features(normalized_worm):
   return worm_features
 
 
+def example_from_HDF5(base_path = None):
+  # If no folder was specified for the worm, use the 
+  # current working directory
+  if(base_path == None):
+    base_path = os.path.abspath(os.getcwd())
+  
+  # DEBUG: hardcoded for now.
+  worm_file_path = os.path.join(base_path, 
+                               "unc-8 (rev) on food " +
+                               "R_2010_03_19__09_14_57___2___2_features.mat")
+
+  w = wormpy.WormExperimentFile()
+  w.load_HDF5_data(worm_file_path)
+
+  return 
 
 def create_example_normalized_worm(norm_folder = None):
   """
@@ -59,24 +79,23 @@ def create_example_normalized_worm(norm_folder = None):
     only looking at the skeleton and other basic information.
   """
 
-  # DEBUG: change to Jim's class later
-  normalized_worm = wormpy.NormalizedWorm()
 
   # If no folder was specified for the worm, use the 
   # current working directory
+  # FIX norm_folder so it's pointing to 
+  # C:\Users\Michael\Dropbox\worm_data\video\testing_with_GUI\.data\mec-4 (u253) off food x_2010_04_21__17_19_20__1_seg\normalized
+  # and fix eigen_worm_file_path to be also eigen_worm_path and be
+  # C:\Users\Michael\Dropbox\worm_data
+  
   if(norm_folder == None):
     norm_folder = os.path.abspath(os.getcwd())
   
-  # DEBUG: hardcoded for now.
-  worm_file_path = os.path.join(norm_folder, 
-                               "unc-8 (rev) on food " +
-                               "R_2010_03_19__09_14_57___2___2_features.mat")
-
   eigen_worm_file_path = os.path.join(norm_folder, 
                                "masterEigenWorms_N2.mat")
 
-  normalized_worm.load_worm(worm_file_path)
-  normalized_worm.load_eigen_worms(eigen_worm_file_path)
+  # create our example instantiation by passing the two file locations
+  normalized_worm = wormpy.NormalizedWorm(worm_file_path,
+                                          eigen_worm_file_path)
   
   return normalized_worm
   

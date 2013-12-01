@@ -3,10 +3,16 @@
 Created on Wed Nov 27 22:36:32 2013
 
 @author: Michael
+A translation of Matlab code written by Jim Hokanson,
+in the SegwormMatlabClasses GitHub repo.  Original code path:
+SegwormMatlabClasses / 
++seg_worm / @feature_calculator / get_features_rewritten.m
 """
 
-# DEBUG: make this a subclass of WormExperimentFile perhaps?
 class WormFeatures:
+  """ WormFeatures takes as input a NormalizedWorm instance, and
+      during initialization calculates all the features of the worm.
+  """
   normalized_worm = None
   
   morphology = None
@@ -22,6 +28,9 @@ class WormFeatures:
 
   def get_morphology_features(self):
     """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / @feature_calculator / getMorphologyFeatures.m
+    
     Inputs: normalized_worm
     Outputs: a structure called "morphology"
     %Old files that served as a reference ...
@@ -40,10 +49,25 @@ class WormFeatures:
     pass
   
   def get_locomotion_features(self):
+    """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / @feature_calculator / getLocomotionFeatures.m
+
+    """
     pass
   
   def get_posture_features(self):
+    """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / @feature_calculator / getPostureFeatures.m
+
+    """    
     pass
   
   def get_path_features(self):
+    """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / @feature_calculator / getPathFeatures.m
+
+    """    
     pass
