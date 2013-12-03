@@ -70,7 +70,7 @@ def get_features(normalized_worm):
 
 
 def example_from_HDF5(base_path = None):
-  # If no folder was specified for the worm, use the 
+  # If no folder was specified for the worm, use the
   # current working directory
   if(base_path == None):
     base_path = os.path.abspath(os.getcwd())

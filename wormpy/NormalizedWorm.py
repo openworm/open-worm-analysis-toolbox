@@ -114,9 +114,13 @@ class NormalizedWorm(WormExperimentFile):
       
         This is a translation of getObject from Jim's original code
     """
+    
     if(not os.path.isfile(data_file_path)):
       raise Exception("Data file not found: " + data_file_path)
     else:
+      #TODO consider applying a dictionary to this data
+      #http://stackoverflow.com/questions/7008608
+         
       self.data_file = scipy.io.loadmat(data_file_path)
       self.structured_data = self.data_file.values()
 
@@ -134,7 +138,7 @@ class NormalizedWorm(WormExperimentFile):
                 'vulva_areas',
                 'non_vulva_areas']
                 
-        
+      
     pass    
     
   def load_normalized_blocks(self, blocks_path):
