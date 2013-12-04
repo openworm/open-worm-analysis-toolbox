@@ -121,11 +121,25 @@ class NormalizedWorm(WormExperimentFile):
       #TODO consider applying a dictionary to this data
       #http://stackoverflow.com/questions/7008608
          
-      self.data_file = scipy.io.loadmat(data_file_path)
+      self.data_file = scipy.io.loadmat(data_file_path, squeeze_me = True)
       self.structured_data = self.data_file.values()
 
+      # self.data_file is a dictionary, with keys:
+      # self.data_file.keys() = 
+      # dict_keys(['__header__', 's', '__version__', '__globals__'])
+      
+      # All the action is in data_file['s'], which is a numpy.ndarray where
+      # data_file['s'].dtype is an array showing how the data is structured.
+      # it is structured in precisely the order specified in self.FIELDS
+
+
+
+
       # NOTE: These are aligned to the order in the files ...
-      self.FIELDS = ['segmentation_status',
+      self.FIELDS = [
+                'EIGENWORM_PATH',
+                'segmentation_status',
+                'frame_codes',
                 'vulva_contours',
                 'non_vulva_contours',
                 'skeletons',
@@ -136,7 +150,9 @@ class NormalizedWorm(WormExperimentFile):
                 'head_areas',
                 'tail_areas',
                 'vulva_areas',
-                'non_vulva_areas']
+                'non_vulva_areas',
+                'x',
+                'y']
                 
       
     pass    
