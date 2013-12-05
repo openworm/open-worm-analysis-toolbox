@@ -204,8 +204,8 @@ class WormExperimentFile:
     # frames to make it faster to save the mp4.
     self.animation_data = \
         animation.FuncAnimation(fig, func=animate_frame, init_func=init,
-                                # total frames / 60 = about 15 seconds
-                                frames=math.floor(self.num_frames()/60), 
+                                # total frames / 30 = about 30 seconds
+                                frames=math.floor(self.num_frames()/30), 
                                 interval=20, blit=True, repeat_delay=100)  
   
   

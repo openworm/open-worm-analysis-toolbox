@@ -8,6 +8,7 @@ in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
 +seg_worm / @normalized_worm / normalized_worm.m
 """
+import numpy as np
 import scipy.io
 import os
 from wormpy.WormExperimentFile import WormExperimentFile
@@ -103,7 +104,7 @@ class NormalizedWorm(WormExperimentFile):
       
       # All the action is in data_file['s'], which is a numpy.ndarray where
       # data_file['s'].dtype is an array showing how the data is structured.
-      # it is structured in precisely the order specified in self.FIELDS
+      # it is structured in precisely the order specified in data_keys below
 
       s = self.data_file['s']
 
@@ -139,8 +140,15 @@ class NormalizedWorm(WormExperimentFile):
       
       # Here I use powerful python syntax to reference data elements of s
       # dynamically through built-in method getattr
-      # to build up a nice dictionary containing the data in s
+      # that is, getattr(s, x)  works syntactically just like s.x, 
+      # only x is a variable, so we can do a list comprehension with it!
+      # this is to build up a nice dictionary containing the data in s
       self.data_dict = {x: getattr(s, x) for x in data_keys}
+      
+      # our derived class, WormExperimentFile, expects skeletons to be 
+      # in the shape (n, 49, 2), but data_dict['skeletons'] is in the 
+      # shape (49, 2, n), so we must "roll the axis" twice.
+      self.skeletons = np.rollaxis(self.data_dict['skeletons'], 2)
       
     
   def load_normalized_blocks(self, blocks_path):
