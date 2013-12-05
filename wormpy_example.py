@@ -35,7 +35,6 @@ def main():
   #  create an instance of WormFeatures, which contains all our features data.
   worm_features = get_features(normalized_worm)
   
-  # TODO: do something more useful with the output here than just print...
   return worm_features
 
 
