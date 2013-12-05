@@ -13,6 +13,10 @@ import scipy.io
 import os
 from wormpy.WormExperimentFile import WormExperimentFile
 
+
+  
+
+
 class NormalizedWorm(WormExperimentFile):
   """ NormalizedWorm inherits from WormExperimentFile, which 
       initializes the skeleton data.
@@ -63,7 +67,30 @@ class NormalizedWorm(WormExperimentFile):
       
 
   """
-  data_dict = None
+
+  """
+       translated from:
+       seg_worm.skeleton_indices
+    
+       This was originally created for feature processing. I found a lot
+       of off by 1 errors in the feature processing.
+    
+       Used in: (list is not comprehensive)
+       --------------------------------------------------------
+       - posture bends
+       - posture directions
+    
+       NOTE: These are hardcoded for now. I didn't find much use in trying
+       to make this dynamic based on some maximum value.
+    
+       Typical Usage:
+       --------------------------------------------------------
+       SI = seg_worm.skeleton_indices;
+  """
+  skeleton_partitions= None  # A dictionary of partitions of the worm
+  normal_partitions = None   # A subset of skeleton_partitions
+
+  data_dict = None  # A dictionary of all data in norm_obj.mat
   
   # shape = (7, 48)
   # NOTE: It is one less than 49 because
@@ -80,6 +107,56 @@ class NormalizedWorm(WormExperimentFile):
     self.load_normalized_data(data_file_path)
     self.load_eigen_worms(eigen_worm_file_path)
     
+    # all are valid partitions of the worm's 49 skeleton points:
+    # all    
+    # head, body, tail
+    # head, neck, midbody, hips, tail
+    # head_tip, head_base, body, tail_base, tail_tip
+    # head_tip, head_base, neck, midbody, hips, tail_base, tail_tip
+
+    self.skeleton_partitions = {'head': (0, 8), 
+                                'neck': (8, 16),
+                                'midbody':  (16, 33),
+                                'hips':  (33, 41),
+                                'tail': (41, 49),
+                                # refinements of ['head']
+                                'head_tip': (0, 4),     
+                                'head_base': (4, 8),    # ""
+                                # refinements of ['tail']
+                                'tail_base': (40, 45),  
+                                'tail_tip': (45, 49),   # ""
+                                # DEBUG: for get_locomotion_bends: 
+                                # DEBUG: Jim might remove
+                                'nose': (3, -1),    
+                                # DEBUG: for get_locomotion_bends: 
+                                # DEBUG: Jim might remove
+                                'neck': (7, -1),
+                                'all': (0, 49),
+                                # neck, midbody, and hips
+                                'body': (8, 41)}
+
+  def normal_partitions(self):
+    """ there are various ways of partitioning the skeleton.
+    this method returns worm partition keys that are "normal"
+    
+    (translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+    +seg_worm / @skeleton_indices / skeleton_indices.m)
+    """
+    return {k: self.skeleton_partitions[k] for k in \
+                              ('head', 'neck', 'midbody', 'hips', 'tail')}
+
+  def get_partition(self, partition_key, data_key = 'skeletons'):
+    """    
+    We use numpy.split to split a data_dict element into three, cleaved
+    first by the first entry in the duple skeleton_partitions[partition_key],
+    and second by the second entry in that duple.
+    taking the second element of the resulting list of arrays [1] gives
+    the partitioned component we were looking for.
+    
+    """
+    return np.split(self.data_dict[data_key], 
+                    self.skeleton_partitions[partition_key])[1]
+    
   def load_normalized_data(self, data_file_path):
     """ Load the norm_obj.mat file into this class
       
@@ -89,9 +166,6 @@ class NormalizedWorm(WormExperimentFile):
     if(not os.path.isfile(data_file_path)):
       raise Exception("Data file not found: " + data_file_path)
     else:
-      #TODO consider applying a dictionary to this data
-      #http://stackoverflow.com/questions/7008608
-         
       self.data_file = scipy.io.loadmat(data_file_path, 
                                         # squeeze unit matrix dimensions:
                                         squeeze_me = True, 
@@ -106,7 +180,7 @@ class NormalizedWorm(WormExperimentFile):
       # data_file['s'].dtype is an array showing how the data is structured.
       # it is structured in precisely the order specified in data_keys below
 
-      s = self.data_file['s']
+      staging_data = self.data_file['s']
 
       # NOTE: These are aligned to the order in the files.
       # these will be the keys of the dictionary data_dict
@@ -117,9 +191,11 @@ class NormalizedWorm(WormExperimentFile):
                 # f = segmentation failed
                 # m = stage movement
                 # d = dropped frame
-                # n??? - there is reference tin some old code to this type # DEBUG
+                # n??? - there is reference tin some old code to this 
+                # type # DEBUG
                 'segmentation_status',
-                #  shape is (1 n), see comments in seg_worm.parsing.frame_errors
+                # shape is (1 n), see comments in 
+                # seg_worm.parsing.frame_errors
                 'frame_codes',
                 
                 # Contour data is used with 
@@ -143,7 +219,7 @@ class NormalizedWorm(WormExperimentFile):
       # that is, getattr(s, x)  works syntactically just like s.x, 
       # only x is a variable, so we can do a list comprehension with it!
       # this is to build up a nice dictionary containing the data in s
-      self.data_dict = {x: getattr(s, x) for x in data_keys}
+      self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
       
       # our derived class, WormExperimentFile, expects skeletons to be 
       # in the shape (n, 49, 2), but data_dict['skeletons'] is in the 
@@ -194,12 +270,12 @@ class NormalizedWorm(WormExperimentFile):
             it encompasses an "out and back" contour
     """
     pass    
-    # TODO    
+    # TODO: implement this and/or understand how this differs from data_dict['x']
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
   def contour_y(self):
     pass
-    # TODO    
+    # TODO: implement this and/or understand how this differs from data_dict['y']
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
 

@@ -165,9 +165,11 @@ class WormExperimentFile:
     return w
     
   
-  def animate(self):
+  def animate(self, portion = 0.1):
     """ Creates an animation of the worm's position over time.
     
+        optional parameter portion is a figure between 0 and 1 of frames
+        to animate.  default is 10%.
     """
     fig = pyplot.figure()
     
@@ -200,12 +202,11 @@ class WormExperimentFile:
                                 self.skeletons[iFrame,:,1])
       return animation_points,
     
-    # let's just run it for a 1/60th subset of the complete number of 
-    # frames to make it faster to save the mp4.
+    # create animation of a certain number of frames.
     self.animation_data = \
         animation.FuncAnimation(fig, func=animate_frame, init_func=init,
-                                # total frames / 30 = about 30 seconds
-                                frames=math.floor(self.num_frames()/30), 
+                                # animate only a portion of the frames.
+                                frames=math.floor(self.num_frames() * portion), 
                                 interval=20, blit=True, repeat_delay=100)  
   
   

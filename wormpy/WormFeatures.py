@@ -8,6 +8,7 @@ in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
 +seg_worm / @feature_calculator / get_features_rewritten.m
 """
+import numpy as np
 
 class WormFeatures:
   """ WormFeatures takes as input a NormalizedWorm instance, and
@@ -59,20 +60,24 @@ class WormFeatures:
     %morphology_process.m
     %schaferFeatures_process.m
     """
-    nw = self.normalized_worm   #just so we have a shorter name to refer to    
+    nw = self.normalized_worm   # just so we have a shorter name to refer to    
     
-    # TODO: SI = seg_worm.skeleton_indices;    
     self.morphology = {}
     self.morphology['length'] = nw.data_dict['lengths']
-    # TODO:     morphology.width.head     = mean(nw.widths(SI.HEAD_INDICES,:),1);
-    # TODO:     morphology.width.midbody  = mean(nw.widths(SI.MID_INDICES,:),1);
-    # TODO:     morphology.width.tail     = mean(nw.widths(SI.TAIL_INDICES,:),1);
+    # each item in this sub-dictionary is the per-frame mean across some
+    # part of the worm the head, midbody and tail.
+    #
+    # shape of resulting arrays are (2, n)
+    width_dict = {k: np.mean(nw.get_partition('head'), 0) \
+                  for k in ('head', 'midbody', 'tail')}
+    self.morphology['width'] = width_dict
     self.morphology['area'] = nw.data_dict['head_areas'] + \
                               nw.data_dict['vulva_areas'] + \
                               nw.data_dict['non_vulva_areas']
     self.morphology['areaPerLength'] = self.morphology['area'] / \
                                        self.morphology['length']
-    # TODO:     morphology.widthPerLength = morphology.width.midbody./morphology.length;
+    self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
+                                        self.morphology['length']
     
   
   def get_locomotion_features(self):

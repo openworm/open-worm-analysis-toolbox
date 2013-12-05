@@ -36,7 +36,7 @@ def main():
   worm_features = get_features(normalized_worm)
   
   # TODO: do something more useful with the output here than just print...
-  print(worm_features)
+  return worm_features
 
 
 
