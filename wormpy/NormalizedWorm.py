@@ -28,8 +28,11 @@ class NormalizedWorm(WormExperimentFile):
     * second column is renamed name, if renamed.
 
     properties / dynamic methods:
-      EIGENWORM_PATH         *not renamed, but actually removed*
+      eigen_worms      
       
+      IN data_dict:
+      
+      EIGENWORM_PATH         
       segmentation_status   
       frame_codes
       vulva_contours
@@ -44,7 +47,6 @@ class NormalizedWorm(WormExperimentFile):
       vulva_areas
       non_vulva_areas      
       
-      eigen_worms     
       n_frames               num_frames()
       x                      skeletons_x()
       y                      skeletons_y()
@@ -60,45 +62,13 @@ class NormalizedWorm(WormExperimentFile):
       
 
   """
+  data_dict = None
+  
   # shape = (7, 48)
   # NOTE: It is one less than 49 because
   #       the values are calculated from paired values, 
   #       and the # of pairs is one less than the # of samples
   eigen_worms = None
-
-  # a numpy array of chars for each frame of the video
-  # s = segmented
-  # f = segmentation failed
-  # m = stage movement
-  # d = dropped frame
-  # n??? - there is reference tin some old code to this type # DEBUG
-  segmentation_status = None
-  #  %[1 n], see comments in seg_worm.parsing.frame_errors
-  frame_codes = None
-
-  # Contour data is used with 
-  # seg_worm.feature_helpers.posture.getEccentricity:
-  vulva_contours = None  # shape is (49, 2, n) integer
-  # TODO
-  non_vulva_contours = None  # shape is (49, 2, n) integer
-
-  # skeletons (INHERITED)
-  angles = None          # shape is (49, 2, n) integer
-  in_out_touches = None  # shape is (49, n) integer (degrees)
-  lengths = None         # shape is (n) integer
-  widths = None          # shape is (49, n) integer
-  head_areas = None      # shape is (n) integer
-  tail_areas = None      # shape is (n) integer
-  vulva_areas = None     # shape is (n) integer
-  non_vulva_areas = None # shape is (n) integer
-  vental_mode = None     # needed for locomotion.  Not yet implemented?
-
-
-  structured_data = None  # DEBUG: hold it here for interactive manipulation
-                          #        while I figure out how to use matlab files
-  FIELDS = None           # DEBUG: same with FIELDS
-  data_file = None        # DEBUG: same with data_file
-
 
   def __init__(self, data_file_path, eigen_worm_file_path):
     """ initialize this instance by loading both the worm and 
@@ -121,8 +91,11 @@ class NormalizedWorm(WormExperimentFile):
       #TODO consider applying a dictionary to this data
       #http://stackoverflow.com/questions/7008608
          
-      self.data_file = scipy.io.loadmat(data_file_path, squeeze_me = True)
-      self.structured_data = self.data_file.values()
+      self.data_file = scipy.io.loadmat(data_file_path, 
+                                        # squeeze unit matrix dimensions:
+                                        squeeze_me = True, 
+                                        # force return numpy object array:
+                                        struct_as_record = False)
 
       # self.data_file is a dictionary, with keys:
       # self.data_file.keys() = 
@@ -132,30 +105,43 @@ class NormalizedWorm(WormExperimentFile):
       # data_file['s'].dtype is an array showing how the data is structured.
       # it is structured in precisely the order specified in self.FIELDS
 
+      s = self.data_file['s']
 
-
-
-      # NOTE: These are aligned to the order in the files ...
-      self.FIELDS = [
+      # NOTE: These are aligned to the order in the files.
+      # these will be the keys of the dictionary data_dict
+      data_keys = [
                 'EIGENWORM_PATH',
+                # a numpy array of chars for each frame of the video
+                # s = segmented
+                # f = segmentation failed
+                # m = stage movement
+                # d = dropped frame
+                # n??? - there is reference tin some old code to this type # DEBUG
                 'segmentation_status',
+                #  shape is (1 n), see comments in seg_worm.parsing.frame_errors
                 'frame_codes',
-                'vulva_contours',
-                'non_vulva_contours',
-                'skeletons',
-                'angles',    
-                'in_out_touches',
-                'lengths',
-                'widths',
-                'head_areas',
-                'tail_areas',
-                'vulva_areas',
-                'non_vulva_areas',
+                
+                # Contour data is used with 
+                # seg_worm.feature_helpers.posture.getEccentricity:
+                'vulva_contours',     # shape is (49, 2, nu) integer
+                'non_vulva_contours', # shape is (49, 2, n) integer
+                'skeletons',          # shape is (49, 2, n) integer
+                'angles',             # shape is (49, 2, n) integer
+                'in_out_touches',     # shape is (49, n) integer (degrees)
+                'lengths',# shape is (n) integer
+                'widths',# shape is (49, n) integer
+                'head_areas', # shape is (n) integer
+                'tail_areas',# shape is (n) integer
+                'vulva_areas',# shape is (n) integer
+                'non_vulva_areas', # shape is (n) integer
                 'x',
                 'y']
-                
       
-    pass    
+      # Here I use powerful python syntax to reference data elements of s
+      # dynamically through built-in method getattr
+      # to build up a nice dictionary containing the data in s
+      self.data_dict = {x: getattr(s, x) for x in data_keys}
+      
     
   def load_normalized_blocks(self, blocks_path):
     """ Processes all the MatLab data "blocks" created from the raw 

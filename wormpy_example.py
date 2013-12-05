@@ -42,7 +42,11 @@ def main():
 
 def get_user_data_path():
   if(getpass.getuser() == 'Michael'):
+    # michael's computer at home
     NORM_PATH = "C:\\Users\\Michael\\Dropbox\\"
+  elif(getpass.getuser() == 'mcurrie'):
+    # michael's computer at work
+    NORM_PATH = "C:\\Backup\\Dropbox\\"    
   else:
     # if it's not Michael, assume it's Jim
     if(os.name == 'nt'): 
