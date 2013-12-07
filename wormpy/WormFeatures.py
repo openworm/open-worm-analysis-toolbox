@@ -7,8 +7,21 @@ A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
 +seg_worm / @feature_calculator / get_features_rewritten.m
+
+*** For +seg_worm / @feature_calculator / getPostureFeatures.m,
+*** here are some renamed variables:
+
+SI = seg_worm.skeleton_indices is expressed here as self.skeleton_partitions
+ALL_INDICES = SI.ALL_NORMAL_INDICES is expressed here as 
+              self.normal_partitions()
+FIELDS = SI.ALL_NORMAL_NAMES is expressed here as 
+         self.normal_partitions().keys()
+n_fields = length(FIELDS) = len(self.normal_partitions().keys())
+
 """
 import numpy as np
+
+# TODO: WormFeatures should INHERIT from NormalizedWorm
 
 class WormFeatures:
   """ WormFeatures takes as input a NormalizedWorm instance, and
@@ -20,12 +33,20 @@ class WormFeatures:
   locomotion = None
   posture = None
   path = None
+  FPS = None  
+  N_ECCENTRICITY = None
   
   def __init__(self, nw):
+    self.FPS = 20               # TODO: get this from higher up..
+    self.N_ECCENTRICITY = 50  # TODO: get this from higher up..
+
     self.normalized_worm = nw
     self.get_morphology_features()
+    self.get_posture_features()    
     self.get_locomotion_features()
-    self.get_posture_features()
+    
+    
+
 
   def get_morphology_features(self):
     """
@@ -78,7 +99,72 @@ class WormFeatures:
                                        self.morphology['length']
     self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
                                         self.morphology['length']
+  
+  def num_fields(self):
+    return 
+  
+  def get_posture_features(self):
+    """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / @feature_calculator / getPostureFeatures.m
+
+    %
+    %   posture = seg_worm.feature_calculator.getPostureFeatures(nw)
+    %
+    %   Old Files
+    %   - schaferFeatures_process
+    %
+    %   NOTES:
+    %   - Indices were inconsistently defined for bends relative to other code
+    %   - stdDev for bends is signed as well, based on means ...
+    %
+    %   UNFINISHED STATUS:
+    %   - seg_worm.feature_helpers.posture.wormKinks - not yet examined
+    %   - distance - missing input to function, need to process locomotion
+    %   first
+    %
+
+    """    
+    # Initialize self.posture as a blank dictionary we will add to
+    self.posture = {}  
+
+    # *** 1. Bends ***
+    """
+    bends = struct;
+    for iField = 1:n_fields
+        cur_indices = ALL_INDICES{iField};
+        cur_name    = FIELDS{iField};
+        bends.(cur_name).mean   = nanmean(nw.angles(cur_indices,:));
+        bends.(cur_name).stdDev = nanstd(nw.angles(cur_indices,:));
+        
+        %Sign the standard deviation ...
+        %----------------------------------------------------------------------
+        mask = bends.(cur_name).mean < 0;
+        bends.(cur_name).stdDev(mask) = -1*bends.(cur_name).stdDev(mask);
+    end
     
+    posture.bends = bends;
+    """
+    # *** 2. Eccentricity & Orientation ***
+    
+    
+    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
+
+
+    # *** 4. Kinks ***
+
+    # *** 5. Coils (NOT YET FINISHED BY JIM) ***
+
+    # *** 6. Directions ***
+
+    # *** 7. Skeleton ***
+
+    # TODO: ask Jim: isn't this already in morphology ?? hmm, I guess not
+
+    # *** 8. EigenProjection ***
+    
+    pass
+
   
   def get_locomotion_features(self):
     """
@@ -88,13 +174,6 @@ class WormFeatures:
     """
     pass
   
-  def get_posture_features(self):
-    """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getPostureFeatures.m
-
-    """    
-    pass
   
   def get_path_features(self):
     """
