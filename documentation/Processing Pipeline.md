@@ -59,7 +59,7 @@ When a model worm is created, these steps will need to be reproduced. This is de
 
 *(Feature calculation in python based on WT2 code.)*
 
-"Features" are properities of the worm, derived from the measurements data.  For instance, the area of the head (a feature) is calculated from skeleton and width data (measurements)
+"Features" are properities of the worm, derived from the measurements data.  For instance, the area of the head (a feature) is calculated from "skeleton" and width data (which are considered "measurements")
 
 ###5. Worm features (expanded)###
 
