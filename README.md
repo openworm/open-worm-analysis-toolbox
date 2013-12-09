@@ -38,6 +38,7 @@ Located here: https://github.com/JimHokanson/openworm_docs/tree/master/Movement
 
 The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [4] or in the supplemental material of his 2013 Nature Methods paper[5].  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
 
+**Markdown editor:** http://markdownpad.com/
 
 ## Sources ##
 
