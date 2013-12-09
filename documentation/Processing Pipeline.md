@@ -26,7 +26,7 @@ Raw video, plus tracking plate movement data + other metadata (time of filming, 
 
 This gives the worm contour and skeleton, etc.
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 2.bmp?raw=true)
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 2.gif?raw=true)
 
 ###3. Normalized measurements###
 
