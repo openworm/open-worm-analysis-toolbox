@@ -18,6 +18,8 @@ Conduct experiment:
 
 Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
 
+![Figure 1-1](documentation/images/STEP 0-1.bmp?raw=true)
+
 ###2. Measurements###
 
 *(machine vision processing step.)*
