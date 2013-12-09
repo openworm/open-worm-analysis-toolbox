@@ -26,6 +26,8 @@ Raw video, plus tracking plate movement data + other metadata (time of filming, 
 
 This gives the worm contour and skeleton, etc.
 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 2.bmp?raw=true)
+
 ###3. Normalized measurements###
 
 *(normalize each from to just 49 points.)*
@@ -89,3 +91,5 @@ In fact, the Schafer lab currently has such a database, [wormbehavior.mrc-lmb.ca
 
 ###7. Reports###
 Reports are run from data in the statistics database, and can take the form of a summary pixel grid, pairwise boxplots, and other charts.
+
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 7.bmp?raw=true)
