@@ -40,6 +40,8 @@ The structure of the files is described at a high level starting on page 183 of 
 
 **Markdown editor:** http://markdownpad.com/
 
+**Data repository** We store the .mat files that flow between the steps of our pipeline, in a DropBox shared folder "worm_data".
+
 ## Sources ##
 
 [1] Dr William Schafer's lab at the MRC Laboratory of Molecular Biology http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/
