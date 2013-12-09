@@ -1,4 +1,4 @@
-OpenWorm Movement Validation
+Movement Validation
 ===================
 
 Contributors: @JimHokanson, @MichaelCurrie
