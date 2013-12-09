@@ -18,7 +18,7 @@ Conduct experiment:
 
 Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
 
-![](documentation/images/STEP 0-1.bmp?raw=true)
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 0-1.bmp?raw=true)
 
 ###2. Measurements###
 
