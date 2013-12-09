@@ -40,7 +40,7 @@ The structure of the files is described at a high level starting on page 183 of 
 
 **Markdown editor:** http://markdownpad.com/
 
-**Data repository** We store the .mat files that flow between the steps of our pipeline, in a DropBox shared folder "worm_data".
+**Data repository:** We store the .mat files that flow between the steps of our pipeline, in a DropBox shared folder "worm_data".
 
 ## Sources ##
 
