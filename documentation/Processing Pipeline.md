@@ -1,0 +1,87 @@
+# Processing Pipeline #
+
+*NOTE:* processing steps are written in parentheses.  The state of the data is described at each numerical step in the pipeline.
+
+Our open-source port of WT2 currently takes **STEP 3** as the starting point, because the Schafer Lab has an analysis tool online that transforms the raw video into normalized data.    
+
+It might be useful to also port the machine vision processing from **STEP 1** to **STEP 2**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
+
+
+## PIPELINE: STEPS 1 to 7
+
+
+###1. Raw video ###
+
+*(**conduct experiment**:
+- case: REAL WORM: Capture video of worm movement using a test protocol, in tandem with a control worm.
+- case: VIRTUAL WORM: Run simulation engine, output video.)*
+
+Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
+
+###2. Measurements###
+
+*(machine vision processing step.)*
+
+This gives the worm contour and skeleton, etc.
+
+###3. Normalized measurements###
+
+*(normalize each from to just 49 points.)*
+
+The existing WT2 code covering **STEP 2** and **STEP 3** is [available](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis) at the Schafer lab site.
+
+The Schafer Lab code creates a bunch of files, some of which are the norm files:
+normBlock1
+normBlock2
+normBlock3
+...
+normBlock10
+mec-4 (u253) off food x_2010_04_21__17_19_20__1_failedFrames.mat (in the .data folder)
+
+Jim wrote a function called [NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m).createObjectFromFiles that stitches these "blocks" together, into an easy-to-deal-with file called norm_obj.mat.  (Previously, this merging of the blocks was embedded within the feature processing code, which complicated the feature processing code unnecessarily.)
+
+Many of the features are derived rather easily from the skeleton and contour, such as the area of the head which  can be calculated relatively easy from the contour.
+
+When a model worm is created, these steps will need to be reproduced. This is described in [OpenWorm Issue 144](https://github.com/openworm/OpenWorm/issues/144).
+
+**Relevant Code:**
+
+- [blob/master/Worms/Features/wormDataInfo.m](https://github.com/openworm/SegWorm/blob/master/Worms/Features/wormDataInfo.m) (This is the original code which starts to describe this expanded set of base features)
+- [feature/roots.m](https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bfeature/roots.m)
+
+[SegWorm/Pipeline/featureProcess.m](https://github.com/JimHokanson/mrc_wormtracker_gui/blob/master/SegWorm/Pipeline/featureProcess.m) - This file is responsible for creating the feature mat files
+
+###4. Worm features###
+
+*(Feature calculation in python based on WT2 code.)*
+
+"Features" are properities of the worm, derived from the measurements data.  For instance, the area of the head (a feature) is calculated from skeleton and width data (a measurement)
+
+###5. Worm features (expanded)###
+
+*(Feature calculation in python based on WT2 code.)*
+
+Using the expanded set of base features the Schafer lab has computed a much larger set of features. As an example, the worm length provides 4 features, one overall, and three more when computed during forward movement, backwards movements, and when paused.
+
+For more on this, see:
+[Expanded Features](Expanded_Features.md)
+
+**Relevant Code**
+- https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/wormStatsInfo.m
+
+###5. Worm statistics###
+
+*(Stats calculation in python based on WT2 code.)*
+
+The result of conversion from the video values to those used during statistical testing. The Schafer lab stats calculation code excludes data in certain situations, normalizes some values, and appears to quantize the frame data to reduce memory requirements. This process will need to eventually be described here in more detail.
+
+*(enter statistics as a record into the database.)*
+
+###6. Database of statistics on multiple worms###
+
+This database could perhaps be made available to researchers everywhere to use, to act as a central repository for C. elegans behavioural statistics.
+
+*(interactively perform operations on the database, to produce the final result:)*
+
+###7. Reports###
+Reports are run from data in the statistics database, and can take the form of a summary pixel grid, pairwise boxplots, and other charts.
