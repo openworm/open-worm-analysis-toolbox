@@ -6,11 +6,11 @@ NOTE: processing steps are written in parentheses.  The state of the data is des
 case: REAL WORM: Capture video of worm movement using a test protocol, in tandem with a control worm.
 case: VIRTUAL WORM: Run simulation engine, output video.)
 
-1. Raw video + tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during vidoe, strain of worm used, Lab name, etc)
+*1. Raw video + tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during vidoe, strain of worm used, Lab name, etc)
 
 (machine vision processing step)
 
-2. Measurements: Worm contour and skeleton
+*2. Measurements: Worm contour and skeleton
 
 (normalize each from to just 49 points)
 
