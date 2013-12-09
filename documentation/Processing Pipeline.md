@@ -29,12 +29,12 @@ This gives the worm contour and skeleton, etc.
 The existing WT2 code covering **STEP 2** and **STEP 3** is [available](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis) at the Schafer lab site.
 
 The Schafer Lab code creates a bunch of files, some of which are the norm files:
-normBlock1
-normBlock2
-normBlock3
-...
-normBlock10
-mec-4 (u253) off food x_2010_04_21__17_19_20__1_failedFrames.mat (in the .data folder)
+- normBlock1
+- normBlock2
+- normBlock3
+- ...
+- normBlock10
+- mec-4 (u253) off food x_2010_04_21__17_19_20__1_failedFrames.mat (in the .data folder)
 
 Jim wrote a function called [NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m).createObjectFromFiles that stitches these "blocks" together, into an easy-to-deal-with file called norm_obj.mat.  (Previously, this merging of the blocks was embedded within the feature processing code, which complicated the feature processing code unnecessarily.)
 
