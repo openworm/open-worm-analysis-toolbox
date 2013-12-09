@@ -1,10 +1,8 @@
 # Processing Pipeline #
 
-*NOTE:* processing steps are written in parentheses.  The state of the data is described at each numerical step in the pipeline.
-
 Our open-source port of WT2 currently takes **STEP 3** as the starting point, because the Schafer Lab has an analysis tool online that transforms the raw video into normalized data.    
 
-It might be useful to also port the machine vision processing from **STEP 1** to **STEP 2**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
+It might be useful to also port the machine vision processing from **STEP 1** to **STEP 2**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (see p.131 of Yemini's dissertation) (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
 
 
 ## PIPELINE: STEPS 1 to 7
@@ -80,6 +78,8 @@ The result of conversion from the video values to those used during statistical 
 ###6. Database of statistics on multiple worms###
 
 This database could perhaps be made available to researchers everywhere to use, to act as a central repository for C. elegans behavioural statistics.
+
+In fact, the Schafer lab currently has such a database, [wormbehavior.mrc-lmb.cam.ac.uk](http://wormbehavior.mrc-lmb.cam.ac.uk/)
 
 *(interactively perform operations on the database, to produce the final result:)*
 
