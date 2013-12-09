@@ -12,9 +12,9 @@ It might be useful to also port the machine vision processing from **STEP 1** to
 
 ###1. Raw video ###
 
-*(**conduct experiment**:
+Conduct experiment:
 - case: REAL WORM: Capture video of worm movement using a test protocol, in tandem with a control worm.
-- case: VIRTUAL WORM: Run simulation engine, output video.)*
+- case: VIRTUAL WORM: Run simulation engine, output video.
 
 Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
 
