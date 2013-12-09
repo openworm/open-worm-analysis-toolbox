@@ -1,6 +1,8 @@
 # Processing Pipeline #
 
-Our open-source port of WT2 currently takes **STEP 3** as the starting point, because the Schafer Lab has an analysis tool online that transforms the raw video into normalized data.    
+This repository intends to code the processing pipeline from raw video to statistics.  Much of the code comes from the Schafer Lab's Worm Tracker 2 (WT2) software.
+
+This repo currently takes **STEP 3** as the starting point, and does not code for steps 1 or 2, because the Schafer Lab has an analysis tool online that transforms the raw video into normalized data.
 
 It might be useful to also port the machine vision processing from **STEP 1** to **STEP 2**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (see p.131 of Yemini's dissertation) (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
 
