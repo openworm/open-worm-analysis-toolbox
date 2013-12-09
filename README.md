@@ -5,8 +5,8 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 Objectives:
 
-1. This repository should eventually house a test pipeline for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
-**Overall OpenWorm Milestone**: *#19*  https://github.com/openworm/OpenWorm/issues?milestone=19&state=open
+1. This repository should eventually house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
+[**Overall OpenWorm Milestone**: *#19*](https://github.com/openworm/OpenWorm/issues?milestone=19&state=open)  
 
 2. In achieving goal #1, this repository will also be an open source version of the Worm Tracker 2 (WT2) analysis pipeline that goes from raw real worm videos to worm measurements detected by machine vision, to a selection of calculated worm behavioural features like average speed.
 
@@ -15,14 +15,14 @@ Objectives:
 
 ## Codebase starting point and real worm data source ##
 
-The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos (e.g. http://www.youtube.com/watch?v=5FAiSgl55p0), using their proprietary hardware/software package called Worm Tracker 2 (WT2).  The videos are processed by the WT2 software's image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
+The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos ([here is an example](http://www.youtube.com/watch?v=5FAiSgl55p0)), using their proprietary hardware/software package called Worm Tracker 2 (WT2).  The videos are processed by the WT2 software's image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
 
 We are using the WT2 analysis software, written in MatLab, as a starting point for our own code development work.
 
 
 ## Further documentation of worm movement data ##
 
-Located here: https://github.com/JimHokanson/openworm_docs/tree/master/Movement
+Located here: [https://github.com/JimHokanson/openworm_docs/tree/master/Movement](https://github.com/JimHokanson/openworm_docs/tree/master/Movement)
 
 
 ## Tools used ##
