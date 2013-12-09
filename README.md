@@ -3,6 +3,8 @@ Movement Validation
 
 Contributors: @JimHokanson, @MichaelCurrie
 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation Strategy.png?raw=true)
+
 Objectives:
 
 1. This repository should eventually house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
