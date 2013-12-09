@@ -13,12 +13,12 @@ case: VIRTUAL WORM: Run simulation engine, output video.)
 *2. Measurements: Worm contour and skeleton
 
 (normalize each from to just 49 points)
-
-3. Normalized measurements
+ 
+ 3. Normalized measurements
 
 (feature calculation in python based on WT2 code)
-
-4. Worm features
+ 
+ 4. Worm features
 
 (stats calculation in python based on WT2 code)
 
