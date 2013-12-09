@@ -3,7 +3,7 @@ Movement Validation
 
 Contributors: @JimHokanson, @MichaelCurrie
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation Strategy.png?raw=true)
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
 
 Objectives:
 
