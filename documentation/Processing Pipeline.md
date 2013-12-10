@@ -22,7 +22,7 @@ Raw video, plus tracking plate movement data + other metadata (time of filming, 
 
 ###2. Measurements###
 
-*(machine vision processing step.)*
+*(Machine vision processing step.)*
 
 This gives the worm contour and skeleton, etc.
 
@@ -30,7 +30,7 @@ This gives the worm contour and skeleton, etc.
 
 ###3. Normalized measurements###
 
-*(normalize each from to just 49 points.)*
+*(Normalize each worm video frame to just 49 points; necessary for frame-by-frame comparability.)*
 
 The existing WT2 code covering **STEP 2** and **STEP 3** is [available](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis) at the Schafer lab site.
 
@@ -57,13 +57,13 @@ When a model worm is created, these steps will need to be reproduced. This is de
 
 ###4. Worm features###
 
-*(Feature calculation in python based on WT2 code.)*
+*(Feature calculation in Python based on WT2 code.)*
 
 "Features" are properities of the worm, derived from the measurements data.  For instance, the area of the head (a feature) is calculated from "skeleton" and width data (which are considered "measurements")
 
 ###5. Worm features (expanded)###
 
-*(Feature calculation in python based on WT2 code.)*
+*(Feature calculation in Python based on WT2 code.)*
 
 Using the expanded set of base features the Schafer lab has computed a much larger set of features. As an example, the worm length provides 4 features, one overall, and three more when computed during forward movement, backwards movements, and when paused.
 
@@ -75,7 +75,7 @@ For more on this, see:
 
 ###5. Worm statistics###
 
-*(Stats calculation in python based on WT2 code.)*
+*(Stats calculation in Python based on WT2 code.)*
 
 The result of conversion from the video values to those used during statistical testing. The Schafer lab stats calculation code excludes data in certain situations, normalizes some values, and appears to quantize the frame data to reduce memory requirements. This process will need to eventually be described here in more detail.
 
