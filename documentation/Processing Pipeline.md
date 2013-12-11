@@ -7,7 +7,7 @@ This repo currently takes **STEP 3** as the starting point, and does not code fo
 It might be useful to also port the machine vision processing for **STEP 2** and **STEP 3**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (see p.131 of Yemini's dissertation) (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
 
 
-## PIPELINE: STEPS 1 to 7
+## PIPELINE: STEPS 1 to 8
 
 
 ###1. Raw video ###
@@ -19,6 +19,7 @@ Conduct experiment:
 Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
 
 ![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 0-1.bmp?raw=true)
+
 <sub><sup>Credit: OpenWorm / http://dorkutopia.com/tag/xbox-one/</sub></sup>
 
 
@@ -29,6 +30,7 @@ Raw video, plus tracking plate movement data + other metadata (time of filming, 
 This gives the worm contour and skeleton, etc.
 
 ![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 2.gif?raw=true)
+
 <sub><sup>Credit: Ev Yemini</sub></sup>
 
 ###3. Normalized measurements###
@@ -76,7 +78,7 @@ For more on this, see:
 **Relevant Code**
 - https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/wormStatsInfo.m
 
-###5. Worm statistics###
+###6. Worm statistics###
 
 *(Stats calculation in Python based on WT2 code.)*
 
@@ -84,7 +86,7 @@ The result of conversion from the video values to those used during statistical 
 
 *(enter statistics as a record into the database.)*
 
-###6. Database of statistics on multiple worms###
+###7. Database of statistics on multiple worms###
 
 This database could perhaps be made available to researchers everywhere to use, to act as a central repository for C. elegans behavioural statistics.
 
@@ -92,8 +94,9 @@ In fact, the Schafer lab currently has such a database, [wormbehavior.mrc-lmb.ca
 
 *(interactively perform operations on the database, to produce the final result:)*
 
-###7. Reports###
+###8. Reports###
 Reports are run from data in the statistics database, and can take the form of a summary pixel grid, pairwise boxplots, and other charts.
 
 ![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 7.bmp?raw=true)
+
 <sub><sup>Credit: Ev Yemini</sub></sup>
