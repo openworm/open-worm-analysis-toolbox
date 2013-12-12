@@ -21,7 +21,7 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. elegans videos ([here is an example](http://www.youtube.com/watch?v=5FAiSgl55p0)), using their proprietary hardware/software package called Worm Tracker 2 (WT2).  The videos are processed by the WT2 software's image processing to capture the worm's skeleton and contour over time, in 15-minute segments.  This video metadata is stored in hundreds of experiment files available on their FTP server. [2]
 
-We are using the WT2 analysis software, written in MatLab, as a starting point for our own code development work.
+We are using the WT2 analysis software, written in MATLAB, as a starting point for our own code development work.
 
 
 ## Further documentation of worm movement data ##
