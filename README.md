@@ -7,7 +7,7 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 <sub><sup>Credit: OpenWorm</sub></sup>
 
-Objectives:
+###Objectives:###
 
 1. This repository should eventually house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
 [**Overall OpenWorm Milestone**: *#19*](https://github.com/openworm/OpenWorm/issues?milestone=19&state=open)  
