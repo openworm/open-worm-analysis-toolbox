@@ -14,7 +14,7 @@ It might be useful to also port the machine vision processing for **STEP 2** and
 
 Conduct experiment:
 - case: REAL WORM: Capture video of worm movement using a test protocol, in tandem with a control worm.
-- case: VIRTUAL WORM: Run simulation engine, output video.
+- case: VIRTU7AL WORM: Run simulation engine, output video.
 
 Raw video, plus tracking plate movement data + other metadata (time of filming, vulva location, whether worm flipped during video, strain of worm used, Lab name, etc)
 
@@ -84,17 +84,14 @@ For more on this, see:
 
 The result of conversion from the video values to those used during statistical testing. The Schafer lab stats calculation code excludes data in certain situations, normalizes some values, and appears to quantize the frame data to reduce memory requirements. This process will need to eventually be described here in more detail.
 
-*(enter statistics as a record into the database.)*
-
 ###7. Database of statistics on multiple worms###
 
 This database could perhaps be made available to researchers everywhere to use, to act as a central repository for C. elegans behavioural statistics.
 
 In fact, the Schafer lab currently has such a database, [wormbehavior.mrc-lmb.cam.ac.uk](http://wormbehavior.mrc-lmb.cam.ac.uk/)
 
-*(interactively perform operations on the database, to produce the final result:)*
-
 ###8. Reports###
+
 Reports are run from data in the statistics database, and can take the form of a summary pixel grid, pairwise boxplots, and other charts.
 
 ![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP 7.bmp?raw=true)
