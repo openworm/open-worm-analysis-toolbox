@@ -26,7 +26,10 @@ We are using the WT2 analysis software, written in MATLAB, as a starting point f
 
 ## Further documentation of worm movement data ##
 
-Located here: [https://github.com/JimHokanson/openworm_docs/tree/master/Movement](https://github.com/JimHokanson/openworm_docs/tree/master/Movement)
+Further documentation is available at Jim's [openworm_docs repo](https://github.com/JimHokanson/openworm_docs/tree/master/Movement)
+
+[Monthly Progress Reports](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/MovementValidation)
+
 
 
 ## Tools used ##
