@@ -37,6 +37,11 @@ Further documentation is available at Jim's [openworm_docs repo](https://github.
 **Language:** Python 3.x.  The code requires use of scientific computing packages (numpy, h5py), and as such getting the packages properly installed can be tricky. As such we recommend using Spyder IDE (Note, this isn't required)
 - https://code.google.com/p/spyderlib/ (see also: https://code.google.com/p/winpython/)
 
+N.B.: numpy is a library for Python that is a dependency in this repo.  If you have numpy version less than 1.8, you will need to either install it, or:
+
+1. Save [nanfunctions.py](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the numpy directory.
+2. Append the line ```__all__ += nanfunctions.__all__``` to numpy/lib/__init__.py.
+
 **HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/) - this can be used for debugging the file structure
 
 **Plotting:** matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.  FFMPEG is used for video processing.
