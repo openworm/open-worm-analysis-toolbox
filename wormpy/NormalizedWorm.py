@@ -87,9 +87,12 @@ class NormalizedWorm(WormExperimentFile):
        --------------------------------------------------------
        SI = seg_worm.skeleton_indices;
   """
-  skeleton_partitions= None  # A dictionary of partitions of the worm
-  normal_partitions = None   # A subset of skeleton_partitions
-
+  # The normalized worm contains precisely 49 points per frame.  Here
+  # we list in a dictionary various partitions of the worm.
+  worm_partitions = None    
+  # this stores a dictionary of various ways of organizing the partitions
+  worm_parititon_subsets = None
+  
   data_dict = None  # A dictionary of all data in norm_obj.mat
   
   # shape = (7, 48)
@@ -114,7 +117,7 @@ class NormalizedWorm(WormExperimentFile):
     # head_tip, head_base, body, tail_base, tail_tip
     # head_tip, head_base, neck, midbody, hips, tail_base, tail_tip
 
-    self.skeleton_partitions = {'head': (0, 8), 
+    self.worm_partitions = {'head': (0, 8), 
                                 'neck': (8, 16),
                                 'midbody':  (16, 33),
                                 'hips':  (33, 41),
@@ -135,27 +138,61 @@ class NormalizedWorm(WormExperimentFile):
                                 # neck, midbody, and hips
                                 'body': (8, 41)}
 
-  def normal_partitions(self):
-    """ there are various ways of partitioning the skeleton.
-    this method returns worm partition keys that are "normal"
+    self.worm_partition_subsets = {'normal': ('head', 'neck', 
+                                              'midbody', 'hips', 'tail'),
+                                   'first_third': ('head', 'neck'),
+                                   'second_third': ('midbody'),
+                                   'last_third': ('hips', 'tail')}
+
+  def get_partition_subset(self, partition_type):
+    """ there are various ways of partitioning the worm's 49 points.
+    this method returns a subset of the worm partition dictionary
     
     (translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
     +seg_worm / @skeleton_indices / skeleton_indices.m)
+    
+    For example, to see the mean of the head and the mean of the neck, 
+    use the partition subset, 'first_third', like this:
+    
+    nw = NormalizedWorm(....)
+    
+    width_dict = {k: np.mean(nw.get_partition(k), 0) \
+              for k in ('head', 'neck')}
+              
+    OR, using self.worm_partition_subsets,
+    
+    s = nw.get_paritition_subset('first_third')
+    # i.e. s = {'head':(0,8), 'neck':(8,16)}
+    
+    width_dict = {k: np.mean(nw.get_partition(k), 0) \
+              for k in s.keys()}
     """
-    return {k: self.skeleton_partitions[k] for k in \
-                              ('head', 'neck', 'midbody', 'hips', 'tail')}
+
+    # parition_type is assumed to be a key for the dictionary
+    # worm_partition_subsets
+    p = self.worm_partition_subsets[partition_type]
+    
+    # return only the subset of partitions contained in the particular 
+    # subset of interest, p.
+    return {k: self.worm_partitions[k] for k in p}
+
 
   def get_partition(self, partition_key, data_key = 'skeletons'):
     """    
-    We use numpy.split to split a data_dict element into three, cleaved
-    first by the first entry in the duple skeleton_partitions[partition_key],
-    and second by the second entry in that duple.
-    taking the second element of the resulting list of arrays [1] gives
-    the partitioned component we were looking for.
-    
+      INPUT: a partition key, and an optional data key.
+      OUTPUT: a numpy array containing the data requested, cropped to just
+              the partition requested.
+              (so the shape might be, say, 4xn if data is 'angles')
+      
     """
+    #We use numpy.split to split a data_dict element into three, cleaved
+    #first by the first entry in the duple worm_partitions[partition_key],
+    #and second by the second entry in that duple.
+    
+    #Taking the second element of the resulting list of arrays, i.e. [1],
+    #gives the partitioned component we were looking for.
     return np.split(self.data_dict[data_key], 
-                    self.skeleton_partitions[partition_key])[1]
+                    self.worm_partitions[partition_key])[1]
     
   def load_normalized_data(self, data_file_path):
     """ Load the norm_obj.mat file into this class

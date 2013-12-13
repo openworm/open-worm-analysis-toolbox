@@ -3,6 +3,11 @@
 Created on Wed Nov 27 22:36:32 2013
 
 @author: Michael
+
+NOTE: REQUIRES numpy.version.full_version >= '1.8' 
+since numpy.nanmean is only available after that version.
+(http://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.nanmean.html)
+
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
@@ -129,22 +134,39 @@ class WormFeatures:
     self.posture = {}  
 
     # *** 1. Bends ***
-    """
-    bends = struct;
-    for iField = 1:n_fields
-        cur_indices = ALL_INDICES{iField};
-        cur_name    = FIELDS{iField};
-        bends.(cur_name).mean   = nanmean(nw.angles(cur_indices,:));
-        bends.(cur_name).stdDev = nanstd(nw.angles(cur_indices,:));
-        
-        %Sign the standard deviation ...
-        %----------------------------------------------------------------------
-        mask = bends.(cur_name).mean < 0;
-        bends.(cur_name).stdDev(mask) = -1*bends.(cur_name).stdDev(mask);
-    end
+    # We care only about the head, neck, midbody, hips and tail 
+    # (i.e. the 'normal' way to partition the worm)
+    p = self.normalized_worm.get_partition_subset('normal')
     
-    posture.bends = bends;
-    """
+    bends = {}
+    
+    for partition_key in p.keys():
+      # retrieve the part of the worm we are currently looking at:
+      bend_angles = self.normalized_worm.get_partition(partition_key, 'angles')
+      
+      bend_metrics_dict = {}
+      bend_metrics_dict['mean'] = np.nanmean(a=bend_angles, axis = 0)
+      bend_metrics_dict['std_dev'] = np.nanstd(a=bend_angles, axis = 0)
+      
+      # Sign the standard deviation (to provide the bend's 
+      # dorsal/ventral orientation):
+      
+      # First find all entries where the mean is negative
+      mask = np.ma.masked_where(condition=bend_metrics_dict['mean'] < 0,
+                                a=bend_metrics_dict['mean']) 
+      # Now create a numpy array of -1 where the mask is True and 0 otherwise
+      sign_array = - np.ones(np.shape(mask)) * mask
+      # Finally, multiply the std_dev array by our sign_array
+      bend_metrics_dict['std_dev'] = bend_metrics_dict['std_dev'] * sign_array
+      
+      bends[partition_key] = bend_metrics_dict
+      
+    # The final bends dictionary now contains a mean and standard 
+    # deviation for the head, neck, midbody, hips and tail.
+    # Now that we've populated the bends dictionary, add it to the posture
+    # dictionary.
+    self.posture['bends'] = bends
+    
     # *** 2. Eccentricity & Orientation ***
     
     
@@ -157,10 +179,10 @@ class WormFeatures:
 
     # *** 6. Directions ***
 
-    # *** 7. Skeleton ***
+    # *** 7. Skeleton ***  
+    # (already in morphology, but Schafer Lab put it here too)
 
-    # TODO: ask Jim: isn't this already in morphology ?? hmm, I guess not
-
+    
     # *** 8. EigenProjection ***
     
     pass
