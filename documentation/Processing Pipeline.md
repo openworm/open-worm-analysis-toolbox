@@ -35,7 +35,7 @@ It might be useful to also port the machine vision processing for **STEP 2** and
 
 **STEP 4**: Added by Jim as ```createObjectFromFiles``` in [NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m)
 
-**STEPS 5-6**:   Some of the code is in the [SegwormMatlabClasses repo](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/oldFeatures).
+**STEPS 5-6**:   Some of the code is in the SegwormMatlabClasses repo, under [tree/master/oldFeatures](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/oldFeatures).
 
 **STEPS 7-9**: n/a
 
