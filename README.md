@@ -41,7 +41,7 @@ Further documentation is available at the [openworm_docs repo](https://github.co
 
 N.B.: numpy is a library for Python that is a dependency in this repo.  If you have numpy version less than 1.8, you will need to either install it, or:
 
-1. Save [nanfunctions.py](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the numpy/lib/ directory.
+1. Save [nanfunctions.py](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the numpy/lib/ directory, and
 2. Append the lines ```__all__ += nanfunctions.__all__``` and ```from .nanfunctions import *``` at the relevant places to numpy/lib/```__init__.py```.
 
 **HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/) - this can be used for debugging the file structure
