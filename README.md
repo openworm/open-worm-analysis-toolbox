@@ -23,6 +23,8 @@ The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. e
 
 We are using the WT2 analysis software, written in MATLAB, as a starting point for our own code development work.
 
+Part of this codebase is available in the [SegWormMatlabClasses repo](https://github.com/JimHokanson/SegwormMatlabClasses/).
+
 
 ## Further documentation of worm movement data ##
 
