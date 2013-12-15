@@ -9,23 +9,35 @@ It might be useful to also port the machine vision processing for **STEP 2** and
 ## PIPELINE: STEPS 1 to 9: Outline
 
 **STEP 1**: Conduct experiment / simulation, end up with raw video.
+
 **STEP 2**: Machine vision processing to obtain measurements
+
 **STEP 3**: Normalize measurements to frames of 49 data points for each measurement type
+
 **STEP 4**: Stitch the "blocks" into one .mat file.
+
 **STEP 5**: Calculate feature information for each frame
+
 **STEP 6**: Calculate extended feature information for each frame.
+
 **STEP 7**: Calculate statistics summarizing the features across all frames
+
 **STEP 8**: Add statistics to a database
+
 **STEP 9**: Run reports from the database
 
 
 ## Schafer Lab Code Sources
 
 **STEP 1**: n/a
-**STEP 2-3**: [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
+
+**STEPS 2-3**: [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
+
 **STEP 4**: Added by Jim as ```createObjectFromFiles``` in [NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m)
-**STEP 6-7**:   Some of the code is in the [SegwormMatlabClasses repo](https://github.com/JimHokanson/SegwormMatlabClasses).
-**STEP 8+**: n/a
+
+**STEPS 5-6**:   Some of the code is in the [SegwormMatlabClasses repo](https://github.com/JimHokanson/SegwormMatlabClasses).
+
+**STEPS 7-9**: n/a
 
 
 ## PIPELINE: STEPS 1 to 9: Details
