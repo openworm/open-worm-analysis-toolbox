@@ -145,7 +145,8 @@ class WormFeatures:
       bend_angles = self.normalized_worm.get_partition(partition_key, 'angles')
       
       bend_metrics_dict = {}
-      bend_metrics_dict['mean'] = np.nanmean(a=bend_angles, axis = 0)
+      # shape = (n):
+      bend_metrics_dict['mean'] = np.nanmean(a=bend_angles, axis = 0) 
       bend_metrics_dict['std_dev'] = np.nanstd(a=bend_angles, axis = 0)
       
       # Sign the standard deviation (to provide the bend's 
@@ -153,9 +154,10 @@ class WormFeatures:
       
       # First find all entries where the mean is negative
       mask = np.ma.masked_where(condition=bend_metrics_dict['mean'] < 0,
-                                a=bend_metrics_dict['mean']) 
-      # Now create a numpy array of -1 where the mask is True and 0 otherwise
-      sign_array = - np.ones(np.shape(mask)) * mask
+                                a=bend_metrics_dict['mean']).mask
+      # Now create a numpy array of -1 where the mask is True and 1 otherwise
+      sign_array = -np.ones(np.shape(mask)) * mask + \
+                   np.ones(np.shape(mask)) * (~mask)
       # Finally, multiply the std_dev array by our sign_array
       bend_metrics_dict['std_dev'] = bend_metrics_dict['std_dev'] * sign_array
       
