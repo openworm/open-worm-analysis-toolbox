@@ -6,7 +6,7 @@ This repo currently takes **STEP 3** as the starting point, and does not code fo
 
 It might be useful to also port the machine vision processing for **STEP 2** and **STEP 3**, but only if we wish to improve upon their algorithms.  This is tempting since their algorithm cannot process nearly 20% of the raw video frames (see p.131 of Yemini's dissertation) (e.g. it cannot deal with coiling or omega turns)  This would involve working with the SegWorm repo and/or porting it to Python (from MATLAB).
 
-## PIPELINE: STEPS 1 to 8: Outline
+## PIPELINE: STEPS 1 to 9: Outline
 
 **STEP 1**: Conduct experiment / simulation, end up with raw video.
 **STEP 2**: Machine vision processing to obtain measurements
@@ -18,7 +18,8 @@ It might be useful to also port the machine vision processing for **STEP 2** and
 **STEP 8**: Add statistics to a database
 **STEP 9**: Run reports from the database
 
-## PIPELINE: Schafer Lab Code Sources
+
+## Schafer Lab Code Sources
 
 **STEP 1**: n/a
 **STEP 2-3**: [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
