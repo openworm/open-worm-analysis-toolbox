@@ -12,8 +12,10 @@ Here main() simply illustrates the use of classes in the wormpy module.
 """
 
 import os
-import wormpy
 import getpass
+import warnings
+
+import wormpy
 
 def main():
   """
@@ -31,12 +33,18 @@ def main():
   #normalized_worm.animate()  
   #normalized_worm.save_to_mp4("worm_animation.mp4")
   
-  #  From the basic information in normalized_worm,
-  #  create an instance of WormFeatures, which contains all our features data.
-  worm_features = get_features(normalized_worm)
+  # NOTE: The warning that appears comes from nanfunctions.py, because 
+  # we are sometimes taking the mean and std dev of all-NaN angle arrays.
+  # The mean and std_dev in these cases is set to NaN, which seems like 
+  # correct behaviour to me.  So we can safely ignore this warning.  
+#  worm_features = None
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    # From the basic information in normalized_worm,
+    # create an instance of WormFeatures, which contains all our features data.
+    worm_features = wormpy.WormFeatures(normalized_worm)
   
   return worm_features
-
 
 
 def get_user_data_path():
@@ -59,27 +67,15 @@ def get_user_data_path():
   
 
 
-def get_features(normalized_worm):
-  """ 
-    INPUT: normalized_worm, an instance of wormpy.NormalizedWorm
-    OUTPUT: an instance of wormpy.WormFeatures
-    From the basic information in normalized_worm,
-    create an instance of WormFeatures, which contains all our features data.
-  """
-  worm_features = wormpy.WormFeatures(normalized_worm)
-  
-  return worm_features
-
-
-
 def example_from_HDF5(base_path = None):
   # If no folder was specified for the worm, use the
   # current working directory
   if(base_path == None):
-    base_path = os.path.abspath(os.getcwd())
+    base_path = get_user_data_path()
   
   # DEBUG: hardcoded for now.
   worm_file_path = os.path.join(base_path, 
+                               "worm_data\\example_feature_files\\" +
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
@@ -117,6 +113,7 @@ def example_nw():
   
   return normalized_worm
   
+
 
 if(__name__ == '__main__'):
   main()
