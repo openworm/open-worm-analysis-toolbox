@@ -1,4 +1,4 @@
-# Processing Pipeline #
+# Movement Validation Video Processing Pipeline #
 
 This repository intends to code the processing pipeline from raw video to statistics.  Much of the code comes from the Schafer Lab's Worm Tracker 2 (WT2) software.
 
