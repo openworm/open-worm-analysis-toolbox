@@ -9,10 +9,11 @@ WormFeatures
 
 """
 import numpy as np
+from collections import namedtuple
 
 from wormpy.config import *
 
-__all__ = ['get_bends', 'get_amplitude_and_wavelength', 'get_eccentricity']  # for posture
+__ALL__ = ['get_bends', 'get_amplitude_and_wavelength', 'get_eccentricity']  # for posture
 
 
 def get_bends(nw):
@@ -139,7 +140,12 @@ def get_amplitude_and_wavelength(theta_d,sx,sy,worm_lengths):
      sinusoidal movement" BMC Genetics 2005, 6:5
   
   """
-  pass
+  AmpWaveTrack = \
+    collections.namedtuple('AmpWaveTrack', 
+                           ['amplitude', 'wavelength', 'track_length'])
+  
+
+  return AmpWaveTrack
 
 
 def get_eccentricity(contour_x, contour_y):
