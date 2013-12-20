@@ -9,11 +9,12 @@ WormFeatures
 
 """
 import numpy as np
-from collections import namedtuple
-
+import collections
 from wormpy.config import *
 
-__ALL__ = ['get_bends', 'get_amplitude_and_wavelength', 'get_eccentricity']  # for posture
+__ALL__ = ['get_bends', 
+           'get_amplitude_and_wavelength', 
+           'get_eccentricity_and_orientation']  # for posture
 
 
 def get_bends(nw):
@@ -56,7 +57,7 @@ def get_bends(nw):
   return bends
 
 
-def get_amplitude_and_wavelength(theta_d,sx,sy,worm_lengths):
+def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   """
   
   
@@ -143,12 +144,14 @@ def get_amplitude_and_wavelength(theta_d,sx,sy,worm_lengths):
   AmpWaveTrack = \
     collections.namedtuple('AmpWaveTrack', 
                            ['amplitude', 'wavelength', 'track_length'])
-  
+  AmpWaveTrack.amplitude = 'yay1'
+  AmpWaveTrack.wavelength = 'yay2'
+  AmpWaveTrack.track_length = 'yay3'
 
   return AmpWaveTrack
 
 
-def get_eccentricity(contour_x, contour_y):
+def get_eccentricity_and_orientation(contour_x, contour_y):
   """
   % get_eccentricity   
   %
@@ -184,7 +187,7 @@ def get_eccentricity(contour_x, contour_y):
   %              gives a more accurate estimate of the ellipse but increases
   %              the calculation time.
   %
-  %   Outputs:
+  %   Outputs: a namedtuple containing:
   %   =======================================================================
   %   eccentricity - [1 x n_frames] The eccentricity of the equivalent ellipse
   %   orientation  - [1 x n_frames] The orientation angle of the equivalent ellipse
@@ -208,5 +211,15 @@ def get_eccentricity(contour_x, contour_y):
   +seg_worm / +feature_helpers / +posture / getEccentricity.m
   """
   # TODO: translate this function from Jim's code
-  return None   
+  EccentricityAndOrientation = \
+    collections.namedtuple('EccentricityAndOrientation', 
+                           ['eccentricity', 'orientation'])
+                           
+  EccentricityAndOrientation.eccentricity = 'eccentricity example'
+  EccentricityAndOrientation.wavelength = 'wavelength example'
+
+  return EccentricityAndOrientation
+  
+  
+  
   

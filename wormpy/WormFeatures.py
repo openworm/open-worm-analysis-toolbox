@@ -143,18 +143,19 @@ class WormFeatures:
     
     # *** 2. Eccentricity & Orientation ***
     eccentricity_and_orientation = \
-            get_eccentricity(self.normalized_worm.contour_x(), 
-                             self.normalized_worm.contour_y())
-    self.posture['eccentricity'] = eccentricity_and_orientation['eccentricity']
-    self.posture['orientation'] = eccentricity_and_orientation['orientation']
+            get_eccentricity_and_orientation(self.normalized_worm.contour_x(), 
+                                             self.normalized_worm.contour_y())
+    self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
+    self.posture['orientation'] = eccentricity_and_orientation.orientation
     
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
-    amp_wave_track = get_amplitude_and_wavelength(self.posture['orientation'],
-                                                  self.normalized_worm.skeletons_x(),
-                                                  self.normalized_worm.skeletons_y())
-    self.posture['amplitude'] = amp_wave_track['amplitude']
-    self.posture['wavelength'] = amp_wave_track['wavelength']
-    self.posture['track_length'] = amp_wave_track['track_length']
+    amp_wave_track = get_amplitude_and_wavelength( \
+                          self.posture['orientation'],
+                          self.normalized_worm.skeletons_x(),
+                          self.normalized_worm.skeletons_y())
+    self.posture['amplitude'] = amp_wave_track.amplitude
+    self.posture['wavelength'] = amp_wave_track.wavelength
+    self.posture['track_length'] = amp_wave_track.track_length
 
     # TODO: change this to return multiple values as in 
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
