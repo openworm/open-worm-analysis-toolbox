@@ -132,6 +132,8 @@ class WormFeatures:
     %
 
     """    
+    nw = self.normalized_worm # let's use this convenient alias 
+    
     # Initialize self.posture as a blank dictionary we will add to
     self.posture = {}  
 
@@ -139,20 +141,21 @@ class WormFeatures:
 
     # Now that we've populated the bends dictionary, add it to the posture
     # dictionary.
-    self.posture['bends'] = get_bends(self.normalized_worm)
+    self.posture['bends'] = get_bends(nw)
     
     # *** 2. Eccentricity & Orientation ***
     eccentricity_and_orientation = \
-            get_eccentricity_and_orientation(self.normalized_worm.contour_x(), 
-                                             self.normalized_worm.contour_y())
+            get_eccentricity_and_orientation(nw.contour_x(), 
+                                             nw.contour_y())
     self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
     self.posture['orientation'] = eccentricity_and_orientation.orientation
     
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
     amp_wave_track = get_amplitude_and_wavelength( \
                           self.posture['orientation'],
-                          self.normalized_worm.skeletons_x(),
-                          self.normalized_worm.skeletons_y())
+                          nw.skeletons_x(),
+                          nw.skeletons_y(),
+                          nw.data_dict['lengths'])
     self.posture['amplitude'] = amp_wave_track.amplitude
     self.posture['wavelength'] = amp_wave_track.wavelength
     self.posture['track_length'] = amp_wave_track.track_length
@@ -161,6 +164,7 @@ class WormFeatures:
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
 
     # *** 4. Kinks ***
+    
 
     # *** 5. Coils ***
 
