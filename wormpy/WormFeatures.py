@@ -96,7 +96,7 @@ class WormFeatures:
     # part of the worm the head, midbody and tail.
     #
     # shape of resulting arrays are (2, n)
-    width_dict = {k: np.mean(nw.get_partition(k), 0) \
+    width_dict = {k: np.mean(nw.get_partition(k, 'skeletons'), 0) \
                   for k in ('head', 'midbody', 'tail')}
     self.morphology['width'] = width_dict
     self.morphology['area'] = nw.data_dict['head_areas'] + \
