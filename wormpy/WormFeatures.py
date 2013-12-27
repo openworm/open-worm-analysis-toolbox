@@ -151,11 +151,18 @@ class WormFeatures:
     self.posture['orientation'] = eccentricity_and_orientation.orientation
     
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
-    amp_wave_track = get_amplitude_and_wavelength( \
-                          self.posture['orientation'],
-                          nw.skeletons_x(),
-                          nw.skeletons_y(),
-                          nw.data_dict['lengths'])
+    amp_wave_track = \
+      collections.namedtuple('amp_wave_track', 
+                             ['amplitude', 'wavelength', 'track_length'])
+    amp_wave_track.amplitude = 'yay1'
+    amp_wave_track.wavelength = 'yay2'
+    amp_wave_track.track_length = 'yay3'
+
+    #amp_wave_track = get_amplitude_and_wavelength( \
+    #                      self.posture['orientation'],
+    #                      self.skeletons_x(),
+    #                      self.skeletons_y(),
+    #                      self.data_dict['lengths'])
     self.posture['amplitude'] = amp_wave_track.amplitude
     self.posture['wavelength'] = amp_wave_track.wavelength
     self.posture['track_length'] = amp_wave_track.track_length
@@ -185,8 +192,15 @@ class WormFeatures:
     +seg_worm / @feature_calculator / getLocomotionFeatures.m
 
     """
+    locomotion = {}
+    
+    # until we have the below calculated, just create an array of zeroes
+    locomotion['midbody_distance'] = 0
+    #      np.zeros(np.shape(self.skeletons_x()))        
+    #      abs(locomotion['velocity']['midbody']['speed'] / config.FPS)
+    
     pass
-  
+ 
   
   def get_path_features(self):
     """

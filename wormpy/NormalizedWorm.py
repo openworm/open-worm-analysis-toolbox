@@ -37,7 +37,7 @@ class NormalizedWorm(WormExperimentFile):
       
       IN data_dict:
       
-      EIGENWORM_PATH         
+      EIGENWORM_PATH
       segmentation_status   
       frame_codes
       vulva_contours
@@ -142,7 +142,8 @@ class NormalizedWorm(WormExperimentFile):
                                               'midbody', 'hips', 'tail'),
                                    'first_third': ('head', 'neck'),
                                    'second_third': ('midbody'),
-                                   'last_third': ('hips', 'tail')}
+                                   'last_third': ('hips', 'tail'),
+                                   'all': ('all')}
 
   def get_partition_subset(self, partition_type):
     """ there are various ways of partitioning the worm's 49 points.
@@ -275,6 +276,50 @@ class NormalizedWorm(WormExperimentFile):
         to the structure I need.
     """
     pass
+
+
+  def rotate(self, theta_d):
+    """ rotate:
+    
+        Returns a NormalizedWorm instance with each frame rotated by 
+        the amount given in the per-frame theta_d array.
+
+        INPUT: theta_d, the frame-by-frame rotation angle in degrees.        
+               A 1-dimensional n-element array where n is the number of
+               frames, giving a rotation angle for each frame.
+               e.g. to align the worm onto the x axis, 
+        
+        OUTPUT: A new NormalizedWorm instance with the same worm, rotated
+        in each frame by the requested amount.
+    
+    """
+    #theta_r = theta_d * (np.pi / 180)
+    
+    #%Unrotate worm
+    #%-----------------------------------------------------------------
+    #wwx = bsxfun(@times,sx,cos(theta_r)) + bsxfun(@times,sy,sin(theta_r));
+    #wwy = bsxfun(@times,sx,-sin(theta_r)) + bsxfun(@times,sy,cos(theta_r));
+
+
+    # TODO
+    return self        
+
+
+  def translate_to_centre(self):
+    """ translate_to_centre:
+      
+        Returns a NormalizedWorm instance with each frame moved so the 
+        centroid of the worm is 0,0
+
+        INPUT: none.  (it is an attribute of self, of course)
+        
+        OUTPUT: A NormalizedWorm instance with the above properties.
+
+    """
+    # TODO
+    return self
+    
+       
 
   def load_eigen_worms(self, eigen_worm_file_path):
     """ load_eigen_worms takes a file path and loads the eigen_worms

@@ -141,14 +141,17 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
      sinusoidal movement" BMC Genetics 2005, 6:5
   
   """
-  AmpWaveTrack = \
-    collections.namedtuple('AmpWaveTrack', 
+  amp_wave_track = \
+    collections.namedtuple('amp_wave_track', 
                            ['amplitude', 'wavelength', 'track_length'])
-  AmpWaveTrack.amplitude = 'yay1'
-  AmpWaveTrack.wavelength = 'yay2'
-  AmpWaveTrack.track_length = 'yay3'
+  amp_wave_track.amplitude = 'yay1'
+  amp_wave_track.wavelength = 'yay2'
+  amp_wave_track.track_length = 'yay3'
 
-  return AmpWaveTrack
+  onw = nw.re_orient_and_centre()  
+
+
+  return amp_wave_track
 
 
 def get_eccentricity_and_orientation(contour_x, contour_y):

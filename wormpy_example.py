@@ -50,20 +50,20 @@ def main():
 def get_user_data_path():
   if(getpass.getuser() == 'Michael'):
     # michael's computer at home
-    NORM_PATH = "C:\\Users\\Michael\\Dropbox\\"
+    user_data_path = "C:\\Users\\Michael\\Dropbox\\"
   elif(getpass.getuser() == 'mcurrie'):
     # michael's computer at work
-    NORM_PATH = "C:\\Backup\\Dropbox\\"    
+    user_data_path = "C:\\Backup\\Dropbox\\"    
   else:
     # if it's not Michael, assume it's Jim
     if(os.name == 'nt'): 
       # Jim is using Windows
-      NORM_PATH = "F:\\"
+      user_data_path = "F:\\"
     else:
       # otherwise, Jim is probably using his Mac
-      NORM_PATH = "//Users//jameshokanson//Dropbox"
+      user_data_path = "//Users//jameshokanson//Dropbox"
   
-  return NORM_PATH  
+  return user_data_path  
   
 
 
