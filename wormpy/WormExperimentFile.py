@@ -15,8 +15,8 @@
 import os
 import math
 import numpy as np
-from matplotlib import pyplot
-from matplotlib import animation
+import matplotlib.pyplot as plt
+import matplotlib.animation
 import h5py
 
 #SPEED_UP = 4
@@ -171,14 +171,14 @@ class WormExperimentFile:
         optional parameter portion is a figure between 0 and 1 of frames
         to animate.  default is 10%.
     """
-    fig = pyplot.figure()
+    fig = plt.figure()
     
     fig.suptitle('Worm position over time', fontsize=20)
-    pyplot.xlabel('x coordinates', fontsize=18)
-    pyplot.ylabel('y coordinates', fontsize=16)
+    plt.xlabel('x coordinates', fontsize=18)
+    plt.ylabel('y coordinates', fontsize=16)
 
     # Set the axes to the maximum extent of the worm's travels
-    ax = pyplot.axes(xLim=self.position_limits(0), 
+    ax = plt.axes(xLim=self.position_limits(0), 
                      yLim=self.position_limits(1))
     
     
@@ -204,7 +204,8 @@ class WormExperimentFile:
     
     # create animation of a certain number of frames.
     self.animation_data = \
-        animation.FuncAnimation(fig, func=animate_frame, init_func=init,
+        matplotlib.animation.FuncAnimation(fig, func=animate_frame, 
+                                init_func=init,
                                 # animate only a portion of the frames.
                                 frames=math.floor(self.num_frames() * portion), 
                                 interval=20, blit=True, repeat_delay=100)  
@@ -212,7 +213,8 @@ class WormExperimentFile:
   
   def position_limits(self, dimension):  
     """ Maximum extent of worm's travels projected onto a given axis
-        dimension is 0 for X axis, or 1 for Y axis.
+        PARAMETERS:
+          dimension: specify 0 for X axis, or 1 for Y axis.
     NOTE: Dropped frames show up as NaN.  
           nanmin returns the min ignoring such NaNs.        
     
