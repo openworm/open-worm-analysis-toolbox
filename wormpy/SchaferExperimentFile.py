@@ -1,33 +1,48 @@
-""" experiment_file.py: A python module in the wormpy package
+""" wormpy\SchaferExperimentFile.py
 
-    Originally based on Jim Hokanson's gist:
-    https://gist.github.com/JimHokanson/6425605
+    Authors: @MichaelCurrie, @JimHokanson
 
-    This module defines the WormExperimentFile class, which encapsulates
+    This module defines the SchaferExperimentFile class, which encapsulates
     the data contained in the Shafer lab worm experiment data files
     
     To use it, instantiate the class by specifying a particular worm 
-    video data file.  Then use the functions to extract information 
-    about the worm and to do things like animate it and save that 
-    animation to mp4.
+    HDF5 data file.  Then use the functions to extract information 
+    about the worm.
+
+    Once you've created your SchaferExperimentFile object, you
+    will likely want to convert it to a wormpy.WormFeatures object using
+    WormFeatures.load_schafer_experiment_file, so you can do things
+    like animate the data.
 
 """
 import os
-import math
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation
 import h5py
 
 #SPEED_UP = 4
 #DT = 0.05
-#TODO: try-catch block for savetomp3 in case animation_data is still None
 
-class WormExperimentFile:
+"""
+   DIFFERENCES BETWEEN wormpy.SchaferExperimentFile and 
+                       wormpy.WormFeatures:
+   1. SchaferExperimentFile expects skeletons to be 
+      in the shape (n, 49, 2), but data_dict['skeletons'] is in the 
+      shape (49, 2, n), so we must "roll the axis" twice.
+      self.skeletons = np.rollaxis(worm_features.data_dict['skeletons'], 2)
+      
+"""
+
+
+class SchaferExperimentFile:
   """
       This class encapsulates the data in the Shafer lab
-      Worm files.  Also, some of the worm data can be 
-      animated using functions in this class.
+      Worm feature files, which store the final features data.
+      
+      This is provided as a legacy support to interpret their data.
+      
+      The latest equivalent is wormpy.WormFeatures.
+      
+      Some aspects of the data here are different in that later version.
   """
 
   # A 3-d numpy array containing the worm's position
@@ -54,35 +69,39 @@ class WormExperimentFile:
     pass
 
   def load_HDF5_data(self, worm_file_path):
-    """ Load the worm data, including the skeleton data
+    """ 
+      load_HDF5_data:
+        Load the worm data, including the skeleton data
+    
     """
     if(not os.path.isfile(worm_file_path)):
       raise Exception("Worm file not found: " + worm_file_path)
     else:
-      wormFile = h5py.File(worm_file_path, 'r')
+      worm_file = h5py.File(worm_file_path, 'r')
       
-      x_data = wormFile["worm"]["posture"]["skeleton"]["x"].value
-      y_data = wormFile["worm"]["posture"]["skeleton"]["y"].value
+      x_data = worm_file["worm"]["posture"]["skeleton"]["x"].value
+      y_data = worm_file["worm"]["posture"]["skeleton"]["y"].value
 
-      wormFile.close()
+      worm_file.close()
 
-      self.combine_skeleton_axes(x_data, y_data)
+      self.skeletons = self.combine_skeleton_axes(x_data, y_data)
 
 
   def combine_skeleton_axes(self, x_data, y_data):
     """ We want to "concatenate" the values of the skeletons_x and 
         skeletons_y 2D arrays into a 3D array
         First let's create a temporary python list of numpy arrays
+        
     """
     skeletons_TEMP = []
     
-    # loop over all frames; frames are the first dimension of skeletons_x
+    # Loop over all frames; frames are the first dimension of skeletons_x
     for frame_index in range(x_data.shape[0]):
         skeletons_TEMP.append(np.column_stack((x_data[frame_index], 
                                               y_data[frame_index])))
 
-    # Then let's transform our list into a numpy array
-    self.skeletons = np.array(skeletons_TEMP)
+    # Return our list as a numpy array
+    return np.array(skeletons_TEMP)
 
   def skeletons_x(self):
     """ returns a numpy array of shape (23135, 49) with just X coordinate
@@ -159,58 +178,11 @@ class WormExperimentFile:
     y_data = np.rollaxis(y_data, 1)
 
     # Create a new instance, with the interpolated results    
-    w = WormExperimentFile()
+    w = SchaferExperimentFile()
     w.combine_skeleton_axes(x_data, y_data)
     
     return w
-    
-  
-  def animate(self, portion = 0.1):
-    """ Creates an animation of the worm's position over time.
-    
-        optional parameter portion is a figure between 0 and 1 of frames
-        to animate.  default is 10%.
-    """
-    fig = plt.figure()
-    
-    fig.suptitle('Worm position over time', fontsize=20)
-    plt.xlabel('x coordinates', fontsize=18)
-    plt.ylabel('y coordinates', fontsize=16)
-
-    # Set the axes to the maximum extent of the worm's travels
-    ax = plt.axes(xLim=self.position_limits(0), 
-                     yLim=self.position_limits(1))
-    
-    
-    # Alternatively: marker='o', linestyle='None'
-    # the plot starts with all worm position animation_points from frame 0
-    animation_points, = ax.plot(self.skeletons[0,:,0], 
-                                self.skeletons[0,:,1],
-                                color='green', 
-                                linestyle='point marker', 
-                                marker='o', 
-                                markersize=5) 
-
-    # inline initialization function: plot the background of each frame
-    def init():
-      animation_points.set_data([], [])
-      return animation_points,
-    
-    # inline animation function.  This is called sequentially
-    def animate_frame(iFrame):
-      animation_points.set_data(self.skeletons[iFrame,:,0], 
-                                self.skeletons[iFrame,:,1])
-      return animation_points,
-    
-    # create animation of a certain number of frames.
-    self.animation_data = \
-        matplotlib.animation.FuncAnimation(fig, func=animate_frame, 
-                                init_func=init,
-                                # animate only a portion of the frames.
-                                frames=math.floor(self.num_frames() * portion), 
-                                interval=20, blit=True, repeat_delay=100)  
-  
-  
+     
   def position_limits(self, dimension):  
     """ Maximum extent of worm's travels projected onto a given axis
         PARAMETERS:
@@ -236,26 +208,3 @@ class WormExperimentFile:
         the skeletal points are along the first dimension i.e. [1].
     """
     return self.skeletons.shape[1]
-
-  def position(self): 
-    """ Return a two-dimensional array with worm's position
-    """
-    pass  # TODO:
-
-  def save_to_mp4(self, file_name):
-    """ Save the animation as an mp4.
-        This requires ffmpeg or mencoder to be installed.
-        The extra_args ensure that the x264 codec is used, so that 
-        the video can be embedded in html5.  You may need to adjust 
-        this for your system: for more information, see
-        http://matplotlib.sourceforge.net/api/animation_api.html
-            
-        To install ffmpeg on windows, see
-        http://www.wikihow.com/Install-FFmpeg-on-Windows
-    """
-    FFMpegWriter = animation.writers['ffmpeg']
-    metadata = dict(title='C. elegans movement video', artist='Matplotlib',
-                    comment='C. elegans movement video from Shafer lab')
-    writer = FFMpegWriter(fps=15, metadata=metadata)
-    self.animation_data.save(file_name, writer=writer, fps=15, 
-                   extra_args=['-vcodec', 'libx264'])

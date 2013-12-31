@@ -11,20 +11,19 @@ SegwormMatlabClasses /
 import numpy as np
 import scipy.io
 import os
-from wormpy.WormExperimentFile import WormExperimentFile
+#from wormpy.WormExperimentFile import WormExperimentFile
 
 
   
 
 
-class NormalizedWorm(WormExperimentFile):
-  """ NormalizedWorm inherits from WormExperimentFile, which 
-      initializes the skeleton data.
-      NormalizedWorm loads the eigen_worm data and much other data from
-      the experiment file data
+class NormalizedWorm():
+  """ NormalizedWorm encapsulates the normalized measures data, loaded
+      from the two files, one for the eigenworm data and the other for 
+      the rest.
 
-      This will be an interface class between the parsed worms and the
-      feature sets that are saved to disk. The goal is to take in the
+      This will be an intermediate representation, between the parsed,
+      normalized worms, and the "feature" sets. The goal is to take in the
       code from normWorms and to have a well described set of properties
       for rewriting the feature code.
 
@@ -89,7 +88,7 @@ class NormalizedWorm(WormExperimentFile):
   """
   # The normalized worm contains precisely 49 points per frame.  Here
   # we list in a dictionary various partitions of the worm.
-  worm_partitions = None    
+  worm_partitions = None
   # this stores a dictionary of various ways of organizing the partitions
   worm_parititon_subsets = None
   
@@ -106,7 +105,6 @@ class NormalizedWorm(WormExperimentFile):
     the eigen_worm data
     
     """
-    super().__init__()    
     self.load_normalized_data(data_file_path)
     self.load_eigen_worms(eigen_worm_file_path)
     
@@ -259,11 +257,7 @@ class NormalizedWorm(WormExperimentFile):
       # this is to build up a nice dictionary containing the data in s
       self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
       
-      # our derived class, WormExperimentFile, expects skeletons to be 
-      # in the shape (n, 49, 2), but data_dict['skeletons'] is in the 
-      # shape (49, 2, n), so we must "roll the axis" twice.
-      self.skeletons = np.rollaxis(self.data_dict['skeletons'], 2)
-      
+
     
   def load_normalized_blocks(self, blocks_path):
     """ Processes all the MatLab data "blocks" created from the raw 
@@ -316,9 +310,13 @@ class NormalizedWorm(WormExperimentFile):
         OUTPUT: A NormalizedWorm instance with the above properties.
 
     """
-    # TODO
-    return self
+    s = self.data_dict['skeletons']
+    s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
     
+    #nw2 = NormalizedWorm()
+    
+    # TODO
+    return s - s_mean
        
 
   def load_eigen_worms(self, eigen_worm_file_path):
@@ -337,6 +335,13 @@ class NormalizedWorm(WormExperimentFile):
       # TODO: and possibly extract other things of value from 
       #       eigen_worms_file
       self.eigen_worms = eigen_worms_file.values()
+
+  def num_frames(self): 
+    """ the number of frames in the video
+        ndarray.shape returns a tuple of array dimensions.
+        the frames are along the first dimension i.e. [0].
+    """
+    return self.data_dict['skeletons'].shape[2]
 
   def n_frames(self):
     """ for backwards compatibility with Jim's code, let's define n_frames

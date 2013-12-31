@@ -26,6 +26,7 @@ def main():
   """
   
   # create a normalized worm from a hardcoded example location
+  print("let's do this...")
   normalized_worm = example_nw()
   
   # AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
@@ -38,13 +39,20 @@ def main():
   # The mean and std_dev in these cases is set to NaN, which seems like 
   # correct behaviour to me.  So we can safely ignore this warning.  
 #  worm_features = None
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+  #with warnings.catch_warnings():
+  #  warnings.simplefilter("ignore")
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
-    worm_features = wormpy.WormFeatures(normalized_worm)
+  #  worm_features = wormpy.WormFeatures(normalized_worm)
   
-  return worm_features
+  wp = wormpy.WormPlotter(normalized_worm)
+  
+  
+  #wp.save('test_sub.mp4')
+  #plt.show()
+  
+  
+  
 
 
 def get_user_data_path():

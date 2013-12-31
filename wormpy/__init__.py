@@ -3,8 +3,12 @@
 # so let's add some lines of the form:
 # from [filename].py import [classname]
 
-from wormpy.WormExperimentFile import WormExperimentFile
+from wormpy.SchaferExperimentFile import SchaferExperimentFile
 from wormpy.WormFeatures import WormFeatures
 from wormpy.NormalizedWorm import NormalizedWorm
+from wormpy.WormPlotter import WormPlotter
 
-__all__ = ['WormExperimentFile', 'WormFeatures', 'NormalizedWorm']
+__all__ = ['SchaferExperimentFile', 
+           'WormFeatures', 
+           'NormalizedWorm',
+           'WormPlotter']
