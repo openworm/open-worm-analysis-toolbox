@@ -69,6 +69,10 @@ class WormPlotter(animation.TimedAnimation):
     ax2.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
     ax2.set_ylim((-500, 500))
     ax2.set_aspect(aspect='equal', adjustable='datalim')
+    ax2.annotate("MICHAEL'S WORM",
+                 xy=(0, 0), xycoords='data',
+                 xytext=(10, 10), textcoords='data')
+
 
     ax3 = fig.add_subplot(2, 2, 3)
     ax3.set_title('Orientation-free')
@@ -84,7 +88,6 @@ class WormPlotter(animation.TimedAnimation):
     self.line1C = Line2D([], [], color='yellow', linestyle='point marker', 
                          marker='o', markersize=5) 
     self.patch1E = Ellipse(xy=(0,0), width=1000, height=500, angle=0, alpha=0.3)
-
 
     self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
     self.line2W_head = Line2D([], [], color='red', linestyle='point marker', 
