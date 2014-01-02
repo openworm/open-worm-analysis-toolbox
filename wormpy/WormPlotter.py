@@ -42,21 +42,21 @@ class WormPlotter(animation.TimedAnimation):
     # 1. set up the data to be used
     self.normalized_worm = normalized_worm
     # TODO: eventually we'll put this in a nicer place
+    self.vulva_contours = self.normalized_worm.data_dict['vulva_contours']
+    self.non_vulva_contours = self.normalized_worm.data_dict['non_vulva_contours']
     self.skeletons = self.normalized_worm.data_dict['skeletons']  
     self.skeletons_centred = self.normalized_worm.translate_to_centre()
-    
-    self.t = np.linspace(0, 80, 400)
-    self.x = np.cos(2 * np.pi * self.t / 10.) + 10000
-    self.y = np.sin(2 * np.pi * self.t / 10.) + 13000
-
-    
+    self.skeleton_centres = self.normalized_worm.centre()    
+    self.orientation = self.normalized_worm.angle()    
+    self.skeletons_rotated = self.normalized_worm.rotate_and_translate()
+        
       
     # 2. create the figure
     fig = plt.figure()
     fig.suptitle('C. elegans attributes', fontsize=20)    
     
     # 3. add the subplots    
-    ax1 = fig.add_subplot(1, 2, 1)
+    ax1 = fig.add_subplot(2, 2, 1)
     ax1.set_title('Position')    
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
@@ -64,28 +64,52 @@ class WormPlotter(animation.TimedAnimation):
     ax1.set_ylim(self.position_limits(1))
     ax1.set_aspect(aspect='equal', adjustable='datalim')
     
-    ax2 = fig.add_subplot(1, 2, 2)
+    ax2 = fig.add_subplot(2, 2, 2)
     ax2.set_title('Morphology')    
     ax2.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
     ax2.set_ylim((-500, 500))
     ax2.set_aspect(aspect='equal', adjustable='datalim')
 
+    ax3 = fig.add_subplot(2, 2, 3)
+    ax3.set_title('Orientation-free')
+    ax3.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
+    ax3.set_ylim((-500, 500))
+    ax3.set_aspect(aspect='equal', adjustable='datalim')
+
     # 4. create Line2D objects
-    self.line1 = Line2D([], [], color='black')
-    self.line1a = Line2D([], [], color='green', linewidth=2)
-    self.line1e = Line2D([], [], color='red', marker='o', markeredgecolor='r')
     self.line1W = Line2D([], [], color='green', linestyle='point marker', 
                          marker='o', markersize=5) 
+    self.line1W_head = Line2D([], [], color='red', linestyle='point marker', 
+                              marker='o', markersize=7) 
+    self.line1C = Line2D([], [], color='yellow', linestyle='point marker', 
+                         marker='o', markersize=5) 
+    self.patch1E = Ellipse(xy=(0,0), width=1000, height=500, angle=0, alpha=0.3)
+
 
     self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
+    self.line2W_head = Line2D([], [], color='red', linestyle='point marker', 
+                              marker='o', markersize=7) 
+    self.line2C = Line2D([], [], color='yellow') 
+    self.line2C2 = Line2D([], [], color='pink') 
+
+    self.line3W = Line2D([], [], color='black', marker='o', markersize=5)
+    self.line3W_head = Line2D([], [], color='red', linestyle='point marker', 
+                              marker='o', markersize=7) 
+    
 
     # 5. assign Line2D objects to the relevant subplot
-    ax1.add_line(self.line1)
-    ax1.add_line(self.line1a)
-    ax1.add_line(self.line1e)
     ax1.add_line(self.line1W)
+    ax1.add_line(self.line1W_head)
+    ax1.add_line(self.line1C)
+    ax1.add_artist(self.patch1E)
     
     ax2.add_line(self.line2W)
+    ax2.add_line(self.line2W_head)
+    ax2.add_line(self.line2C)
+    ax2.add_line(self.line2C2)
+    
+    ax3.add_line(self.line3W)
+    ax3.add_line(self.line3W_head)
 
 
     # 6. call the base class __init__
@@ -93,26 +117,44 @@ class WormPlotter(animation.TimedAnimation):
 
   def _draw_frame(self, framedata):
     i = framedata
-    head = i - 1
-    head_slice = (self.t > self.t[i] - 1.0) & (self.t < self.t[i])
-
-    self.line1.set_data(self.x[:i], self.y[:i])
-    self.line1a.set_data(self.x[head_slice], self.y[head_slice])
-    self.line1e.set_data(self.x[head], self.y[head])
 
     self.line1W.set_data(self.skeletons[:,0,i],
                          self.skeletons[:,1,i])
+    self.line1W_head.set_data(self.skeletons[0,0,i],
+                              self.skeletons[0,1,i])
+    self.line1C.set_data(self.vulva_contours[:,0,i],
+                         self.vulva_contours[:,1,i])                              
+    self.patch1E.center = (self.skeleton_centres[:,i])
+    self.patch1E.angle = self.orientation[i]
 
     self.line2W.set_data(self.skeletons_centred[:,0,i],
                          self.skeletons_centred[:,1,i])
+    self.line2W_head.set_data(self.skeletons_centred[0,0,i],
+                              self.skeletons_centred[0,1,i])
+    self.line2C.set_data(self.skeletons_centred[:,0,i] + (self.vulva_contours[:,0,i] - self.skeletons[:,0,i]),
+                         self.skeletons_centred[:,1,i] + (self.vulva_contours[:,1,i] - self.skeletons[:,1,i]))
+    self.line2C2.set_data(self.skeletons_centred[:,0,i] + (self.non_vulva_contours[:,0,i] - self.skeletons[:,0,i]),
+                          self.skeletons_centred[:,1,i] + (self.non_vulva_contours[:,1,i] - self.skeletons[:,1,i]))
 
-    self._drawn_artists = [self.line1, self.line1a, self.line1e, self.line1W, self.line2W]
+                         
+    self.line3W.set_data(self.skeletons_rotated[:,0,i],
+                         self.skeletons_rotated[:,1,i])
+    self.line3W_head.set_data(self.skeletons_rotated[0,0,i],
+                              self.skeletons_rotated[0,1,i])
+
+    
+    self._drawn_artists = [self.line1W, self.line1C, self.line1W_head, 
+                           self.line2W, self.line2C, self.line2C2, self.line2W_head, 
+                           self.line3W, self.line3W_head,
+                           self.patch1E]
 
   def new_frame_seq(self):
-    return iter(range(self.t.size))
+    return iter(range(self.normalized_worm.num_frames()))
 
   def _init_draw(self):
-    lines =  [self.line1, self.line1a, self.line1e, self.line1W, self.line2W]
+    lines =  [self.line1W, self.line1W_head, self.line1C,
+              self.line2W, self.line2W_head, self.line2C, self.line2C2,
+              self.line3W, self.line3W_head]
 
     for l in lines:
       l.set_data([], [])

@@ -236,7 +236,7 @@ class NormalizedWorm():
                 
                 # Contour data is used with 
                 # seg_worm.feature_helpers.posture.getEccentricity:
-                'vulva_contours',     # shape is (49, 2, nu) integer
+                'vulva_contours',     # shape is (49, 2, n) integer
                 'non_vulva_contours', # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
                 'angles',             # shape is (49, 2, n) integer
@@ -298,10 +298,32 @@ class NormalizedWorm():
     # TODO
     return self        
 
+  def centre(self):
+    """
+      centre:
+        Returns a numpy array of length n, giving for each frame
+        the mean of the skeleton points
+        
+    """
+    s = self.data_dict['skeletons']
+    return np.nanmean(s, 0, keepdims=False)
+
+  def angle(self):
+    """
+      angle:
+        Returns a numpy array of length n, giving for each frame
+        the angle formed by the first and last skeleton point.
+        
+    """
+    s = self.data_dict['skeletons']
+    # obtain vector between first and last skeleton point
+    v = s[48,:,:]-s[0,:,:]  
+    # find the angle of this vector
+    return np.arctan(v[1,:]/v[0,:])*(180/np.pi)
 
   def translate_to_centre(self):
-    """ translate_to_centre:
-      
+    """ 
+      translate_to_centre:      
         Returns a NormalizedWorm instance with each frame moved so the 
         centroid of the worm is 0,0
 
@@ -318,6 +340,54 @@ class NormalizedWorm():
     # TODO
     return s - s_mean
        
+  def rotate_and_translate(self):
+    # to perform this matrix multiplication we are multiplying:
+    # rot_matrix * s
+    # this is shape 2 x 2 x n, times 2 x 49 x n.
+    # basically we want the first matrix treated as two-dimensional,
+    # and the second matrix treated as one-dimensional,
+    # with the results applied elementwise in the other dimensions.
+    
+    # to make this work I believe we need to pre-broadcast rot_matrix into
+    # the skeleton points dimension (the one with 49 points) so that we have
+    # 2 x 2 x 49 x n, times 2 x 49 x n
+    #s1 = np.rollaxis(self.skeletons, 1)
+    
+    #rot_matrix = np.ones(np.shape(s1)) * rot_matrix
+    
+    #self.skeletons_rotated = rot_matrix.dot(self.skeletons)    
+    
+    skeletons_centred = self.translate_to_centre()
+    orientation = self.angle()
+  
+    a = -orientation * (np.pi/180)
+    
+    rot_matrix = np.array([[np.cos(a), -np.sin(a)],
+                           [np.sin(a),  np.cos(a)]])    
+
+    # we need the x,y listed in the first dimension
+    s1 = np.rollaxis(skeletons_centred, 1)
+
+    # for example, here is the first point of the first frame rotated:
+    #rot_matrix[:,:,0].dot(s1[:,0,0])    
+    
+    # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
+    # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], np.shape(s1)[2])) * rot_matrix    
+    
+    s1_rotated = []        
+    
+    # rotate the worm frame-by-frame and add these skeletons to a list
+    for frame_index in range(self.num_frames()):
+      s1_rotated.append(rot_matrix[:,:,frame_index].dot(s1[:,:,frame_index]))
+    #print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
+      
+    # save the list as a numpy array
+    s1_rotated = np.array(s1_rotated)
+    
+    # fix the axis settings
+    return np.rollaxis(np.rollaxis(s1_rotated,0,3),1)
+
+
 
   def load_eigen_worms(self, eigen_worm_file_path):
     """ load_eigen_worms takes a file path and loads the eigen_worms
@@ -357,12 +427,10 @@ class NormalizedWorm():
             it encompasses an "out and back" contour
     """
     pass    
-    # TODO: implement this and/or understand how this differs from data_dict['x']
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
   def contour_y(self):
     pass
-    # TODO: implement this and/or understand how this differs from data_dict['y']
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
 

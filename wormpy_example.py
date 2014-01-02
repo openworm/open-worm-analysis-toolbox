@@ -17,18 +17,19 @@ import warnings
 
 import wormpy
 
-def main():
-  """
-    This is an example illustrating use of the classes in the wormpy module.
-    We load the skeleton and other basic data from a worm HDF5 file,
-    optionally animate it using matplotlib, and also    
-    re-create the features information by deriving them from the basic data.
-  """
+#def main():
+"""
+  This is an example illustrating use of the classes in the wormpy module.
+  We load the skeleton and other basic data from a worm HDF5 file,
+  optionally animate it using matplotlib, and also    
+  re-create the features information by deriving them from the basic data.
+"""
   
   # create a normalized worm from a hardcoded example location
-  print("let's do this...")
-  normalized_worm = example_nw()
-  
+  #print("let's do this...")
+  #normalized_worm = example_nw()
+  #wp = wormpy.WormPlotter(normalized_worm)
+
   # AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
   #normalized_worm.interpolate_dropped_frames()  
   #normalized_worm.animate()  
@@ -45,7 +46,6 @@ def main():
     # create an instance of WormFeatures, which contains all our features data.
   #  worm_features = wormpy.WormFeatures(normalized_worm)
   
-  wp = wormpy.WormPlotter(normalized_worm)
   
   
   #wp.save('test_sub.mp4')
@@ -122,11 +122,74 @@ def example_nw():
   return normalized_worm
   
 
+def example_real_worm_pipeline(data_file_path, eigen_worm_file_path, other_data_file_path):
+  """
+    This depicts an example of how the data would flow from the Schafer real
+    worm data to the features calculation and plotting
+    
+    At two places, we verify that our figures are the same as the 
+    Schafer figures
+      
+  """
+  
+  snw_blocks = wormpy.SchaferNormalizedWormBlocks(data_file_path, eigen_worm_file_path)
+  snw = snw_blocks.stitch()
+  type(snw)
+  # *** returns <class 'SchaferNormalizedWorm'>
+  
+  # NormalizedWorm can load either:
+  #  --> a 'VirtualWorm' file (wrapped in a class) or
+  #  --> a 'Schafer' file (wrapped in a class)
+  nw = wormpy.NormalizedWorm('Schafer', snw)
+  
+  nw.compare_with_schafer(snw)
+  #*** returns True, hopefully!
+  
+  wf = wormpy.WormFeatures(nw)
+  
+  sef = wormpy.SchaferExperimentFile(other_data_file_path)
+  
+  wf.compare_with_schafer(sef)
+  #*** returns True, hopefully!
+  
+  wp = wormpy.WormPlotter(wf)
+  
+  wp.show()  # show the plot
 
-if(__name__ == '__main__'):
-  main()
+
+def example_virtual_worm_pipeline(data_file_path):
+  """
+    This depicts an example of how the data would flow from the virtual worm
+    to the features calculation and plotting
+    
+    This 'virtual' pipeline is simpler because there are no blocks to stitch
+    and also we don't have to verify that our figures are the same as
+    the Schafer figures
+    
+  """
+
+  vw = wormpy.BasicWormData(data_file_path)
+  
+  # NormalizedWorm can load either:
+  #  --> a 'VirtualWorm' file (wrapped in a class) or
+  #  --> a 'Schafer' file (wrapped in a class)
+  nw = wormpy.NormalizedWorm('VirtualWorm', vw)
+  
+  wf = wormpy.WormFeatures(nw)
+  
+  wp = wormpy.WormPlotter(wf)
+  
+  wp.show()
+  
+
+#if(__name__ == '__main__'):
+#  main()
   
   
   
   
   
+# create a normalized worm from a hardcoded example location
+print("let's do this...")
+nw = example_nw()
+wp = wormpy.WormPlotter(nw)
