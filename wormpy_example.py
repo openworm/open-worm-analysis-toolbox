@@ -178,7 +178,9 @@ with warnings.catch_warnings():
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
 
-wp = wormpy.WormPlotter(nw, interactive=True)
+wormpy.plot_frame_codes(nw)
+
+#wp = wormpy.WormPlotter(nw, interactive=False)
 
 #wp.show()
 

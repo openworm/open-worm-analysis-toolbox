@@ -20,11 +20,9 @@ import matplotlib.animation as animation
 from wormpy import config
 
 
+
+
 class WormPlotter(animation.TimedAnimation):
-  normalized_worm = None
-  skeletons = None 
-  skeletons_centred = None
-  
   
   def __init__(self, normalized_worm, interactive=False):
     """
@@ -64,19 +62,33 @@ class WormPlotter(animation.TimedAnimation):
         
       
     # 2. create the figure
-    fig = plt.figure()
-    fig.suptitle('C. elegans attributes', fontsize=20)    
+    fig = plt.figure(figsize=(5,5))
+
+    # We have blit=True, so the animation only redraws the elements that have
+    # changed.  This means that if the window is resized, everything other
+    # than the plot area will be black.  To fix this, here we have matplotlib
+    # explicitly redraw everything if a resizing event occurs.
+    # DEBUG: this actually doesn't appear to work.
+    def refresh_plot(event):
+      print("yes")
+      fig.canvas.draw()
+
+    self.refresh_connection_id = \
+      fig.canvas.mpl_connect('resize_event', refresh_plot)
+
+    fig.suptitle('C. elegans attributes', fontsize=20)
     
     # 3. add the subplots    
-    ax1 = fig.add_subplot(2, 2, 1)
+    ax1 = plt.subplot2grid((3,3), (0,0), rowspan=2, colspan=2)
     ax1.set_title('Position')    
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
-    ax1.set_xlim(self.position_limits(0))  # DON'T USE set_xbound, it changes dynmically
-    ax1.set_ylim(self.position_limits(1))
-    ax1.set_aspect(aspect='equal', adjustable='datalim')
+    ax1.set_xlim(self.normalized_worm.position_limits(0))
+    ax1.set_ylim(self.normalized_worm.position_limits(1))
+    #ax1.set_aspect(aspect='equal', adjustable='datalim')
+    #ax1.set_autoscale_on()    
     
-    ax2 = fig.add_subplot(2, 2, 2)
+    ax2 = plt.subplot2grid((3,3), (2,0))
     ax2.set_title('Morphology')    
     ax2.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
     ax2.set_ylim((-500, 500))
@@ -84,14 +96,18 @@ class WormPlotter(animation.TimedAnimation):
     self.annotation2 = ax2.annotate("Worm head",
                                     xy=(0,0), xycoords='data',
                                     xytext=(10, 10), textcoords='data',
-                                    arrowprops=dict(arrowstyle="->",
+                                    arrowprops=dict(arrowstyle="fancy",
                                                     connectionstyle="arc3,rad=.2"))
 
-    ax3 = fig.add_subplot(2, 2, 3)
+
+    ax3 = plt.subplot2grid((3,3), (2,1))
     ax3.set_title('Orientation-free')
     ax3.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
     ax3.set_ylim((-500, 500))
     ax3.set_aspect(aspect='equal', adjustable='datalim')
+
+    ax4 = plt.subplot2grid((3,3), (2,2))
+    self.annotation4 = ax4.annotate("Segmentation status: ")
 
     # 4. create Artist objects 
     self.line1W = Line2D([], [], color='green', linestyle='point marker', 
@@ -105,14 +121,13 @@ class WormPlotter(animation.TimedAnimation):
     self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
     self.line2W_head = Line2D([], [], color='red', linestyle='point marker', 
                               marker='o', markersize=7) 
-    self.line2C = Line2D([], [], color='yellow') 
-    self.line2C2 = Line2D([], [], color='pink') 
+    self.line2C = Line2D([], [], color='blue') 
+    self.line2C2 = Line2D([], [], color='orange') 
 
     self.line3W = Line2D([], [], color='black', marker='o', markersize=5)
     self.line3W_head = Line2D([], [], color='red', linestyle='point marker', 
                               marker='o', markersize=7) 
     
-
     # 5. assign Artist objects to the relevant subplot
     ax1.add_line(self.line1W)
     ax1.add_line(self.line1W_head)
@@ -129,8 +144,9 @@ class WormPlotter(animation.TimedAnimation):
 
 
     # 6. call the base class __init__
+
     # TimedAnimation draws a new frame every *interval* milliseconds.
-    # 
+    # so this is how we convert from FPS to interval:
     interval = 1000 / config.FPS
 
     return animation.TimedAnimation.__init__(self, 
@@ -139,9 +155,26 @@ class WormPlotter(animation.TimedAnimation):
                                              blit=True)
 
   def show(self):
+    """
+      show:
+        draw the figure in a window on the screen
+      
+    """
     plt.show()
 
   def _draw_frame(self, framedata):
+    """
+      _draw_frame:
+        Called sequentially for each frame of the animation.  Thus
+        we must set our plot to look like it should for the given frame.
+        
+      INPUT
+        framedata: 
+          an integer between 0 and the number of frames, giving
+          the current frame.
+      
+    """
+
     i = framedata
 
     self.line1W.set_data(self.skeletons[:,0,i],
@@ -164,17 +197,20 @@ class WormPlotter(animation.TimedAnimation):
                           self.skeletons_centred[:,1,i] + (self.non_vulva_contours[:,1,i] - self.skeletons[:,1,i]))
     self.annotation2.xy = (self.skeletons_centred[0,0,i],
                            self.skeletons_centred[0,1,i])
-                         
+    self.annotation2.label = 'label'  # DEBUG
+    self.annotation2.text = 'text'    # DEBUG 
+
+                            
     self.line3W.set_data(self.skeletons_rotated[:,0,i],
                          self.skeletons_rotated[:,1,i])
     self.line3W_head.set_data(self.skeletons_rotated[0,0,i],
                               self.skeletons_rotated[0,1,i])
 
     
-    self._drawn_artists = [self.line1W, self.line1C, self.line1W_head, 
+    self._drawn_artists = [self.line1W, self.line1C, self.line1W_head, self.patch1E,
                            self.line2W, self.line2C, self.line2C2, self.line2W_head, self.annotation2,
                            self.line3W, self.line3W_head,
-                           self.patch1E]
+                           self.annotation4]
 
   def new_frame_seq(self):
     """
@@ -186,9 +222,11 @@ class WormPlotter(animation.TimedAnimation):
 
   def _init_draw(self):
     """
-      The _init_draw function is called when first drawing the animation.
-      It is an abstract method in Animation, to be implemented here for
-      the first time.
+      _init_draw:
+        Called when first drawing the animation.
+        It is an abstract method in Animation, to be implemented here for
+        the first time.
+      
     """
     artists =  [self.line1W, self.line1W_head, self.line1C,
               self.line2W, self.line2W_head, self.line2C, self.line2C2,
@@ -197,24 +235,14 @@ class WormPlotter(animation.TimedAnimation):
     for l in artists:
       l.set_data([], [])
     
-    artists.extend([self.annotation2, self.patch1E])
+    # TODO: figure out how to clear the non-line elements
+    #artists.extend([self.annotation2, self.patch1E])
     
-    return artists
-    
-
-  def position_limits(self, dimension):  
-    """ Maximum extent of worm's travels projected onto a given axis
-        PARAMETERS:
-          dimension: specify 0 for X axis, or 1 for Y axis.
-    NOTE: Dropped frames show up as NaN.  
-          nanmin returns the min ignoring such NaNs.        
-    
-    """
-    return (np.nanmin(self.skeletons[dimension,:,:]), 
-            np.nanmax(self.skeletons[dimension,:,:]))
 
   def save(self, filename):
-    """ Save the animation as an mp4.
+    """ 
+      save:
+        Save the animation as an mp4.
         This requires ffmpeg or mencoder to be installed.
         The extra_args ensure that the x264 codec is used, so that 
         the video can be embedded in html5.  You may need to adjust 
@@ -223,6 +251,7 @@ class WormPlotter(animation.TimedAnimation):
             
         To install ffmpeg on windows, see
         http://www.wikihow.com/Install-FFmpeg-on-Windows
+        
     """
     FFMpegWriter = animation.writers['ffmpeg']
     metadata = dict(title='C. elegans movement video', artist='matplotlib',
@@ -233,3 +262,22 @@ class WormPlotter(animation.TimedAnimation):
                                   extra_args=['-vcodec', 'libx264'])
 
 
+
+def plot_frame_codes(normalized_worm):
+  """
+    Plot a pie chart of the frame codes of a normalized worm.
+    
+  """  
+  nw = normalized_worm
+  fc = nw.data_dict['frame_codes']
+  # create a dictionary of    frame code : frame code title   pairs
+  fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}
+  
+  # a dictionary with the count for each frame code type
+  counts = {i:np.bincount(fc)[i] for i in np.unique(fc)}
+
+  # display the pie chart  
+  plt.pie(x=list(counts.values()), 
+          labels=list(fc_desc[d] for d in np.unique(fc)), 
+          autopct='%1.1f%%')
+  plt.suptitle("Proportion of frames segmented")

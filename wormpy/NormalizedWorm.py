@@ -451,6 +451,22 @@ class NormalizedWorm():
     """
     return self.num_frames()
 
+
+  def position_limits(self, dimension, measurement='skeletons'):  
+    """ Maximum extent of worm's travels projected onto a given axis
+        PARAMETERS:
+          dimension: specify 0 for X axis, or 1 for Y axis.
+    NOTE: Dropped frames show up as NaN.  
+          nanmin returns the min ignoring such NaNs.        
+    
+    """
+    d = self.data_dict[measurement]
+    if(len(np.shape(d))<3):
+      raise Exception("Position Limits Is Only Implemented for 2D data")
+    return (np.nanmin(d[dimension,0,:]), 
+            np.nanmax(d[dimension,1,:]))
+
+
   def contour_x(self):
     """ 
       Return the approximate worm contour, derived from data

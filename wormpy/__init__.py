@@ -7,8 +7,10 @@ from wormpy.SchaferExperimentFile import SchaferExperimentFile
 from wormpy.WormFeatures import WormFeatures
 from wormpy.NormalizedWorm import NormalizedWorm
 from wormpy.WormPlotter import WormPlotter
+from wormpy.WormPlotter import plot_frame_codes
 
 __all__ = ['SchaferExperimentFile', 
            'WormFeatures', 
            'NormalizedWorm',
-           'WormPlotter']
+           'WormPlotter',
+           'plot_frame_codes']
