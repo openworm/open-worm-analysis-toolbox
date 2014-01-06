@@ -27,8 +27,9 @@ n_fields = length(FIELDS) = len(self.normal_partitions().keys())
 
 """
 import numpy as np
-from wormpy.config import *
-from wormpy.feature_helpers import *
+import collections
+from wormpy import config
+from wormpy import feature_helpers
 
 # TODO: WormFeatures should INHERIT from NormalizedWorm
 
@@ -141,12 +142,12 @@ class WormFeatures:
 
     # Now that we've populated the bends dictionary, add it to the posture
     # dictionary.
-    self.posture['bends'] = get_bends(nw)
+    self.posture['bends'] = feature_helpers.get_bends(nw)
     
     # *** 2. Eccentricity & Orientation ***
     eccentricity_and_orientation = \
-            get_eccentricity_and_orientation(nw.contour_x(), 
-                                             nw.contour_y())
+            feature_helpers.get_eccentricity_and_orientation(nw.contour_x(), 
+                                                             nw.contour_y())
     self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
     self.posture['orientation'] = eccentricity_and_orientation.orientation
     

@@ -26,19 +26,30 @@ class WormPlotter(animation.TimedAnimation):
   skeletons_centred = None
   
   
-  def __init__(self, normalized_worm):
+  def __init__(self, normalized_worm, interactive=False):
     """
       __init__: Initialize the animation of the worm's attributes.
+
+        INPUT: 
+          normalized_worm: the NormalizedWorm object to be plotted.
+          
+          interactive: boolean, if interactive is set to False, then:
+          suppress the drawing of the figure, until an explicit plt.show()
+          is called.  this allows WormPlotter to be instantiated without 
+          just automatically being displayed.  Instead, the user must call
+          WormPlotter.show() to have plt.show() be called.
+
         To initialize the animation, we must do six things:
         
         1. set up the data to be used from the normalized_worm
         2. create the figure
         3. create subplots in the figure, assigning them Axis handles
-        4. create Line2D objects for all objects in the subplots 
-        5. assign the Line2D objects to the correct Axis handle
+        4. create Artist objects for all objects in the subplots 
+        5. assign the Artist objects to the correct Axis handle
         6. call the base class __init__
-     
+
     """
+    plt.interactive(interactive)
 
     # 1. set up the data to be used
     self.normalized_worm = normalized_worm
@@ -70,10 +81,11 @@ class WormPlotter(animation.TimedAnimation):
     ax2.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
     ax2.set_ylim((-500, 500))
     ax2.set_aspect(aspect='equal', adjustable='datalim')
-    ax2.annotate("MICHAEL'S WORM",
-                 xy=(0, 0), xycoords='data',
-                 xytext=(10, 10), textcoords='data')
-
+    self.annotation2 = ax2.annotate("Worm head",
+                                    xy=(0,0), xycoords='data',
+                                    xytext=(10, 10), textcoords='data',
+                                    arrowprops=dict(arrowstyle="->",
+                                                    connectionstyle="arc3,rad=.2"))
 
     ax3 = fig.add_subplot(2, 2, 3)
     ax3.set_title('Orientation-free')
@@ -81,7 +93,7 @@ class WormPlotter(animation.TimedAnimation):
     ax3.set_ylim((-500, 500))
     ax3.set_aspect(aspect='equal', adjustable='datalim')
 
-    # 4. create Line2D objects
+    # 4. create Artist objects 
     self.line1W = Line2D([], [], color='green', linestyle='point marker', 
                          marker='o', markersize=5) 
     self.line1W_head = Line2D([], [], color='red', linestyle='point marker', 
@@ -101,7 +113,7 @@ class WormPlotter(animation.TimedAnimation):
                               marker='o', markersize=7) 
     
 
-    # 5. assign Line2D objects to the relevant subplot
+    # 5. assign Artist objects to the relevant subplot
     ax1.add_line(self.line1W)
     ax1.add_line(self.line1W_head)
     ax1.add_line(self.line1C)
@@ -126,6 +138,9 @@ class WormPlotter(animation.TimedAnimation):
                                              interval=interval, 
                                              blit=True)
 
+  def show(self):
+    plt.show()
+
   def _draw_frame(self, framedata):
     i = framedata
 
@@ -137,6 +152,7 @@ class WormPlotter(animation.TimedAnimation):
                          self.vulva_contours[:,1,i])                              
     self.patch1E.center = (self.skeleton_centres[:,i])
     self.patch1E.angle = self.orientation[i]
+    
 
     self.line2W.set_data(self.skeletons_centred[:,0,i],
                          self.skeletons_centred[:,1,i])
@@ -146,7 +162,8 @@ class WormPlotter(animation.TimedAnimation):
                          self.skeletons_centred[:,1,i] + (self.vulva_contours[:,1,i] - self.skeletons[:,1,i]))
     self.line2C2.set_data(self.skeletons_centred[:,0,i] + (self.non_vulva_contours[:,0,i] - self.skeletons[:,0,i]),
                           self.skeletons_centred[:,1,i] + (self.non_vulva_contours[:,1,i] - self.skeletons[:,1,i]))
-
+    self.annotation2.xy = (self.skeletons_centred[0,0,i],
+                           self.skeletons_centred[0,1,i])
                          
     self.line3W.set_data(self.skeletons_rotated[:,0,i],
                          self.skeletons_rotated[:,1,i])
@@ -155,20 +172,35 @@ class WormPlotter(animation.TimedAnimation):
 
     
     self._drawn_artists = [self.line1W, self.line1C, self.line1W_head, 
-                           self.line2W, self.line2C, self.line2C2, self.line2W_head, 
+                           self.line2W, self.line2C, self.line2C2, self.line2W_head, self.annotation2,
                            self.line3W, self.line3W_head,
                            self.patch1E]
 
   def new_frame_seq(self):
+    """
+      returns an iterator that iterates over the frames 
+      in the animation
+      
+    """
     return iter(range(self.normalized_worm.num_frames()))
 
   def _init_draw(self):
-    lines =  [self.line1W, self.line1W_head, self.line1C,
+    """
+      The _init_draw function is called when first drawing the animation.
+      It is an abstract method in Animation, to be implemented here for
+      the first time.
+    """
+    artists =  [self.line1W, self.line1W_head, self.line1C,
               self.line2W, self.line2W_head, self.line2C, self.line2C2,
               self.line3W, self.line3W_head]
 
-    for l in lines:
+    for l in artists:
       l.set_data([], [])
+    
+    artists.extend([self.annotation2, self.patch1E])
+    
+    return artists
+    
 
   def position_limits(self, dimension):  
     """ Maximum extent of worm's travels projected onto a given axis
@@ -196,7 +228,8 @@ class WormPlotter(animation.TimedAnimation):
     metadata = dict(title='C. elegans movement video', artist='matplotlib',
                     comment='C. elegans movement video from Shafer lab')
     writer = FFMpegWriter(fps=15, metadata=metadata)
-    animation.TimedAnimation.save(self, filename, writer=writer, 
-                                  fps=15, extra_args=['-vcodec', 'libx264'])
+    animation.TimedAnimation.save(self, filename, 
+                                  writer=writer, fps=config.FPS, 
+                                  extra_args=['-vcodec', 'libx264'])
 
 

@@ -164,10 +164,8 @@ def example_virtual_worm_pipeline(data_file_path):
 # Create a normalized worm from a hardcoded example location
 nw = example_nw()
 
-# AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
+# AT THIS POINT WE COULD INTERPOLATE THE WORM'S SKELETON
 #normalized_worm.interpolate_dropped_frames()  
-#normalized_worm.animate()  
-#normalized_worm.save_to_mp4("worm_animation.mp4")
 
 # NOTE: The warning that appears comes from nanfunctions.py, because 
 # we are sometimes taking the mean and std dev of all-NaN angle arrays.
@@ -180,9 +178,10 @@ with warnings.catch_warnings():
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
 
-wp = wormpy.WormPlotter(nw)
+wp = wormpy.WormPlotter(nw, interactive=True)
 
 #wp.show()
 
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
+
