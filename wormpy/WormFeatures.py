@@ -2,7 +2,7 @@
 """
 Created on Wed Nov 27 22:36:32 2013
 
-@author: Michael
+@authors: @JimHokanson, @MichaelCurrie
 
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:

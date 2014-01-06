@@ -2,20 +2,18 @@
 """
 Created on Fri Nov 29 21:01:23 2013
 
-@author: mcurrie
+@authors: @JimHokanson, @MichaelCurrie
+
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
 +seg_worm / @normalized_worm / normalized_worm.m
+
 """
+
 import numpy as np
 import scipy.io
 import os
-#from wormpy.WormExperimentFile import WormExperimentFile
-
-
-  
-
 
 class NormalizedWorm():
   """ NormalizedWorm encapsulates the normalized measures data, loaded
@@ -221,34 +219,33 @@ class NormalizedWorm():
       # NOTE: These are aligned to the order in the files.
       # these will be the keys of the dictionary data_dict
       data_keys = [
-                'EIGENWORM_PATH',
-                # a numpy array of chars for each frame of the video
+                # this just contains a string for where to find the 
+                # eigenworm file.
+                'EIGENWORM_PATH',   
+                # a string of length n, showing, for each frame of the video:
                 # s = segmented
                 # f = segmentation failed
                 # m = stage movement
                 # d = dropped frame
                 # n??? - there is reference tin some old code to this 
-                # type # DEBUG
+                # after loading this we convert it to a numpy array.
                 'segmentation_status',
                 # shape is (1 n), see comments in 
                 # seg_worm.parsing.frame_errors
                 'frame_codes',
-                
-                # Contour data is used with 
-                # seg_worm.feature_helpers.posture.getEccentricity:
                 'vulva_contours',     # shape is (49, 2, n) integer
                 'non_vulva_contours', # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
                 'angles',             # shape is (49, 2, n) integer
                 'in_out_touches',     # shape is (49, n) integer (degrees)
-                'lengths',# shape is (n) integer
-                'widths',# shape is (49, n) integer
-                'head_areas', # shape is (n) integer
-                'tail_areas',# shape is (n) integer
-                'vulva_areas',# shape is (n) integer
-                'non_vulva_areas', # shape is (n) integer
-                'x',
-                'y']
+                'lengths',            # shape is (n) integer
+                'widths',             # shape is (49, n) integer
+                'head_areas',         # shape is (n) integer
+                'tail_areas',         # shape is (n) integer
+                'vulva_areas',        # shape is (n) integer
+                'non_vulva_areas',    # shape is (n) integer
+                'x',                  # shape is (49, n) integer
+                'y']                  # shape is (49, n) integer
       
       # Here I use powerful python syntax to reference data elements of s
       # dynamically through built-in method getattr
@@ -257,8 +254,43 @@ class NormalizedWorm():
       # this is to build up a nice dictionary containing the data in s
       self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
       
-
+      # Let's change the string of length n to a numpy array of single 
+      # characters of length n, to be consistent with the other data 
+      # structures
+      self.data_dict['segmentation_status'] = \
+        np.array(list(self.data_dict['segmentation_status']))
+        
+      # TODO: @MichaelCurrie: do this.  but I'm not sure how the file 
+      # knows where the eigenworm file is
+      # So I have to think about this step.        
+      #self.load_eigen_worms(self.data_dict['EIGENWORM_PATH'])
     
+      self.load_frame_code_descriptions()    
+    
+  def load_frame_code_descriptions(self):
+    """
+      Load the frame_codes descriptions, which are stored in a .csv file
+      
+    """
+    file_path = os.path.join(os.path.abspath(os.getcwd()),
+                             'wormpy', 
+                             'frame_codes.csv')
+    f = open(file_path, 'r')
+
+    self.frame_codes_descriptions = []
+    
+    for line in f:
+      # split along ';' but ignore any newlines or quotes
+      a = line.replace("\n","").replace("'","").split(';')
+      # the actual frame codes (the first entry on each line)
+      # can be treated as integers
+      a[0] = int(a[0])
+      self.frame_codes_descriptions.append(a)  
+    
+    f.close()
+    
+    
+
   def load_normalized_blocks(self, blocks_path):
     """ Processes all the MatLab data "blocks" created from the raw 
         video into one coherent set of data.  This is a translation 
@@ -426,11 +458,11 @@ class NormalizedWorm():
             those on the second set. We also reverse the contour so that
             it encompasses an "out and back" contour
     """
-    pass    
+    pass    # TODO
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
   def contour_y(self):
-    pass
+    pass    # TODO
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
 

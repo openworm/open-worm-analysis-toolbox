@@ -2,60 +2,25 @@
 """
 Created on Tue Nov 26 22:48:17 2013
 
-@author: Michael Currie
-A translation of Matlab code written by Jim Hokanson,
-in the SegwormMatlabClasses GitHub repo.  Original code path:
-SegwormMatlabClasses / 
-+seg_worm / @feature_calculator / get_features_rewritten.m
+@authors: @JimHokanson, @MichaelCurrie
 
-Here main() simply illustrates the use of classes in the wormpy module.
+This is an example illustrating use of the classes in the wormpy module.
+
 """
 
 import os
 import getpass
 import warnings
-
 import wormpy
-
-#def main():
-"""
-  This is an example illustrating use of the classes in the wormpy module.
-  We load the skeleton and other basic data from a worm HDF5 file,
-  optionally animate it using matplotlib, and also    
-  re-create the features information by deriving them from the basic data.
-"""
-  
-  # create a normalized worm from a hardcoded example location
-  #print("let's do this...")
-  #normalized_worm = example_nw()
-  #wp = wormpy.WormPlotter(normalized_worm)
-
-  # AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
-  #normalized_worm.interpolate_dropped_frames()  
-  #normalized_worm.animate()  
-  #normalized_worm.save_to_mp4("worm_animation.mp4")
-  
-  # NOTE: The warning that appears comes from nanfunctions.py, because 
-  # we are sometimes taking the mean and std dev of all-NaN angle arrays.
-  # The mean and std_dev in these cases is set to NaN, which seems like 
-  # correct behaviour to me.  So we can safely ignore this warning.  
-#  worm_features = None
-  #with warnings.catch_warnings():
-  #  warnings.simplefilter("ignore")
-    # From the basic information in normalized_worm,
-    # create an instance of WormFeatures, which contains all our features data.
-  #  worm_features = wormpy.WormFeatures(normalized_worm)
-  
-  
-  
-  #wp.save('test_sub.mp4')
-  #plt.show()
-  
-  
-  
 
 
 def get_user_data_path():
+  """
+    Return the data path to be used to load example worm files.
+    This path will change depending on where DropBox has been located
+    on the user computer.
+    
+  """
   if(getpass.getuser() == 'Michael'):
     # michael's computer at home
     user_data_path = "C:\\Users\\Michael\\Dropbox\\"
@@ -74,8 +39,12 @@ def get_user_data_path():
   return user_data_path  
   
 
-
-def example_from_HDF5(base_path = None):
+def example_WormExperimentFile(base_path = None):
+  """
+    Returns an example instance of WormExperimentFile, loaded
+    from an unc-8 (strong coiler) mutant worm
+    
+  """
   # If no folder was specified for the worm, use the
   # current working directory
   if(base_path == None):
@@ -90,7 +59,7 @@ def example_from_HDF5(base_path = None):
   w = wormpy.WormExperimentFile()
   w.load_HDF5_data(worm_file_path)
 
-  return 
+  return w
 
 
 
@@ -182,14 +151,38 @@ def example_virtual_worm_pipeline(data_file_path):
   wp.show()
   
 
-#if(__name__ == '__main__'):
-#  main()
+"""
+  We load the skeleton and other basic data from a worm HDF5 file,
+  optionally animate it using matplotlib, and also    
+  re-create the features information by deriving them from the basic data.
+"""
+
+# NOTE: I originally had this code wrapped in a main function, but
+# for some reason the lines in the plot would not appear if they were
+# called in this manner.  Outside a main() function, things work fine.
   
-  
-  
-  
-  
-# create a normalized worm from a hardcoded example location
-print("let's do this...")
+# Create a normalized worm from a hardcoded example location
 nw = example_nw()
+
+# AT THIS POINT WE COULD ANIMATE THE WORM'S SKELETON IF WE WANTED:
+#normalized_worm.interpolate_dropped_frames()  
+#normalized_worm.animate()  
+#normalized_worm.save_to_mp4("worm_animation.mp4")
+
+# NOTE: The warning that appears comes from nanfunctions.py, because 
+# we are sometimes taking the mean and std dev of all-NaN angle arrays.
+# The mean and std_dev in these cases is set to NaN, which seems like 
+# correct behaviour to me.  So we can safely ignore this warning.  
+#  worm_features = None
+with warnings.catch_warnings():
+  warnings.simplefilter("ignore")
+  # From the basic information in normalized_worm,
+  # create an instance of WormFeatures, which contains all our features data.
+  wf = wormpy.WormFeatures(nw)
+
 wp = wormpy.WormPlotter(nw)
+
+#wp.show()
+
+# At this point we could save the plot to a file:
+#wp.save('test_sub.mp4')

@@ -3,12 +3,12 @@
 WormPlotter: A class that renders matplotlib plots of worm measurement and
              feature data.
 
+@authors: @JimHokanson, @MichaelCurrie
+
 This follows the [animated subplots example]
 (http://matplotlib.org/1.3.0/examples/animation/subplots.html)
 in creating a class derivation from TimedAnimation rather than 
 using pylab shell-type calls to construct the animation.
-
-@authors: @MichaelCurrie, @JimHokanson
 
 """
 
@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
 import matplotlib.animation as animation
+from wormpy import config
 
 
 class WormPlotter(animation.TimedAnimation):
@@ -116,7 +117,14 @@ class WormPlotter(animation.TimedAnimation):
 
 
     # 6. call the base class __init__
-    return animation.TimedAnimation.__init__(self, fig, interval=15, blit=True)
+    # TimedAnimation draws a new frame every *interval* milliseconds.
+    # 
+    interval = 1000 / config.FPS
+
+    return animation.TimedAnimation.__init__(self, 
+                                             fig, 
+                                             interval=interval, 
+                                             blit=True)
 
   def _draw_frame(self, framedata):
     i = framedata
