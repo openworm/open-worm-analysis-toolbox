@@ -30,7 +30,7 @@ Part of this codebase is available in the [SegWormMatlabClasses repo](https://gi
 
 Further documentation is available at the [openworm_docs repo](https://github.com/JimHokanson/openworm_docs/tree/master/Movement)
 
-[Monthly Progress Reports](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/Movement)
+[Monthly Progress Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing)
 
 
 
