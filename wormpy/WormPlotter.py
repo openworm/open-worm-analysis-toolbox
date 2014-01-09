@@ -47,8 +47,11 @@ class WormPlotter(animation.TimedAnimation):
         6. call the base class __init__
 
     """
+    # A WormPlotter instance can be instantiated to be interactive,
+    # or by default it is set to NOT interactive, which means that 
+    # WormPlotter.show() must be called to get it to display.
     plt.interactive(interactive)
-
+    
     # 1. set up the data to be used
     self.normalized_worm = normalized_worm
     # TODO: eventually we'll put this in a nicer place
@@ -70,7 +73,6 @@ class WormPlotter(animation.TimedAnimation):
     # explicitly redraw everything if a resizing event occurs.
     # DEBUG: this actually doesn't appear to work.
     def refresh_plot(event):
-      print("yes")
       fig.canvas.draw()
 
     self.refresh_connection_id = \
@@ -107,7 +109,11 @@ class WormPlotter(animation.TimedAnimation):
     ax3.set_aspect(aspect='equal', adjustable='datalim')
 
     ax4 = plt.subplot2grid((3,3), (2,2))
-    self.annotation4 = ax4.annotate("Segmentation status: ")
+    self.annotation4 = ax4.annotate("Segmentation status: ",
+                                    xy=(0,0), xycoords='data',
+                                    xytext=(10, 10), textcoords='data',
+                                    arrowprops=dict(arrowstyle="fancy",
+                                                    connectionstyle="arc3,rad=.2"))
 
     # 4. create Artist objects 
     self.line1W = Line2D([], [], color='green', linestyle='point marker', 
@@ -142,6 +148,9 @@ class WormPlotter(animation.TimedAnimation):
     ax3.add_line(self.line3W)
     ax3.add_line(self.line3W_head)
 
+
+    # So labels don't overlap:    
+    plt.tight_layout()
 
     # 6. call the base class __init__
 
@@ -268,6 +277,8 @@ def plot_frame_codes(normalized_worm):
     Plot a pie chart of the frame codes of a normalized worm.
     
   """  
+  # TODO: someday make this pie chart look nicer with:
+  # http://nxn.se/post/46440196846/making-nicer-looking-pie-charts-with-matplotlib
   nw = normalized_worm
   fc = nw.data_dict['frame_codes']
   # create a dictionary of    frame code : frame code title   pairs
@@ -277,7 +288,17 @@ def plot_frame_codes(normalized_worm):
   counts = {i:np.bincount(fc)[i] for i in np.unique(fc)}
 
   # display the pie chart  
-  plt.pie(x=list(counts.values()), 
+  patches, texts, autotexts = plt.pie(x=list(counts.values()), 
           labels=list(fc_desc[d] for d in np.unique(fc)), 
-          autopct='%1.1f%%')
+          autopct='%1.1f%%',
+          startangle=90,
+          colors=['g','r','c', 'y', 'm'], labeldistance=1.2)
   plt.suptitle("Proportion of frames segmented")
+  
+  for t in texts:
+    t.set_size('smaller')
+  for t in autotexts:
+    t.set_size('x-small')
+  
+  
+  

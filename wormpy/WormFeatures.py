@@ -37,8 +37,6 @@ class WormFeatures:
   """ WormFeatures takes as input a NormalizedWorm instance, and
       during initialization calculates all the features of the worm.
   """
-  normalized_worm = None
-  
   features = None
   
   morphology = None  # a python dictionary
@@ -48,12 +46,56 @@ class WormFeatures:
 
   
   def __init__(self, nw):
-    self.normalized_worm = nw
+    self.nw = nw
     
     self.get_morphology_features()
-    self.get_posture_features()    
     self.get_locomotion_features()
+    self.get_posture_features()    
     self.get_path_features()
+
+
+
+  def get_locomotion_features(self):
+    """
+    Translation of: SegwormMatlabClasses / 
+    +seg_worm / +features / @locomotion / locomotion.m
+
+   properties
+        velocity
+        %   .headTip
+        %       .speed
+        %       .direction
+        %   .head
+        %       .speed
+        %       .direction
+        %   .midbody
+        %       .speed
+        %       .direction
+        %   .tail
+        %       .speed
+        %       .direction
+        %   .tailTip
+        %       .speed
+        %       .direction
+        motion
+        bends
+        turns
+    end
+
+    """
+    self.locomotion = {}
+
+    self.locomotion['velocity'] = \
+      feature_helpers.get_worm_velocity(self.nw.data_dict['skeletons'])
+
+    
+    # until we have the below calculated, just create an array of zeroes
+    self.locomotion['midbody_distance'] = 0
+    #      np.zeros(np.shape(self.skeletons_x()))        
+    #      abs(locomotion['velocity']['midbody']['speed'] / config.FPS)
+    
+    pass
+
     
       
   def get_morphology_features(self):
@@ -82,14 +124,14 @@ class WormFeatures:
     5. Midbody Width/Length.
     
     get_morphology_features:
-    * Takes normalized_worm, and generates a structure called "morphology"
+    * Takes nw, and generates a structure called "morphology"
     
     %Old files that served as a reference ...
     %------------------------------------------------------------
     %morphology_process.m
     %schaferFeatures_process.m
     """
-    nw = self.normalized_worm   # just so we have a shorter name to refer to    
+    nw = self.nw   # just so we have a shorter name to refer to    
     
     self.morphology = {}
     self.morphology['length'] = nw.data_dict['lengths']
@@ -133,7 +175,7 @@ class WormFeatures:
     %
 
     """    
-    nw = self.normalized_worm # let's use this convenient alias 
+    nw = self.nw # let's use this convenient alias 
     
     # Initialize self.posture as a blank dictionary we will add to
     self.posture = {}  
@@ -187,20 +229,6 @@ class WormFeatures:
     pass
 
   
-  def get_locomotion_features(self):
-    """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getLocomotionFeatures.m
-
-    """
-    locomotion = {}
-    
-    # until we have the below calculated, just create an array of zeroes
-    locomotion['midbody_distance'] = 0
-    #      np.zeros(np.shape(self.skeletons_x()))        
-    #      abs(locomotion['velocity']['midbody']['speed'] / config.FPS)
-    
-    pass
  
   
   def get_path_features(self):

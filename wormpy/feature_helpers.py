@@ -12,9 +12,16 @@ import numpy as np
 import collections
 from wormpy.config import *
 
-__ALL__ = ['get_bends', 
+__ALL__ = ['get_worm_velocity',
+           'get_bends', 
            'get_amplitude_and_wavelength', 
            'get_eccentricity_and_orientation']  # for posture
+
+
+def get_worm_velocity(skeletons):
+  # TODO
+  
+  return 0
 
 
 def get_bends(nw):
@@ -222,6 +229,9 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   EccentricityAndOrientation.wavelength = 'wavelength example'
 
   return EccentricityAndOrientation
+  
+  
+  
   
   
   
