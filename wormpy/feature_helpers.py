@@ -9,11 +9,19 @@ WormFeatures
 
 """
 import numpy as np
-from collections import namedtuple
-
+import collections
 from wormpy.config import *
 
-__ALL__ = ['get_bends', 'get_amplitude_and_wavelength', 'get_eccentricity']  # for posture
+__ALL__ = ['get_worm_velocity',
+           'get_bends', 
+           'get_amplitude_and_wavelength', 
+           'get_eccentricity_and_orientation']  # for posture
+
+
+def get_worm_velocity(skeletons):
+  # TODO
+  
+  return 0
 
 
 def get_bends(nw):
@@ -56,7 +64,7 @@ def get_bends(nw):
   return bends
 
 
-def get_amplitude_and_wavelength(theta_d,sx,sy,worm_lengths):
+def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   """
   
   
@@ -140,15 +148,20 @@ def get_amplitude_and_wavelength(theta_d,sx,sy,worm_lengths):
      sinusoidal movement" BMC Genetics 2005, 6:5
   
   """
-  AmpWaveTrack = \
-    collections.namedtuple('AmpWaveTrack', 
+  amp_wave_track = \
+    collections.namedtuple('amp_wave_track', 
                            ['amplitude', 'wavelength', 'track_length'])
-  
+  amp_wave_track.amplitude = 'yay1'
+  amp_wave_track.wavelength = 'yay2'
+  amp_wave_track.track_length = 'yay3'
 
-  return AmpWaveTrack
+  onw = nw.re_orient_and_centre()  
 
 
-def get_eccentricity(contour_x, contour_y):
+  return amp_wave_track
+
+
+def get_eccentricity_and_orientation(contour_x, contour_y):
   """
   % get_eccentricity   
   %
@@ -184,7 +197,7 @@ def get_eccentricity(contour_x, contour_y):
   %              gives a more accurate estimate of the ellipse but increases
   %              the calculation time.
   %
-  %   Outputs:
+  %   Outputs: a namedtuple containing:
   %   =======================================================================
   %   eccentricity - [1 x n_frames] The eccentricity of the equivalent ellipse
   %   orientation  - [1 x n_frames] The orientation angle of the equivalent ellipse
@@ -208,5 +221,18 @@ def get_eccentricity(contour_x, contour_y):
   +seg_worm / +feature_helpers / +posture / getEccentricity.m
   """
   # TODO: translate this function from Jim's code
-  return None   
+  EccentricityAndOrientation = \
+    collections.namedtuple('EccentricityAndOrientation', 
+                           ['eccentricity', 'orientation'])
+                           
+  EccentricityAndOrientation.eccentricity = 'eccentricity example'
+  EccentricityAndOrientation.wavelength = 'wavelength example'
+
+  return EccentricityAndOrientation
+  
+  
+  
+  
+  
+  
   

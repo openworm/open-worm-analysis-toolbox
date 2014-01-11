@@ -2,29 +2,26 @@
 """
 Created on Fri Nov 29 21:01:23 2013
 
-@author: mcurrie
+@authors: @JimHokanson, @MichaelCurrie
+
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code path:
 SegwormMatlabClasses / 
 +seg_worm / @normalized_worm / normalized_worm.m
+
 """
+
 import numpy as np
 import scipy.io
 import os
-from wormpy.WormExperimentFile import WormExperimentFile
 
+class NormalizedWorm():
+  """ NormalizedWorm encapsulates the normalized measures data, loaded
+      from the two files, one for the eigenworm data and the other for 
+      the rest.
 
-  
-
-
-class NormalizedWorm(WormExperimentFile):
-  """ NormalizedWorm inherits from WormExperimentFile, which 
-      initializes the skeleton data.
-      NormalizedWorm loads the eigen_worm data and much other data from
-      the experiment file data
-
-      This will be an interface class between the parsed worms and the
-      feature sets that are saved to disk. The goal is to take in the
+      This will be an intermediate representation, between the parsed,
+      normalized worms, and the "feature" sets. The goal is to take in the
       code from normWorms and to have a well described set of properties
       for rewriting the feature code.
 
@@ -37,7 +34,7 @@ class NormalizedWorm(WormExperimentFile):
       
       IN data_dict:
       
-      EIGENWORM_PATH         
+      EIGENWORM_PATH
       segmentation_status   
       frame_codes
       vulva_contours
@@ -89,7 +86,7 @@ class NormalizedWorm(WormExperimentFile):
   """
   # The normalized worm contains precisely 49 points per frame.  Here
   # we list in a dictionary various partitions of the worm.
-  worm_partitions = None    
+  worm_partitions = None
   # this stores a dictionary of various ways of organizing the partitions
   worm_parititon_subsets = None
   
@@ -106,7 +103,6 @@ class NormalizedWorm(WormExperimentFile):
     the eigen_worm data
     
     """
-    super().__init__()    
     self.load_normalized_data(data_file_path)
     self.load_eigen_worms(eigen_worm_file_path)
     
@@ -142,7 +138,8 @@ class NormalizedWorm(WormExperimentFile):
                                               'midbody', 'hips', 'tail'),
                                    'first_third': ('head', 'neck'),
                                    'second_third': ('midbody'),
-                                   'last_third': ('hips', 'tail')}
+                                   'last_third': ('hips', 'tail'),
+                                   'all': ('all')}
 
   def get_partition_subset(self, partition_type):
     """ there are various ways of partitioning the worm's 49 points.
@@ -222,34 +219,33 @@ class NormalizedWorm(WormExperimentFile):
       # NOTE: These are aligned to the order in the files.
       # these will be the keys of the dictionary data_dict
       data_keys = [
-                'EIGENWORM_PATH',
-                # a numpy array of chars for each frame of the video
+                # this just contains a string for where to find the 
+                # eigenworm file.
+                'EIGENWORM_PATH',   
+                # a string of length n, showing, for each frame of the video:
                 # s = segmented
                 # f = segmentation failed
                 # m = stage movement
                 # d = dropped frame
                 # n??? - there is reference tin some old code to this 
-                # type # DEBUG
+                # after loading this we convert it to a numpy array.
                 'segmentation_status',
                 # shape is (1 n), see comments in 
                 # seg_worm.parsing.frame_errors
                 'frame_codes',
-                
-                # Contour data is used with 
-                # seg_worm.feature_helpers.posture.getEccentricity:
-                'vulva_contours',     # shape is (49, 2, nu) integer
+                'vulva_contours',     # shape is (49, 2, n) integer
                 'non_vulva_contours', # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
                 'angles',             # shape is (49, 2, n) integer
                 'in_out_touches',     # shape is (49, n) integer (degrees)
-                'lengths',# shape is (n) integer
-                'widths',# shape is (49, n) integer
-                'head_areas', # shape is (n) integer
-                'tail_areas',# shape is (n) integer
-                'vulva_areas',# shape is (n) integer
-                'non_vulva_areas', # shape is (n) integer
-                'x',
-                'y']
+                'lengths',            # shape is (n) integer
+                'widths',             # shape is (49, n) integer
+                'head_areas',         # shape is (n) integer
+                'tail_areas',         # shape is (n) integer
+                'vulva_areas',        # shape is (n) integer
+                'non_vulva_areas',    # shape is (n) integer
+                'x',                  # shape is (49, n) integer
+                'y']                  # shape is (49, n) integer
       
       # Here I use powerful python syntax to reference data elements of s
       # dynamically through built-in method getattr
@@ -258,12 +254,43 @@ class NormalizedWorm(WormExperimentFile):
       # this is to build up a nice dictionary containing the data in s
       self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
       
-      # our derived class, WormExperimentFile, expects skeletons to be 
-      # in the shape (n, 49, 2), but data_dict['skeletons'] is in the 
-      # shape (49, 2, n), so we must "roll the axis" twice.
-      self.skeletons = np.rollaxis(self.data_dict['skeletons'], 2)
-      
+      # Let's change the string of length n to a numpy array of single 
+      # characters of length n, to be consistent with the other data 
+      # structures
+      self.data_dict['segmentation_status'] = \
+        np.array(list(self.data_dict['segmentation_status']))
+        
+      # TODO: @MichaelCurrie: do this.  but I'm not sure how the file 
+      # knows where the eigenworm file is
+      # So I have to think about this step.        
+      #self.load_eigen_worms(self.data_dict['EIGENWORM_PATH'])
     
+      self.load_frame_code_descriptions()    
+    
+  def load_frame_code_descriptions(self):
+    """
+      Load the frame_codes descriptions, which are stored in a .csv file
+      
+    """
+    file_path = os.path.join(os.path.abspath(os.getcwd()),
+                             'wormpy', 
+                             'frame_codes.csv')
+    f = open(file_path, 'r')
+
+    self.frame_codes_descriptions = []
+    
+    for line in f:
+      # split along ';' but ignore any newlines or quotes
+      a = line.replace("\n","").replace("'","").split(';')
+      # the actual frame codes (the first entry on each line)
+      # can be treated as integers
+      a[0] = int(a[0])
+      self.frame_codes_descriptions.append(a)  
+    
+    f.close()
+    
+    
+
   def load_normalized_blocks(self, blocks_path):
     """ Processes all the MatLab data "blocks" created from the raw 
         video into one coherent set of data.  This is a translation 
@@ -275,6 +302,124 @@ class NormalizedWorm(WormExperimentFile):
         to the structure I need.
     """
     pass
+
+
+  def rotate(self, theta_d):
+    """ rotate:
+    
+        Returns a NormalizedWorm instance with each frame rotated by 
+        the amount given in the per-frame theta_d array.
+
+        INPUT: theta_d, the frame-by-frame rotation angle in degrees.        
+               A 1-dimensional n-element array where n is the number of
+               frames, giving a rotation angle for each frame.
+               e.g. to align the worm onto the x axis, 
+        
+        OUTPUT: A new NormalizedWorm instance with the same worm, rotated
+        in each frame by the requested amount.
+    
+    """
+    #theta_r = theta_d * (np.pi / 180)
+    
+    #%Unrotate worm
+    #%-----------------------------------------------------------------
+    #wwx = bsxfun(@times,sx,cos(theta_r)) + bsxfun(@times,sy,sin(theta_r));
+    #wwy = bsxfun(@times,sx,-sin(theta_r)) + bsxfun(@times,sy,cos(theta_r));
+
+
+    # TODO
+    return self        
+
+  def centre(self):
+    """
+      centre:
+        Returns a numpy array of length n, giving for each frame
+        the mean of the skeleton points
+        
+    """
+    s = self.data_dict['skeletons']
+    return np.nanmean(s, 0, keepdims=False)
+
+  def angle(self):
+    """
+      angle:
+        Returns a numpy array of length n, giving for each frame
+        the angle formed by the first and last skeleton point.
+        
+    """
+    s = self.data_dict['skeletons']
+    # obtain vector between first and last skeleton point
+    v = s[48,:,:]-s[0,:,:]  
+    # find the angle of this vector
+    return np.arctan(v[1,:]/v[0,:])*(180/np.pi)
+
+  def translate_to_centre(self):
+    """ 
+      translate_to_centre:      
+        Returns a NormalizedWorm instance with each frame moved so the 
+        centroid of the worm is 0,0
+
+        INPUT: none.  (it is an attribute of self, of course)
+        
+        OUTPUT: A NormalizedWorm instance with the above properties.
+
+    """
+    s = self.data_dict['skeletons']
+    s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
+    
+    #nw2 = NormalizedWorm()
+    
+    # TODO
+    return s - s_mean
+       
+  def rotate_and_translate(self):
+    # to perform this matrix multiplication we are multiplying:
+    # rot_matrix * s
+    # this is shape 2 x 2 x n, times 2 x 49 x n.
+    # basically we want the first matrix treated as two-dimensional,
+    # and the second matrix treated as one-dimensional,
+    # with the results applied elementwise in the other dimensions.
+    
+    # to make this work I believe we need to pre-broadcast rot_matrix into
+    # the skeleton points dimension (the one with 49 points) so that we have
+    # 2 x 2 x 49 x n, times 2 x 49 x n
+    #s1 = np.rollaxis(self.skeletons, 1)
+    
+    #rot_matrix = np.ones(np.shape(s1)) * rot_matrix
+    
+    #self.skeletons_rotated = rot_matrix.dot(self.skeletons)    
+    
+    skeletons_centred = self.translate_to_centre()
+    orientation = self.angle()
+  
+    a = -orientation * (np.pi/180)
+    
+    rot_matrix = np.array([[np.cos(a), -np.sin(a)],
+                           [np.sin(a),  np.cos(a)]])    
+
+    # we need the x,y listed in the first dimension
+    s1 = np.rollaxis(skeletons_centred, 1)
+
+    # for example, here is the first point of the first frame rotated:
+    #rot_matrix[:,:,0].dot(s1[:,0,0])    
+    
+    # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
+    # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], np.shape(s1)[2])) * rot_matrix    
+    
+    s1_rotated = []        
+    
+    # rotate the worm frame-by-frame and add these skeletons to a list
+    for frame_index in range(self.num_frames()):
+      s1_rotated.append(rot_matrix[:,:,frame_index].dot(s1[:,:,frame_index]))
+    #print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
+      
+    # save the list as a numpy array
+    s1_rotated = np.array(s1_rotated)
+    
+    # fix the axis settings
+    return np.rollaxis(np.rollaxis(s1_rotated,0,3),1)
+
+
 
   def load_eigen_worms(self, eigen_worm_file_path):
     """ load_eigen_worms takes a file path and loads the eigen_worms
@@ -293,11 +438,34 @@ class NormalizedWorm(WormExperimentFile):
       #       eigen_worms_file
       self.eigen_worms = eigen_worms_file.values()
 
+  def num_frames(self): 
+    """ the number of frames in the video
+        ndarray.shape returns a tuple of array dimensions.
+        the frames are along the first dimension i.e. [0].
+    """
+    return self.data_dict['skeletons'].shape[2]
+
   def n_frames(self):
     """ for backwards compatibility with Jim's code, let's define n_frames
         (it does exactly the same thing as num_frames)
     """
     return self.num_frames()
+
+
+  def position_limits(self, dimension, measurement='skeletons'):  
+    """ Maximum extent of worm's travels projected onto a given axis
+        PARAMETERS:
+          dimension: specify 0 for X axis, or 1 for Y axis.
+    NOTE: Dropped frames show up as NaN.  
+          nanmin returns the min ignoring such NaNs.        
+    
+    """
+    d = self.data_dict[measurement]
+    if(len(np.shape(d))<3):
+      raise Exception("Position Limits Is Only Implemented for 2D data")
+    return (np.nanmin(d[dimension,0,:]), 
+            np.nanmax(d[dimension,1,:]))
+
 
   def contour_x(self):
     """ 
@@ -306,13 +474,11 @@ class NormalizedWorm(WormExperimentFile):
             those on the second set. We also reverse the contour so that
             it encompasses an "out and back" contour
     """
-    pass    
-    # TODO: implement this and/or understand how this differs from data_dict['x']
+    pass    # TODO
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
   def contour_y(self):
-    pass
-    # TODO: implement this and/or understand how this differs from data_dict['y']
+    pass    # TODO
     #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
 
 

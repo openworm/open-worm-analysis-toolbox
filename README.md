@@ -9,7 +9,7 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 ###Objectives:###
 
-1. This repository should eventually house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
+1. This repository should house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
 [**Overall OpenWorm Milestone**: *#19*](https://github.com/openworm/OpenWorm/issues?milestone=19&state=open)  
 
 2. In achieving goal #1, this repository will also be an open source version of the Schafer Lab's Worm Tracker 2 (WT2) analysis pipeline that goes from raw real worm videos to worm measurements detected by machine vision, to a selection of calculated worm behavioural features like average speed.
@@ -23,14 +23,14 @@ The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. e
 
 We are using the WT2 analysis software, written in MATLAB, as a starting point for our own code development work.
 
-Part of this codebase is available in the [SegWormMatlabClasses repo](https://github.com/JimHokanson/SegwormMatlabClasses/).
+This full codebase is available in the [SegWormMatlabClasses](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
 
 
 ## Further documentation of worm movement data ##
 
-Further documentation is available at the [openworm_docs repo](https://github.com/JimHokanson/openworm_docs/tree/master/Movement)
+Further documentation is available at the [openworm_docs](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/Movement) repo.
 
-[Monthly Progress Reports](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/MovementValidation)
+[Monthly Progress Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing)
 
 
 
