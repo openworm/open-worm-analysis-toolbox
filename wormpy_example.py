@@ -178,11 +178,11 @@ with warnings.catch_warnings():
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
 
-wormpy.plot_frame_codes(nw)
+#wormpy.plot_frame_codes(nw)
 
-#wp = wormpy.WormPlotter(nw, interactive=False)
+wp = wormpy.WormPlotter(nw, interactive=False)
 
-#wp.show()
+wp.show()
 
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')

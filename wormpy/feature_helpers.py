@@ -18,8 +18,40 @@ __ALL__ = ['get_worm_velocity',
            'get_eccentricity_and_orientation']  # for posture
 
 
-def get_worm_velocity(skeletons):
+def get_worm_velocity(skeletons, ventral_mode=0):
+  """
+    get_worm_velocity:
+      Compute the worm velocity (speed & direction) at the
+      head-tip/head/midbody/tail/tail-tip
+   
+    INPUTS: skeletons: the worm skeleton with shape (49,2,n)
+            ventral_mode: the ventral side mode:
+              0 = unknown
+              1 = clockwise
+              2 = anticlockwise
+    %   Outputs:
+    TODO: fix this description to mention it is a dictionary
+          velocity - the worm velocity; each field has subfields for the
+            "speed" and "direction":
+              headTip = the tip of the head (1/12 the worm at 0.25s)
+              head    = the head (1/6 the worm at 0.5s)
+              midbody = the midbody (2/6 the worm at 0.5s)
+              tail    = the tail (1/6 the worm at 0.5s)
+              tailTip = the tip of the tail (1/12 the worm at 0.25s)
+
+   © Medical Research Council 2012
+   You will not remove any copyright or other notices from the Software; 
+   you must reproduce all copyright notices and other proprietary 
+   notices on any copies of the Software.
+
+  """
+
   # TODO
+  x = skeletons[:,0,:]
+  y = skeletons[:,1,:]
+  
+  
+  
   
   return 0
 
