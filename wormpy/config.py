@@ -13,7 +13,7 @@ these are shown here
 __ALL__ = ['FPS', 'N_ECCENTRICITY']
 
 
-""" FEATURE CONFIGS """
+""" FEATURE CONFIGURATION SETTINGS """
 
 # Frames Per Second
 FPS = 20                
@@ -36,3 +36,6 @@ POSTURE_AMPLITURE_AND_WAVELENGTH = { \
 POSTURE_AMPLITURE_AND_WAVELENGTH['HALF_N_FFT'] = \
   POSTURE_AMPLITURE_AND_WAVELENGTH['N_POINTS_FFT']/2
 
+# used in get_velocity:
+TIP_DIFF  = 0.25
+BODY_DIFF = 0.5

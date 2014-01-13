@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec 17 18:00:36 2013
-
-@author: mcurrie
-
-Some helper functions that assist in the calculation of the attributes of
-WormFeatures
+  feature_helpers.py
+  
+  @authors: @MichaelCurrie, @JimHokanson
+  
+  Some helper functions that assist in the calculation of the attributes of
+  WormFeatures
+  
+  
+  © Medical Research Council 2012
+  You will not remove any copyright or other notices from the Software; 
+  you must reproduce all copyright notices and other proprietary 
+  notices on any copies of the Software.
 
 """
 import numpy as np
 import collections
-from wormpy.config import *
+from wormpy import config
 
 __ALL__ = ['get_worm_velocity',
            'get_bends', 
@@ -18,13 +24,13 @@ __ALL__ = ['get_worm_velocity',
            'get_eccentricity_and_orientation']  # for posture
 
 
-def get_worm_velocity(skeletons, ventral_mode=0):
+def get_worm_velocity(normalized_worm, ventral_mode=0):
   """
     get_worm_velocity:
       Compute the worm velocity (speed & direction) at the
       head-tip/head/midbody/tail/tail-tip
    
-    INPUTS: skeletons: the worm skeleton with shape (49,2,n)
+    INPUTS: nw: a NormalizedWorm instance
             ventral_mode: the ventral side mode:
               0 = unknown
               1 = clockwise
@@ -39,21 +45,69 @@ def get_worm_velocity(skeletons, ventral_mode=0):
               tail    = the tail (1/6 the worm at 0.5s)
               tailTip = the tip of the tail (1/12 the worm at 0.25s)
 
-   © Medical Research Council 2012
-   You will not remove any copyright or other notices from the Software; 
-   you must reproduce all copyright notices and other proprietary 
-   notices on any copies of the Software.
+
 
   """
 
-  # TODO
-  x = skeletons[:,0,:]
-  y = skeletons[:,1,:]
+  # Let's use some partitions.  
+  # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
+  #       this set of partitions does not cover the neck and hips
+  partitions = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
   
+  body_skeleton = normalized_worm.get_partition('body', 'skeletons')
   
+  # maybe try x, y = nw.get_partition_xy('body', 'skeletons')
   
+  # diff calculates differences between adjacent elements of X along the 
+  # first array dimension whose size does not equal 1
+  # 
+  diff_x = np.nanmean(np.diff(body_skeleton[:,0,:], 2, 1), 2)
+  diff_y = np.nanmean(np.diff(body_skeleton[:,0,:], 2, 1), 2)
+  
+  body_angle = np.arctan2(diff_y, diff_x) * (180 / np.pi)
+  # TODO: CHECK THE ABOVE CODE
+  
+  TIME_SCALES = \
+    {
+      'head_tip': config.TIP_DIFF,
+      'head': config.BODY_DIFF,
+      'midbody': config.BODY_DIFF,
+      'tail': config.BODY_DIFF,
+      'tail_tip': config.TIP_DIFF
+    }  
+  
+  for partition in partitions:
+    skeletons = normalized_worm.get_partition(partition, 'skeletons')
+    x = skeletons[:,0,:]
+    y = skeletons[:,1,:]
+    h__compute_velocity(x, y, body_angle, TIME_SCALES[partition], ventral_mode)
   
   return 0
+
+def h__compute_velocity(x, y, body_angle, time_scale, ventral_mode=0):
+  """
+    h__compute_velocity:
+      The velocity is computed not using the nearest values but values
+      that are separated by a sufficient time (scale_time). If the encountered 
+      values are not valid, the width of time is expanded up to a maximum of
+      2*scale_time (or technically, 1 scale time in either direction)
+
+      INPUT:
+        x, y: two numpy arrays of shape (p, n) where p is the size of the 
+              partition of worm's 49 points, and n is the number of frames 
+              in the video
+              
+        body_angle: the angle between the mean of the first-order differences
+        
+        time_scale: either config.TIP_DIFF or config.BODY_DIFF
+        
+        ventral_mode: the ventral side mode:
+              0 = unknown
+              1 = clockwise
+              2 = anticlockwise
+              
+  """
+  pass
 
 
 def get_bends(nw):

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 29 21:01:23 2013
+  NormalizedWorm class
+  
+  @authors: @JimHokanson, @MichaelCurrie
 
-@authors: @JimHokanson, @MichaelCurrie
-
-A translation of Matlab code written by Jim Hokanson,
-in the SegwormMatlabClasses GitHub repo.  Original code path:
-SegwormMatlabClasses / 
-+seg_worm / @normalized_worm / normalized_worm.m
+  A translation of Matlab code written by Jim Hokanson,
+  in the SegwormMatlabClasses GitHub repo.  Original code path:
+  SegwormMatlabClasses / 
+  +seg_worm / @normalized_worm / normalized_worm.m
 
 """
 
@@ -83,6 +83,7 @@ class NormalizedWorm():
        Typical Usage:
        --------------------------------------------------------
        SI = seg_worm.skeleton_indices;
+
   """
   # The normalized worm contains precisely 49 points per frame.  Here
   # we list in a dictionary various partitions of the worm.
@@ -114,25 +115,25 @@ class NormalizedWorm():
     # head_tip, head_base, neck, midbody, hips, tail_base, tail_tip
 
     self.worm_partitions = {'head': (0, 8), 
-                                'neck': (8, 16),
-                                'midbody':  (16, 33),
-                                'hips':  (33, 41),
-                                'tail': (41, 49),
-                                # refinements of ['head']
-                                'head_tip': (0, 4),     
-                                'head_base': (4, 8),    # ""
-                                # refinements of ['tail']
-                                'tail_base': (40, 45),  
-                                'tail_tip': (45, 49),   # ""
-                                # DEBUG: for get_locomotion_bends: 
-                                # DEBUG: Jim might remove
-                                'nose': (3, -1),    
-                                # DEBUG: for get_locomotion_bends: 
-                                # DEBUG: Jim might remove
-                                'neck': (7, -1),
-                                'all': (0, 49),
-                                # neck, midbody, and hips
-                                'body': (8, 41)}
+                            'neck': (8, 16),
+                            'midbody':  (16, 33),
+                            'hips':  (33, 41),
+                            'tail': (41, 49),
+                            # refinements of ['head']
+                            'head_tip': (0, 4),     
+                            'head_base': (4, 8),    # ""
+                            # refinements of ['tail']
+                            'tail_base': (40, 45),  
+                            'tail_tip': (45, 49),   # ""
+                            # DEBUG: for get_locomotion_bends: 
+                            # DEBUG: Jim might remove
+                            'nose': (3, -1),    
+                            # DEBUG: for get_locomotion_bends: 
+                            # DEBUG: Jim might remove
+                            'neck': (7, -1),
+                            'all': (0, 49),
+                            # neck, midbody, and hips
+                            'body': (8, 41)}
 
     self.worm_partition_subsets = {'normal': ('head', 'neck', 
                                               'midbody', 'hips', 'tail'),
@@ -163,6 +164,7 @@ class NormalizedWorm():
     
     width_dict = {k: np.mean(nw.get_partition(k), 0) \
               for k in s.keys()}
+
     """
 
     # parition_type is assumed to be a key for the dictionary
