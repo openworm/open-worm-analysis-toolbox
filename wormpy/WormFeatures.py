@@ -86,7 +86,7 @@ class WormFeatures:
     self.locomotion = {}
 
     self.locomotion['velocity'] = \
-      feature_helpers.get_worm_velocity(self.nw.data_dict['skeletons'])
+      feature_helpers.get_worm_velocity(self.nw)
 
     
     # until we have the below calculated, just create an array of zeroes
