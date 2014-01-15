@@ -16,7 +16,8 @@ __ALL__ = ['FPS', 'N_ECCENTRICITY']
 """ FEATURE CONFIGURATION SETTINGS """
 
 # Frames Per Second
-FPS = 20                
+# (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
+FPS = 20                 
 
 # Grid size for estimating eccentricity, this is the
 # max # of points that will fill the wide dimension.

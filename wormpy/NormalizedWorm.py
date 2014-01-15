@@ -176,9 +176,12 @@ class NormalizedWorm():
     return {k: self.worm_partitions[k] for k in p}
 
 
-  def get_partition(self, partition_key, data_key = 'skeletons'):
+  def get_partition(self, partition_key, data_key = 'skeletons', 
+                    split_spatial_dimensions = False):
     """    
       INPUT: a partition key, and an optional data key.
+        If split_spatial_dimensions is True, the partition is returned 
+        separated into x and y
       OUTPUT: a numpy array containing the data requested, cropped to just
               the partition requested.
               (so the shape might be, say, 4xn if data is 'angles')
@@ -190,8 +193,13 @@ class NormalizedWorm():
     
     #Taking the second element of the resulting list of arrays, i.e. [1],
     #gives the partitioned component we were looking for.
-    return np.split(self.data_dict[data_key], 
+    partition = np.split(self.data_dict[data_key], 
                     self.worm_partitions[partition_key])[1]
+    
+    if(split_spatial_dimensions):
+      return partition[:,0,:], partition[:,1,:]
+    else:
+      return partition
     
   def load_normalized_data(self, data_file_path):
     """ Load the norm_obj.mat file into this class
