@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 26 22:48:17 2013
+  wormpy_example.py
 
-@authors: @JimHokanson, @MichaelCurrie
+  @authors: @JimHokanson, @MichaelCurrie
 
-This is an example illustrating use of the classes in the wormpy module.
+  This is an example illustrating use of the classes in the wormpy module.
 
 """
 
@@ -176,7 +176,7 @@ with warnings.catch_warnings():
   warnings.simplefilter("ignore")
   # From the basic information in normalized_worm,
   # create an instance of WormFeatures, which contains all our features data.
-  wf = wormpy.WormFeatures(nw)
+  #wf = wormpy.WormFeatures(nw)
 
 #wormpy.plot_frame_codes(nw)
 

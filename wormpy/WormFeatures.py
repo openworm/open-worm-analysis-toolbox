@@ -1,31 +1,32 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 27 22:36:32 2013
-
-@authors: @JimHokanson, @MichaelCurrie
-
-A translation of Matlab code written by Jim Hokanson,
-in the SegwormMatlabClasses GitHub repo.  Original code path:
-SegwormMatlabClasses / 
-+seg_worm / @feature_calculator / get_features_rewritten.m
-
-NOTE: REQUIRES numpy.version.full_version >= '1.8' 
-since numpy.nanmean is only available after that version.
-(http://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.nanmean.html)
-Alternatively, you can just install nanfunctions.py 
-(see instructions in ..//README.md in this repo)
-
-*** For +seg_worm / @feature_calculator / getPostureFeatures.m,
-*** here are some renamed variables:
-
-SI = seg_worm.skeleton_indices is expressed here as self.skeleton_partitions
-ALL_INDICES = SI.ALL_NORMAL_INDICES is expressed here as 
-              self.normal_partitions()
-FIELDS = SI.ALL_NORMAL_NAMES is expressed here as 
-         self.normal_partitions().keys()
-n_fields = length(FIELDS) = len(self.normal_partitions().keys())
+  WormFeatures.py:
+  
+  @authors: @JimHokanson, @MichaelCurrie
+  
+  A translation of Matlab code written by Jim Hokanson,
+  in the SegwormMatlabClasses GitHub repo.  Original code path:
+  SegwormMatlabClasses / 
+  +seg_worm / @feature_calculator / get_features_rewritten.m
+  
+  NOTE: REQUIRES numpy.version.full_version >= '1.8' 
+  since numpy.nanmean is only available after that version.
+  (http://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.nanmean.html)
+  Alternatively, you can just install nanfunctions.py 
+  (see instructions in ..//README.md in this repo)
+  
+  *** For +seg_worm / @feature_calculator / getPostureFeatures.m,
+  *** here are some renamed variables:
+  
+  SI = seg_worm.skeleton_indices is expressed here as self.skeleton_partitions
+  ALL_INDICES = SI.ALL_NORMAL_INDICES is expressed here as 
+                self.normal_partitions()
+  FIELDS = SI.ALL_NORMAL_NAMES is expressed here as 
+           self.normal_partitions().keys()
+  n_fields = length(FIELDS) = len(self.normal_partitions().keys())
 
 """
+
 import numpy as np
 import collections
 from wormpy import config

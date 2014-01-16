@@ -18,113 +18,235 @@ import numpy as np
 import collections
 from wormpy import config
 
-__ALL__ = ['get_worm_velocity',
-           'get_bends', 
-           'get_amplitude_and_wavelength', 
+__ALL__ = ['get_worm_velocity',                 # for locomotion
+           'get_bends',                         # for posture
+           'get_amplitude_and_wavelength',      # for posture
            'get_eccentricity_and_orientation']  # for posture
 
 
-def get_angle():
+def get_angles(segment_x, segment_y, head_to_tail=False):
   """
-    get_angle: obtain the angle of a subset of the 49 points of a worm for
-               each frame
+    get_angles: obtain the "angle" of a subset of the 49 points
+                 of a worm, for each frame.
+      INPUT: 
+        segment_x, segment_y: numpy arrays of shape (p,n) where 
+                              p is the size of the partition of the 49 points
+                              n is the number of frames in the video
+        head_to_tail: True means the worm points are order head to tail.
     
-    returns: A numpy array of shape (n) and stores the worm body's "angle" 
-             for each frame of video
-    
+      OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
+              (in degrees) for each frame of video
+
   """
-  body_x, body_y = nw.get_partition('body', 'skeletons', True)  # shape (33, n)
-  # diff calculates each body point difference between the 33 body points
-  # the we take the mean of these differences for each frame
-  average_diff_x = np.nanmean(np.diff(body_x, n=1, axis=0), axis=0)# shape (n)
-  average_diff_y = np.nanmean(np.diff(body_y, n=1, axis=0), axis=0)# shape (n)
   
-  # body_angle has shape (n) and stores the worm body's "angle" 
+  if(not head_to_tail):
+    # reverse the worm points so we go from tail to head
+    segment_x = segment_x[::-1,:]
+    segment_y = segment_y[::-1,:]
+
+  # Diff calculates each point's difference between the segment's points
+  # then we take the mean of these differences for each frame
+  average_diff_x = np.nanmean(np.diff(segment_x, n=1, axis=0), 
+                              axis=0) # shape (n)
+  average_diff_y = np.nanmean(np.diff(segment_y, n=1, axis=0), 
+                              axis=0) # shape (n)
+  
+  # angles has shape (n) and stores the worm body's "angle"
   # for each frame of video
-  body_angle = np.arctan2(average_diff_y, average_diff_x) * (180 / np.pi)
+  angles = np.degrees(np.arctan2(average_diff_y, average_diff_x))
 
-  return body_angle
+  return angles
 
-def get_worm_velocity(nw, ventral_mode=0):
+
+def get_partition_angles(nw, partition_key, data_key='skeletons',
+                         head_to_tail=False):
   """
-    get_worm_velocity:
-      Compute the worm velocity (speed & direction) at the
-      head-tip/head/midbody/tail/tail-tip
-   
-    INPUTS: nw: a NormalizedWorm instance
-            ventral_mode: the ventral side mode:
-              0 = unknown
-              1 = clockwise
-              2 = anticlockwise
-    %   Outputs:
-    TODO: fix this description to mention it is a dictionary
-          velocity - the worm velocity; each field has subfields for the
-            "speed" and "direction":
-              headTip = the tip of the head (1/12 the worm at 0.25s)
-              head    = the head (1/6 the worm at 0.5s)
-              midbody = the midbody (2/6 the worm at 0.5s)
-              tail    = the tail (1/6 the worm at 0.5s)
-              tailTip = the tip of the tail (1/12 the worm at 0.25s)
+    get_partition_angles: obtain the "angle" of a subset of the 49 points 
+                          of a worm for each frame
+      INPUT: head_to_tail=True means the worm points are order head to tail.
+    
+      OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
+              (in degrees) for each frame of video
+    
+  """
+  # the shape of both segment_x and segment_y is (partition length, n)
+  segment_x, segment_y = nw.get_partition(partition_key, data_key, True)  
+
+  return get_angles(segment_x, segment_y, head_to_tail)
 
 
+def h__computeAngularSpeed(segment_x, segment_y, 
+                           left_I, right_I, ventral_mode):
+  """
+    h__computeAngularSpeed
+      INPUT: 
+        segment_x: the x's of the partition being considered. shape (p,n)
+        segment_y: the y's of the partition being considered. shape (p,n)
+        left_I: the angle's first point
+        right_I: the angle's second point
+        ventral_mode: 0, 1, or 2, specifying that the ventral side is...
+                        0 = unknown
+                        1 = clockwise
+                        2 = anticlockwise
+                        
+      OUTPUT: an angle in the range 
+  """
+  # Compute the body part direction for each frame
+  point_angle_d = get_angles(segment_x, segment_y, head_to_tail=False)
 
+  angular_speed = point_angle_d(right_I) - point_angle_d(left_I)
+  
+  # Correct any jumps that result during the subtraction process
+  # i.e. 1 - 359 ~= -358
+  # by forcing -180 <= angular_speed[i] <= 180
+  angular_speed = (angular_speed + 180) % (360) - 180
+
+  # Change units from distance per frame to distance per second
+  angular_speed = angular_speed * (1/config.FPS)
+  
+  # Sign the direction for dorsal/ventral locomotion.
+  # if ventral_mode is anything but anticlockwise, then negate angular_speed:
+  if(ventral_mode < 2):
+    angular_speed = -angular_speed
+
+  return angular_speed
+
+
+def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
+  """
+    h__getVelocityIndices:
+      Compute the speed using back/front nearest neighbours, avoiding NaNs,
+      bounded at twice the scale.
+
+      INPUTS:
+        num_frames: the number of frames
+        frames_per_sample: our sample scale, in frames
+        good_frames_mask: shape (num_frames), false if underlying angle is NaN
+  
+       OUTPUTS:
+         keep_mask : shape (num_frames), this is used to indicate 
+                     which original frames have valid velocity values, 
+                     and which don't. 
+                     NOTE: sum(keep_mask) == n_valid_velocity_values
+         left_I    : shape (n_valid_velocity_values), for a given sample, this
+                     indicates the index to the left of (less than) the sample
+                     that should be used to calculate the velocity
+         right_I   : shape (n_valid_velocity_values)
+  
   """
 
-  # Let's use some partitions.  
-  # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
-  #       this set of partitions does not cover the neck and hips
-  partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
+  # Create a "half" scale
+  # NOTE: Since the scale is odd, the half
+  #       scale will be even, because we subtract 1
+  scale_minus_1 = frames_per_sample - 1
+  half_scale    = scale_minus_1 / 2 
   
-  body_angle = get_angle()
+  # First frame for which we can assign a valid velocity:
+  start_index = half_scale 
+  end_index   = num_frames - half_scale + 1
   
-  TIME_SCALES = \
-    {
-      'head_tip': config.TIP_DIFF,
-      'head': config.BODY_DIFF,
-      'midbody': config.BODY_DIFF,
-      'tail': config.BODY_DIFF,
-      'tail_tip': config.TIP_DIFF
-    }  
+  # These are the indices we will use to compute the velocity. We add
+  # a half scale here to avoid boundary issues. We'll subtract it out later.
+  # See below for more details
+  middle_I = np.arange(start_index, end_index, 1) + half_scale
   
-  for partition_key in partition_keys:
-    x, y = nw.get_partition(partition_key, 'skeletons', True)
-    h__compute_velocity(x, y, body_angle, 
-                        TIME_SCALES[partition_key], ventral_mode)
-  
-  return 0
-
-def h__compute_velocity(x, y, body_angle, time_scale, ventral_mode=0):
   """
-    h__compute_velocity:
-      The velocity is computed not using the nearest values but values
-      that are separated by a sufficient time (scale_time). If the encountered 
-      values are not valid, the width of time is expanded up to a maximum of
-      2*scale_time (or technically, 1 scale time in either direction)
-
-      INPUT:
-        x, y: two numpy arrays of shape (p, n) where p is the size of the 
-              partition of worm's 49 points, and n is the number of frames 
-              in the video
-              
-        body_angle: the angle between the mean of the first-order differences
-        
-        time_scale: either config.TIP_DIFF or config.BODY_DIFF, which are
-                    fractions like 0.5 or 0.25.
-        
-        ventral_mode: the ventral side mode:
-              0 = unknown
-              1 = clockwise
-              2 = anticlockwise
-              
+     Our start_index frame can only have one valid start frame (frame 1)
+     afterwards it is invalid. In other words, if frame 1 is not good, we
+     can't check frame 0 or frame -1, or -2.
+  
+     However, in general I'd prefer to avoid doing some check on the bounds
+     of the frames, i.e. for looking at starting frames, I'd like to avoid
+     checking if the frame value is 1 or greater.
+  
+     To get around this we'll pad with bad values (which we'll never match)
+     then shift the final indices. In this way, we can check these "frames",
+     as they will have positive indices.
+  
+     e.g.
+     scale = 5
+     half_scale = 2
+  
+     This means the first frame in which we could possibly get a valid
+     velocity is frame 3, computed using frames 1 and 5
+  
+     NaN NaN 1 2 3  <- true indices (frame numbers)
+     1   2   3 4 5  <- temporary indices
+  
+     NOTE: Now if frame 1 is bad, we can go left by half_scale + 1 to temp
+     index 2 (frame 0) or even further to temp_index 1 (frame -1), we'll
+     never use those values however because below we state that the values
+     at those indices are bad (see is_good_value_mask)
+  
   """
-  num_frames = np.shape(x)[1]
   
-  # TODO: insert description of what sampling_scale is used for
+  """
+  unmatched_left_mask  = true(1,length(middle_I))
+  unmatched_right_mask = true(1,length(middle_I))
   
-  # We require sampling_scale to be an odd integer
-  # We calculate the scale as a scalar multiple of FPS.  We require the 
-  # scalar multiple of FPS to be an ODD INTEGER.
-  ostensive_sampling_scale = time_scale * config.FPS
+  # This tells us whether each value is useable or not for velocity
+  # Better to do this out of the loop.
+  # For real indices (frames 1:n_frames), we rely on whether or not the
+  # mean position is NaN, for fake padding frames they can never be good so we
+  # set them to be false
+  is_good_value_mask = [false(1,half_scale) good_frames_mask false(1,half_scale)]
+  
+  # These will be the final indices from which we estimate the velocity.
+  # i.e. delta_position(I) = (position(right_indices(I)) - position(left_indices(I))
+  left_I  = NaN(1,length(middle_I))
+  right_I = NaN(1,length(middle_I))
+  
+  # Instead of looping over each centered velocity, we loop over each possible
+  # shift. A shift is valid if the frame of the shift is good, and we have yet
+  # to encounter a match for that centered index
+  for iShift = half_scale:scale_minus_1
+      
+      # We grab indices that are the appropriate distance from the current
+      # value. If we have not yet found a bound on the given side, and the
+      # index is valid, we keep it.
+      left_indices_temp  = middle_I - iShift
+      right_indices_temp = middle_I + iShift
+      
+      is_good_left_mask  = is_good_value_mask(left_indices_temp)
+      is_good_right_mask = is_good_value_mask(right_indices_temp)
+      
+      use_left_mask      = unmatched_left_mask  & is_good_left_mask
+      use_right_mask     = unmatched_right_mask & is_good_right_mask
+      
+      left_I(use_left_mask)   = left_indices_temp(use_left_mask)
+      right_I(use_right_mask) = right_indices_temp(use_right_mask)
+      
+      unmatched_left_mask(use_left_mask)   = false
+      unmatched_right_mask(use_right_mask) = false
+  end
+  
+  left_I   = left_I    - half_scale # Remove the offset ...
+  right_I  = right_I   - half_scale
+  middle_I = middle_I  - half_scale
+  
+  # Filter down to usable values, in which both left and right are defined
+  valid_indices_mask = ~isnan(left_I) & ~isnan(right_I)
+  left_I    = left_I(valid_indices_mask)
+  right_I   = right_I(valid_indices_mask)
+  middle_I  = middle_I(valid_indices_mask)
+  
+  keep_mask = false(1,n_frames)
+  keep_mask(middle_I) = true
+  
+  return [keep_mask,left_I,right_I]
+  """
+
+def get_frames_per_sample(sample_time):
+  """
+    get_window_width:
+      We require sampling_scale to be an odd integer
+      We calculate the scale as a scalar multiple of FPS.  We require the 
+      scalar multiple of FPS to be an ODD INTEGER.
+
+      INPUT: sample_time: number of seconds to sample.
+  """
+
+  ostensive_sampling_scale = sample_time * config.FPS
   
   # We need sampling_scale to be an odd integer, so 
   # first we check if we already have an integer.
@@ -137,7 +259,7 @@ def h__compute_velocity(x, y, body_angle, time_scale, ventral_mode=0):
       sampling_scale = ostensive_sampling_scale
   else:
     # Otherwise, ostensive_sampling_scale is not an integer, 
-    # so take the nearest odd integer
+    # so take the nearest odd integerw
     sampling_scale_low  = np.floor(ostensive_sampling_scale)
     sampling_scale_high = np.ceil(ostensive_sampling_scale)
     if(sampling_scale_high % 2 == 0): 
@@ -145,138 +267,206 @@ def h__compute_velocity(x, y, body_angle, time_scale, ventral_mode=0):
     else:
       sampling_scale = sampling_scale_high
 
-  # Create numpy arrays filled with NaNs to start with
-  speed          = np.empty((1, num_frames)).fill(np.NaN)
-  direction      = np.empty((1, num_frames)).fill(np.NaN)
-  body_direction = np.empty((1, num_frames)).fill(np.NaN)
+  return sampling_scale
+
+
+def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
+  """
+    compute_velocity:
+      The velocity is computed not using the nearest values but values
+      that are separated by a sufficient time (sample_time). 
+      If the encountered values are not valid (i.e. NaNs), the width of 
+      time is expanded up to a maximum of 2*sample_time (or technically, 
+      1 sample_time in either direction)
+
+      INPUT:
+        sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
+              partition of worm's 49 points, and n is the number of frames 
+              in the video
+              
+        avg_body_angle: The angles between the mean of the first-order 
+                        differences.  Should have shape (n).
+        
+        sample_time: Time over which to compute velocity, in seconds.
+        
+        ventral_mode: 0, 1, or 2, specifying that the ventral side is...
+                        0 = unknown
+                        1 = clockwise
+                        2 = anticlockwise
+      OUTPUT:
+        Two numpy arrays of shape (n), for 
+        speed and direction, respectively.
+        
+  """
+  num_frames = np.shape(sx)[1]
   
-  # If we don't have enough frames to satisfy our sampling_scale,
+  # We need to go from a time over which to compute the velocity 
+  # to a # of samples. The # of samples should be odd.
+  frames_per_sample = get_frames_per_sample(sample_time)
+  
+  # If we don't have enough frames to satisfy our sampling scale,
   # return with nothing.
-  if(sampling_scale > num_frames):
-      velocity = {'speed': speed, 'direction': direction}
-      return velocity
+  if(frames_per_sample > num_frames):
+    # Create numpy arrays filled with NaNs
+    speed = np.empty((1, num_frames)).fill(np.NaN)
+    direction = np.empty((1, num_frames)).fill(np.NaN)
+    return speed, direction
 
-  # Compute the body part direction.
+  # Compute the indices that we will use for computing the velocity. We
+  # calculate the velocity roughly centered on each sample, but with a
+  # considerable width between frames that smooths the velocity.
+  good_frames_mask = ~np.isnan(avg_body_angle)
+  keep_mask, left_I, right_I = h__getVelocityIndices(num_frames, 
+                                                     frames_per_sample, 
+                                                     good_frames_mask)
 
-  # ME: add get_angle() here....
 
-  d_x = nanmean(diff(x(pointsI,:), 1, 1), 1)
-  d_y = nanmean(diff(y(pointsI,:), 1, 1), 1)
+  # Compute speed
+  # --------------------------------------------------------
+
+  # Centroid of skeletal segment, frame-by-frame:
+  x_mean = np.mean(sx, 1)
+  y_mean = np.mean(sy, 1)
   
-  pointAngle = atan2(d_y, d_x) * (180 / pi)
+  """
+  dX  = x_mean(right_I) - x_mean(left_I)
+  dY  = y_mean(right_I) - y_mean(left_I)
   
-  # Compute the coordinates.
-  x_mean = mean(x(pointsI,:), 1)
-  y_mean = mean(y(pointsI,:), 1)
+  distance = sqrt(dX.^2 + dY.^2)
+  time     = (right_I - left_I)./ config.FPS
   
-  # Compute the speed using back/front nearest neighbors bounded at twice the scale.
-  scale_minus_1 = sampling_scale - 1
-  half_scale    = scale_minus_1 / 2
+  speed    = NaN(1,n_frames)
+  speed(keep_mask) = distance./time
+
   
-  start_index = 1+half_scale
-  end_index   = n_frames-half_scale
+  # Compute angular speed (Formally known as direction :/)
+  # --------------------------------------------------------
+  angular_speed = NaN(1,n_frames)
+  angular_speed(keep_mask) = h__computeAngularSpeed(sx, sy,
+                                                    left_I, right_I,
+                                                    ventral_mode)
   
-  middle_indices     = (start_index:end_index) + half_scale
+  # Sign the speed
+  #   We want to know how the worm's movement direction compares 
+  #   to the average angle it had (apparently at the start)
+  motion_direction = NaN(1,n_frames)
+  motion_direction(keep_mask) = atan2(dY, dX) * (180 / pi)
+  
+  # This recentres the definition, as we are really just concerned
+  # with the change, not with the actual value
+  body_direction = NaN(1,n_frames)
+  body_direction(keep_mask) = motion_direction(keep_mask) - avg_body_angle_d(left_I)
+  
+  body_direction(body_direction < -180) = body_direction(body_direction < -180) + 360
+  body_direction(body_direction > 180)  = body_direction(body_direction > 180)  - 360
+  
+  speed(abs(body_direction) > 90) = -speed(abs(body_direction) > 90)
+  
+  
+  # Added for wormPathCurvature
+  motion_direction(body_direction < 0) = -1*motion_direction(body_direction < 0)
+  if(ventral_mode > 1):
+     motion_direction = -1*motion_direction 
+  
+  # Organize the velocity.
+  #-----------------------------------------------------------
+  velocity.speed            = speed
+  velocity.angular_speed    = angular_speed
+  velocity.body_direction   = body_direction
+  velocity.motion_direction = motion_direction
+    
 
   """
-  #   our start_index frame can only have one valid frame (frame 1)
-  #   afterwards it is invalid
-  #
-  #   To get around this we'll pad with bad values (which we'll never match)
-  #   then shift the final indices
-  #
-  #   e.g.
-  #   scale = 5
-  #   start = 3 - this means we grab +/- 2, so we need to have our indices
-  #       padded by 2 when we grab, or alternatively do a filter (i.e. if statement
-  #   and removal of indices, which I think is slower)
-  #
-  #   NaN NaN 1 2 3
-  #   1   2   3 4 5  <- temporary indices
-  #
-  #   Then at the end shift everything by 2 
-  #
-  #   This allows us to remove conditionals ...
   
-  matched_left_mask  = false(1,length(middle_indices))
-  matched_right_mask = false(1,length(middle_indices))
-  
-  #This tells us whether each value is useable or not for velocity
-  #Better to do this out of the loop ...
-  is_good_value_mask = [false(1,half_scale) ~isnan(x_mean) false(1,half_scale)]
-  
-  #These will be the final indices from which we estimate the velocity
-  left_indices  = NaN(1,length(middle_indices))
-  right_indices = NaN(1,length(middle_indices))
-  
-  #NOTE: This might be faster if we only tested unmatched values ...
-  #NOTE: We could also switch the matched logic to avoid the negation ...
-  for iShift = half_scale:scale_minus_1
-      
-      #We grab indices that are the appropriate distance from the current
-      #value. If we have not yet found a bound on the given side, and the
-      #index is valid, we keep it.
-      left_indices_temp  = middle_indices - iShift
-      right_indices_temp = middle_indices + iShift
-      
-      is_good_left       = is_good_value_mask(left_indices_temp)
-      is_good_right      = is_good_value_mask(right_indices_temp)
-      
-      #Use if the value is good and not set ..
-      use_left  = ~matched_left_mask  & is_good_left
-      use_right = ~matched_right_mask & is_good_right
-      
-      left_indices(use_left)   = left_indices_temp(use_left)
-      right_indices(use_right) = right_indices_temp(use_right)
-      
-      matched_left_mask(use_left)   = true
-      matched_right_mask(use_right) = true
-  end
-  
-  left_indices   = left_indices    - half_scale #Remove the offset ...
-  right_indices  = right_indices   - half_scale
-  middle_indices = middle_indices  - half_scale
-  
-  #Filter down to usable values
-  #NOTE: Some values may not have valid points on one or both sides ...
-  keep_mask = ~isnan(left_indices) & ~isnan(right_indices)
-  
-  left_indices   = left_indices(keep_mask)
-  right_indices  = right_indices(keep_mask)
-  middle_indices = middle_indices(keep_mask)
-  
-  #--------------------------------------------------------------------------
-  
-  d_x = x_mean(right_indices) - x_mean(left_indices)
-  d_y = y_mean(right_indices) - y_mean(left_indices)
-  distance = sqrt(d_x.^ 2 + d_y.^ 2)
-  time     = (right_indices - left_indices)./ fps
-  speed(middle_indices) = distance./time
-  
-  direction(middle_indices)   = pointAngle(right_indices) - pointAngle(left_indices)
-  direction(direction < -180) = direction(direction < -180) + 360
-  direction(direction > 180)  = direction(direction > 180)  - 360
-  direction = direction./fps
-  
-  # Sign the speed.
-  #--------------------------------------------------------
-  motionDirection = atan2(d_y, d_x) * (180 / pi)
-  bodyDirection(middle_indices) = motionDirection - bodyAngle(left_indices)
-  
-  bodyDirection(bodyDirection < -180) = bodyDirection(bodyDirection < -180) + 360
-  bodyDirection(bodyDirection > 180)  = bodyDirection(bodyDirection > 180)  - 360
-  
-  speed(abs(bodyDirection) > 90) = -speed(abs(bodyDirection) > 90)
-  
-  # Sign the direction for dorsal/ventral locomtoion.
-  if ventralMode < 2 % + = dorsal direction
-      direction = -direction
-  end
+  return speed, direction
+
+
+
+def get_worm_velocity(nw, ventral_mode=0):
+  """
+    get_worm_velocity:
+      Compute the worm velocity (speed & direction) at the
+      head-tip/head/midbody/tail/tail-tip
+   
+    INPUTS: nw: a NormalizedWorm instance
+            ventral_mode: the ventral side mode:
+              0 = unknown
+              1 = clockwise
+              2 = anticlockwise
+    OUTPUT: a two-tiered dictionary containing
+              the partitions in the first tier:
+                headTip = the tip of the head (1/12 the worm at 0.25s)
+                head    = the head (1/6 the worm at 0.5s)
+                midbody = the midbody (2/6 the worm at 0.5s)
+                tail    = the tail (1/6 the worm at 0.5s)
+                tailTip = the tip of the tail (1/12 the worm at 0.25s)
+              and 'speed' and 'direction' in the second tier.
+
   """
 
-  velocity = {'speed': speed, 'direction': direction}
+  # Let's use some partitions.  
+  # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
+  #       this set of partitions does not cover the neck and hips
+  partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
+  
+  avg_body_angle = get_angles(nw, partition_key='body',
+                              data_key='skeletons', reverse=True)
+  
+  sample_time_values = \
+    {
+      'head_tip': config.TIP_DIFF,
+      'head': config.BODY_DIFF,
+      'midbody': config.BODY_DIFF,
+      'tail': config.BODY_DIFF,
+      'tail_tip': config.TIP_DIFF
+    }  
+
+  # Set up a dictionary to store the velocity for each partition
+  velocity = {}
+  
+  for partition_key in partition_keys:
+    x, y = nw.get_partition(partition_key, 'skeletons', True)
+    speed, direction = compute_velocity(x, y, 
+                                        avg_body_angle, 
+                                        sample_time_values[partition_key], 
+                                        ventral_mode)
+    velocity[partition_key] = {'speed': speed, 'direction': direction}
+  
   return velocity
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+"""
 
 
 def get_bends(nw):
@@ -418,59 +608,59 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
 def get_eccentricity_and_orientation(contour_x, contour_y):
   """
-  % get_eccentricity   
-  %
-  %   [eccentricity, orientation] = seg_worm.feature_helpers.posture.getEccentricity(xOutline, yOutline, gridSize)
-  %
-  %   Given x and y coordinates of the outline of a region of interest, fill
-  %   the outline with a grid of evenly spaced points and use these points in
-  %   a center of mass calculation to calculate the eccentricity and
-  %   orientation of the equivalent ellipse.
-  %
-  %   Placing points in the contour is a well known computer science problem
-  %   known as the Point-in-Polygon problem.
-  %
-  %   http://en.wikipedia.org/wiki/Point_in_polygon
-  %
-  %   This function became a lot more complicated in an attempt to make it 
-  %   go much faster. The complication comes from the simplication that can
-  %   be made when the worm doesn't bend back on itself at all.
-  %
-  %
-  %   OldName: getEccentricity.m
-  %
-  %
-  %   Inputs:
-  %   =======================================================================
-  %   xOutline : [96 x n_frames] The x coordinates of the contour. In particular the contour
-  %               starts at the head and goes to the tail and then back to
-  %               the head (although no points are redundant)
-  %   yOutline : [96 x n_frames]  The y coordinates of the contour "  "
-  %   
-  %   N_ECCENTRICITY (a constant from config.py):
-  %              (scalar) The # of points to place in the long dimension. More points
-  %              gives a more accurate estimate of the ellipse but increases
-  %              the calculation time.
-  %
-  %   Outputs: a namedtuple containing:
-  %   =======================================================================
-  %   eccentricity - [1 x n_frames] The eccentricity of the equivalent ellipse
-  %   orientation  - [1 x n_frames] The orientation angle of the equivalent ellipse
-  %
-  %   Nature Methods Description
-  %   =======================================================================
-  %   Eccentricity. 
-  %   ------------------
-  %   The eccentricity of the worm’s posture is measured using
-  %   the eccentricity of an equivalent ellipse to the worm’s filled contour.
-  %   The orientation of the major axis for the equivalent ellipse is used in
-  %   computing the amplitude, wavelength, and track length (described
-  %   below).
-  %
-  %   Status
-  %   =======================================================================
-  %   The code below is finished although I want to break it up into smaller
-  %   functions. I also need to submit a bug report for the inpoly FEX code.
+    get_eccentricity   
+   
+      [eccentricity, orientation] = seg_worm.feature_helpers.posture.getEccentricity(xOutline, yOutline, gridSize)
+   
+      Given x and y coordinates of the outline of a region of interest, fill
+      the outline with a grid of evenly spaced points and use these points in
+      a center of mass calculation to calculate the eccentricity and
+      orientation of the equivalent ellipse.
+   
+      Placing points in the contour is a well known computer science problem
+      known as the Point-in-Polygon problem.
+   
+      http://en.wikipedia.org/wiki/Point_in_polygon
+   
+      This function became a lot more complicated in an attempt to make it 
+      go much faster. The complication comes from the simplication that can
+      be made when the worm doesn't bend back on itself at all.
+   
+   
+      OldName: getEccentricity.m
+    
+   
+      Inputs:
+      =======================================================================
+      xOutline : [96 x n_frames] The x coordinates of the contour. In particular the contour
+                  starts at the head and goes to the tail and then back to
+                  the head (although no points are redundant)
+      yOutline : [96 x n_frames]  The y coordinates of the contour "  "
+      
+      N_ECCENTRICITY (a constant from config.py):
+                 (scalar) The # of points to place in the long dimension. More points
+                 gives a more accurate estimate of the ellipse but increases
+                 the calculation time.
+   
+      Outputs: a namedtuple containing:
+      =======================================================================
+      eccentricity - [1 x n_frames] The eccentricity of the equivalent ellipse
+      orientation  - [1 x n_frames] The orientation angle of the equivalent ellipse
+   
+      Nature Methods Description
+      =======================================================================
+      Eccentricity. 
+      ------------------
+      The eccentricity of the worm’s posture is measured using
+      the eccentricity of an equivalent ellipse to the worm’s filled contour.
+      The orientation of the major axis for the equivalent ellipse is used in
+      computing the amplitude, wavelength, and track length (described
+      below).
+   
+      Status
+      =======================================================================
+      The code below is finished although I want to break it up into smaller
+      functions. I also need to submit a bug report for the inpoly FEX code.
 
   Translation of: SegwormMatlabClasses / 
   +seg_worm / +feature_helpers / +posture / getEccentricity.m
