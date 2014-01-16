@@ -112,14 +112,13 @@ def h__computeAngularSpeed(segment_x, segment_y,
   return angular_speed
 
 
-def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
+def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   """
     h__getVelocityIndices:
       Compute the speed using back/front nearest neighbours, avoiding NaNs,
       bounded at twice the scale.
 
       INPUTS:
-        num_frames: the number of frames
         frames_per_sample: our sample scale, in frames
         good_frames_mask: shape (num_frames), false if underlying angle is NaN
   
@@ -134,7 +133,8 @@ def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
          right_I   : shape (n_valid_velocity_values)
   
   """
-
+  num_frames = len(good_frames_mask)
+  
   # Create a "half" scale
   # NOTE: Since the scale is odd, the half
   #       scale will be even, because we subtract 1
@@ -143,72 +143,83 @@ def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
   
   # First frame for which we can assign a valid velocity:
   start_index = half_scale 
-  end_index   = num_frames - half_scale + 1
+  # Final frame for which we can assign a valid velocity, plus one:
+  end_index   = num_frames - half_scale
   
   # These are the indices we will use to compute the velocity. We add
   # a half scale here to avoid boundary issues. We'll subtract it out later.
   # See below for more details
-  middle_I = np.arange(start_index, end_index, 1) + half_scale
+  middle_I = np.arange(start_index, end_index, 1) + half_scale  
+  # @MichaelCurrie: Wouldn't this make more sense?
+  #middle_I = np.arange(start_index, end_index + half_scale, 1) + half_scale  
   
   """
-     Our start_index frame can only have one valid start frame (frame 1)
-     afterwards it is invalid. In other words, if frame 1 is not good, we
-     can't check frame 0 or frame -1, or -2.
+     Our start_index frame can only have one valid start frame (frame 0)
+     afterwards it is invalid. In other words, if frame 0 is not good, we
+     can't check frame -1, or -2.
   
      However, in general I'd prefer to avoid doing some check on the bounds
      of the frames, i.e. for looking at starting frames, I'd like to avoid
-     checking if the frame value is 1 or greater.
+     checking if the frame value is 0 or greater.
   
      To get around this we'll pad with bad values (which we'll never match)
      then shift the final indices. In this way, we can check these "frames",
      as they will have positive indices.
   
      e.g.
-     scale = 5
-     half_scale = 2
+       scale = 5
+       half_scale = 2
   
      This means the first frame in which we could possibly get a valid
-     velocity is frame 3, computed using frames 1 and 5
+     velocity is frame 2, computed using frames 0 and 4
   
-     NaN NaN 1 2 3  <- true indices (frame numbers)
-     1   2   3 4 5  <- temporary indices
   
-     NOTE: Now if frame 1 is bad, we can go left by half_scale + 1 to temp
-     index 2 (frame 0) or even further to temp_index 1 (frame -1), we'll
+     F   F   F T T  <- example good_frames_mask_padded values
+             0 1 2  <- true indices (frame numbers)
+     0   1   2 3 4  <- temporary indices
+  
+     NOTE: Now if frame 0 is bad, we can go left by half_scale + 1 to temp
+     index 1 (frame -1) or even further to temp_index 0 (frame -2). we'll
      never use those values however because below we state that the values
-     at those indices are bad (see is_good_value_mask)
+     at those indices are bad (see good_frames_mask_padded)
   
   """
-  
-  """
-  unmatched_left_mask  = true(1,length(middle_I))
-  unmatched_right_mask = true(1,length(middle_I))
   
   # This tells us whether each value is useable or not for velocity
   # Better to do this out of the loop.
   # For real indices (frames 1:n_frames), we rely on whether or not the
   # mean position is NaN, for fake padding frames they can never be good so we
   # set them to be false
-  is_good_value_mask = [false(1,half_scale) good_frames_mask false(1,half_scale)]
+  stub_mask = np.zeros(half_scale, dtype=bool)
+  good_frames_mask_padded = \
+    np.concatenate((stub_mask, good_frames_mask, stub_mask))
   
   # These will be the final indices from which we estimate the velocity.
-  # i.e. delta_position(I) = (position(right_indices(I)) - position(left_indices(I))
-  left_I  = NaN(1,length(middle_I))
-  right_I = NaN(1,length(middle_I))
+  # i.e. delta_position(I) = position(right_indices(I)) - 
+  #                          position(left_indices(I))
+  left_I  = np.empty(len(middle_I))
+  left_I  = np.fill(NaN)
+  right_I = np.empty(len(middle_I))
+  right_I = np.fill(NaN)
+
+  # Track which ends we haven't yet matched, for each of the middle_I's.
+  # since we are loopering over each possible shift, we need to track 
+  # whether valid ends have been found for each of the middle_I's.
+  unmatched_left_mask  = np.ones(len(middle_I), dtype=bool)
+  unmatched_right_mask = np.ones(len(middle_I), dtype=bool)
   
   # Instead of looping over each centered velocity, we loop over each possible
   # shift. A shift is valid if the frame of the shift is good, and we have yet
   # to encounter a match for that centered index
-  for iShift = half_scale:scale_minus_1
-      
+  for shift_size in range(half_scale, scale_minus_1):
       # We grab indices that are the appropriate distance from the current
       # value. If we have not yet found a bound on the given side, and the
       # index is valid, we keep it.
-      left_indices_temp  = middle_I - iShift
-      right_indices_temp = middle_I + iShift
+      left_indices_temp  = middle_I - shift_size
+      right_indices_temp = middle_I + shift_size
       
-      is_good_left_mask  = is_good_value_mask(left_indices_temp)
-      is_good_right_mask = is_good_value_mask(right_indices_temp)
+      is_good_left_mask  = good_frames_mask_padded(left_indices_temp)
+      is_good_right_mask = good_frames_mask_padded(right_indices_temp)
       
       use_left_mask      = unmatched_left_mask  & is_good_left_mask
       use_right_mask     = unmatched_right_mask & is_good_right_mask
@@ -218,7 +229,6 @@ def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
       
       unmatched_left_mask(use_left_mask)   = false
       unmatched_right_mask(use_right_mask) = false
-  end
   
   left_I   = left_I    - half_scale # Remove the offset ...
   right_I  = right_I   - half_scale
@@ -233,8 +243,8 @@ def h__getVelocityIndices(num_frames, frames_per_sample, good_frames_mask):
   keep_mask = false(1,n_frames)
   keep_mask(middle_I) = true
   
-  return [keep_mask,left_I,right_I]
-  """
+  return keep_mask, left_I, right_I
+
 
 def get_frames_per_sample(sample_time):
   """
@@ -308,16 +318,17 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # return with nothing.
   if(frames_per_sample > num_frames):
     # Create numpy arrays filled with NaNs
-    speed = np.empty((1, num_frames)).fill(np.NaN)
-    direction = np.empty((1, num_frames)).fill(np.NaN)
+    speed = np.empty((1, num_frames))
+    speed.fill(np.NaN)
+    direction = np.empty((1, num_frames))
+    direction.fill(np.NaN)
     return speed, direction
 
   # Compute the indices that we will use for computing the velocity. We
   # calculate the velocity roughly centered on each sample, but with a
   # considerable width between frames that smooths the velocity.
   good_frames_mask = ~np.isnan(avg_body_angle)
-  keep_mask, left_I, right_I = h__getVelocityIndices(num_frames, 
-                                                     frames_per_sample, 
+  keep_mask, left_I, right_I = h__getVelocityIndices(frames_per_sample, 
                                                      good_frames_mask)
 
 
