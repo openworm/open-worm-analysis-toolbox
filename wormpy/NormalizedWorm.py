@@ -14,6 +14,7 @@
 import numpy as np
 import scipy.io
 import os
+from wormpy import config
 
 class NormalizedWorm():
   """ NormalizedWorm encapsulates the normalized measures data, loaded
@@ -141,6 +142,11 @@ class NormalizedWorm():
                                    'second_third': ('midbody'),
                                    'last_third': ('hips', 'tail'),
                                    'all': ('all')}
+
+    # If we want to mimic the old Schafer Lab decisions,
+    # change the partition definitions.
+    if(config.MIMIC_OLD_BEHAVIOUR):
+      self.worm_partitions['midbody'] = (20, 29)
 
   def get_partition_subset(self, partition_type):
     """ there are various ways of partitioning the worm's 49 points.
