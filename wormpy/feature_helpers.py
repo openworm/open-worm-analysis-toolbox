@@ -89,7 +89,8 @@ def h__computeAngularSpeed(segment_x, segment_y,
                         1 = clockwise
                         2 = anticlockwise
                         
-      OUTPUT: an angle in the range 
+      OUTPUT: a numpy array of shape n, in units of degrees per second
+      
   """
   # Compute the body part direction for each frame
   point_angle_d = get_angles(segment_x, segment_y, head_to_tail=False)
@@ -101,7 +102,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
   # by forcing -180 <= angular_speed[i] <= 180
   angular_speed = (angular_speed + 180) % (360) - 180
 
-  # Change units from distance per frame to distance per second
+  # Change units from degrees per frame to degrees per second
   angular_speed = angular_speed * (1/config.FPS)
   
   # Sign the direction for dorsal/ventral locomotion.
@@ -133,6 +134,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
          right_I   : shape (n_valid_velocity_values)
   
   """
+  
   num_frames = len(good_frames_mask)
   
   # Create a "half" scale
@@ -198,9 +200,9 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   # i.e. delta_position(I) = position(right_indices(I)) - 
   #                          position(left_indices(I))
   left_I  = np.empty(len(middle_I))
-  left_I  = np.fill(NaN)
+  left_I  = np.fill(np.NaN)
   right_I = np.empty(len(middle_I))
-  right_I = np.fill(NaN)
+  right_I = np.fill(np.NaN)
 
   # Track which ends we haven't yet matched, for each of the middle_I's.
   # since we are loopering over each possible shift, we need to track 
@@ -218,30 +220,38 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
       left_indices_temp  = middle_I - shift_size
       right_indices_temp = middle_I + shift_size
       
-      is_good_left_mask  = good_frames_mask_padded(left_indices_temp)
-      is_good_right_mask = good_frames_mask_padded(right_indices_temp)
+      is_good_left_mask  = good_frames_mask_padded[left_indices_temp]
+      is_good_right_mask = good_frames_mask_padded[right_indices_temp]
       
       use_left_mask      = unmatched_left_mask  & is_good_left_mask
       use_right_mask     = unmatched_right_mask & is_good_right_mask
       
-      left_I(use_left_mask)   = left_indices_temp(use_left_mask)
-      right_I(use_right_mask) = right_indices_temp(use_right_mask)
+      # Change only those left_I's to our newly shifted outwards 
+      # left_indices_temp, that the use_left_mask says should be used.
+      left_I[use_left_mask]   = left_indices_temp[use_left_mask]
+      right_I[use_right_mask] = right_indices_temp[use_right_mask]
       
-      unmatched_left_mask(use_left_mask)   = false
-      unmatched_right_mask(use_right_mask) = false
+      # Flag the matched items as being matched
+      unmatched_left_mask[use_left_mask]   = False
+      unmatched_right_mask[use_right_mask] = False
   
-  left_I   = left_I    - half_scale # Remove the offset ...
-  right_I  = right_I   - half_scale
-  middle_I = middle_I  - half_scale
+  # Remove the offset used to pad the numbers (discussed above)
+  left_I   -= half_scale
+  right_I  -= half_scale
+  middle_I -= half_scale
   
   # Filter down to usable values, in which both left and right are defined
-  valid_indices_mask = ~isnan(left_I) & ~isnan(right_I)
-  left_I    = left_I(valid_indices_mask)
-  right_I   = right_I(valid_indices_mask)
-  middle_I  = middle_I(valid_indices_mask)
+  valid_indices_mask = ~np.isnan(left_I) & ~np.isnan(right_I)
+  left_I    = left_I[valid_indices_mask]
+  right_I   = right_I[valid_indices_mask]
+  middle_I  = middle_I[valid_indices_mask]
   
-  keep_mask = false(1,n_frames)
-  keep_mask(middle_I) = true
+  keep_mask = np.zeros(num_frames, dtype=bool)
+  keep_mask[middle_I] = True
+
+  # sum(keep_mask) should equal the number of valid velocity values
+  # left_I and right_I should store just these valid velocity values
+  assert sum(keep_mask) == shape(left_I)[0] == shape(right_I)[0]
   
   return keep_mask, left_I, right_I
 
@@ -335,61 +345,68 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # Compute speed
   # --------------------------------------------------------
 
-  # Centroid of skeletal segment, frame-by-frame:
+  # Centroid of the current skeletal segment, frame-by-frame:
   x_mean = np.mean(sx, 1)
   y_mean = np.mean(sy, 1)
   
-  """
   dX  = x_mean(right_I) - x_mean(left_I)
   dY  = y_mean(right_I) - y_mean(left_I)
   
-  distance = sqrt(dX.^2 + dY.^2)
-  time     = (right_I - left_I)./ config.FPS
+  distance = np.sqrt(dX**2 + dY**2)
+  time     = (right_I - left_I) / config.FPS
   
-  speed    = NaN(1,n_frames)
-  speed(keep_mask) = distance./time
+  speed    = np.empty((1, num_frames))
+  speed.fill(np.NaN)
+  speed[keep_mask] = distance / time
 
   
   # Compute angular speed (Formally known as direction :/)
   # --------------------------------------------------------
-  angular_speed = NaN(1,n_frames)
-  angular_speed(keep_mask) = h__computeAngularSpeed(sx, sy,
+  angular_speed = np.empty((1, num_frames))
+  angular_speed.fill(np.NaN)
+  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,
                                                     left_I, right_I,
                                                     ventral_mode)
   
   # Sign the speed
   #   We want to know how the worm's movement direction compares 
   #   to the average angle it had (apparently at the start)
-  motion_direction = NaN(1,n_frames)
-  motion_direction(keep_mask) = atan2(dY, dX) * (180 / pi)
+  motion_direction = np.empty((1, num_frames))
+  motion_direction.fill(np.NaN)
+  motion_direction[keep_mask] = np.degrees(np.arctan2(dY, dX))
   
   # This recentres the definition, as we are really just concerned
   # with the change, not with the actual value
-  body_direction = NaN(1,n_frames)
-  body_direction(keep_mask) = motion_direction(keep_mask) - avg_body_angle_d(left_I)
+  body_direction = np.empty((1, num_frames))
+  body_direction.fill(np.NaN)
+  body_direction[keep_mask] = motion_direction[keep_mask] \
+                              - avg_body_angle[left_I]
   
-  body_direction(body_direction < -180) = body_direction(body_direction < -180) + 360
-  body_direction(body_direction > 180)  = body_direction(body_direction > 180)  - 360
+  # Force all angles to be within -pi and pi
+  body_direction = (body_direction + 180) % (360) - 180
   
-  speed(abs(body_direction) > 90) = -speed(abs(body_direction) > 90)
+  # Sign speed[i] as negative if the angle 
+  # body_direction[i] lies in Q2 or Q3
+  speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
   
-  
-  # Added for wormPathCurvature
-  motion_direction(body_direction < 0) = -1*motion_direction(body_direction < 0)
-  if(ventral_mode > 1):
-     motion_direction = -1*motion_direction 
+  # (Added for wormPathCurvature)
+  # Sign motion_direction[i] as negative if the angle 
+  # body_direction[i] lies in Q3 or Q4
+  motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+  if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
+     motion_direction = -motion_direction 
   
   # Organize the velocity.
   #-----------------------------------------------------------
-  velocity.speed            = speed
-  velocity.angular_speed    = angular_speed
-  velocity.body_direction   = body_direction
-  velocity.motion_direction = motion_direction
+  velocity = {'speed': speed, 'angular_speed': angular_speed}
     
+  return velocity
 
-  """
-  
-  return speed, direction
+  # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
+  # did we both to calculate them?
+  #            'body_direction': body_direction,
+  #            'motion_direction': motion_direction
+
 
 
 
