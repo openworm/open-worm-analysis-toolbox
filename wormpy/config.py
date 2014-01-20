@@ -50,3 +50,18 @@ POSTURE_AMPLITURE_AND_WAVELENGTH['HALF_N_FFT'] = \
 # used in get_velocity:
 TIP_DIFF  = 0.25
 BODY_DIFF = 0.5
+
+
+# Used in get_motion_codes:
+
+#   These are a percentage of the length ...
+SPEED_THRESHOLD_PCT   = 0.05
+DISTANCE_THRSHOLD_PCT = 0.05
+PAUSE_THRESHOLD_PCT   = 0.025
+
+#   These are times (s)
+EVENT_FRAMES_THRESHOLD = 0.5    # Half a second
+EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
+
+DATA_SUM_NAME       = 'distance'
+INTER_DATA_SUM_NAME = 'interDistance'
