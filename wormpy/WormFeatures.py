@@ -32,107 +32,41 @@ import collections
 from wormpy import config
 from wormpy import feature_helpers
 
-# TODO: WormFeatures should INHERIT from NormalizedWorm
-
-class WormFeatures:
-  """ WormFeatures takes as input a NormalizedWorm instance, and
-      during initialization calculates all the features of the worm.
-  """
-  features = None
-  
-  morphology = None  # a python dictionary
-  locomotion = None
-  posture = None
-  path = None
-
-  
+class WormMorphology():
   def __init__(self, nw):
-    self.nw = nw
-    
-    self.get_morphology_features()
-    self.get_locomotion_features()
-    self.get_posture_features()    
-    self.get_path_features()
-
-
-
-  def get_locomotion_features(self):
     """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / +features / @locomotion / locomotion.m
-
-   properties
-        velocity
-        %   .headTip
-        %       .speed
-        %       .direction
-        %   .head
-        %       .speed
-        %       .direction
-        %   .midbody
-        %       .speed
-        %       .direction
-        %   .tail
-        %       .speed
-        %       .direction
-        %   .tailTip
-        %       .speed
-        %       .direction
-        motion
-        bends
-        turns
-    end
-
-    """
-    self.locomotion = {}
-
-    self.locomotion['velocity'] = \
-      feature_helpers.get_worm_velocity(self.nw)
-
-    
-    # until we have the below calculated, just create an array of zeroes
-    self.locomotion['midbody_distance'] = 0
-    #      np.zeros(np.shape(self.skeletons_x()))        
-    #      abs(locomotion['velocity']['midbody']['speed'] / config.FPS)
-    
-    pass
-
-    
+      Translation of: SegwormMatlabClasses / 
+      +seg_worm / @feature_calculator / getMorphologyFeatures.m
       
-  def get_morphology_features(self):
-    """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getMorphologyFeatures.m
+      Nature Methods Description
+      =======================================================================
+       
+      Morphology Features 
+       
+      1. Length. Worm length is computed from the segmented skeleton by
+      converting the chain-code pixel length to microns.
+      
+      2. Widths. Worm width is computed from the segmented skeleton. The
+      head, midbody, and tail widths are measured as the mean of the widths
+      associated with the skeleton points covering their respective sections.
+      These widths are converted to microns.
+      
+      3. Area. The worm area is computed from the number of pixels within the
+      segmented contour. The sum of the pixels is converted to microns2.
+       
+      4. Area/Length.
+       
+      5. Midbody Width/Length.
+      
+      get_morphology_features:
+      * Takes nw, and generates a structure called "morphology"
+      
+      %Old files that served as a reference ...
+      %------------------------------------------------------------
+      %morphology_process.m
+      %schaferFeatures_process.m
   
-    Nature Methods Description
-    =======================================================================
-   
-    Morphology Features 
-   
-    1. Length. Worm length is computed from the segmented skeleton by
-    converting the chain-code pixel length to microns.
-    
-    2. Widths. Worm width is computed from the segmented skeleton. The
-    head, midbody, and tail widths are measured as the mean of the widths
-    associated with the skeleton points covering their respective sections.
-    These widths are converted to microns.
-    
-    3. Area. The worm area is computed from the number of pixels within the
-    segmented contour. The sum of the pixels is converted to microns2.
-   
-    4. Area/Length.
-   
-    5. Midbody Width/Length.
-    
-    get_morphology_features:
-    * Takes nw, and generates a structure called "morphology"
-    
-    %Old files that served as a reference ...
-    %------------------------------------------------------------
-    %morphology_process.m
-    %schaferFeatures_process.m
     """
-    nw = self.nw   # just so we have a shorter name to refer to    
     
     self.morphology = {}
     self.morphology['length'] = nw.data_dict['lengths']
@@ -150,11 +84,55 @@ class WormFeatures:
                                        self.morphology['length']
     self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
                                         self.morphology['length']
-    
-  def num_fields(self):
-    return 
+
+
+
+class WormLocomotion():
+  def __init__(self, nw):
+    """
+      Translation of: SegwormMatlabClasses / 
+      +seg_worm / +features / @locomotion / locomotion.m
   
-  def get_posture_features(self):
+        properties
+          velocity:(head_tip, head, midbody, tail, tail_tip) x (speed, direction)
+          motion
+          motion_mode
+          is_paused
+          bends
+          foraging
+          omegas
+          upsilons
+        end
+
+    """
+    self.locomotion = {}
+
+    self.locomotion['velocity'] = \
+      feature_helpers.get_worm_velocity(nw)
+
+    midbody_distance = \
+      abs(self.locomotion['velocity']['midbody']['speed'] / config.FPS)
+    
+    self.locomotion['motion_codes'] = \
+      feature_helpers.get_motion_codes(midbody_distance, 
+                                       nw.data_dict['lengths'])
+  
+    self.locomotion['motion_mode'] = 0
+    
+    self.locomotion['is_paused'] = 0
+
+    self.locomotion['bends'] = 0
+
+    self.locomotion['foraging'] = 0
+
+    self.locomotion['omegas'] = 0
+
+    self.locomotion['upsilons'] = 0
+  
+    
+
+class WormPosture():
+  def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
     +seg_worm / @feature_calculator / getPostureFeatures.m
@@ -176,8 +154,6 @@ class WormFeatures:
     %
 
     """    
-    nw = self.nw # let's use this convenient alias 
-    
     # Initialize self.posture as a blank dictionary we will add to
     self.posture = {}  
 
@@ -227,19 +203,27 @@ class WormFeatures:
     
     # *** 8. EigenProjection ***
     
-    pass
 
-  
- 
-  
-  def get_path_features(self):
+class WormPath():
+  def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
     +seg_worm / @feature_calculator / getPathFeatures.m
 
     """    
-    pass
+    self.path = {}
 
 
-
-
+class WormFeatures:
+  """ 
+    WormFeatures: takes as input a NormalizedWorm instance, and
+    during initialization calculates all the features of the worm.
+    
+  """
+  def __init__(self, nw):
+    self.nw = nw
+    
+    self.morphology = WormMorphology(nw).morphology
+    self.locomotion = WormLocomotion(nw).locomotion
+    self.posture    = WormPosture(nw).path
+    self.path       = WormPath(nw).path

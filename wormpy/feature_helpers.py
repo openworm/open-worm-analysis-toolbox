@@ -18,11 +18,136 @@ import numpy as np
 import collections
 from wormpy import config
 
-__ALL__ = ['get_worm_velocity',                 # for locomotion
+__ALL__ = ['get_motion_codes',                  # for locomotion
+           'get_worm_velocity',                 # for locomotion
            'get_bends',                         # for posture
            'get_amplitude_and_wavelength',      # for posture
            'get_eccentricity_and_orientation']  # for posture
 
+"""----------------------------------------------------
+    motion codes:
+    
+    
+"""
+
+def get_motion_codes(midbody_speed, skeleton_lengths):
+  """
+    get_motion_codes: calculate motion codes (a locomotion feature)
+      INPUT:
+        midbody speed:  
+        skeleton_lengths:
+        
+      OUTPUT
+        the locomotion events; a dict with event fields:
+          forward  - (event) forward locomotion
+          paused   - (event) no locomotion (the worm is paused)
+          backward - (event) backward locomotion
+          mode     = [1 x num_frames] the locomotion mode:
+                     -1 = backward locomotion
+                      0 = no locomotion (the worm is paused)
+                      1 = forward locomotion
+
+  """
+
+  # Compute the locomotion events.
+  #--------------------------------------------------------------------------
+  
+  # Initialize the worm speed and video frames.
+  num_frames = len(midbody_speed)
+  
+  # Compute the distance.
+  distance = abs(midbody_speed / config.FPS)
+
+  return 0  # debug
+  """
+  # Interpolate the missing lengths.
+  isNotData = isnan(skeleton_lengths)
+  isData    = ~isNotData
+  dataI     = find(isData)
+  interpI   = find(isNotData)
+  if(~isempty(interpI) and length(dataI) > 1):
+      skeleton_lengths(interpI) = interp1(dataI, skeleton_lengths(dataI), interpI, 'linear')
+  end
+  
+  #==========================================================================
+  worm_speed_threshold       = skeleton_lengths * SPEED_THRESHOLD_PCT
+  worm_distance_threshold    = skeleton_lengths * DISTANCE_THRSHOLD_PCT 
+  
+  #Forward stuffs
+  #--------------------------------------------------------------------------
+  min_forward_speed    = worm_speed_threshold
+  min_forward_distance = worm_distance_threshold
+  
+  #Backward stuffs
+  #--------------------------------------------------------------------------
+  max_backward_speed    = -worm_speed_threshold
+  min_backward_distance = worm_distance_threshold
+  
+  #Paused stuffs
+  #--------------------------------------------------------------------------
+  worm_pause_threshold = skeleton_lengths * PAUSE_THRESHOLD_PCT # 2.5 percent of its length
+  min_paused_speed     = -worm_pause_threshold
+  max_paused_speed     = worm_pause_threshold
+
+  min_speeds   = {min_forward_speed       []                      min_paused_speed}
+  max_speeds   = {[]                      max_backward_speed      max_paused_speed}
+  min_distance = {min_forward_distance    min_backward_distance   []}
+  
+  #--------------------------------------------------------------------------
+  worm_event_frames_threshold          = fps * EVENT_FRAMES_THRESHOLD
+  worm_event_min_interframes_threshold = fps * EVENT_MIN_INTER_FRAMES_THRESHOLD
+  
+  all_events_struct = struct
+  
+  FIELD_NAMES  = {'forward' 'backward' 'paused'}
+  FRAME_VALUES = [1 -1 0]
+  motion_mode = NaN(1,num_frames)
+  
+  for iType = 1:3
+     
+      #Determine when the event type occurred
+      #----------------------------------------------------------------------
+      ef = seg_worm.feature.event_finder
+      
+      ef.include_at_thr       = true
+      ef.minum_frames_thr       = worm_event_frames_threshold
+      ef.min_sum_thr          = min_distance{iType}
+      ef.include_at_sum_thr   = true
+      ef.data_for_sum_thr     = distance
+      ef.min_inter_frames_thr = worm_event_min_interframes_threshold
+      
+      #seg_worm.feature.event_finder.getEvents
+      frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
+      #frames_temp - class - seg_worm.feature.event_ss
+      
+      #Assign event type to relevant frames
+      #----------------------------------------------------------------------
+      mask = frames_temp.getEventMask(num_frames)
+      motion_mode(mask) = FRAME_VALUES(iType)
+  
+      #Take the start and stop indices and convert them to the structure
+      #used in the feature files ...
+      #----------------------------------------------------------------------
+      cur_field_name = FIELD_NAMES{iType}
+  
+      temp = seg_worm.feature.event(frames_temp,fps,distance,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
+      all_events_struct.(cur_field_name) = temp.getFeatureStruct
+      
+  end
+  
+  all_events_struct.mode = motion_mode
+  
+  obj.motion = all_events_struct
+  """
+
+
+
+
+
+
+"""----------------------------------------------------
+    velocity:
+"""
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
   """
@@ -89,7 +214,8 @@ def h__computeAngularSpeed(segment_x, segment_y,
                         1 = clockwise
                         2 = anticlockwise
                         
-      OUTPUT: an angle in the range 
+      OUTPUT: a numpy array of shape n, in units of degrees per second
+      
   """
   # Compute the body part direction for each frame
   point_angle_d = get_angles(segment_x, segment_y, head_to_tail=False)
@@ -101,7 +227,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
   # by forcing -180 <= angular_speed[i] <= 180
   angular_speed = (angular_speed + 180) % (360) - 180
 
-  # Change units from distance per frame to distance per second
+  # Change units from degrees per frame to degrees per second
   angular_speed = angular_speed * (1/config.FPS)
   
   # Sign the direction for dorsal/ventral locomotion.
@@ -119,7 +245,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
       bounded at twice the scale.
 
       INPUTS:
-        frames_per_sample: our sample scale, in frames
+        frames_per_sample: our sample scale, in frames.  must be an odd integer
         good_frames_mask: shape (num_frames), false if underlying angle is NaN
   
        OUTPUTS:
@@ -133,13 +259,17 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
          right_I   : shape (n_valid_velocity_values)
   
   """
+  # Require that frames_per_sample be an odd integer
+  assert(type(frames_per_sample)==int)
+  assert(frames_per_sample%2==1)
+  
   num_frames = len(good_frames_mask)
   
   # Create a "half" scale
   # NOTE: Since the scale is odd, the half
   #       scale will be even, because we subtract 1
   scale_minus_1 = frames_per_sample - 1
-  half_scale    = scale_minus_1 / 2 
+  half_scale    = int(scale_minus_1 / 2)
   
   # First frame for which we can assign a valid velocity:
   start_index = half_scale 
@@ -149,7 +279,8 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   # These are the indices we will use to compute the velocity. We add
   # a half scale here to avoid boundary issues. We'll subtract it out later.
   # See below for more details
-  middle_I = np.arange(start_index, end_index, 1) + half_scale  
+  middle_I = np.array(np.arange(start_index, end_index, 1) + half_scale,
+                      dtype='int32')
   # @MichaelCurrie: Wouldn't this make more sense?
   #middle_I = np.arange(start_index, end_index + half_scale, 1) + half_scale  
   
@@ -187,7 +318,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   
   # This tells us whether each value is useable or not for velocity
   # Better to do this out of the loop.
-  # For real indices (frames 1:n_frames), we rely on whether or not the
+  # For real indices (frames 1:num_frames), we rely on whether or not the
   # mean position is NaN, for fake padding frames they can never be good so we
   # set them to be false
   stub_mask = np.zeros(half_scale, dtype=bool)
@@ -197,11 +328,11 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   # These will be the final indices from which we estimate the velocity.
   # i.e. delta_position(I) = position(right_indices(I)) - 
   #                          position(left_indices(I))
-  left_I  = np.empty(len(middle_I))
-  left_I  = np.fill(NaN)
-  right_I = np.empty(len(middle_I))
-  right_I = np.fill(NaN)
-
+  left_I  = np.empty(len(middle_I), dtype='int32')
+  right_I = np.empty(len(middle_I), dtype='int32')
+  left_I.fill(np.NaN)
+  right_I.fill(np.NaN)
+  
   # Track which ends we haven't yet matched, for each of the middle_I's.
   # since we are loopering over each possible shift, we need to track 
   # whether valid ends have been found for each of the middle_I's.
@@ -218,30 +349,38 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
       left_indices_temp  = middle_I - shift_size
       right_indices_temp = middle_I + shift_size
       
-      is_good_left_mask  = good_frames_mask_padded(left_indices_temp)
-      is_good_right_mask = good_frames_mask_padded(right_indices_temp)
+      is_good_left_mask  = good_frames_mask_padded[left_indices_temp]
+      is_good_right_mask = good_frames_mask_padded[right_indices_temp]
       
       use_left_mask      = unmatched_left_mask  & is_good_left_mask
       use_right_mask     = unmatched_right_mask & is_good_right_mask
       
-      left_I(use_left_mask)   = left_indices_temp(use_left_mask)
-      right_I(use_right_mask) = right_indices_temp(use_right_mask)
+      # Change only those left_I's to our newly shifted outwards 
+      # left_indices_temp, that the use_left_mask says should be used.
+      left_I[use_left_mask]   = left_indices_temp[use_left_mask]
+      right_I[use_right_mask] = right_indices_temp[use_right_mask]
       
-      unmatched_left_mask(use_left_mask)   = false
-      unmatched_right_mask(use_right_mask) = false
+      # Flag the matched items as being matched
+      unmatched_left_mask[use_left_mask]   = False
+      unmatched_right_mask[use_right_mask] = False
   
-  left_I   = left_I    - half_scale # Remove the offset ...
-  right_I  = right_I   - half_scale
-  middle_I = middle_I  - half_scale
+  # Remove the offset used to pad the numbers (discussed above)
+  left_I   -= half_scale
+  right_I  -= half_scale
+  middle_I -= half_scale
   
   # Filter down to usable values, in which both left and right are defined
-  valid_indices_mask = ~isnan(left_I) & ~isnan(right_I)
-  left_I    = left_I(valid_indices_mask)
-  right_I   = right_I(valid_indices_mask)
-  middle_I  = middle_I(valid_indices_mask)
+  valid_indices_mask = ~np.isnan(left_I) & ~np.isnan(right_I)
+  left_I    = left_I[valid_indices_mask]
+  right_I   = right_I[valid_indices_mask]
+  middle_I  = middle_I[valid_indices_mask]
   
-  keep_mask = false(1,n_frames)
-  keep_mask(middle_I) = true
+  keep_mask = np.zeros(num_frames, dtype=bool)
+  keep_mask[middle_I] = True
+
+  # sum(keep_mask) should equal the number of valid velocity values
+  # left_I and right_I should store just these valid velocity values
+  assert sum(keep_mask) == np.shape(left_I)[0] == np.shape(right_I)[0]
   
   return keep_mask, left_I, right_I
 
@@ -277,7 +416,8 @@ def get_frames_per_sample(sample_time):
     else:
       sampling_scale = sampling_scale_high
 
-  return sampling_scale
+  assert(sampling_scale.is_integer())
+  return int(sampling_scale)
 
 
 def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
@@ -335,61 +475,68 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # Compute speed
   # --------------------------------------------------------
 
-  # Centroid of skeletal segment, frame-by-frame:
+  # Centroid of the current skeletal segment, frame-by-frame:
   x_mean = np.mean(sx, 1)
   y_mean = np.mean(sy, 1)
   
-  """
-  dX  = x_mean(right_I) - x_mean(left_I)
-  dY  = y_mean(right_I) - y_mean(left_I)
+  dX  = x_mean[right_I] - x_mean[left_I]
+  dY  = y_mean[right_I] - y_mean[left_I]
   
-  distance = sqrt(dX.^2 + dY.^2)
-  time     = (right_I - left_I)./ config.FPS
+  distance = np.sqrt(dX**2 + dY**2)
+  time     = (right_I - left_I) / config.FPS
   
-  speed    = NaN(1,n_frames)
-  speed(keep_mask) = distance./time
+  speed    = np.empty((1, num_frames))
+  speed.fill(np.NaN)
+  speed[keep_mask] = distance / time
 
   
   # Compute angular speed (Formally known as direction :/)
   # --------------------------------------------------------
-  angular_speed = NaN(1,n_frames)
-  angular_speed(keep_mask) = h__computeAngularSpeed(sx, sy,
+  angular_speed = np.empty((1, num_frames))
+  angular_speed.fill(np.NaN)
+  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,
                                                     left_I, right_I,
                                                     ventral_mode)
   
   # Sign the speed
   #   We want to know how the worm's movement direction compares 
   #   to the average angle it had (apparently at the start)
-  motion_direction = NaN(1,n_frames)
-  motion_direction(keep_mask) = atan2(dY, dX) * (180 / pi)
+  motion_direction = np.empty((1, num_frames))
+  motion_direction.fill(np.NaN)
+  motion_direction[keep_mask] = np.degrees(np.arctan2(dY, dX))
   
   # This recentres the definition, as we are really just concerned
   # with the change, not with the actual value
-  body_direction = NaN(1,n_frames)
-  body_direction(keep_mask) = motion_direction(keep_mask) - avg_body_angle_d(left_I)
+  body_direction = np.empty((1, num_frames))
+  body_direction.fill(np.NaN)
+  body_direction[keep_mask] = motion_direction[keep_mask] \
+                              - avg_body_angle[left_I]
   
-  body_direction(body_direction < -180) = body_direction(body_direction < -180) + 360
-  body_direction(body_direction > 180)  = body_direction(body_direction > 180)  - 360
+  # Force all angles to be within -pi and pi
+  body_direction = (body_direction + 180) % (360) - 180
   
-  speed(abs(body_direction) > 90) = -speed(abs(body_direction) > 90)
+  # Sign speed[i] as negative if the angle 
+  # body_direction[i] lies in Q2 or Q3
+  speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
   
-  
-  # Added for wormPathCurvature
-  motion_direction(body_direction < 0) = -1*motion_direction(body_direction < 0)
-  if(ventral_mode > 1):
-     motion_direction = -1*motion_direction 
+  # (Added for wormPathCurvature)
+  # Sign motion_direction[i] as negative if the angle 
+  # body_direction[i] lies in Q3 or Q4
+  motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+  if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
+     motion_direction = -motion_direction 
   
   # Organize the velocity.
   #-----------------------------------------------------------
-  velocity.speed            = speed
-  velocity.angular_speed    = angular_speed
-  velocity.body_direction   = body_direction
-  velocity.motion_direction = motion_direction
+  velocity = {'speed': speed, 'angular_speed': angular_speed}
     
+  return velocity
 
-  """
-  
-  return speed, direction
+  # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
+  # did we both to calculate them?
+  #            'body_direction': body_direction,
+  #            'motion_direction': motion_direction
+
 
 
 
@@ -420,15 +567,16 @@ def get_worm_velocity(nw, ventral_mode=0):
   #       this set of partitions does not cover the neck and hips
   partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
   
-  avg_body_angle = get_angles(nw, partition_key='body',
-                              data_key='skeletons', reverse=True)
+  avg_body_angle = get_partition_angles(nw, partition_key='body',
+                                        data_key='skeletons', 
+                                        head_to_tail=True)  # reverse
   
   sample_time_values = \
     {
       'head_tip': config.TIP_DIFF,
-      'head': config.BODY_DIFF,
-      'midbody': config.BODY_DIFF,
-      'tail': config.BODY_DIFF,
+      'head':     config.BODY_DIFF,
+      'midbody':  config.BODY_DIFF,
+      'tail':     config.BODY_DIFF,
       'tail_tip': config.TIP_DIFF
     }  
 
@@ -528,22 +676,22 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
      =======================================================================
      theta_d      : worm orientation based on fitting to an ellipse, in
                      degrees
-     sx           : [49 x n_frames]
-     sy           : [49 x n_frames]
-     worm_lengths : [1 x n_frames], total length of each worm
+     sx           : [49 x num_frames]
+     sy           : [49 x num_frames]
+     worm_lengths : [1 x num_frames], total length of each worm
   
   
      Output: A dictionary with three elements:
      =======================================================================
      amplitude    :
-         .max       - [1 x n_frames] max y deviation after rotating major axis to x-axis
-         .ratio     - [1 x n_frames] ratio of y-deviations (+y and -y) with worm centered
+         .max       - [1 x num_frames] max y deviation after rotating major axis to x-axis
+         .ratio     - [1 x num_frames] ratio of y-deviations (+y and -y) with worm centered
                       on the y-axis, ratio is computed to be less than 1
      wavelength   :
-         .primary   - [1 x n_frames]
-         .secondary - [1 x n_frames] this might not always be valid, even 
+         .primary   - [1 x num_frames]
+         .secondary - [1 x num_frames] this might not always be valid, even 
                        when the primary wavelength is defined
-     track_length  : [1 x n_frames]
+     track_length  : [1 x num_frames]
   
      
      Old Name: getAmpWavelength.m
@@ -643,10 +791,10 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
    
       Inputs:
       =======================================================================
-      xOutline : [96 x n_frames] The x coordinates of the contour. In particular the contour
+      xOutline : [96 x num_frames] The x coordinates of the contour. In particular the contour
                   starts at the head and goes to the tail and then back to
                   the head (although no points are redundant)
-      yOutline : [96 x n_frames]  The y coordinates of the contour "  "
+      yOutline : [96 x num_frames]  The y coordinates of the contour "  "
       
       N_ECCENTRICITY (a constant from config.py):
                  (scalar) The # of points to place in the long dimension. More points
@@ -655,8 +803,8 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
    
       Outputs: a namedtuple containing:
       =======================================================================
-      eccentricity - [1 x n_frames] The eccentricity of the equivalent ellipse
-      orientation  - [1 x n_frames] The orientation angle of the equivalent ellipse
+      eccentricity - [1 x num_frames] The eccentricity of the equivalent ellipse
+      orientation  - [1 x num_frames] The orientation angle of the equivalent ellipse
    
       Nature Methods Description
       =======================================================================
