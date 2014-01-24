@@ -330,6 +330,9 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   #                          position(left_indices(I))
   left_I  = np.empty(len(middle_I), dtype='int32')
   right_I = np.empty(len(middle_I), dtype='int32')
+  # numpy arrays cannot accept NaN, which is a float concept, but
+  # filling them with NaN fills them with the largest negative number
+  # possible, -2**31.  We can easily filter for this later.
   left_I.fill(np.NaN)
   right_I.fill(np.NaN)
   
@@ -365,12 +368,19 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
       unmatched_right_mask[use_right_mask] = False
   
   # Remove the offset used to pad the numbers (discussed above)
-  left_I   -= half_scale
-  right_I  -= half_scale
-  middle_I -= half_scale
+  # We have to avoid decrementing negative numbers because our negative
+  # number is our NaN proxy and it's already as negative as it can be
+  # without wrapping back up to positive again
+  left_I[left_I>0]   -= half_scale
+  right_I[right_I>0] -= half_scale
+  middle_I           -= half_scale
   
   # Filter down to usable values, in which both left and right are defined
-  valid_indices_mask = ~np.isnan(left_I) & ~np.isnan(right_I)
+  # Remember than np.NaN is not valid number for integer numpy arrays
+  # so instead of checking for which entries are NaN, we check for 
+  # which entries are negative, since no array indices can be 
+  # negative!
+  valid_indices_mask = (left_I>=0) & (right_I>=0)
   left_I    = left_I[valid_indices_mask]
   right_I   = right_I[valid_indices_mask]
   middle_I  = middle_I[valid_indices_mask]
@@ -380,8 +390,9 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
 
   # sum(keep_mask) should equal the number of valid velocity values
   # left_I and right_I should store just these valid velocity values
-  assert sum(keep_mask) == np.shape(left_I)[0] == np.shape(right_I)[0]
-  
+  assert sum(keep_mask) == len(left_I) == len(right_I)
+  assert all(left_I>=0) and all(left_I<num_frames)
+  assert all(right_I>=0) and all(right_I<num_frames)  
   return keep_mask, left_I, right_I
 
 
