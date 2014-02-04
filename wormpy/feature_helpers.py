@@ -487,8 +487,8 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # --------------------------------------------------------
 
   # Centroid of the current skeletal segment, frame-by-frame:
-  x_mean = np.mean(sx, 1)
-  y_mean = np.mean(sy, 1)
+  x_mean = np.mean(sx, 0)
+  y_mean = np.mean(sy, 0)
   
   dX  = x_mean[right_I] - x_mean[left_I]
   dY  = y_mean[right_I] - y_mean[left_I]
