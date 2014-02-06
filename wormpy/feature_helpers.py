@@ -220,7 +220,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
   # Compute the body part direction for each frame
   point_angle_d = get_angles(segment_x, segment_y, head_to_tail=False)
 
-  angular_speed = point_angle_d(right_I) - point_angle_d(left_I)
+  angular_speed = point_angle_d[right_I] - point_angle_d[left_I]
   
   # Correct any jumps that result during the subtraction process
   # i.e. 1 - 359 ~= -358
@@ -496,29 +496,29 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   distance = np.sqrt(dX**2 + dY**2)
   time     = (right_I - left_I) / config.FPS
   
-  speed    = np.empty((1, num_frames))
+  speed    = np.empty((num_frames))
   speed.fill(np.NaN)
   speed[keep_mask] = distance / time
 
   
   # Compute angular speed (Formally known as direction :/)
   # --------------------------------------------------------
-  angular_speed = np.empty((1, num_frames))
+  angular_speed = np.empty((num_frames))
   angular_speed.fill(np.NaN)
   angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,
                                                     left_I, right_I,
                                                     ventral_mode)
   
-  # Sign the speed
+  # Sign the speed.
   #   We want to know how the worm's movement direction compares 
   #   to the average angle it had (apparently at the start)
-  motion_direction = np.empty((1, num_frames))
+  motion_direction = np.empty((num_frames))
   motion_direction.fill(np.NaN)
   motion_direction[keep_mask] = np.degrees(np.arctan2(dY, dX))
   
   # This recentres the definition, as we are really just concerned
   # with the change, not with the actual value
-  body_direction = np.empty((1, num_frames))
+  body_direction = np.empty((num_frames))
   body_direction.fill(np.NaN)
   body_direction[keep_mask] = motion_direction[keep_mask] \
                               - avg_body_angle[left_I]
@@ -537,11 +537,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
      motion_direction = -motion_direction 
   
-  # Organize the velocity.
-  #-----------------------------------------------------------
-  velocity = {'speed': speed, 'angular_speed': angular_speed}
-    
-  return velocity
+  return speed, angular_speed
 
   # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
   # did we both to calculate them?
