@@ -225,5 +225,5 @@ class WormFeatures:
     
     self.morphology = WormMorphology(nw).morphology
     self.locomotion = WormLocomotion(nw).locomotion
-    self.posture    = WormPosture(nw).path
+    self.posture    = WormPosture(nw).posture
     self.path       = WormPath(nw).path

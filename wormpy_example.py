@@ -23,10 +23,10 @@ def get_user_data_path():
   """
   if(getpass.getuser() == 'Michael'):
     # michael's computer at home
-    user_data_path = "C:\\Users\\Michael\\Dropbox\\"
+    user_data_path = r"C:\Users\Michael\Dropbox\\"
   elif(getpass.getuser() == 'mcurrie'):
     # michael's computer at work
-    user_data_path = "C:\\Backup\\Dropbox\\"    
+    user_data_path = r"C:\Backup\Dropbox\\"
   else:
     # if it's not Michael, assume it's Jim
     if(os.name == 'nt'): 
@@ -34,7 +34,7 @@ def get_user_data_path():
       user_data_path = "F:\\"
     else:
       # otherwise, Jim is probably using his Mac
-      user_data_path = "//Users//jameshokanson//Dropbox"
+      user_data_path = r"/Users/jameshokanson/Dropbox"
   
   return user_data_path  
   
@@ -52,7 +52,7 @@ def example_WormExperimentFile(base_path = None):
   
   # DEBUG: hardcoded for now.
   worm_file_path = os.path.join(base_path, 
-                               "worm_data\\example_feature_files\\" +
+                               r"worm_data\example_feature_files\\" +
                                "unc-8 (rev) on food " +
                                "R_2010_03_19__09_14_57___2___2_features.mat")
 
@@ -74,9 +74,9 @@ def example_nw():
   
   # let's hardcode one example worm
   norm_folder = os.path.join(norm_folder, 
-                           "worm_data\\video\\testing_with_GUI\\.data\\" +
+                           r"worm_data\video\testing_with_GUI\.data\\" +
                            "mec-4 (u253) off food " +
-                           "x_2010_04_21__17_19_20__1_seg\\normalized")
+                           r"x_2010_04_21__17_19_20__1_seg\normalized")
   
   data_file_path = os.path.join(os.path.abspath(norm_folder),
                                 "norm_obj.mat")
@@ -178,11 +178,11 @@ with warnings.catch_warnings():
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
 
-#wormpy.plot_frame_codes(nw)
+wormpy.plot_frame_codes(nw)
 
-#wp = wormpy.WormPlotter(nw, interactive=False)
+wp = wormpy.WormPlotter(nw, interactive=False)
 
-#wp.show()
+wp.show()
 
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
