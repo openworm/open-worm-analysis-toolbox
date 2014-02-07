@@ -58,7 +58,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   # Compute the distance.
   distance = abs(midbody_speed / config.FPS)
 
-  return 0  # debug
+  
   """
   # Interpolate the missing lengths.
   isNotData = isnan(skeleton_lengths)
@@ -139,7 +139,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   obj.motion = all_events_struct
   """
-
+  #return 0  # debug
 
 
 
