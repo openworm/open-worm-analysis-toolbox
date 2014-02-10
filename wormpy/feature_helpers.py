@@ -55,23 +55,26 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   # Initialize the worm speed and video frames.
   num_frames = len(midbody_speed)
   
-  # Compute the distance.
-  distance = abs(midbody_speed / config.FPS)
+  # Compute the midbody's "instantaneous" distance travelled at each frame, 
+  # distance per second / (frames per second) = distance per frame
+  distance_per_frame = abs(midbody_speed / config.FPS)
 
+  #  Interpolate the missing lengths.
+  is_not_data = np.isnan(skeleton_lengths)
+  is_data    = ~is_not_data
   
   """
-  # Interpolate the missing lengths.
-  isNotData = isnan(skeleton_lengths)
-  isData    = ~isNotData
-  dataI     = find(isData)
-  interpI   = find(isNotData)
+  dataI     = find(is_data)
+  interpI   = find(is_not_data)
   if(~isempty(interpI) and length(dataI) > 1):
       skeleton_lengths(interpI) = interp1(dataI, skeleton_lengths(dataI), interpI, 'linear')
-  end
   
+  """  
+  
+  """
   #==========================================================================
-  worm_speed_threshold       = skeleton_lengths * SPEED_THRESHOLD_PCT
-  worm_distance_threshold    = skeleton_lengths * DISTANCE_THRSHOLD_PCT 
+  worm_speed_threshold       = skeleton_lengths * config.SPEED_THRESHOLD_PCT
+  worm_distance_threshold    = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT 
   
   #Forward stuffs
   #--------------------------------------------------------------------------
@@ -85,7 +88,8 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   #Paused stuffs
   #--------------------------------------------------------------------------
-  worm_pause_threshold = skeleton_lengths * PAUSE_THRESHOLD_PCT # 2.5 percent of its length
+  #                                         2.5 percent of its length  
+  worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
   min_paused_speed     = -worm_pause_threshold
   max_paused_speed     = worm_pause_threshold
 
@@ -94,16 +98,18 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   min_distance = {min_forward_distance    min_backward_distance   []}
   
   #--------------------------------------------------------------------------
-  worm_event_frames_threshold          = fps * EVENT_FRAMES_THRESHOLD
-  worm_event_min_interframes_threshold = fps * EVENT_MIN_INTER_FRAMES_THRESHOLD
+  worm_event_frames_threshold          = fps * config.EVENT_FRAMES_THRESHOLD
+  worm_event_min_interframes_threshold = fps * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
   all_events_struct = struct
   
-  FIELD_NAMES  = {'forward' 'backward' 'paused'}
-  FRAME_VALUES = [1 -1 0]
+  motion_codes = {1: 'forward', -1:'backward', 0:'paused'}
+  #FIELD_NAMES  = {'forward' 'backward' 'paused'}
+  #FRAME_VALUES = [1 -1 0]
   motion_mode = NaN(1,num_frames)
   
-  for iType = 1:3
+  
+  for iType in range(1,4)   # change to (0,3)
      
       #Determine when the event type occurred
       #----------------------------------------------------------------------
@@ -113,7 +119,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
       ef.minum_frames_thr       = worm_event_frames_threshold
       ef.min_sum_thr          = min_distance{iType}
       ef.include_at_sum_thr   = true
-      ef.data_for_sum_thr     = distance
+      ef.data_for_sum_thr     = distance_per_frame
       ef.min_inter_frames_thr = worm_event_min_interframes_threshold
       
       #seg_worm.feature.event_finder.getEvents
@@ -130,7 +136,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
       #----------------------------------------------------------------------
       cur_field_name = FIELD_NAMES{iType}
   
-      temp = seg_worm.feature.event(frames_temp,fps,distance,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
+      temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
       all_events_struct.(cur_field_name) = temp.getFeatureStruct
       
   end
