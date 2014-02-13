@@ -9,52 +9,19 @@
 """
 
 import os
-import getpass
 import warnings
 import wormpy
+from wormpy import user_config
 
-
-def get_user_data_path():
+def example_WormExperimentFile():
   """
-    Return the data path to be used to load example worm files.
-    This path will change depending on where DropBox has been located
-    on the user computer.
+    Returns an example instance of WormExperimentFile, using the file
+    paths specified in user_config.py
     
   """
-  if(getpass.getuser() == 'Michael'):
-    # michael's computer at home
-    user_data_path = r"C:\Users\Michael\Dropbox\\"
-  elif(getpass.getuser() == 'mcurrie'):
-    # michael's computer at work
-    user_data_path = r"C:\Backup\Dropbox\\"
-  else:
-    # if it's not Michael, assume it's Jim
-    if(os.name == 'nt'): 
-      # Jim is using Windows
-      user_data_path = "F:\\"
-    else:
-      # otherwise, Jim is probably using his Mac
-      user_data_path = r"/Users/jameshokanson/Dropbox"
   
-  return user_data_path  
-  
-
-def example_WormExperimentFile(base_path = None):
-  """
-    Returns an example instance of WormExperimentFile, loaded
-    from an unc-8 (strong coiler) mutant worm
-    
-  """
-  # If no folder was specified for the worm, use the
-  # current working directory
-  if(base_path == None):
-    base_path = get_user_data_path()
-  
-  # DEBUG: hardcoded for now.
-  worm_file_path = os.path.join(base_path, 
-                               r"worm_data\example_feature_files\\" +
-                               "unc-8 (rev) on food " +
-                               "R_2010_03_19__09_14_57___2___2_features.mat")
+  worm_file_path = os.path.join(user_config.DROPBOX_PATH, 
+                                user_config.WORM_FILE_PATH) 
 
   w = wormpy.WormExperimentFile()
   w.load_HDF5_data(worm_file_path)
@@ -69,14 +36,9 @@ def example_nw():
     
   """
 
-  # first let's get a base path depending on whether it's Jim or Michael
-  norm_folder = get_user_data_path()
-  
   # let's hardcode one example worm
-  norm_folder = os.path.join(norm_folder, 
-                           r"worm_data\video\testing_with_GUI\.data\\" +
-                           "mec-4 (u253) off food " +
-                           r"x_2010_04_21__17_19_20__1_seg\normalized")
+  norm_folder = os.path.join(user_config.DROPBOX_PATH, 
+                             user_config.NORMALIZED_WORM_PATH)
   
   data_file_path = os.path.join(os.path.abspath(norm_folder),
                                 "norm_obj.mat")
@@ -91,7 +53,9 @@ def example_nw():
   return normalized_worm
   
 
-def example_real_worm_pipeline(data_file_path, eigen_worm_file_path, other_data_file_path):
+def example_real_worm_pipeline(data_file_path, 
+                               eigen_worm_file_path, 
+                               other_data_file_path):
   """
     This depicts an example of how the data would flow from the Schafer real
     worm data to the features calculation and plotting
@@ -101,7 +65,8 @@ def example_real_worm_pipeline(data_file_path, eigen_worm_file_path, other_data_
       
   """
   
-  snw_blocks = wormpy.SchaferNormalizedWormBlocks(data_file_path, eigen_worm_file_path)
+  snw_blocks = wormpy.SchaferNormalizedWormBlocks(data_file_path, 
+                                                  eigen_worm_file_path)
   snw = snw_blocks.stitch()
   type(snw)
   # *** returns <class 'SchaferNormalizedWorm'>
