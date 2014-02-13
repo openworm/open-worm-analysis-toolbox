@@ -38,8 +38,8 @@ class NormalizedWorm():
       EIGENWORM_PATH
       segmentation_status   
       frame_codes
-      vulva_contours
-      non_vulva_contours
+      vulva_contours        [49,2,4642]
+      non_vulva_contours    [49,2,4642]
       skeletons
       angles
       in_out_touches
@@ -490,12 +490,15 @@ class NormalizedWorm():
             those on the second set. We also reverse the contour so that
             it encompasses an "out and back" contour
     """
-    pass    # TODO
-    #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
+    vc  = self.data_dict['vulva_contours']
+    nvc = self.data_dict['non_vulva_contours']
+    return np.concatenate((vc[:,0,:],nvc[-2:0:-1,0,:]))    
+
 
   def contour_y(self):
-    pass    # TODO
-    #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
+    vc  = self.data_dict['vulva_contours']
+    nvc = self.data_dict['non_vulva_contours']
+    return np.concatenate((vc[:,1,:],nvc[-2:0:-1,1,:]))    
 
 
 
