@@ -482,7 +482,7 @@ class NormalizedWorm():
     return (np.nanmin(d[dimension,0,:]), 
             np.nanmax(d[dimension,1,:]))
 
-
+  @property
   def contour_x(self):
     """ 
       Return the approximate worm contour, derived from data
@@ -494,7 +494,7 @@ class NormalizedWorm():
     nvc = self.data_dict['non_vulva_contours']
     return np.concatenate((vc[:,0,:],nvc[-2:0:-1,0,:]))    
 
-
+  @property
   def contour_y(self):
     vc  = self.data_dict['vulva_contours']
     nvc = self.data_dict['non_vulva_contours']

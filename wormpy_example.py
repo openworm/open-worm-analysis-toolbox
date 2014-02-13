@@ -127,7 +127,7 @@ def example_virtual_worm_pipeline(data_file_path):
 # called in this manner.  Outside a main() function, things work fine.
   
 # Create a normalized worm from a hardcoded example location
-nw = example_nw()
+nw = example_nw() #wormpy.NormalizedWorm
 
 # AT THIS POINT WE COULD INTERPOLATE THE WORM'S SKELETON
 #normalized_worm.interpolate_dropped_frames()  
