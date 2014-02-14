@@ -31,6 +31,7 @@ import numpy as np
 import collections
 from wormpy import config
 from wormpy import feature_helpers
+import pdb
 
 class WormMorphology():
   def __init__(self, nw):
@@ -215,14 +216,43 @@ class WormPath():
     
     #Range
     #--------------------------------------------------
-    
+    def getRange(self,contour_x,contour_y):
+       """
+       Get the range
+       """
+       
+       #Get average per frame
+       #------------------------------------------------
+       mean_cx = contour_x.mean(axis=0)
+       mean_cy = contour_y.mean(axis=0)
+       
+       #Average over all frames for subtracting
+       #-------------------------------------------------
+       x_centroid_cx = np.nanmean(mean_cx)
+       y_centroid_cy = np.nanmean(mean_cy)
+       
+       return np.sqrt((mean_cx - x_centroid_cx)**2 + (mean_cy - y_centroid_cy)**2)
+       
+    self.range = getRange(self,nw.contour_x,nw.contour_y)
+        
     #Duration (aka Dwelling)
     #---------------------------------------------------
+    def getDurationInfo(self):
+        #JAH - At this point, I still need to configure the inputs
+        pdb.set_trace()
     
-    #Coordinates
+    #Coordinates (Done)
     #---------------------------------------------------
-        
+    #??? How to handle nested classes
+    class s:
+      x = []
+      y = []
     
+    
+    
+    self.coordinates = s()
+    self.coordinates.x = nw.contour_x.mean(axis=0)
+    self.coordinates.y = nw.contour_y.mean(axis=0)
     
     #Curvature
     #---------------------------------------------------
