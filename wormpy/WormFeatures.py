@@ -237,9 +237,13 @@ class WormPath():
         
     #Duration (aka Dwelling)
     #---------------------------------------------------
-    def getDurationInfo(self):
-        #JAH - At this point, I still need to configure the inputs
-        pdb.set_trace()
+    sx = nw.skeleton_x
+    sy = nw.skeleton_y
+    widths = nw.data_dict['widths']
+    d_opts = []
+    fps = 25 #Where do we get this from?
+    feature_helpers.get_duration_info(self,nw, sx, sy, widths, fps, d_opts)
+        
     
     #Coordinates (Done)
     #---------------------------------------------------

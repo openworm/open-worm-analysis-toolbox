@@ -500,6 +500,13 @@ class NormalizedWorm():
     nvc = self.data_dict['non_vulva_contours']
     return np.concatenate((vc[:,1,:],nvc[-2:0:-1,1,:]))    
 
+  @property
+  def skeleton_x(self):
+    return self.data_dict['skeletons'][:,0,:]
+    
+  @property
+  def skeleton_y(self):
+    return self.data_dict['skeletons'][:,1,:]
 
 
 
