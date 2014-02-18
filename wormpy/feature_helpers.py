@@ -845,80 +845,80 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   
 def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
   
-  pdb.set_trace()
-  s_points   = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
   
+  class arena:
+    height = np.nan
+    width  = np.nan
+    min_x  = np.nan
+    min_y  = np.nan
+    max_x  = np.nan
+    max_y  = np.nan
+  
+  pdb.set_trace()
+  s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
+  n_points = len(s_points)
+  
+  #d_opts not currently used
+  #This is for the old version via d_opts, this is currently not used
+  #i.e. if d_opts.mimic_old_behavior 
+#    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
+#
+#    all_widths = zeros(1,3);
+#    for iWidth = 1:3
+#        temp = widths(s_points_temp{iWidth},:);
+#        all_widths(iWidth) = nanmean(temp(:));
+#    end
+#    mean_width = mean(all_widths);    
+  #end
+  
+  mean_width = np.nanmean(widths)
+  scale      = 2**0.5/mean_width;
+  
+  
+  #JAH: At this point  
+  
+#NAN_cell  = repmat({NaN},1,n_points);
+#durations = struct('indices',NAN_cell,'times',NAN_cell);  
+  
+  if len(sx) == 0 or np.isnan(sx).all():
+     raise Exception('This code is not yet translated')
+#    arena.height = NaN;
+#    arena.width = NaN;
+#    arena.min.x = NaN;
+#    arena.min.y = NaN;
+#    arena.max.x = NaN;
+#    arena.max.y = NaN;
+#    
+#    obj.duration = h__buildOutput(arena,durations);
+#    return;  
+     
+  # Scale the skeleton and translate so that the minimum values are at 1
+  #-------------------------------------------------------------------------
+  sxs1 = np.round(sx*scale)  #NOTE: I added the  just to avoid overwriting
+  sys1 = np.round(sy*scale)  #Ideally these would be named better
+  
+  xScaledMin = np.nanmin(sxs1)
+  xScaledMax = np.nanmax(sxs1)
+  yScaledMin = np.nanmin(sys1)
+  yScaledMax = np.nanmax(sys1)
+
+  sxs = sxs1 - xScaledMin
+  sys = sys1 - yScaledMin  
+  
+  # Construct the empty arena(s).
+  arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];  
+  
+  #Organize the arena size
+  #---------------------------------
+  ar = arena()
+  ar.height = arena_size[0]
+  ar.width  = arena_size[1]
+  ar.min_x  = np.nanmin(sx)
+  ar.min_y  = np.nanmin(sy)
+  ar.max_x  = np.nanmax(sx)
+  ar.max_y  = np.nanmax(sy)
   
   """
-        SI = seg_worm.skeleton_indices;
-
-% Compute the skeleton points.
-s_points = {SI.ALL_INDICES SI.HEAD_INDICES SI.BODY_INDICES SI.TAIL_INDICES};
-n_points = length(s_points);
-
-%??? - why scale this ????, why not just use microns?
-
-if d_opts.mimic_old_behavior 
-    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
-
-    all_widths = zeros(1,3);
-    for iWidth = 1:3
-        temp = widths(s_points_temp{iWidth},:);
-        all_widths(iWidth) = nanmean(temp(:));
-    end
-    mean_width = mean(all_widths);  
-else
-    mean_width = nanmean(widths(:));
-end
-
-
-scale = sqrt(2)/mean_width;
-%NOTE: The old code omitted the widths at the neck and hips, I'm also doing
-%that here, which is why we use the head, midbody, and tail indices,
-%instead of just taking the mean of the widths. This distinction seems not
-%functionally useful but I'll keep it for now ...
-
-NAN_cell  = repmat({NaN},1,n_points);
-durations = struct('indices',NAN_cell,'times',NAN_cell);
-
-% The skeletons are empty.
-if isempty(sx) || all(isnan(sx(:)))
-    arena.height = NaN;
-    arena.width = NaN;
-    arena.min.x = NaN;
-    arena.min.y = NaN;
-    arena.max.x = NaN;
-    arena.max.y = NaN;
-    
-    obj.duration = h__buildOutput(arena,durations);
-    return;
-end
-
-% Scale the skeleton and translate so that the minimum values are at 1
-%-------------------------------------------------------------------------
-sxs = round(sx*scale);
-sys = round(sy*scale);
-
-xScaledMin = min(sxs(:));
-xScaledMax = max(sxs(:));
-yScaledMin = min(sys(:));
-yScaledMax = max(sys(:));
-sxs = sxs - xScaledMin + 1;
-sys = sys - yScaledMin + 1;
-
-
-% Construct the empty arena(s).
-arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];
-
-%Organize the arena size.
-%------------------------------------------------
-arena.height = arena_size(1);
-arena.width  = arena_size(2);
-arena.min.x  = min(sx(:));
-arena.min.y  = min(sy(:));
-arena.max.x  = max(sx(:));
-arena.max.y  = max(sy(:));
-%--------------------------------------------------------------------------
 
 arenas = h__populateArenas(arena_size, sys, sxs, s_points);
 
