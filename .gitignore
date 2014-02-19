@@ -1,3 +1,3 @@
 *.pyc
 __pycache__\*
-user_config.txt
+user_config.py
