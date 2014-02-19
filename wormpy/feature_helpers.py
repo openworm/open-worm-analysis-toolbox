@@ -854,7 +854,6 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
     max_x  = np.nan
     max_y  = np.nan
   
-  pdb.set_trace()
   s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
   n_points = len(s_points)
   
@@ -918,6 +917,80 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
   ar.max_x  = np.nanmax(sx)
   ar.max_y  = np.nanmax(sy)
   
+  def h__populateArenas(arena_size, sys, sxs, s_points):
+    """
+
+    Inputs:
+    sys :
+    sxs : 
+    Returns????    
+    
+    """
+    
+    #NOTE: All skeleton points have been rounded to integer values for
+    #assignment to the matrix based on their values being treated as indices
+
+    #Convert to linear indices for assignment.
+    #----------------------------------------------------------
+
+    pdb.set_trace()
+    return []
+    #    all_worm_I   = sub2ind(arena_size, sys, sxs);
+    frames_run   = np.flatnonzero(np.any(~np.isnan(sxs),axis=0))
+    n_frames_run = len(frames_run);
+     
+    #1 area for each set of skeleton indices
+    #-----------------------------------------
+    
+    n_points = len(s_points);
+    arenas   = [None]*n_points;
+     
+    for iPoint in range(n_points):
+           
+      temp_arena = np.zeros(arena_size);
+    #        s_indices  = s_points{iPoint};
+    #        
+    #        for iFrame = 1:n_frames_run
+    #           cur_frame   = frames_run(iFrame);
+    #           cur_indices = all_worm_I(s_indices,cur_frame);
+    #           
+    #    
+    #           %Approach: we only want to increment 1 for each unique value, but
+    #           %assuming that the right hand side is done before any assigments are
+    #           %made, redundant assignments result in only having each unique value
+    #           %incremented by 1. Previously this code used unique() which is much
+    #           %slower.
+    #           %
+    #           %i.e. a = [0 0 0 0 0]
+    #           %     b = [1 3 1 3 5] %NOTE: We have two each of 1 & 3
+    #           %
+    #           %     a(b) = a(b) + 1 => [1 0 1 0 1]
+    #           %
+    #           %    I assume the computer does the assignment:
+    #           %    a(1) = 1, twice 
+    #           %
+    #           %    and not:
+    #           %    a(1) = a(1) + 1 twice
+    #           %    
+    #           %    same for 3:
+    #           %    a(3) = 1 , NOT a(3) = a(3) + 1
+    #           %
+    #           %    This allows us to avoid computing the unique set of indices
+    #           %    before doing the calculation:
+    #           %    i.e., we avoid b = unique(b)
+    #           %
+    #           temp_arena(cur_indices) = temp_arena(cur_indices) + 1;
+    #        end
+    #        
+    #        % Correct the y-axis (from image space).
+    #        %???? Hold over from old code
+    #        arenas{iPoint} = temp_arena(end:-1:1,:);
+    #    end
+    #    
+    #    end
+      
+  arenas = h__populateArenas(arena_size, sys, sxs, s_points)  
+      
   """
 
 arenas = h__populateArenas(arena_size, sys, sxs, s_points);
@@ -944,70 +1017,8 @@ duration_struct = struct( ...
 
 end
 
-function arenas = h__populateArenas(arena_size, sys, sxs, s_points)
-%
-%
-%   
-%
-%
 
-%NOTE: All skeleton points have been rounded to integer values for
-%assignment to the matrix based on their values being treated as indices
-
-%Convert to linear indices for assignment.
-all_worm_I   = sub2ind(arena_size, sys, sxs);
-frames_run   = find(any(all_worm_I)); %NOTE: any(NaN) is false, all(NaN) is true
-n_frames_run = length(frames_run);
-
-%1 area for each set of skeleton indices
-n_points = length(s_points);
-arenas   = cell(n_points,1);
-
-for iPoint = 1:n_points
-   
-    temp_arena = zeros(arena_size);
-    s_indices  = s_points{iPoint};
-    
-    for iFrame = 1:n_frames_run
-       cur_frame   = frames_run(iFrame);
-       cur_indices = all_worm_I(s_indices,cur_frame);
-       
-
-       %Approach: we only want to increment 1 for each unique value, but
-       %assuming that the right hand side is done before any assigments are
-       %made, redundant assignments result in only having each unique value
-       %incremented by 1. Previously this code used unique() which is much
-       %slower.
-       %
-       %i.e. a = [0 0 0 0 0]
-       %     b = [1 3 1 3 5] %NOTE: We have two each of 1 & 3
-       %
-       %     a(b) = a(b) + 1 => [1 0 1 0 1]
-       %
-       %    I assume the computer does the assignment:
-       %    a(1) = 1, twice 
-       %
-       %    and not:
-       %    a(1) = a(1) + 1 twice
-       %    
-       %    same for 3:
-       %    a(3) = 1 , NOT a(3) = a(3) + 1
-       %
-       %    This allows us to avoid computing the unique set of indices
-       %    before doing the calculation:
-       %    i.e., we avoid b = unique(b)
-       %
-       temp_arena(cur_indices) = temp_arena(cur_indices) + 1;
-    end
-    
-    % Correct the y-axis (from image space).
-    %???? Hold over from old code
-    arenas{iPoint} = temp_arena(end:-1:1,:);
-end
-
-end
-
-  s"""
+  """
   
   
   
