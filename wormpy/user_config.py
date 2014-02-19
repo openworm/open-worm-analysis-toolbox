@@ -23,12 +23,6 @@ NORMALIZED_WORM_PATH = "worm_data\\video\\testing_with_GUI\\.data\\" + \
                        "x_2010_04_21__17_19_20__1_seg\\normalized"
 
 
-# motion codes   # DEBUG, placeholder
-SPEED_THRESHOLD_PCT = 0
-DISTANCE_THRSHOLD_PCT = 0
-PAUSE_THRESHOLD_PCT = 0
-EVENT_FRAMES_THRESHOLD = 0
-EVENT_MIN_INTER_FRAMES_THRESHOLD = 0
 
 #  OLD CODE (for reference):
   
