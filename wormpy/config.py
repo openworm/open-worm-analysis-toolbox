@@ -65,6 +65,3 @@ EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
 
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
-
-
-

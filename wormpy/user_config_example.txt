@@ -8,15 +8,10 @@
   
   @authors: @JimHokanson, @MichaelCurrie
   
-  NOTE: If you are looking at this file and it is named user_config.py.txt,
-        you must rename this from .py.txt to .py in your own fork, and then
-        the file will be ignored by github and you can make user-specific 
-        changes to the file.
-
 """
 
 
-DROPBOX_PATH = "C:\\Users\\Michael\\Dropbox\\"
+DROPBOX_PATH = r"C:\Users\RNEL\Dropbox"
 
 # An unc-8 (strong coiler) mutant worm
 WORM_FILE_PATH = "worm_data\\example_feature_files\\" + \
@@ -28,6 +23,12 @@ NORMALIZED_WORM_PATH = "worm_data\\video\\testing_with_GUI\\.data\\" + \
                        "x_2010_04_21__17_19_20__1_seg\\normalized"
 
 
+# motion codes   # DEBUG, placeholder
+SPEED_THRESHOLD_PCT = 0
+DISTANCE_THRSHOLD_PCT = 0
+PAUSE_THRESHOLD_PCT = 0
+EVENT_FRAMES_THRESHOLD = 0
+EVENT_MIN_INTER_FRAMES_THRESHOLD = 0
 
 #  OLD CODE (for reference):
   

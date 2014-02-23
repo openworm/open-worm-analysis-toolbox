@@ -38,8 +38,8 @@ class NormalizedWorm():
       EIGENWORM_PATH
       segmentation_status   
       frame_codes
-      vulva_contours
-      non_vulva_contours
+      vulva_contours        [49,2,4642]
+      non_vulva_contours    [49,2,4642]
       skeletons
       angles
       in_out_touches
@@ -482,7 +482,7 @@ class NormalizedWorm():
     return (np.nanmin(d[dimension,0,:]), 
             np.nanmax(d[dimension,1,:]))
 
-
+  @property
   def contour_x(self):
     """ 
       Return the approximate worm contour, derived from data
@@ -490,13 +490,23 @@ class NormalizedWorm():
             those on the second set. We also reverse the contour so that
             it encompasses an "out and back" contour
     """
-    pass    # TODO
-    #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
+    vc  = self.data_dict['vulva_contours']
+    nvc = self.data_dict['non_vulva_contours']
+    return np.concatenate((vc[:,0,:],nvc[-2:0:-1,0,:]))    
 
+  @property
   def contour_y(self):
-    pass    # TODO
-    #return squeeze([obj.vulva_contours(:,1,:); obj.non_vulva_contours(end-1:-1:2,1,:);]);
+    vc  = self.data_dict['vulva_contours']
+    nvc = self.data_dict['non_vulva_contours']
+    return np.concatenate((vc[:,1,:],nvc[-2:0:-1,1,:]))    
 
+  @property
+  def skeleton_x(self):
+    return self.data_dict['skeletons'][:,0,:]
+    
+  @property
+  def skeleton_y(self):
+    return self.data_dict['skeletons'][:,1,:]
 
 
 
