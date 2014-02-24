@@ -1,3 +1,5 @@
+## Work Tracking Software Packages ##
+
 1. WT 2.0 from [Dr William Schafer's lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/) at Cambridge University's MRC Laboratory of Molecular Biology
  * NOTE: The OpenWorm team has chosen to adapt the codebase of this tracker for our movement validation functionality.
 
