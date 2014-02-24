@@ -1,5 +1,5 @@
-1. WT 2.0 from Shafter Lab()
-NOTE: The OpenWorm team has chosen to adapt the codebase of this tracker for our movement validation functionality.
+1. WT 2.0 from [Dr William Schafer's lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/) at Cambridge University's MRC Laboratory of Molecular Biology
+ * NOTE: The OpenWorm team has chosen to adapt the codebase of this tracker for our movement validation functionality.
 
 2. [3-D Worm Tracker for Freely Moving C. elegans](http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3578814&tool=pmcentrez&rendertype=abstract)
 
