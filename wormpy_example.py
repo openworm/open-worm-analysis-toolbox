@@ -12,7 +12,7 @@ import os
 import warnings
 import wormpy
 from wormpy import user_config
-
+import pdb
 
 
 def example_WormExperimentFile():
@@ -136,12 +136,21 @@ def dontRunMeAutomagically():
   #Code for running things as we work through translating code:
   #------------------------------------------------------------------
   #These lines can be evaluated and run by selection
-  import wormpy_example as we
-  nw = we.example_nw()   
+  import wormpy_example as we  
+  import warnings
+  import pdb
+  #warnings.filterwarnings('error')
+   
+  try:
 
-  from wormpy.WormFeatures import WormPath as wp #Temporary for directly accessing features  
+    nw = we.example_nw()   
+
+    from wormpy.WormFeatures import WormPath as wp #Temporary for directly accessing features  
   
-  temp = wp(nw)
+    temp = wp(nw)
+  except:
+    print('wtf')
+    pdb.set_trace()
   
   #-------------------------------------------------------------------
   nw = example_nw() #wormpy.NormalizedWorm

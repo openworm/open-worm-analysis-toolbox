@@ -853,7 +853,7 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
     min_y  = np.nan
     max_x  = np.nan
     max_y  = np.nan
-  
+    
   s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
   n_points = len(s_points)
   
@@ -871,7 +871,8 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
   #end
   
   mean_width = np.nanmean(widths)
-  scale      = 2**0.5/mean_width;
+  scale      = 2.0**0.5/mean_width;
+  
   
   
   #JAH: At this point  
@@ -891,9 +892,13 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
 #    obj.duration = h__buildOutput(arena,durations);
 #    return;  
      
+   
+     
   # Scale the skeleton and translate so that the minimum values are at 1
   #-------------------------------------------------------------------------
-  sxs1 = np.round(sx*scale)  #NOTE: I added the  just to avoid overwriting
+  #NOTE: These will throw warnings if NaN are created :/
+  #Thanks Python
+  sxs1 = np.round(sx*scale)  #NOTE: I added the 1 just to avoid overwriting
   sys1 = np.round(sy*scale)  #Ideally these would be named better
   
   xScaledMin = np.nanmin(sxs1)
@@ -903,6 +908,9 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
 
   sxs = sxs1 - xScaledMin
   sys = sys1 - yScaledMin  
+  
+  sxs_I = sxs.astype(int)
+  sys_I = sys.astype(int)  
   
   # Construct the empty arena(s).
   arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];  
@@ -932,27 +940,26 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
 
     #Convert to linear indices for assignment.
     #----------------------------------------------------------
-
-    pdb.set_trace()
-    return []
-    #    all_worm_I   = sub2ind(arena_size, sys, sxs);
     frames_run   = np.flatnonzero(np.any(~np.isnan(sxs),axis=0))
-    n_frames_run = len(frames_run);
+    n_frames_run = len(frames_run)
      
     #1 area for each set of skeleton indices
     #-----------------------------------------
-    
-    n_points = len(s_points);
-    arenas   = [None]*n_points;
+    n_points = len(s_points)
+    arenas   = [None]*n_points
      
     for iPoint in range(n_points):
            
-      temp_arena = np.zeros(arena_size);
-    #        s_indices  = s_points{iPoint};
-    #        
-    #        for iFrame = 1:n_frames_run
-    #           cur_frame   = frames_run(iFrame);
-    #           cur_indices = all_worm_I(s_indices,cur_frame);
+      temp_arena = np.zeros(arena_size)
+      s_indices  = s_points[iPoint]
+            
+      for iFrame in range(n_frames_run):
+        cur_frame = frames_run[iFrame]
+        cur_x     = sxs_I[s_indices[0]:s_indices[1]:,cur_frame]
+        cur_y     = sys_I[s_indices[0]:s_indices[1]:,cur_frame]
+        temp_arena[cur_y,cur_x] += 1
+        
+      pdb.set_trace()  
     #           
     #    
     #           %Approach: we only want to increment 1 for each unique value, but
@@ -979,7 +986,8 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
     #           %    before doing the calculation:
     #           %    i.e., we avoid b = unique(b)
     #           %
-    #           temp_arena(cur_indices) = temp_arena(cur_indices) + 1;
+        
+        
     #        end
     #        
     #        % Correct the y-axis (from image space).
