@@ -125,17 +125,10 @@ def example_virtual_worm_pipeline(data_file_path):
 """
 
 def dontRunMeAutomagically():
-
-  # NOTE: I originally had this code wrapped in a main function, but
-  # for some reason the lines in the plot would not appear if they were
-  # called in this manner.  Outside a main() function, things work fine.
-    
-  # Create a normalized worm from a hardcoded example location
-    
-  
   #Code for running things as we work through translating code:
   #------------------------------------------------------------------
   #These lines can be evaluated and run by selection
+  
   import wormpy_example as we
   nw = we.example_nw()   
 
@@ -143,31 +136,34 @@ def dontRunMeAutomagically():
   
   temp = wp(nw)
   
-  #-------------------------------------------------------------------
-  nw = example_nw() #wormpy.NormalizedWorm
+
+
+# NOTE: I originally had this code wrapped in a main function, but
+# for some reason the lines in the plot would not appear if they were
+# called in this manner.  Outside a main() function, things work fine.
   
-  
-  
-  # AT THIS POINT WE COULD INTERPOLATE THE WORM'S SKELETON
-  #normalized_worm.interpolate_dropped_frames()  
-  
-  # NOTE: The warning that appears comes from nanfunctions.py, because 
-  # we are sometimes taking the mean and std dev of all-NaN angle arrays.
-  # The mean and std_dev in these cases is set to NaN, which seems like 
-  # correct behaviour to me.  So we can safely ignore this warning.  
-  #  worm_features = None
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    # From the basic information in normalized_worm,
-    # create an instance of WormFeatures, which contains all our features data.
-    wf = wormpy.WormFeatures(nw)
-  
-  wormpy.plot_frame_codes(nw)
-  
-  wp = wormpy.WormPlotter(nw, interactive=False)
-  
-  wp.show()
-  
-  # At this point we could save the plot to a file:
-  #wp.save('test_sub.mp4')
+# Create a normalized worm from a hardcoded example location
+
+#-------------------------------------------------------------------
+nw = example_nw() #wormpy.NormalizedWorm
+
+
+# NOTE: The warning that appears comes from nanfunctions.py, because 
+# we are sometimes taking the mean and std dev of all-NaN angle arrays.
+# The mean and std_dev in these cases is set to NaN, which seems like 
+# correct behaviour to me.  So we can safely ignore this warning.  
+with warnings.catch_warnings():
+  warnings.simplefilter("ignore")
+  # From the basic information in normalized_worm,
+  # create an instance of WormFeatures, which contains all our features data.
+  wf = wormpy.WormFeatures(nw)
+
+wormpy.plot_frame_codes(nw)
+
+wp = wormpy.WormPlotter(nw, interactive=False)
+
+wp.show()
+
+# At this point we could save the plot to a file:
+#wp.save('test_sub.mp4')
 
