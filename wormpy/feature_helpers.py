@@ -853,13 +853,26 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
     min_y  = np.nan
     max_x  = np.nan
     max_y  = np.nan
-  
+    
+  class duration_element:
+    indices = [] #[n x 2] i,j indices into the arena of non-zero indices
+    times   = [] #Number of frames spent in each area, converted into time
+    #based on frame rate
+    
+  class durations:
+    arena   = []
+    worm    = []
+    head    = []
+    midbody = []
+    tail    = []
+    
   s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
   n_points = len(s_points)
   
   #d_opts not currently used
+  #-------------------------------------------------------------------------
   #This is for the old version via d_opts, this is currently not used
-  #i.e. if d_opts.mimic_old_behavior 
+  #i.e. if d_opts.mimic_old_behavior   #Then do the following ...
 #    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
 #
 #    all_widths = zeros(1,3);
@@ -871,29 +884,34 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
   #end
   
   mean_width = np.nanmean(widths)
-  scale      = 2**0.5/mean_width;
+  scale      = 2.0**0.5/mean_width;
+  
   
   
   #JAH: At this point  
   
-#NAN_cell  = repmat({NaN},1,n_points);
-#durations = struct('indices',NAN_cell,'times',NAN_cell);  
+  #
+  #
   
   if len(sx) == 0 or np.isnan(sx).all():
      raise Exception('This code is not yet translated')
-#    arena.height = NaN;
-#    arena.width = NaN;
-#    arena.min.x = NaN;
-#    arena.min.y = NaN;
-#    arena.max.x = NaN;
-#    arena.max.y = NaN;
-#    
-#    obj.duration = h__buildOutput(arena,durations);
-#    return;  
+      #    arena.height = NaN;
+      #    arena.width = NaN;
+      #    arena.min.x = NaN;
+      #    arena.min.y = NaN;
+      #    arena.max.x = NaN;
+      #    arena.max.y = NaN;
+      #    NAN_cell  = repmat({NaN},1,n_points);
+      #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
+      #    obj.duration = h__buildOutput(arena,durations);
+      #    return;  
+     
+   
      
   # Scale the skeleton and translate so that the minimum values are at 1
   #-------------------------------------------------------------------------
-  sxs1 = np.round(sx*scale)  #NOTE: I added the  just to avoid overwriting
+  #NOTE: These will throw warnings if NaN are created :/ , thanks Python
+  sxs1 = np.round(sx*scale)  #NOTE: I added the 1 just to avoid overwriting
   sys1 = np.round(sy*scale)  #Ideally these would be named better
   
   xScaledMin = np.nanmin(sxs1)
@@ -903,6 +921,9 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
 
   sxs = sxs1 - xScaledMin
   sys = sys1 - yScaledMin  
+  
+  sxs_I = sxs.astype(int)
+  sys_I = sys.astype(int)  
   
   # Construct the empty arena(s).
   arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];  
@@ -932,94 +953,72 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
 
     #Convert to linear indices for assignment.
     #----------------------------------------------------------
-
-    pdb.set_trace()
-    return []
-    #    all_worm_I   = sub2ind(arena_size, sys, sxs);
     frames_run   = np.flatnonzero(np.any(~np.isnan(sxs),axis=0))
-    n_frames_run = len(frames_run);
+    n_frames_run = len(frames_run)
      
     #1 area for each set of skeleton indices
     #-----------------------------------------
-    
-    n_points = len(s_points);
-    arenas   = [None]*n_points;
+    n_points = len(s_points)
+    arenas   = [None]*n_points
      
     for iPoint in range(n_points):
            
-      temp_arena = np.zeros(arena_size);
-    #        s_indices  = s_points{iPoint};
-    #        
-    #        for iFrame = 1:n_frames_run
-    #           cur_frame   = frames_run(iFrame);
-    #           cur_indices = all_worm_I(s_indices,cur_frame);
-    #           
-    #    
-    #           %Approach: we only want to increment 1 for each unique value, but
-    #           %assuming that the right hand side is done before any assigments are
-    #           %made, redundant assignments result in only having each unique value
-    #           %incremented by 1. Previously this code used unique() which is much
-    #           %slower.
-    #           %
-    #           %i.e. a = [0 0 0 0 0]
-    #           %     b = [1 3 1 3 5] %NOTE: We have two each of 1 & 3
-    #           %
-    #           %     a(b) = a(b) + 1 => [1 0 1 0 1]
-    #           %
-    #           %    I assume the computer does the assignment:
-    #           %    a(1) = 1, twice 
-    #           %
-    #           %    and not:
-    #           %    a(1) = a(1) + 1 twice
-    #           %    
-    #           %    same for 3:
-    #           %    a(3) = 1 , NOT a(3) = a(3) + 1
-    #           %
-    #           %    This allows us to avoid computing the unique set of indices
-    #           %    before doing the calculation:
-    #           %    i.e., we avoid b = unique(b)
-    #           %
-    #           temp_arena(cur_indices) = temp_arena(cur_indices) + 1;
-    #        end
-    #        
-    #        % Correct the y-axis (from image space).
-    #        %???? Hold over from old code
-    #        arenas{iPoint} = temp_arena(end:-1:1,:);
-    #    end
-    #    
-    #    end
+      temp_arena = np.zeros(arena_size)
+      s_indices  = s_points[iPoint]
+            
+      for iFrame in range(n_frames_run):
+        cur_frame = frames_run[iFrame]
+        cur_x     = sxs_I[s_indices[0]:s_indices[1]:,cur_frame]
+        cur_y     = sys_I[s_indices[0]:s_indices[1]:,cur_frame]
+        temp_arena[cur_y,cur_x] += 1
+    
+      arenas[iPoint] = temp_arena[::-1,:] #
+    
+    return arenas
+  #----------------------------------------------------------------------------  
+  
+  arenas   = h__populateArenas(arena_size, sys, sxs, s_points)  
       
-  arenas = h__populateArenas(arena_size, sys, sxs, s_points)  
-      
-  """
+  n_points = len(s_points)      
 
-arenas = h__populateArenas(arena_size, sys, sxs, s_points);
+  temp_duration = [None]*n_points   
 
+  for iPoint in range(n_points): 
+    d = duration_element()
+    d.indices = np.transpose(np.nonzero(arenas[iPoint]))
+    d.times   = arenas[iPoint][d.indices[:,0],d.indices[:,1]]/fps      
+    temp_duration[iPoint] = d
 
-% Organize the arena/path time(s).
-for iPoint = 1:n_points
-    non_empty_arena_indices   = find(arenas{iPoint} > 0);
-    durations(iPoint).indices = non_empty_arena_indices;
-    durations(iPoint).times   = arenas{iPoint}(non_empty_arena_indices) / fps;
-end
+  d_out = durations()
+  d_out.arena   = ar
+  d_out.worm    = temp_duration[0]
+  d_out.head    = temp_duration[1]
+  d_out.midbody = temp_duration[2]
+  d_out.tail    = temp_duration[3]
 
-obj.duration = h__buildOutput(arena,durations);
+  return d_out
 
-end
-
-function duration_struct = h__buildOutput(arena,durations)
-duration_struct = struct( ...
-    'arena',    arena, ...
-    'worm',     durations(1), ...
-    'head',     durations(2), ...
-    'midbody',  durations(3), ...
-    'tail',     durations(4));
-
-end
-
-
+def worm_path_curvature(x,y,fps,ventral_mode):
+  
   """
   
   
+  """
+
+  BODY_DIFF = 0.5  
+  BODY_I    = (44,3,-1)
   
+  #This was nanmean but I think mean will be fine. nanmean was
+  #causing the program to crash
+  diff_x = np.mean(np.diff(x[slice(*BODY_I),:],axis=0),axis=0)
+  diff_y = np.mean(np.diff(y[slice(*BODY_I),:],axis=0),axis=0)  
+  avg_body_angles_d = np.arctan2(diff_y,diff_x)*180/np.pi  
+  
+  #JAH: At this point  
+  
+  pdb.set_trace()
+  
+  #compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0)
+  
+  a = 1
   
