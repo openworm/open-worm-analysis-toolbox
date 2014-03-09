@@ -166,8 +166,8 @@ class WormPosture():
     
     # *** 2. Eccentricity & Orientation ***
     eccentricity_and_orientation = \
-            feature_helpers.get_eccentricity_and_orientation(nw.contour_x(), 
-                                                             nw.contour_y())
+            feature_helpers.get_eccentricity_and_orientation(nw.contour_x, 
+                                                             nw.contour_y)
     self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
     self.posture['orientation'] = eccentricity_and_orientation.orientation
     
