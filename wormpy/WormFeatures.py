@@ -206,13 +206,21 @@ class WormPosture():
     
 
 class WormPath():
+  
+  range = []
+  duration = []
+  coordinates = []
+  curvature = []
+  
   def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
     +seg_worm / @feature_calculator / getPathFeatures.m
 
     """    
-    self.path = {}
+    
+    FPS = 25
+    VENTRAL_MODE = 0    
     
     #Range
     #--------------------------------------------------
@@ -237,30 +245,25 @@ class WormPath():
         
     #Duration (aka Dwelling)
     #---------------------------------------------------
-    sx = nw.skeleton_x
-    sy = nw.skeleton_y
+    sx     = nw.skeleton_x
+    sy     = nw.skeleton_y
     widths = nw.data_dict['widths']
     d_opts = []
-    fps = 25 #Where do we get this from?
-    feature_helpers.get_duration_info(self,nw, sx, sy, widths, fps, d_opts)
+    self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, FPS, d_opts)
         
-    
     #Coordinates (Done)
     #---------------------------------------------------
-    #??? How to handle nested classes
     class s:
       x = []
       y = []
     
-    
-    
-    self.coordinates = s()
+    self.coordinates   = s()
     self.coordinates.x = nw.contour_x.mean(axis=0)
     self.coordinates.y = nw.contour_y.mean(axis=0)
     
     #Curvature
     #---------------------------------------------------
-
+    self.curvature = feature_helpers.worm_path_curvature(sx,sy,FPS,VENTRAL_MODE)
 
 class WormFeatures:
   """ 
