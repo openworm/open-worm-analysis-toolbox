@@ -11,7 +11,7 @@
 import numpy as np
 import collections
 from wormpy import config
-import pdb
+#import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
            'get_worm_velocity',                 # for locomotion
@@ -1016,7 +1016,7 @@ def worm_path_curvature(x,y,fps,ventral_mode):
   
   #JAH: At this point  
   
-  pdb.set_trace()
+  #pdb.set_trace()
   
   #compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0)
   

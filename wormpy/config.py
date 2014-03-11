@@ -28,7 +28,8 @@ MIMIC_OLD_BEHAVIOUR = False
 # Frames Per Second
 # (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
 FPS = 20                 
-
+VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
+    
 # Grid size for estimating eccentricity, this is the
 # max # of points that will fill the wide dimension.
 # (scalar) The # of points to place in the long dimension. More points
@@ -65,3 +66,6 @@ EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
 
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
+
+
+
