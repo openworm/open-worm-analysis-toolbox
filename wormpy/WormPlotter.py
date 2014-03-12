@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-WormPlotter: A class that renders matplotlib plots of worm measurement and
-             feature data.
-
-@authors: @JimHokanson, @MichaelCurrie
-
-This follows the [animated subplots example]
-(http://matplotlib.org/1.3.0/examples/animation/subplots.html)
-in creating a class derivation from TimedAnimation rather than 
-using pylab shell-type calls to construct the animation.
+  WormPlotter: A class that renders matplotlib plots of worm measurement and
+               feature data.
+  
+  @authors: @JimHokanson, @MichaelCurrie
+  
+  This follows the [animated subplots example]
+  (http://matplotlib.org/1.3.0/examples/animation/subplots.html)
+  in inheriting from TimedAnimation rather than 
+  using PyLab shell-type calls to construct the animation.
 
 """
 
@@ -25,8 +25,7 @@ from wormpy import config
 class WormPlotter(animation.TimedAnimation):
   
   def __init__(self, normalized_worm, interactive=False):
-    """
-      __init__: Initialize the animation of the worm's attributes.
+    """ Initialize the animation of the worm's attributes.
 
         INPUT: 
           normalized_worm: the NormalizedWorm object to be plotted.
@@ -164,17 +163,13 @@ class WormPlotter(animation.TimedAnimation):
                                              blit=True)
 
   def show(self):
-    """
-      show:
-        draw the figure in a window on the screen
+    """ draw the figure in a window on the screen
       
     """
     plt.show()
 
   def _draw_frame(self, framedata):
-    """
-      _draw_frame:
-        Called sequentially for each frame of the animation.  Thus
+    """ Called sequentially for each frame of the animation.  Thus
         we must set our plot to look like it should for the given frame.
         
       INPUT
@@ -222,17 +217,14 @@ class WormPlotter(animation.TimedAnimation):
                            self.annotation4]
 
   def new_frame_seq(self):
-    """
-      returns an iterator that iterates over the frames 
-      in the animation
+    """ Returns an iterator that iterates over the frames 
+        in the animation
       
     """
     return iter(range(self.normalized_worm.num_frames()))
 
   def _init_draw(self):
-    """
-      _init_draw:
-        Called when first drawing the animation.
+    """ Called when first drawing the animation.
         It is an abstract method in Animation, to be implemented here for
         the first time.
       
@@ -249,9 +241,7 @@ class WormPlotter(animation.TimedAnimation):
     
 
   def save(self, filename):
-    """ 
-      save:
-        Save the animation as an mp4.
+    """ Save the animation as an mp4.
         This requires ffmpeg or mencoder to be installed.
         The extra_args ensure that the x264 codec is used, so that 
         the video can be embedded in html5.  You may need to adjust 
@@ -273,8 +263,8 @@ class WormPlotter(animation.TimedAnimation):
 
 
 def plot_frame_codes(normalized_worm):
-  """
-    Plot a pie chart of the frame codes of a normalized worm.
+  """ Plot a pie chart of the frame codes of a normalized worm.  (An attempt
+      at replicating /documentation/Video%20Segmentation.gif)
     
   """  
   # TODO: someday make this pie chart look nicer with:

@@ -26,8 +26,8 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
 """
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
-  """
-    get_motion_codes: calculate motion codes (a locomotion feature)
+  """ Calculate motion codes (a locomotion feature)
+  
       INPUT:
         midbody speed:  
         skeleton_lengths:
@@ -58,7 +58,11 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   is_not_data = np.isnan(skeleton_lengths)
   is_data    = ~is_not_data
   
+  interpI   = np.nonzero(is_not_data)
+  dataI     = np.nonzero(is_data)
+  
   """
+  https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40locomotion/getWormMotionCodes.m
   dataI     = find(is_data)
   interpI   = find(is_not_data)
   if(~isempty(interpI) and length(dataI) > 1):
@@ -151,9 +155,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 """
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
-  """
-    get_angles: obtain the "angle" of a subset of the 49 points
-                 of a worm, for each frame.
+  """ Obtain the "angle" of a subset of the 49 points
+      of a worm, for each frame.
+      
       INPUT: 
         segment_x, segment_y: numpy arrays of shape (p,n) where 
                               p is the size of the partition of the 49 points
@@ -186,9 +190,9 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
 
 def get_partition_angles(nw, partition_key, data_key='skeletons',
                          head_to_tail=False):
-  """
-    get_partition_angles: obtain the "angle" of a subset of the 49 points 
-                          of a worm for each frame
+  """ Obtain the "angle" of a subset of the 49 points of a worm for each 
+      frame
+  
       INPUT: head_to_tail=True means the worm points are order head to tail.
     
       OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
@@ -203,9 +207,7 @@ def get_partition_angles(nw, partition_key, data_key='skeletons',
 
 def h__computeAngularSpeed(segment_x, segment_y, 
                            left_I, right_I, ventral_mode):
-  """
-    h__computeAngularSpeed
-      INPUT: 
+  """ INPUT: 
         segment_x: the x's of the partition being considered. shape (p,n)
         segment_y: the y's of the partition being considered. shape (p,n)
         left_I: the angle's first point
@@ -240,9 +242,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
 
 
 def h__getVelocityIndices(frames_per_sample, good_frames_mask):
-  """
-    h__getVelocityIndices:
-      Compute the speed using back/front nearest neighbours, avoiding NaNs,
+  """ Compute the speed using back/front nearest neighbours, avoiding NaNs,
       bounded at twice the scale.
 
       INPUTS:
