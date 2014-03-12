@@ -55,12 +55,24 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   distance_per_frame = abs(midbody_speed / config.FPS)
 
   #  Interpolate the missing lengths.
-  is_not_data = np.isnan(skeleton_lengths)
-  is_data    = ~is_not_data
+
+  # First, create two boolean numpy arrays indicating whether the frame 
+  # has been dropped
+  frame_is_dropped = np.isnan(skeleton_lengths)
+  frame_is_good = ~frame_is_dropped
   
-  interpI   = np.nonzero(is_not_data)
-  dataI     = np.nonzero(is_data)
+  # Flatnonzero returns a smaller array of the indexes of the True elements 
+  dropped_frames  = np.flatnonzero(frame_is_dropped)
+  good_frames     = np.flatnonzero(frame_is_good)
   
+  # Basic validation that our new list of dropped frames contains precisely
+  # the same number of elements as the true elements of frame_is_dropped
+  assert(np.shape(dropped_frames)[0] ==
+         np.sum(frame_is_dropped))
+
+  # TODO:
+  #http://docs.scipy.org/doc/numpy/reference/generated/numpy.interp.html
+         
   """
   https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40locomotion/getWormMotionCodes.m
   dataI     = find(is_data)
