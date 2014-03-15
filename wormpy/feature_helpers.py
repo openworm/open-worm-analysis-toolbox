@@ -70,6 +70,15 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   assert(np.shape(dropped_frames)[0] ==
          np.sum(frame_is_dropped))
 
+  # create a copy of the array (just for debugging purposes)
+  # that will contain interpolated values in place of the NaNs
+  skeleton_lengths2 = np.copy(skeleton_lengths)
+
+  skeleton_lengths2[frame_is_dropped] = \
+    np.interp(dropped_frames, good_frames, skeleton_lengths[frame_is_good])
+
+
+
   # TODO:
   #http://docs.scipy.org/doc/numpy/reference/generated/numpy.interp.html
          
