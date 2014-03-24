@@ -122,12 +122,13 @@ def example_virtual_worm_pipeline(data_file_path):
   We load the skeleton and other basic data from a worm HDF5 file,
   optionally animate it using matplotlib, and also    
   re-create the features information by deriving them from the basic data.
+
 """
 
 def dontRunMeAutomagically():
-  #Code for running things as we work through translating code:
-  #------------------------------------------------------------------
-  #These lines can be evaluated and run by selection
+  # Code for running things as we work through translating code:
+  # ------------------------------------------------------------------
+  # These lines can be evaluated and run by selection
   
   import wormpy_example as we
   nw = we.example_nw()   
@@ -158,12 +159,11 @@ with warnings.catch_warnings():
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
 
-wormpy.plot_frame_codes(nw)
 
-wp = wormpy.WormPlotter(nw, interactive=False)
-
-wp.show()
-
+# Plotting demonstration
+#wormpy.plot_frame_codes(nw)
+#wp = wormpy.WormPlotter(nw, interactive=False)
+#wp.show()
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
 

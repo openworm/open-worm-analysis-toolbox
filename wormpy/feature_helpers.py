@@ -11,7 +11,7 @@
 import numpy as np
 import collections
 from wormpy import config
-import pdb
+#import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
            'get_worm_velocity',                 # for locomotion
@@ -26,8 +26,8 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
 """
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
-  """
-    get_motion_codes: calculate motion codes (a locomotion feature)
+  """ Calculate motion codes (a locomotion feature)
+  
       INPUT:
         midbody speed:  
         skeleton_lengths:
@@ -55,10 +55,35 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   distance_per_frame = abs(midbody_speed / config.FPS)
 
   #  Interpolate the missing lengths.
-  is_not_data = np.isnan(skeleton_lengths)
-  is_data    = ~is_not_data
+
+  # First, create two boolean numpy arrays indicating whether the frame 
+  # has been dropped
+  frame_is_dropped = np.isnan(skeleton_lengths)
+  frame_is_good = ~frame_is_dropped
   
+  # Flatnonzero returns a smaller array of the indexes of the True elements 
+  dropped_frames  = np.flatnonzero(frame_is_dropped)
+  good_frames     = np.flatnonzero(frame_is_good)
+  
+  # Basic validation that our new list of dropped frames contains precisely
+  # the same number of elements as the true elements of frame_is_dropped
+  assert(np.shape(dropped_frames)[0] ==
+         np.sum(frame_is_dropped))
+
+  # create a copy of the array (just for debugging purposes)
+  # that will contain interpolated values in place of the NaNs
+  skeleton_lengths2 = np.copy(skeleton_lengths)
+
+  skeleton_lengths2[frame_is_dropped] = \
+    np.interp(dropped_frames, good_frames, skeleton_lengths[frame_is_good])
+
+
+
+  # TODO:
+  #http://docs.scipy.org/doc/numpy/reference/generated/numpy.interp.html
+         
   """
+  https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40locomotion/getWormMotionCodes.m
   dataI     = find(is_data)
   interpI   = find(is_not_data)
   if(~isempty(interpI) and length(dataI) > 1):
@@ -151,9 +176,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 """
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
-  """
-    get_angles: obtain the "angle" of a subset of the 49 points
-                 of a worm, for each frame.
+  """ Obtain the "angle" of a subset of the 49 points
+      of a worm, for each frame.
+      
       INPUT: 
         segment_x, segment_y: numpy arrays of shape (p,n) where 
                               p is the size of the partition of the 49 points
@@ -186,9 +211,9 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
 
 def get_partition_angles(nw, partition_key, data_key='skeletons',
                          head_to_tail=False):
-  """
-    get_partition_angles: obtain the "angle" of a subset of the 49 points 
-                          of a worm for each frame
+  """ Obtain the "angle" of a subset of the 49 points of a worm for each 
+      frame
+  
       INPUT: head_to_tail=True means the worm points are order head to tail.
     
       OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
@@ -203,9 +228,7 @@ def get_partition_angles(nw, partition_key, data_key='skeletons',
 
 def h__computeAngularSpeed(segment_x, segment_y, 
                            left_I, right_I, ventral_mode):
-  """
-    h__computeAngularSpeed
-      INPUT: 
+  """ INPUT: 
         segment_x: the x's of the partition being considered. shape (p,n)
         segment_y: the y's of the partition being considered. shape (p,n)
         left_I: the angle's first point
@@ -240,9 +263,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
 
 
 def h__getVelocityIndices(frames_per_sample, good_frames_mask):
-  """
-    h__getVelocityIndices:
-      Compute the speed using back/front nearest neighbours, avoiding NaNs,
+  """ Compute the speed using back/front nearest neighbours, avoiding NaNs,
       bounded at twice the scale.
 
       INPUTS:
@@ -1016,7 +1037,7 @@ def worm_path_curvature(x,y,fps,ventral_mode):
   
   #JAH: At this point  
   
-  pdb.set_trace()
+  #pdb.set_trace()
   
   #compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0)
   

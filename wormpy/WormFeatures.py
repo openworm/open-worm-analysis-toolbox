@@ -31,7 +31,7 @@ import numpy as np
 import collections
 from wormpy import config
 from wormpy import feature_helpers
-import pdb
+#import pdb
 
 class WormMorphology():
   def __init__(self, nw):
@@ -218,10 +218,11 @@ class WormPath():
     +seg_worm / @feature_calculator / getPathFeatures.m
 
     """    
-    
-    FPS = 25
-    VENTRAL_MODE = 0    
-    
+    # DEBUG: Jim, this is the dict where range, duration,coordinates, etc, should go in the current scheme.  
+    # Perhaps we could discuss if you think otherwise?
+    self.path = {}  
+   
+
     #Range
     #--------------------------------------------------
     def getRange(self,contour_x,contour_y):
@@ -249,7 +250,7 @@ class WormPath():
     sy     = nw.skeleton_y
     widths = nw.data_dict['widths']
     d_opts = []
-    self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, FPS, d_opts)
+    self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, config.FPS, d_opts)
         
     #Coordinates (Done)
     #---------------------------------------------------
@@ -263,7 +264,7 @@ class WormPath():
     
     #Curvature
     #---------------------------------------------------
-    self.curvature = feature_helpers.worm_path_curvature(sx,sy,FPS,VENTRAL_MODE)
+    self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
 class WormFeatures:
   """ 
@@ -278,3 +279,5 @@ class WormFeatures:
     self.locomotion = WormLocomotion(nw).locomotion
     self.posture    = WormPosture(nw).posture
     self.path       = WormPath(nw).path
+    
+    

@@ -56,6 +56,17 @@ The structure of the files is described at a high level starting on page 183 of 
 
 **Data repository:** We store the .mat files that flow between the steps of our pipeline, in a DropBox shared folder "worm_data".
 
+###Installing and running the movement_validation repo:###
+1. Clone the repository to your computer
+2. Ask @MichaelCurrie or @JimHokanson to share the worm_data DropBox folder with you
+3. In the wormpy directory there should be a file `user_config_example.txt`.  Rename this file as `user_config.py`.  It will be ignored by github since it is in the .gitignore file.  So in `user_config.py`, specify your computer's specific DropBox folder root directory and other settings.
+4. Save [nanfunctions.py](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the numpy/lib/ directory, and
+5. Append the lines ```__all__ += nanfunctions.__all__``` and ```from .nanfunctions import *``` at the relevant places to numpy/lib/```__init__.py```.
+6. Try running wormpy_example.py
+7. Hopefully it runs and shows plots of the worm's contour!
+
+Contact @MichaelCurrie for troubleshooting these steps.
+
 ## Sources ##
 
 [1] [Dr William Schafer's lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/) at Cambridge University's MRC Laboratory of Molecular Biology

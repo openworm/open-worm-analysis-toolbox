@@ -15,12 +15,10 @@
     like animate the data.
 
 """
+
 import os
 import numpy as np
 import h5py
-
-#SPEED_UP = 4
-#DT = 0.05
 
 """
    DIFFERENCES BETWEEN wormpy.SchaferExperimentFile and 
@@ -69,9 +67,7 @@ class SchaferExperimentFile:
     pass
 
   def load_HDF5_data(self, worm_file_path):
-    """ 
-      load_HDF5_data:
-        Load the worm data, including the skeleton data
+    """ Load the worm data, including the skeleton data
     
     """
     if(not os.path.isfile(worm_file_path)):
@@ -104,19 +100,19 @@ class SchaferExperimentFile:
     return np.array(skeletons_TEMP)
 
   def skeletons_x(self):
-    """ returns a numpy array of shape (23135, 49) with just X coordinate
+    """ Returns a numpy array of shape (23135, 49) with just X coordinate
         data
     """
     return np.rollaxis(self.skeletons, 2)[0]
 
   def skeletons_y(self):
-    """ returns a numpy array of shape (23135, 49) with just X coordinate
+    """ Returns a numpy array of shape (23135, 49) with just X coordinate
         data
     """
     return np.rollaxis(self.skeletons, 2)[1]
 
   def dropped_frames_mask(self):
-    """ decide which frames are "dropped" by seeing which frames 
+    """ Decide which frames are "dropped" by seeing which frames 
         have the first skeleton X-coordinate set to NaN
         returned shape is approx (23000) and gives True if frame 
         was dropped in experiment file
