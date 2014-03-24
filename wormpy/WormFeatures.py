@@ -27,8 +27,9 @@
 
 """
 
+import h5py #For loading from disk 
 import numpy as np
-import collections
+import collections #For namedtuple
 from wormpy import config
 from wormpy import feature_helpers
 #import pdb
@@ -218,6 +219,11 @@ class WormPath():
     +seg_worm / @feature_calculator / getPathFeatures.m
 
     """    
+    
+    #Creating from disk 
+    if nw is None:
+      return
+    
     # DEBUG: Jim, this is the dict where range, duration,coordinates, etc, should go in the current scheme.  
     # Perhaps we could discuss if you think otherwise?
     self.path = {}  
@@ -241,7 +247,8 @@ class WormPath():
        y_centroid_cy = np.nanmean(mean_cy)
        
        return np.sqrt((mean_cx - x_centroid_cx)**2 + (mean_cy - y_centroid_cy)**2)
-       
+    #--------------------------------------------------
+ 
     self.range = getRange(self,nw.contour_x,nw.contour_y)
         
     #Duration (aka Dwelling)
@@ -251,21 +258,49 @@ class WormPath():
     widths = nw.data_dict['widths']
     d_opts = []
     self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, config.FPS, d_opts)
+    #duration
+    #arena
+      #height
+      #width
+      #min
+      # x
+      #max
+      # y
+    #worm
+    #
+    #head
+    #midbody
+    #tail        
+        
         
     #Coordinates (Done)
-    #---------------------------------------------------
-    class s:
-      x = []
-      y = []
-    
-    self.coordinates   = s()
-    self.coordinates.x = nw.contour_x.mean(axis=0)
-    self.coordinates.y = nw.contour_y.mean(axis=0)
+    #---------------------------------------------------    
+    self.coordinates   = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
     
     #Curvature
     #---------------------------------------------------
     self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
+  @staticmethod
+  def _create_coordinates(x,y):
+    Coordinates = collections.namedtuple('Coordinates',['x','y'])
+    return Coordinates(x,y)
+
+  @staticmethod 
+  def from_disk(path_var):
+    self = WormPath(None)   
+    
+    self.range       = path_var['range'].value
+    #TODO: Finish this ...
+    self.duration    = None #This is a really complicated structure :/   
+    self.coordinates = self._create_coordinates(path_var['coordinates']['x'].value,path_var['coordinates']['y'].value)
+    self.curvature   = path_var['curvature'].value   
+    
+    import pdb
+    pdb.set_trace()    
+    
+    return self
+    
 class WormFeatures:
   """ 
     WormFeatures: takes as input a NormalizedWorm instance, and
@@ -273,11 +308,34 @@ class WormFeatures:
     
   """
   def __init__(self, nw):
+
+    if nw is None:
+      return
+
+    #Yikes, do we need to hang onto this ???
+    #We won't have this if loading from disk     
     self.nw = nw
-    
+
     self.morphology = WormMorphology(nw).morphology
     self.locomotion = WormLocomotion(nw).locomotion
     self.posture    = WormPosture(nw).posture
     self.path       = WormPath(nw).path
+    
+  @staticmethod  
+  def from_disk(file_path):
+    
+    h = h5py.File(file_path,'r')
+    worm = h['worm']
+    
+    self = WormFeatures(None)    
+    
+    #self.morphology = WormMorphology.from_disk(worm['morphology'])
+    #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
+    #self.posture    = WormPosture.from_disk(worm['posture'])
+    self.path = WormPath.from_disk(worm['path']) 
+    
+    
+
+        
     
     
