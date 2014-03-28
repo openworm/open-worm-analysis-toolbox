@@ -11,6 +11,8 @@
 import numpy as np
 import collections
 from wormpy import config
+from . import path_features
+
 #import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
@@ -866,158 +868,21 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   
 def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
   
+  """
+  Arguments:
+  ---------------------------------
+  nw : normalized worm ...
+    Normalized worm object
+  sx : numpy.array
+    Skeleton x points
+  """
   
-  class arena:
-    height = np.nan
-    width  = np.nan
-    min_x  = np.nan
-    min_y  = np.nan
-    max_x  = np.nan
-    max_y  = np.nan
-    
-  class duration_element:
-    indices = [] #[n x 2] i,j indices into the arena of non-zero indices
-    times   = [] #Number of frames spent in each area, converted into time
-    #based on frame rate
-    
-  class durations:
-    arena   = []
-    worm    = []
-    head    = []
-    midbody = []
-    tail    = []
-    
-  s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
-  n_points = len(s_points)
+  wtf = path_features.Duration(nw, sx, sy, widths, fps)    
   
-  #d_opts not currently used
-  #-------------------------------------------------------------------------
-  #This is for the old version via d_opts, this is currently not used
-  #i.e. if d_opts.mimic_old_behavior   #Then do the following ...
-#    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
-#
-#    all_widths = zeros(1,3);
-#    for iWidth = 1:3
-#        temp = widths(s_points_temp{iWidth},:);
-#        all_widths(iWidth) = nanmean(temp(:));
-#    end
-#    mean_width = mean(all_widths);    
-  #end
-  
-  mean_width = np.nanmean(widths)
-  scale      = 2.0**0.5/mean_width;
+  return wtf
   
   
   
-  #JAH: At this point  
-  
-  #
-  #
-  
-  if len(sx) == 0 or np.isnan(sx).all():
-     raise Exception('This code is not yet translated')
-      #    arena.height = NaN;
-      #    arena.width = NaN;
-      #    arena.min.x = NaN;
-      #    arena.min.y = NaN;
-      #    arena.max.x = NaN;
-      #    arena.max.y = NaN;
-      #    NAN_cell  = repmat({NaN},1,n_points);
-      #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
-      #    obj.duration = h__buildOutput(arena,durations);
-      #    return;  
-     
-   
-     
-  # Scale the skeleton and translate so that the minimum values are at 1
-  #-------------------------------------------------------------------------
-  #NOTE: These will throw warnings if NaN are created :/ , thanks Python
-  sxs1 = np.round(sx*scale)  #NOTE: I added the 1 just to avoid overwriting
-  sys1 = np.round(sy*scale)  #Ideally these would be named better
-  
-  xScaledMin = np.nanmin(sxs1)
-  xScaledMax = np.nanmax(sxs1)
-  yScaledMin = np.nanmin(sys1)
-  yScaledMax = np.nanmax(sys1)
-
-  sxs = sxs1 - xScaledMin
-  sys = sys1 - yScaledMin  
-  
-  sxs_I = sxs.astype(int)
-  sys_I = sys.astype(int)  
-  
-  # Construct the empty arena(s).
-  arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];  
-  
-  #Organize the arena size
-  #---------------------------------
-  ar = arena()
-  ar.height = arena_size[0]
-  ar.width  = arena_size[1]
-  ar.min_x  = np.nanmin(sx)
-  ar.min_y  = np.nanmin(sy)
-  ar.max_x  = np.nanmax(sx)
-  ar.max_y  = np.nanmax(sy)
-  
-  def h__populateArenas(arena_size, sys, sxs, s_points):
-    """
-
-    Inputs:
-    sys :
-    sxs : 
-    Returns????    
-    
-    """
-    
-    #NOTE: All skeleton points have been rounded to integer values for
-    #assignment to the matrix based on their values being treated as indices
-
-    #Convert to linear indices for assignment.
-    #----------------------------------------------------------
-    frames_run   = np.flatnonzero(np.any(~np.isnan(sxs),axis=0))
-    n_frames_run = len(frames_run)
-     
-    #1 area for each set of skeleton indices
-    #-----------------------------------------
-    n_points = len(s_points)
-    arenas   = [None]*n_points
-     
-    for iPoint in range(n_points):
-           
-      temp_arena = np.zeros(arena_size)
-      s_indices  = s_points[iPoint]
-            
-      for iFrame in range(n_frames_run):
-        cur_frame = frames_run[iFrame]
-        cur_x     = sxs_I[s_indices[0]:s_indices[1]:,cur_frame]
-        cur_y     = sys_I[s_indices[0]:s_indices[1]:,cur_frame]
-        temp_arena[cur_y,cur_x] += 1
-    
-      arenas[iPoint] = temp_arena[::-1,:] #
-    
-    return arenas
-  #----------------------------------------------------------------------------  
-  
-  arenas   = h__populateArenas(arena_size, sys, sxs, s_points)  
-      
-  n_points = len(s_points)      
-
-  temp_duration = [None]*n_points   
-
-  for iPoint in range(n_points): 
-    d = duration_element()
-    d.indices = np.transpose(np.nonzero(arenas[iPoint]))
-    d.times   = arenas[iPoint][d.indices[:,0],d.indices[:,1]]/fps      
-    temp_duration[iPoint] = d
-
-  d_out = durations()
-  d_out.arena   = ar
-  d_out.worm    = temp_duration[0]
-  d_out.head    = temp_duration[1]
-  d_out.midbody = temp_duration[2]
-  d_out.tail    = temp_duration[3]
-
-  return d_out
 
 def worm_path_curvature(x,y,fps,ventral_mode):
   

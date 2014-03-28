@@ -32,6 +32,7 @@ import numpy as np
 import collections #For namedtuple
 from wormpy import config
 from wormpy import feature_helpers
+from . import utils
 #import pdb
 
 class WormMorphology():
@@ -258,21 +259,7 @@ class WormPath():
     widths = nw.data_dict['widths']
     d_opts = []
     self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, config.FPS, d_opts)
-    #duration
-    #arena
-      #height
-      #width
-      #min
-      # x
-      #max
-      # y
-    #worm
-    #
-    #head
-    #midbody
-    #tail        
-        
-        
+  
     #Coordinates (Done)
     #---------------------------------------------------    
     self.coordinates   = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
@@ -334,7 +321,8 @@ class WormFeatures:
     #self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path']) 
     
-    
+  def __repr__(self):
+    return utils.print_object(self)
 
         
     
