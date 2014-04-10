@@ -3,22 +3,64 @@
 
 """
 
+from . import utils
 import numpy as np
+
+class Range:
+
+  """
+  Attributes
+  ------------------
+  value :
+  
+  """
+
+  def __init__(self,contour_x,contour_y):
+
+    if contour_x is None:
+      return
+
+    #Get average per frame
+    #------------------------------------------------
+    mean_cx = contour_x.mean(axis=0)
+    mean_cy = contour_y.mean(axis=0)
+   
+    #Average over all frames for subtracting
+    #-------------------------------------------------
+    x_centroid_cx = np.nanmean(mean_cx)
+    y_centroid_cy = np.nanmean(mean_cy)
+   
+    self.value    =  np.sqrt((mean_cx - x_centroid_cx)**2 + (mean_cy - y_centroid_cy)**2)
+
+
+  @staticmethod 
+  def from_disk(path_var):
+    
+    #path_features.Range.from_disk(path_var)    
+    
+    temp = Range(None)
+    temp.value = path_var['range'].value
+    return temp
 
 class Duration:
 
   """
   Attributes:
   --------------------------------------
-    
-  
+  arena :
+  worm  :
+  head  :
+  midbody :
+  tail :
   
   """
 
   def __init__(self, nw, sx, sy, widths, fps):
     
+    if nw is None:
+      return
+    
     s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]    
-    n_points = len(s_points)
 
     #TODO: d_opts not currently used
     #-------------------------------------------------------------------------
@@ -34,9 +76,13 @@ class Duration:
     #    mean_width = mean(all_widths);    
     #end
 
+    #Return early if necessary
+    #------------------------------------------------------------------------
     if len(sx) == 0 or np.isnan(sx).all():
-      ar = Arena(create_null = True)      
       raise Exception('This code is not yet translated')
+      
+      #ar = Arena(create_null = True)      
+      
       #    NAN_cell  = repmat({NaN},1,n_points);
       #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
       #    obj.duration = h__buildOutput(arena,durations);
@@ -48,8 +94,8 @@ class Duration:
     # Scale the skeleton and translate so that the minimum values are at 1
     #-------------------------------------------------------------------------
     #NOTE: These will throw warnings if NaN are created :/ , thanks Python
-    scaled_sx = np.round(sx*scale)  #NOTE: I added the 1 just to avoid overwriting
-    scaled_sy = np.round(sy*scale)  #Ideally these would be named better
+    scaled_sx = np.round(sx*scale)
+    scaled_sy = np.round(sy*scale)  
   
     x_scaled_min = np.nanmin(scaled_sx)
     x_scaled_max = np.nanmax(scaled_sx)
@@ -58,6 +104,7 @@ class Duration:
    
     #Unfortunately needing to typecast to int for array indexing also
     #removes my ability to identify invalid values :/
+    #Thus we precompute invalid values and then cast
     isnan_mask = np.isnan(scaled_sx) 
    
     scaled_zeroed_sx = (scaled_sx - x_scaled_min).astype(int)
@@ -66,8 +113,7 @@ class Duration:
     arena_size  = [y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]    
     ar = Arena(sx, sy, arena_size)
   
-
-  
+    #--------------------------------------------------------------------------
     def h__populateArenas(arena_size, sys, sxs, s_points, isnan_mask):
       """
   
@@ -129,43 +175,58 @@ class Duration:
     #------------------------------------
     #utils.imagesc(temp_arenas[0])
 
-    #********************************************************
-    #JAH TODO: AT THIS POINT
-    #********************************************************
+    temp_duration = [DurationElement(x,fps) for x in temp_arenas]
 
-     
-#  n_points = len(s_points)      
-#
-#  temp_duration = [None]*n_points   
-#
-#  for iPoint in range(n_points): 
-#    d = duration_element()
-#    d.indices = np.transpose(np.nonzero(arenas[iPoint]))
-#    d.times   = arenas[iPoint][d.indices[:,0],d.indices[:,1]]/fps      
-#    temp_duration[iPoint] = d
-#
-#  d_out = durations()
-#  d_out.arena   = ar
-#  d_out.worm    = temp_duration[0]
-#  d_out.head    = temp_duration[1]
-#  d_out.midbody = temp_duration[2]
-#  d_out.tail    = temp_duration[3]
-#
-#  return d_out
+    self.arena   = ar
+    self.worm    = temp_duration[0]
+    self.head    = temp_duration[1]
+    self.midbody = temp_duration[2]
+    self.tail    = temp_duration[3]
 
+  def __repr__(self):
+    return utils.print_object(self)
 
+  @staticmethod 
+  def from_disk(duration_group):
+    
+    #path_features.Duration.from_disk(path_var)    
+    
+    temp = Duration(None)
+    temp.arena    = Arena.from_disk(duration_group['arena'])
+    temp.worm     = DurationElement.from_disk(duration_group['worm'])
+    temp.head     = DurationElement.from_disk(duration_group['head'])
+    temp.midbody  = DurationElement.from_disk(duration_group['midbody'])
+    temp.tail     = DurationElement.from_disk(duration_group['tail'])
 
+    return temp
 
 
 class DurationElement:
   
-  def __init__(self):
-    self.indices = []
-    self.times   = []
+  def __init__(self,arena_coverage,fps):
+
+    if arena_coverage is None:
+      return
+    
+    #transpose groups results by element rather than by dimension
+    self.indices = np.transpose(np.nonzero(arena_coverage))
+    self.times   = arena_coverage[self.indices[:,0],self.indices[:,1]]/fps
+
+  def __repr__(self):
+    return utils.print_object(self)
+   
+  @staticmethod 
+  def from_disk(saved_duration_elem):
+    temp = DurationElement(None)
+    temp.indices = saved_duration_elem['indices'].value
+    temp.times   = saved_duration_elem['times'].value
     
 class Arena:
    
   def __init__(self, sx, sy, arena_size, create_null = False):
+    
+    if sx is None:
+      return
     
     if create_null:
       self.height = np.nan
@@ -184,4 +245,17 @@ class Arena:
       self.max_x  = np.nanmax(sx)
       self.max_y  = np.nanmax(sy)    
     
+  def __repr__(self):
+    return utils.print_object(self)
     
+  @staticmethod 
+  def from_disk(saved_arena_elem):
+    temp = Arena(None)
+    temp.height = saved_arena_elem['height'].value
+    temp.width  = saved_arena_elem['width'].value
+    temp.min_x  = saved_arena_elem['min']['x'].value
+    temp.min_y  = saved_arena_elem['min']['y'].value
+    temp.max_x  = saved_arena_elem['max']['x'].value
+    temp.max_y  = saved_arena_elem['max']['y'].value      
+    
+    return

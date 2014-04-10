@@ -422,6 +422,10 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
 
 def get_frames_per_sample(sample_time):
   """
+  
+  Matlab code: getWindowWidthAsInteger
+    
+  
     get_window_width:
       We require sampling_scale to be an odd integer
       We calculate the scale as a scalar multiple of FPS.  We require the 
@@ -431,6 +435,13 @@ def get_frames_per_sample(sample_time):
   """
 
   ostensive_sampling_scale = sample_time * config.FPS
+  
+  #Code would be better as: (Matlab code shown)
+  #------------------------------------------------
+  #half_scale = round(window_width_as_samples/2);
+  #window_width_integer = 2*half_scale + 1;
+  
+  
   
   # We need sampling_scale to be an odd integer, so 
   # first we check if we already have an integer.
@@ -877,6 +888,8 @@ def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
     Skeleton x points
   """
   
+  #TODO: Remove this function, call subfunction directly  
+  
   wtf = path_features.Duration(nw, sx, sy, widths, fps)    
   
   return wtf
@@ -890,21 +903,60 @@ def worm_path_curvature(x,y,fps,ventral_mode):
   
   
   """
-
-  BODY_DIFF = 0.5  
-  BODY_I    = (44,3,-1)
+  
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m  
+  
+  BODY_I    = slice(44,3,-1)
+  
+#slice(*BODY_I)  
   
   #This was nanmean but I think mean will be fine. nanmean was
   #causing the program to crash
-  diff_x = np.mean(np.diff(x[slice(*BODY_I),:],axis=0),axis=0)
-  diff_y = np.mean(np.diff(y[slice(*BODY_I),:],axis=0),axis=0)  
+  diff_x = np.mean(np.diff(x[BODY_I,:],axis=0),axis=0)
+  diff_y = np.mean(np.diff(y[BODY_I,:],axis=0),axis=0)
   avg_body_angles_d = np.arctan2(diff_y,diff_x)*180/np.pi  
   
-  #JAH: At this point  
+  #compute_velocity - inputs don't make sense ...
+  #???? - sample_time??
+  #???? - bodyI, BODY_DIFF, 
+  speed, motion_direction = compute_velocity(x, y, avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+
+  frame_scale      = get_frames_per_sample(config.BODY_DIFF)
+  half_frame_scale = (frame_scale - 1) / 2
+
+  #Compute the angle differentials and distances.
+  speed = abs(speed);
+
+  #At each frame, we'll compute the differences in motion direction using 
+  #some frame in the future relative to the current frame
+  #
+  #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
+  #------------------------------------------------
+  diff_motion    = np.empty(speed.shape)
+  diff_motion[:] = np.NAN
   
-  #pdb.set_trace()
+  right_max_I = len(diff_motion) - frame_scale
+  diff_motion[0:right_max_I] = motion_direction[frame_scale:] - motion_direction[0:right_max_I]
+
+  diff_motion[diff_motion >= 180]  -= 360;
+  diff_motion[diff_motion <= -180] += 360;
   
-  #compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0)
+  import pdb
+  pdb.set_trace()
   
-  a = 1
+  distance_I_base    = slice(half_frame_scale,-(frame_scale+1),1)
+  distance_I_shifted = slice(half_frame_scale + frame_scale,-1,1)  
   
+  #OLD
+  #distance_I = (half_frame_scale + 1):(length(speed) - frame_scale);
+  
+  #JAH: I need to translate below
+  
+  distance    = np.empty(speed.shape)
+  distance[:] = np.NaN
+  
+  distance[distance_I_base] = speed(distance_I_base) + speed(distance_I_shifted)*config.BODY_DIFF/2
+  
+  distance[distance < 1] = np.NAN
+  
+  return (diff_motion/distance) * (np.pi/180);
