@@ -20,4 +20,4 @@ file_path = r'F:\worm_data\segworm_data\features\247 JU438 on food R_2010_11_25_
 
 from wormpy.WormFeatures import WormFeatures as wf
 
-wf.from_disk(file_path)
+worm = wf.from_disk(file_path)

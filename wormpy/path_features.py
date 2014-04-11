@@ -15,7 +15,7 @@ class Range:
   
   """
 
-  def __init__(self,contour_x,contour_y):
+  def __init__(self,contour_x = None,contour_y = None):
 
     if contour_x is None:
       return
@@ -55,7 +55,7 @@ class Duration:
   
   """
 
-  def __init__(self, nw, sx, sy, widths, fps):
+  def __init__(self, nw=None, sx=None, sy=None, widths=None, fps=None):
     
     if nw is None:
       return
@@ -203,7 +203,7 @@ class Duration:
 
 class DurationElement:
   
-  def __init__(self,arena_coverage,fps):
+  def __init__(self,arena_coverage=None,fps=None):
 
     if arena_coverage is None:
       return
@@ -223,7 +223,7 @@ class DurationElement:
     
 class Arena:
    
-  def __init__(self, sx, sy, arena_size, create_null = False):
+  def __init__(self, sx=None, sy=None, arena_size=None, create_null=False):
     
     if sx is None:
       return
@@ -258,4 +258,4 @@ class Arena:
     temp.max_x  = saved_arena_elem['max']['x'].value
     temp.max_y  = saved_arena_elem['max']['y'].value      
     
-    return
+    return temp

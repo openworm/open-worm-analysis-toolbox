@@ -305,6 +305,8 @@ class WormFeatures:
     #self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path']) 
     
+    return self
+    
   def __repr__(self):
     return utils.print_object(self)
 

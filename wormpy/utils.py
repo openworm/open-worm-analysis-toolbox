@@ -61,7 +61,11 @@ def print_object(obj):
             if len(temp_str) > max_value_length:
                 #type_str = str(type(value))
                 #type_str = type_str[7:-2]
-                temp_str = str.format('Type::{}, Len: {}',type(value).__name__,len(value))                
+                try:
+                  len_value = len(value)
+                except:
+                  len_value = 1
+                temp_str = str.format('Type::{}, Len: {}',type(value).__name__,len_value)                
   
         value_strings.append(temp_str)    
     
