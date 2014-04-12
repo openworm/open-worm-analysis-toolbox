@@ -8,9 +8,18 @@
   WormFeatures
   
 """
+
+from __future__ import division #distance/time compute_velocity
+
+import warnings
 import numpy as np
+
+#np.seterr(all='raise')
+
 import collections
 from wormpy import config
+from . import path_features
+
 #import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
@@ -195,13 +204,20 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
     segment_x = segment_x[::-1,:]
     segment_y = segment_y[::-1,:]
 
+
+
   # Diff calculates each point's difference between the segment's points
   # then we take the mean of these differences for each frame
-  average_diff_x = np.nanmean(np.diff(segment_x, n=1, axis=0), 
-                              axis=0) # shape (n)
-  average_diff_y = np.nanmean(np.diff(segment_y, n=1, axis=0), 
-                              axis=0) # shape (n)
-  
+  with warnings.catch_warnings():  #ignore mean of empty slice from np.nanmean
+    #This warning arises when all values are NaN in an array
+    #This occurs in not for all values but only for some rows, other rows
+    #may be a mix of valid and NaN values
+    warnings.simplefilter("ignore")
+    #with np.errstate(invalid='ignore'):  #doesn't work, numpy warning
+    #is not of the invalid type, just says "mean of empty slice"
+    average_diff_x = np.nanmean(np.diff(segment_x, n=1, axis=0), axis=0) # shape (n)
+    average_diff_y = np.nanmean(np.diff(segment_y, n=1, axis=0), axis=0) # shape (n)
+    
   # angles has shape (n) and stores the worm body's "angle"
   # for each frame of video
   angles = np.degrees(np.arctan2(average_diff_y, average_diff_x))
@@ -420,6 +436,10 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
 
 def get_frames_per_sample(sample_time):
   """
+  
+  Matlab code: getWindowWidthAsInteger
+    
+  
     get_window_width:
       We require sampling_scale to be an odd integer
       We calculate the scale as a scalar multiple of FPS.  We require the 
@@ -429,6 +449,13 @@ def get_frames_per_sample(sample_time):
   """
 
   ostensive_sampling_scale = sample_time * config.FPS
+  
+  #Code would be better as: (Matlab code shown)
+  #------------------------------------------------
+  #half_scale = round(window_width_as_samples/2);
+  #window_width_integer = 2*half_scale + 1;
+  
+  
   
   # We need sampling_scale to be an odd integer, so 
   # first we check if we already have an integer.
@@ -481,6 +508,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
         speed and direction, respectively.
         
   """
+  
   num_frames = np.shape(sx)[1]
   
   # We need to go from a time over which to compute the velocity 
@@ -504,7 +532,6 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   keep_mask, left_I, right_I = h__getVelocityIndices(frames_per_sample, 
                                                      good_frames_mask)
 
-
   # Compute speed
   # --------------------------------------------------------
 
@@ -521,16 +548,13 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   speed    = np.empty((num_frames))
   speed.fill(np.NaN)
   speed[keep_mask] = distance / time
-
   
   # Compute angular speed (Formally known as direction :/)
   # --------------------------------------------------------
   angular_speed = np.empty((num_frames))
   angular_speed.fill(np.NaN)
-  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,
-                                                    left_I, right_I,
-                                                    ventral_mode)
-  
+  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,left_I, right_I,ventral_mode)
+
   # Sign the speed.
   #   We want to know how the worm's movement direction compares 
   #   to the average angle it had (apparently at the start)
@@ -542,23 +566,27 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # with the change, not with the actual value
   body_direction = np.empty((num_frames))
   body_direction.fill(np.NaN)
-  body_direction[keep_mask] = motion_direction[keep_mask] \
-                              - avg_body_angle[left_I]
+  body_direction[keep_mask] = motion_direction[keep_mask] - avg_body_angle[left_I]
   
   # Force all angles to be within -pi and pi
-  body_direction = (body_direction + 180) % (360) - 180
+  with np.errstate(invalid='ignore'):
+    body_direction = (body_direction + 180) % (360) - 180
   
   # Sign speed[i] as negative if the angle 
   # body_direction[i] lies in Q2 or Q3
-  speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
-  
+  with np.errstate(invalid='ignore'):
+    speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
+    
   # (Added for wormPathCurvature)
   # Sign motion_direction[i] as negative if the angle 
   # body_direction[i] lies in Q3 or Q4
-  motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+  #
+  with np.errstate(invalid='ignore'):
+    motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+    
   if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
      motion_direction = -motion_direction 
-  
+    
   return speed, angular_speed
 
   # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
@@ -863,183 +891,60 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
   return EccentricityAndOrientation
   
-  
-def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
-  
-  
-  class arena:
-    height = np.nan
-    width  = np.nan
-    min_x  = np.nan
-    min_y  = np.nan
-    max_x  = np.nan
-    max_y  = np.nan
-    
-  class duration_element:
-    indices = [] #[n x 2] i,j indices into the arena of non-zero indices
-    times   = [] #Number of frames spent in each area, converted into time
-    #based on frame rate
-    
-  class durations:
-    arena   = []
-    worm    = []
-    head    = []
-    midbody = []
-    tail    = []
-    
-  s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]
-  n_points = len(s_points)
-  
-  #d_opts not currently used
-  #-------------------------------------------------------------------------
-  #This is for the old version via d_opts, this is currently not used
-  #i.e. if d_opts.mimic_old_behavior   #Then do the following ...
-#    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
-#
-#    all_widths = zeros(1,3);
-#    for iWidth = 1:3
-#        temp = widths(s_points_temp{iWidth},:);
-#        all_widths(iWidth) = nanmean(temp(:));
-#    end
-#    mean_width = mean(all_widths);    
-  #end
-  
-  mean_width = np.nanmean(widths)
-  scale      = 2.0**0.5/mean_width;
-  
-  
-  
-  #JAH: At this point  
-  
-  #
-  #
-  
-  if len(sx) == 0 or np.isnan(sx).all():
-     raise Exception('This code is not yet translated')
-      #    arena.height = NaN;
-      #    arena.width = NaN;
-      #    arena.min.x = NaN;
-      #    arena.min.y = NaN;
-      #    arena.max.x = NaN;
-      #    arena.max.y = NaN;
-      #    NAN_cell  = repmat({NaN},1,n_points);
-      #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
-      #    obj.duration = h__buildOutput(arena,durations);
-      #    return;  
-     
-   
-     
-  # Scale the skeleton and translate so that the minimum values are at 1
-  #-------------------------------------------------------------------------
-  #NOTE: These will throw warnings if NaN are created :/ , thanks Python
-  sxs1 = np.round(sx*scale)  #NOTE: I added the 1 just to avoid overwriting
-  sys1 = np.round(sy*scale)  #Ideally these would be named better
-  
-  xScaledMin = np.nanmin(sxs1)
-  xScaledMax = np.nanmax(sxs1)
-  yScaledMin = np.nanmin(sys1)
-  yScaledMax = np.nanmax(sys1)
-
-  sxs = sxs1 - xScaledMin
-  sys = sys1 - yScaledMin  
-  
-  sxs_I = sxs.astype(int)
-  sys_I = sys.astype(int)  
-  
-  # Construct the empty arena(s).
-  arena_size = [yScaledMax - yScaledMin + 1, xScaledMax - xScaledMin + 1];  
-  
-  #Organize the arena size
-  #---------------------------------
-  ar = arena()
-  ar.height = arena_size[0]
-  ar.width  = arena_size[1]
-  ar.min_x  = np.nanmin(sx)
-  ar.min_y  = np.nanmin(sy)
-  ar.max_x  = np.nanmax(sx)
-  ar.max_y  = np.nanmax(sy)
-  
-  def h__populateArenas(arena_size, sys, sxs, s_points):
-    """
-
-    Inputs:
-    sys :
-    sxs : 
-    Returns????    
-    
-    """
-    
-    #NOTE: All skeleton points have been rounded to integer values for
-    #assignment to the matrix based on their values being treated as indices
-
-    #Convert to linear indices for assignment.
-    #----------------------------------------------------------
-    frames_run   = np.flatnonzero(np.any(~np.isnan(sxs),axis=0))
-    n_frames_run = len(frames_run)
-     
-    #1 area for each set of skeleton indices
-    #-----------------------------------------
-    n_points = len(s_points)
-    arenas   = [None]*n_points
-     
-    for iPoint in range(n_points):
-           
-      temp_arena = np.zeros(arena_size)
-      s_indices  = s_points[iPoint]
-            
-      for iFrame in range(n_frames_run):
-        cur_frame = frames_run[iFrame]
-        cur_x     = sxs_I[s_indices[0]:s_indices[1]:,cur_frame]
-        cur_y     = sys_I[s_indices[0]:s_indices[1]:,cur_frame]
-        temp_arena[cur_y,cur_x] += 1
-    
-      arenas[iPoint] = temp_arena[::-1,:] #
-    
-    return arenas
-  #----------------------------------------------------------------------------  
-  
-  arenas   = h__populateArenas(arena_size, sys, sxs, s_points)  
-      
-  n_points = len(s_points)      
-
-  temp_duration = [None]*n_points   
-
-  for iPoint in range(n_points): 
-    d = duration_element()
-    d.indices = np.transpose(np.nonzero(arenas[iPoint]))
-    d.times   = arenas[iPoint][d.indices[:,0],d.indices[:,1]]/fps      
-    temp_duration[iPoint] = d
-
-  d_out = durations()
-  d_out.arena   = ar
-  d_out.worm    = temp_duration[0]
-  d_out.head    = temp_duration[1]
-  d_out.midbody = temp_duration[2]
-  d_out.tail    = temp_duration[3]
-
-  return d_out
-
 def worm_path_curvature(x,y,fps,ventral_mode):
   
   """
   
   
   """
-
-  BODY_DIFF = 0.5  
-  BODY_I    = (44,3,-1)
+  
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m  
+  
+  BODY_I    = slice(44,3,-1)
+  
+#slice(*BODY_I)  
   
   #This was nanmean but I think mean will be fine. nanmean was
   #causing the program to crash
-  diff_x = np.mean(np.diff(x[slice(*BODY_I),:],axis=0),axis=0)
-  diff_y = np.mean(np.diff(y[slice(*BODY_I),:],axis=0),axis=0)  
+  diff_x = np.mean(np.diff(x[BODY_I,:],axis=0),axis=0)
+  diff_y = np.mean(np.diff(y[BODY_I,:],axis=0),axis=0)
   avg_body_angles_d = np.arctan2(diff_y,diff_x)*180/np.pi  
   
-  #JAH: At this point  
+  #compute_velocity - inputs don't make sense ...
+  #???? - sample_time??
+  #???? - bodyI, BODY_DIFF, 
+  speed, motion_direction = compute_velocity(x, y, avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+
+  frame_scale      = get_frames_per_sample(config.BODY_DIFF)
+  half_frame_scale = (frame_scale - 1) / 2
+
+  #Compute the angle differentials and distances.
+  speed = abs(speed);
+
+  #At each frame, we'll compute the differences in motion direction using 
+  #some frame in the future relative to the current frame
+  #
+  #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
+  #------------------------------------------------
+  diff_motion    = np.empty(speed.shape)
+  diff_motion[:] = np.NAN
   
-  #pdb.set_trace()
+  right_max_I = len(diff_motion) - frame_scale
+  diff_motion[0:right_max_I] = motion_direction[frame_scale:] - motion_direction[0:right_max_I]
+
+  with np.errstate(invalid='ignore'):
+    diff_motion[diff_motion >= 180]  -= 360;
+    diff_motion[diff_motion <= -180] += 360;
   
-  #compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0)
+  distance_I_base    = slice(half_frame_scale,-(frame_scale+1),1)
+  distance_I_shifted = slice(half_frame_scale + frame_scale,-1,1)  
+    
+  distance    = np.empty(speed.shape)
+  distance[:] = np.NaN
+
+  distance[distance_I_base] = speed[distance_I_base] + speed[distance_I_shifted]*config.BODY_DIFF/2
   
-  a = 1
+  with np.errstate(invalid='ignore'):
+    distance[distance < 1] = np.NAN
   
+  return (diff_motion/distance) * (np.pi/180);

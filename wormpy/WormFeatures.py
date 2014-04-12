@@ -32,6 +32,9 @@ import numpy as np
 import collections #For namedtuple
 from wormpy import config
 from wormpy import feature_helpers
+from . import path_features
+from . import utils
+
 #import pdb
 
 class WormMorphology():
@@ -208,10 +211,16 @@ class WormPosture():
 
 class WormPath():
   
-  range = []
-  duration = []
-  coordinates = []
-  curvature = []
+  """
+  
+  Attributes:
+  ------------------------
+  range :
+  duration :
+  coordinates :
+  curvature :
+  
+  """
   
   def __init__(self, nw):
     """
@@ -220,67 +229,28 @@ class WormPath():
 
     """    
     
-    #Creating from disk 
+    #Pass in none to create from disk
     if nw is None:
       return
-    
-    # DEBUG: Jim, this is the dict where range, duration,coordinates, etc, should go in the current scheme.  
-    # Perhaps we could discuss if you think otherwise?
-    self.path = {}  
-   
 
-    #Range
-    #--------------------------------------------------
-    def getRange(self,contour_x,contour_y):
-       """
-       Get the range
-       """
-       
-       #Get average per frame
-       #------------------------------------------------
-       mean_cx = contour_x.mean(axis=0)
-       mean_cy = contour_y.mean(axis=0)
-       
-       #Average over all frames for subtracting
-       #-------------------------------------------------
-       x_centroid_cx = np.nanmean(mean_cx)
-       y_centroid_cy = np.nanmean(mean_cy)
-       
-       return np.sqrt((mean_cx - x_centroid_cx)**2 + (mean_cy - y_centroid_cy)**2)
-    #--------------------------------------------------
- 
-    self.range = getRange(self,nw.contour_x,nw.contour_y)
+    self.range = path_features.Range(nw.contour_x,nw.contour_y)
         
     #Duration (aka Dwelling)
     #---------------------------------------------------
     sx     = nw.skeleton_x
     sy     = nw.skeleton_y
     widths = nw.data_dict['widths']
-    d_opts = []
-    self.duration = feature_helpers.get_duration_info(self,nw, sx, sy, widths, config.FPS, d_opts)
-    #duration
-    #arena
-      #height
-      #width
-      #min
-      # x
-      #max
-      # y
-    #worm
-    #
-    #head
-    #midbody
-    #tail        
-        
-        
+    self.duration = path_features.Duration(nw, sx, sy, widths, config.FPS)
+  
     #Coordinates (Done)
     #---------------------------------------------------    
-    self.coordinates   = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
-    
-    #Curvature
+    self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
+       
+    #Curvature (Done) - TODO: Move to path_features
     #---------------------------------------------------
     self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
+  #TODO: Move to class in path_features
   @staticmethod
   def _create_coordinates(x,y):
     Coordinates = collections.namedtuple('Coordinates',['x','y'])
@@ -290,16 +260,21 @@ class WormPath():
   def from_disk(path_var):
     self = WormPath(None)   
     
-    self.range       = path_var['range'].value
-    #TODO: Finish this ...
-    self.duration    = None #This is a really complicated structure :/   
+    self.range       = path_features.Range.from_disk(path_var)
+    self.duration    = path_features.Duration.from_disk(path_var['duration']) 
+
+    #TODO: I'd like to have these also be objects with from_disk methods
     self.coordinates = self._create_coordinates(path_var['coordinates']['x'].value,path_var['coordinates']['y'].value)
     self.curvature   = path_var['curvature'].value   
-    
-    import pdb
-    pdb.set_trace()    
-    
+
     return self
+    
+  def __repr__(self):
+    return utils.print_object(self)  
+    
+  def __eq__(self,other):
+    #TODO: Actually implement this
+    return True
     
 class WormFeatures:
   """ 
@@ -334,7 +309,17 @@ class WormFeatures:
     #self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path']) 
     
+    return self
     
+  def __repr__(self):
+    return utils.print_object(self)
+    
+  def __eq__(self,other):
+    return \
+      self.path       == other.path       #and \
+      #self.posture    == other.posture    and \
+      #self.locomotion == other.locomotion and \
+      #self.morphology == other.morphology
 
         
     
