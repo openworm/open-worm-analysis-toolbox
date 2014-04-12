@@ -272,6 +272,10 @@ class WormPath():
   def __repr__(self):
     return utils.print_object(self)  
     
+  def __eq__(self,other):
+    #TODO: Actually implement this
+    return True
+    
 class WormFeatures:
   """ 
     WormFeatures: takes as input a NormalizedWorm instance, and
@@ -309,6 +313,13 @@ class WormFeatures:
     
   def __repr__(self):
     return utils.print_object(self)
+    
+  def __eq__(self,other):
+    return \
+      self.path       == other.path       #and \
+      #self.posture    == other.posture    and \
+      #self.locomotion == other.locomotion and \
+      #self.morphology == other.morphology
 
         
     

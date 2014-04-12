@@ -8,7 +8,14 @@
   WormFeatures
   
 """
+
+from __future__ import division #distance/time compute_velocity
+
+import warnings
 import numpy as np
+
+#np.seterr(all='raise')
+
 import collections
 from wormpy import config
 from . import path_features
@@ -197,13 +204,20 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
     segment_x = segment_x[::-1,:]
     segment_y = segment_y[::-1,:]
 
+
+
   # Diff calculates each point's difference between the segment's points
   # then we take the mean of these differences for each frame
-  average_diff_x = np.nanmean(np.diff(segment_x, n=1, axis=0), 
-                              axis=0) # shape (n)
-  average_diff_y = np.nanmean(np.diff(segment_y, n=1, axis=0), 
-                              axis=0) # shape (n)
-  
+  with warnings.catch_warnings():  #ignore mean of empty slice from np.nanmean
+    #This warning arises when all values are NaN in an array
+    #This occurs in not for all values but only for some rows, other rows
+    #may be a mix of valid and NaN values
+    warnings.simplefilter("ignore")
+    #with np.errstate(invalid='ignore'):  #doesn't work, numpy warning
+    #is not of the invalid type, just says "mean of empty slice"
+    average_diff_x = np.nanmean(np.diff(segment_x, n=1, axis=0), axis=0) # shape (n)
+    average_diff_y = np.nanmean(np.diff(segment_y, n=1, axis=0), axis=0) # shape (n)
+    
   # angles has shape (n) and stores the worm body's "angle"
   # for each frame of video
   angles = np.degrees(np.arctan2(average_diff_y, average_diff_x))
@@ -494,6 +508,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
         speed and direction, respectively.
         
   """
+  
   num_frames = np.shape(sx)[1]
   
   # We need to go from a time over which to compute the velocity 
@@ -517,7 +532,6 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   keep_mask, left_I, right_I = h__getVelocityIndices(frames_per_sample, 
                                                      good_frames_mask)
 
-
   # Compute speed
   # --------------------------------------------------------
 
@@ -534,16 +548,13 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   speed    = np.empty((num_frames))
   speed.fill(np.NaN)
   speed[keep_mask] = distance / time
-
   
   # Compute angular speed (Formally known as direction :/)
   # --------------------------------------------------------
   angular_speed = np.empty((num_frames))
   angular_speed.fill(np.NaN)
-  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,
-                                                    left_I, right_I,
-                                                    ventral_mode)
-  
+  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,left_I, right_I,ventral_mode)
+
   # Sign the speed.
   #   We want to know how the worm's movement direction compares 
   #   to the average angle it had (apparently at the start)
@@ -555,23 +566,27 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # with the change, not with the actual value
   body_direction = np.empty((num_frames))
   body_direction.fill(np.NaN)
-  body_direction[keep_mask] = motion_direction[keep_mask] \
-                              - avg_body_angle[left_I]
+  body_direction[keep_mask] = motion_direction[keep_mask] - avg_body_angle[left_I]
   
   # Force all angles to be within -pi and pi
-  body_direction = (body_direction + 180) % (360) - 180
+  with np.errstate(invalid='ignore'):
+    body_direction = (body_direction + 180) % (360) - 180
   
   # Sign speed[i] as negative if the angle 
   # body_direction[i] lies in Q2 or Q3
-  speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
-  
+  with np.errstate(invalid='ignore'):
+    speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
+    
   # (Added for wormPathCurvature)
   # Sign motion_direction[i] as negative if the angle 
   # body_direction[i] lies in Q3 or Q4
-  motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+  #
+  with np.errstate(invalid='ignore'):
+    motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+    
   if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
      motion_direction = -motion_direction 
-  
+    
   return speed, angular_speed
 
   # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
@@ -876,27 +891,6 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
   return EccentricityAndOrientation
   
-  
-def get_duration_info(self, nw, sx, sy, widths, fps, d_opts):
-  
-  """
-  Arguments:
-  ---------------------------------
-  nw : normalized worm ...
-    Normalized worm object
-  sx : numpy.array
-    Skeleton x points
-  """
-  
-  #TODO: Remove this function, call subfunction directly  
-  
-  wtf = path_features.Duration(nw, sx, sy, widths, fps)    
-  
-  return wtf
-  
-  
-  
-
 def worm_path_curvature(x,y,fps,ventral_mode):
   
   """
@@ -938,25 +932,19 @@ def worm_path_curvature(x,y,fps,ventral_mode):
   right_max_I = len(diff_motion) - frame_scale
   diff_motion[0:right_max_I] = motion_direction[frame_scale:] - motion_direction[0:right_max_I]
 
-  diff_motion[diff_motion >= 180]  -= 360;
-  diff_motion[diff_motion <= -180] += 360;
-  
-  import pdb
-  pdb.set_trace()
+  with np.errstate(invalid='ignore'):
+    diff_motion[diff_motion >= 180]  -= 360;
+    diff_motion[diff_motion <= -180] += 360;
   
   distance_I_base    = slice(half_frame_scale,-(frame_scale+1),1)
   distance_I_shifted = slice(half_frame_scale + frame_scale,-1,1)  
-  
-  #OLD
-  #distance_I = (half_frame_scale + 1):(length(speed) - frame_scale);
-  
-  #JAH: I need to translate below
-  
+    
   distance    = np.empty(speed.shape)
   distance[:] = np.NaN
+
+  distance[distance_I_base] = speed[distance_I_base] + speed[distance_I_shifted]*config.BODY_DIFF/2
   
-  distance[distance_I_base] = speed(distance_I_base) + speed(distance_I_shifted)*config.BODY_DIFF/2
-  
-  distance[distance < 1] = np.NAN
+  with np.errstate(invalid='ignore'):
+    distance[distance < 1] = np.NAN
   
   return (diff_motion/distance) * (np.pi/180);

@@ -93,9 +93,9 @@ class Duration:
      
     # Scale the skeleton and translate so that the minimum values are at 1
     #-------------------------------------------------------------------------
-    #NOTE: These will throw warnings if NaN are created :/ , thanks Python
-    scaled_sx = np.round(sx*scale)
-    scaled_sy = np.round(sy*scale)  
+    with np.errstate(invalid='ignore'):
+      scaled_sx = np.round(sx*scale)
+      scaled_sy = np.round(sy*scale)  
   
     x_scaled_min = np.nanmin(scaled_sx)
     x_scaled_max = np.nanmax(scaled_sx)
