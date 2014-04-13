@@ -273,8 +273,11 @@ class WormPath():
     return utils.print_object(self)  
     
   def __eq__(self,other):
+    #TODO: Ensure both are of this class - i.e. check other
     #TODO: Actually implement this
-    return True
+    return self.range == other.range #and \
+    #self.duration == other.duration #and \
+    #self.coordinates == other.cordinates
     
 class WormFeatures:
   """ 

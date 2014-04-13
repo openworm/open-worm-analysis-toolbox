@@ -39,8 +39,29 @@ class Range:
     #path_features.Range.from_disk(path_var)    
     
     temp = Range(None)
-    temp.value = path_var['range'].value
+    
+    #NOTE: This is of size nx1 for Matlab versions, might want to fix on loading
+    #
+    temp.value = np.squeeze(path_var['range'].value)
+    
     return temp
+    
+  def __repr__(self):
+    return utils.print_object(self)
+    
+  def __eq__(self,other):
+    value1 = self.value
+    value2 = other.value
+ 
+ 
+    #TODO: This code should be moved elsewhere ...
+    mask = ~(np.logical_or(np.isnan(value1),np.isnan(value2)))
+    
+    corr_mat = np.corrcoef(value1[mask],value2[mask])
+
+    c_value = corr_mat[1][0]    
+    
+    return c_value > 0.99    
 
 class Duration:
 
