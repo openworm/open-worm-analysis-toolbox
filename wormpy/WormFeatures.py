@@ -277,7 +277,8 @@ class WormPath():
     #TODO: Actually implement this
     return self.range == other.range #and \
     #self.duration == other.duration #and \
-    #self.coordinates == other.cordinates
+    #self.coordinates == other.cordinates #and \
+    #self.curvature == other.curvature
     
 class WormFeatures:
   """ 
