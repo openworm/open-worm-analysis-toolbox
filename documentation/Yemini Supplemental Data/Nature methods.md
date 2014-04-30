@@ -14,10 +14,10 @@
 
 ###Details of feature files and algorithms for feature measurement###
 
-- [Morphology](Morphology.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
-- [Posture](Posture.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
-- [Locomotion](Locomotion.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
-- [Path](Path.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- **[Morphology](Morphology.md)** - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- **[Posture](Posture.md)** - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- **[Locomotion](Locomotion.md)** - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- **[Path](Path.md)** - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
 
 ###[Phenotypic Ontology](Phenotypic Ontology.md)###
 
@@ -25,8 +25,11 @@
 
 
 ###Relevant Documents:###
+
 2013 - Yemini et al. in Nature Methods - A database of Caenorhabditis elegans behavioral phenotypes
+
 2013 - Yemini et al. in Nature Methods - Supplementary Data - Nature Methods nmeth.2560-S1
+
 2011 - High-throughput, single-worm tracking and analysis in Caenorhabditis elegans.  Eviatar Yemini's PhD dissertation.  November, 2011.
 
 
