@@ -4,7 +4,7 @@ Movement Validation
 
 Contributors: @JimHokanson, @MichaelCurrie
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
+![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
 
 <sub><sup>Credit: OpenWorm</sub></sup>
      
