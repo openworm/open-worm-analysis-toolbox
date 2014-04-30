@@ -1,7 +1,6 @@
 #Path Features#
  
- 
-![](Supplementary Figure 1.gif)
+![](Path Figure.gif)
 
 ###1. Range###
  
