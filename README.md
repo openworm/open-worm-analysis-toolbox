@@ -85,8 +85,6 @@ Contact @MichaelCurrie for troubleshooting these steps.
 
 [3] Yemini E 2011 High-throughput, single-worm tracking and analysis in Caenorhabditis elegans (University of Cambridge)
 
-[4] Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer, W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013). doi:10.1038/nmeth.2560
+[4] Yemini, et al.  A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013). doi:10.1038/nmeth.2560
 
-In particular see:
-
-http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf
+[5] [Yemini, et al.  A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013).  Supplementary Data.  nmeth.2560-S1](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
