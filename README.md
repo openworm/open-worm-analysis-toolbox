@@ -39,8 +39,9 @@ Further documentation of worm movement data is available at @JimHokanson's [open
 
 [Monthly Progress Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing)
 
-[How to use the worm plotter](https://github.com/openworm/movement_validation/wiki/How-to-use-WormPlotter)
+[How to use the worm plotter](https://github.com/openworm/movement_validation/blob/master/documentation/How%20to%20use%20WormPlotter.md)
 
+[Movement Validation: The White Paper](https://github.com/openworm/movement_validation/blob/master/documentation/Movement%20Validation%20The%20White%20Paper.md)
 
 
 ## Tools used ##
