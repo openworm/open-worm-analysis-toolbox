@@ -1,12 +1,15 @@
 #Path Features#
  
+ 
+![](Supplementary Figure 1.gif)
+
 ###1. Range###
  
-The centroid of the worm’s entire path is computed. The range is defined as the distance of the worm’s midbody from this overall centroid, in each frame (Supplementary Fig. 4h). 
+The centroid of the worm’s entire path is computed. The range is defined as the distance of the worm’s midbody from this overall centroid, in each frame (Supplementary Fig. 1h). 
 
 ###2. Dwelling###
 
-The worm dwelling is computed for the head, midbody, tail, and the entire worm (Supplementary Fig. 4i). The worm’s width is assumed to be the mean of its head, midbody, and tail widths across all frames. The skeleton’s minimum and maximum location, for the x and y axes, is used to create a rectangular boundary. This boundary is subdivided into a grid wherein each grid square has a diagonal the same length as the worm’s width. When skeleton points are present on a grid square, their corresponding body part is computed as dwelling within that square. The dwelling for each grid square is integrated to define the dwelling distribution for each body part. For each body part, untouched grid squares are ignored. 
+The worm dwelling is computed for the head, midbody, tail, and the entire worm (Supplementary Fig. 1i). The worm’s width is assumed to be the mean of its head, midbody, and tail widths across all frames. The skeleton’s minimum and maximum location, for the x and y axes, is used to create a rectangular boundary. This boundary is subdivided into a grid wherein each grid square has a diagonal the same length as the worm’s width. When skeleton points are present on a grid square, their corresponding body part is computed as dwelling within that square. The dwelling for each grid square is integrated to define the dwelling distribution for each body part. For each body part, untouched grid squares are ignored. 
 
 ###3. Curvature###
 
