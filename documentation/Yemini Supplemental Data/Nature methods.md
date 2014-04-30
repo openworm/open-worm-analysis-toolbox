@@ -14,10 +14,10 @@
 
 ###Details of feature files and algorithms for feature measurement###
 
-- [Morphology](Morphology.md)
-- [Posture](Posture.md)
-- [Locomotion](Locomotion.md)
-- [Path](Path.md)
+- [Morphology](Morphology.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- [Posture](Posture.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- [Locomotion](Locomotion.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+- [Path](Path.md) - [MatLab Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path) - [Python Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
 
 ###[Phenotypic Ontology](Phenotypic Ontology.md)###
 
