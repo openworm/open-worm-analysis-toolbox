@@ -1,4 +1,4 @@
-#Yemini Nature Methods Paper - Supplementary Data#
+## Schafer Lab Feature Descriptions ##
 
 [Supplementary Figure 1: Feature computation](s1.md)
 
