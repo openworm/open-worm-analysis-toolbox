@@ -2,7 +2,7 @@
 Movement Validation
 ===================
 
-Contributors: @JimHokanson, @MichaelCurrie
+Contributors: @JimHokanson, @MichaelCurrie, the [Movement Validation Team](https://github.com/orgs/openworm/teams/movement-validation)
 
 ![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
 
