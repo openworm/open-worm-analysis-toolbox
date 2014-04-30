@@ -1,6 +1,6 @@
 #Yemini Nature Methods Paper - Supplementary Data#
 
-Supplementary Figure 1: Feature computation
+[Supplementary Figure 1: Feature computation](s1.md)
 
 Supplementary Figure 2: WT2 sensitivity
 
