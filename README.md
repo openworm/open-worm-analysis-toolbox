@@ -8,6 +8,10 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 <sub><sup>Credit: OpenWorm</sub></sup>
 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
+
+<sub><sup>Images: C. elegans by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/  Freely licensed. Contour credit: MRC Schafer Lab.  Simulated worm: OpenWorm.</sub></sup>
+
 ###Objectives:###
 
 1. This repository should house a test [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
