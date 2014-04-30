@@ -287,7 +287,8 @@ class WormFeatures:
     
     There are two ways to initialize a WormFeatures instance: 
     1. by passing a NormalizedWorm instance and generating the features, or
-    2. by loading the already-calculated features from an HDF5 file.  
+    2. by loading the already-calculated features from an HDF5 file.
+       (via the from_disk method)
     
   """
   def __init__(self, nw):

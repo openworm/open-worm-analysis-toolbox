@@ -60,7 +60,7 @@ N.B.: numpy is a library for Python that is a dependency in this repo.  If you h
 
 **File processing:** The Schafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the Python module H5PY to extract the information from the Schafer Lab files.
 
-The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [3] or in the supplemental material of his 2013 Nature Methods paper[4].  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
+The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [3] or in the supplemental material of his 2013 Nature Methods paper [5].  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
 
 **Markdown editor:** http://markdownpad.com/
 
