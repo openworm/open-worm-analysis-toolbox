@@ -8,7 +8,7 @@ Contributors: @JimHokanson, @MichaelCurrie
 
 <sub><sup>Credit: OpenWorm</sub></sup>
      
-![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png)
+![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true)
 
 <sub><sup>Images: C. elegans by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/  Freely licensed. Contour credit: MRC Schafer Lab.  Simulated worm: OpenWorm.</sub></sup>
 
