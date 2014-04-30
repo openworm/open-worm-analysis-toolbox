@@ -33,7 +33,7 @@ This full codebase is available in the [SegWormMatlabClasses](https://github.com
 
 ## Further Documentation ##
 
-The original Schafer Lab Supplemental Documentation is [available in hyperlinked form](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Nature%20methods.md), giving descriptions of the features.
+Technical descriptions of the features calculated are [available in hyperlinked form](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Nature%20methods.md), in documents adapted from the original Schafer Lab Supplemental Documentation to [4].
 
 Further documentation of worm movement data is available at @JimHokanson's [openworm_docs](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/Movement) repo.
 
