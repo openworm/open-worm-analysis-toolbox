@@ -9,7 +9,7 @@ Worm width is computed from the segmented skeleton. The head, midbody, and tail 
 ###3. Area###
 The worm area is computed from the number of pixels within the segmented contour. The sum of the pixels is converted to microns2. 
 
-###4. Area/Length### 
+###4. Area/Length###
 
 No description available from Yemini paper
 
