@@ -28,7 +28,7 @@
 
 2013 - Yemini et al. in Nature Methods - A database of Caenorhabditis elegans behavioral phenotypes
 
-2013 - Yemini et al. in Nature Methods - Supplementary Data - Nature Methods nmeth.2560-S1
+[2013 - Yemini et al. in Nature Methods - Supplementary Data - Nature Methods nmeth.2560-S1](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
 2011 - High-throughput, single-worm tracking and analysis in Caenorhabditis elegans.  Eviatar Yemini's PhD dissertation.  November, 2011.
 
