@@ -37,7 +37,7 @@ from . import utils
 
 #import pdb
 
-class WormMorphology():
+class WormMorphology(object):
   def __init__(self, nw):
     """
       Translation of: SegwormMatlabClasses / 
@@ -81,6 +81,11 @@ class WormMorphology():
     # shape of resulting arrays are (2, n)
     width_dict = {k: np.mean(nw.get_partition(k, 'skeletons'), 0) \
                   for k in ('head', 'midbody', 'tail')}
+            
+    #Make named tuple instead of dict
+    #temp = namedtuple('Widths',width_dict.keys())
+    #self.width = temp(**width_dict)
+                    
     self.morphology['width'] = width_dict
     self.morphology['area'] = nw.data_dict['head_areas'] + \
                               nw.data_dict['vulva_areas'] + \
@@ -89,6 +94,42 @@ class WormMorphology():
                                        self.morphology['length']
     self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
                                         self.morphology['length']
+
+  @classmethod 
+  def from_disk(cls, m_var):
+    
+    self = cls.__new__(cls)   
+    
+    #TODO: More gracefully handle removal of the 2nd dimension ...
+    self.length = m_var['length'].value[:,0]
+    temp1 = m_var['width']
+    #import pdb
+    #pdb.set_trace()
+    temp2 = {k: temp1[k].value[:,0] for k in ('head','midbody','tail')}
+    
+    #I'm not sure why this doesn't work, 
+    #
+    # unhashable type: 'numpy.ndarray'
+    #
+    #temp2 = {
+    #'head',     temp1['head'].value[:,0],
+    #'midbody',  temp1['midbody'].value[:,0],
+    #'tail',     temp1['tail'].value[:,0]}
+    nt = collections.namedtuple('Widths',['head','midbody','tail'])
+    self.width  = nt(**temp2) 
+
+    self.area             = m_var['area'].value[:,0]
+    self.area_per_length  = m_var['areaPerLength'].value[:,0]
+    self.width_per_length = m_var['widthPerLength'].value[:,0]
+
+    return self
+
+  def __repr__(self):
+    return utils.print_object(self) 
+    
+  def save_for_gepetto(self):
+    #See https://github.com/openworm/org.geppetto.recording/blob/master/org/geppetto/recording/CreateTestGeppettoRecording.py
+    pass
 
 
 
@@ -309,7 +350,7 @@ class WormFeatures:
     
     self = cls(None)
     
-    #self.morphology = WormMorphology.from_disk(worm['morphology'])
+    self.morphology = WormMorphology.from_disk(worm['morphology'])
     #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
     #self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path'])
@@ -326,9 +367,10 @@ class WormFeatures:
     """
     return \
       self.path       == other.path       #and \
+      #self.morphology == other.morphology and \
       #self.posture    == other.posture    and \
       #self.locomotion == other.locomotion and \
-      #self.morphology == other.morphology
+      #
 
         
     
