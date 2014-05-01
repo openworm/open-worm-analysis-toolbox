@@ -1,11 +1,16 @@
+[![Stories in Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
 Movement Validation
 ===================
 
-Contributors: @JimHokanson, @MichaelCurrie
+Contributors: @JimHokanson, @MichaelCurrie, the [Movement Validation Team](https://github.com/orgs/openworm/teams/movement-validation)
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
+![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
 
 <sub><sup>Credit: OpenWorm</sub></sup>
+     
+![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true)
+
+<sub><sup>Images: C. elegans by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/  Freely licensed. Contour credit: MRC Schafer Lab.  Simulated worm: OpenWorm.</sub></sup>
 
 ###Objectives:###
 
@@ -26,12 +31,17 @@ We are using the WT2 analysis software, written in MATLAB, as a starting point f
 This full codebase is available in the [SegWormMatlabClasses](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
 
 
-## Further documentation of worm movement data ##
+## Further Documentation ##
 
-Further documentation is available at the [openworm_docs](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/Movement) repo.
+Technical descriptions of the features calculated are [available in hyperlinked form](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Schafer%20Lab%20Feature%20Descriptions.md), in documents adapted from the original Schafer Lab Supplemental Documentation to [4].
+
+Further documentation of worm movement data is available at @JimHokanson's [openworm_docs](https://github.com/JimHokanson/openworm_docs/tree/master/Projects/Movement) repo.
 
 [Monthly Progress Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing)
 
+[How to use the worm plotter](https://github.com/openworm/movement_validation/blob/master/documentation/How%20to%20use%20WormPlotter.md)
+
+[Movement Validation: The White Paper](https://github.com/openworm/movement_validation/blob/master/documentation/Movement%20Validation%20The%20White%20Paper.md)
 
 
 ## Tools used ##
@@ -50,7 +60,7 @@ N.B.: numpy is a library for Python that is a dependency in this repo.  If you h
 
 **File processing:** The Schafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the Python module H5PY to extract the information from the Schafer Lab files.
 
-The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [3] or in the supplemental material of his 2013 Nature Methods paper[4].  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
+The structure of the files is described at a high level starting on page 183 of Ev Yemeni’s 2011 thesis [3] or in the supplemental material of his 2013 Nature Methods paper [5].  In [2], for example, there are 23135 frames describing 899.9515 seconds of worm movement (900 seconds is 15 minutes)
 
 **Markdown editor:** http://markdownpad.com/
 
@@ -75,8 +85,6 @@ Contact @MichaelCurrie for troubleshooting these steps.
 
 [3] Yemini E 2011 High-throughput, single-worm tracking and analysis in Caenorhabditis elegans (University of Cambridge)
 
-[4] Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer, W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013). doi:10.1038/nmeth.2560
+[4] Yemini, et al.  A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013). doi:10.1038/nmeth.2560
 
-In particular see:
-
-http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf
+[5] [Yemini, et al.  A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013).  Supplementary Data.  nmeth.2560-S1](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)

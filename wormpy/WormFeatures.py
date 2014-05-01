@@ -251,14 +251,14 @@ class WormPath():
     self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
   #TODO: Move to class in path_features
-  @staticmethod
-  def _create_coordinates(x,y):
+  @classmethod
+  def _create_coordinates(cls, x, y):
     Coordinates = collections.namedtuple('Coordinates',['x','y'])
-    return Coordinates(x,y)
+    return Coordinates(x, y)
 
-  @staticmethod 
-  def from_disk(path_var):
-    self = WormPath(None)   
+  @classmethod 
+  def from_disk(cls, path_var):
+    self = cls(None)   
     
     self.range       = path_features.Range.from_disk(path_var)
     self.duration    = path_features.Duration.from_disk(path_var['duration']) 
@@ -285,33 +285,34 @@ class WormFeatures:
     WormFeatures: takes as input a NormalizedWorm instance, and
     during initialization calculates all the features of the worm.
     
+    There are two ways to initialize a WormFeatures instance: 
+    1. by passing a NormalizedWorm instance and generating the features, or
+    2. by loading the already-calculated features from an HDF5 file.
+       (via the from_disk method)
+    
   """
   def __init__(self, nw):
 
     if nw is None:
       return
 
-    #Yikes, do we need to hang onto this ???
-    #We won't have this if loading from disk     
-    self.nw = nw
-
     self.morphology = WormMorphology(nw).morphology
     self.locomotion = WormLocomotion(nw).locomotion
     self.posture    = WormPosture(nw).posture
-    self.path       = WormPath(nw).path
+    #self.path       = WormPath(nw).path
     
-  @staticmethod  
-  def from_disk(file_path):
+  @classmethod  
+  def from_disk(cls, file_path):
     
     h = h5py.File(file_path,'r')
     worm = h['worm']
     
-    self = WormFeatures(None)    
+    self = cls(None)
     
     #self.morphology = WormMorphology.from_disk(worm['morphology'])
     #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
     #self.posture    = WormPosture.from_disk(worm['posture'])
-    self.path = WormPath.from_disk(worm['path']) 
+    self.path = WormPath.from_disk(worm['path'])
     
     return self
     
@@ -319,6 +320,10 @@ class WormFeatures:
     return utils.print_object(self)
     
   def __eq__(self,other):
+    """
+      Compare two WormFeatures instances by value
+    
+    """
     return \
       self.path       == other.path       #and \
       #self.posture    == other.posture    and \

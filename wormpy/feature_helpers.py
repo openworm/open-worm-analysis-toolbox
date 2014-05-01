@@ -38,8 +38,8 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   """ Calculate motion codes (a locomotion feature)
   
       INPUT:
-        midbody speed:  
-        skeleton_lengths:
+        midbody speed: [1 x n_frames] from locomotion.velocity.midbody.speed / config.FPS
+        skeleton_lengths: [1 x n_frames]
         
       OUTPUT
         the locomotion events; a dict with event fields:
@@ -81,7 +81,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
   # create a copy of the array (just for debugging purposes)
   # that will contain interpolated values in place of the NaNs
-  skeleton_lengths2 = np.copy(skeleton_lengths)
+  skeleton_lengths2 = np.copy(skeleton_lengths) 
 
   skeleton_lengths2[frame_is_dropped] = \
     np.interp(dropped_frames, good_frames, skeleton_lengths[frame_is_good])
