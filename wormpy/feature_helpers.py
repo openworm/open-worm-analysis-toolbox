@@ -35,21 +35,28 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
 """
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
-  """ Calculate motion codes (a locomotion feature)
-  
-      INPUT:
-        midbody speed: [1 x n_frames] from locomotion.velocity.midbody.speed / config.FPS
-        skeleton_lengths: [1 x n_frames]
-        
-      OUTPUT
-        the locomotion events; a dict with event fields:
-          forward  - (event) forward locomotion
-          paused   - (event) no locomotion (the worm is paused)
-          backward - (event) backward locomotion
-          mode     = [1 x num_frames] the locomotion mode:
-                     -1 = backward locomotion
-                      0 = no locomotion (the worm is paused)
-                      1 = forward locomotion
+  """ 
+  Calculate motion codes (a locomotion feature)
+
+  See feature description at 
+    /documentation/Yemini%20Supplemental%20Data/Locomotion.md
+
+  Parameters
+  ---------------------------------------
+  midbody_speed: numpy array 1 x n_frames
+    from locomotion.velocity.midbody.speed / config.FPS
+  skeleton_lengths: numpy array 1 x n_frames
+
+  Returns
+  ---------------------------------------
+  the locomotion events; a dict with event fields:
+    forward  - (event) forward locomotion
+    paused   - (event) no locomotion (the worm is paused)
+    backward - (event) backward locomotion
+    mode     = [1 x num_frames] the locomotion mode:
+               -1 = backward locomotion
+                0 = no locomotion (the worm is paused)
+                1 = forward locomotion
 
   """
 
@@ -132,7 +139,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   all_events_struct = struct
   
-  motion_codes = {1: 'forward', -1:'backward', 0:'paused'}
+  motion_codes  = {1: 'forward', -1:'backward', 0:'paused'}
   #FIELD_NAMES  = {'forward' 'backward' 'paused'}
   #FRAME_VALUES = [1 -1 0]
   motion_mode = NaN(1,num_frames)
