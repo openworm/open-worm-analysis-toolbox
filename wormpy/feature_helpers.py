@@ -13,6 +13,7 @@ from __future__ import division #distance/time compute_velocity
 
 import warnings
 import numpy as np
+from itertools import groupby
 
 #np.seterr(all='raise')
 
@@ -33,6 +34,100 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
     
     
 """
+
+"""  
+  # example array  
+  a = np.array([10, 12, 15, np.NaN, 17, \
+                np.NaN, np.NaN, np.NaN, -5], dtype='float')
+  
+  a2 = interpolate_with_threshold(a, 5)
+  
+  print(a)
+  print(a2)
+  
+"""
+
+def interpolate_with_threshold(array, threshold):
+  """
+  Linearly interpolate a numpy array along one dimension but only 
+  for missing data n frames from a valid data point.  That is, 
+  if there are too many contiguous missing data points, none of 
+  those points get interpolated.
+
+  Parameters
+  ---------------------------------------
+  array: 1-dimensional numpy array
+    The array to be interpolated
+  threshold: int
+    The maximum size of a contiguous set of missing data points
+    that gets interpolated.  Sets larger than this are left as NaNs.
+  
+  Returns
+  ---------------------------------------
+  numpy array with the values interpolated
+  
+  """
+
+  """
+    # SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE
+  # Check that any frames with NaN in at least one dimension must
+  # have it in all:
+  frames_with_at_least_one_NaN = np.all(np.isnan(array), frame_dimension)
+  frames_with_no_NaNs          = np.all(~np.isnan(array), frame_dimension)
+  # check that each frame is either True for one of these arrays or 
+  # the other but not both.
+  assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
+  frame_dropped = frames_with_at_least_one_NaN
+  """
+  assert(threshold>=0)
+  if(threshold==0):  # everything gets left as NaN
+    return array
+
+  # Say array = [10, 12, 15, nan, 17, nan, nan, nan, -5]
+  # Then np.isnan(array) = 
+  # [False, False, False, True, False True, True, True, False]
+  # The x-coordinates of the interpolated values.
+  # e.g. [3, 5, 6, 7]
+  x = np.flatnonzero(np.isnan(array))
+  # Group these together using a fancy trick from 
+  # http://stackoverflow.com/questions/2154249/, since
+  # the lambda function x:x[0]-x[1] on an enumerated list will
+  # group consecutive integers together
+  # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
+  x_grouped = [list(group) for key, group in groupby(enumerate(x), lambda i:i[0]-i[1])]
+  
+  # We want to know the first element from each "run"
+  # e.g. [(3, 1), (5, 3)]
+  x_runs = [(i[0][1], len(i)) for i in x_grouped]
+  
+  # We need only interpolate on runs of length <= threshold
+  # e.g. if threshold = 2, then we have only [(3,1)]
+  x_runs = [i for i in x_runs if i[1] <= threshold]
+
+  # now exapand the remaining runs
+  # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
+  #      x would be [3, 5, 6, 7]
+  x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
+  
+  # The x-coordinates of the interpolated values.
+  #x = np.flatnonzero(to_interpolate)   
+  # The x-coordinates of the data points, must be increasing.
+  xp = np.flatnonzero(~np.isnan(array))
+  # The y-coordinates of the data points, same length as xp
+  yp = array[~np.isnan(array)]
+
+  # use a new array so we don't modify the original array passed to us
+  new_array = np.copy(array)
+  
+  # place the interpolated values into the array
+  new_array[x] = np.interp(x, xp, yp)  
+  
+  return new_array
+
+
+
+
+
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
   """ 
@@ -146,34 +241,34 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   
   for iType in range(1,4)   # change to (0,3)
-     
-      #Determine when the event type occurred
-      #----------------------------------------------------------------------
-      ef = seg_worm.feature.event_finder
-      
-      ef.include_at_thr       = true
-      ef.minum_frames_thr       = worm_event_frames_threshold
-      ef.min_sum_thr          = min_distance{iType}
-      ef.include_at_sum_thr   = true
-      ef.data_for_sum_thr     = distance_per_frame
-      ef.min_inter_frames_thr = worm_event_min_interframes_threshold
-      
-      #seg_worm.feature.event_finder.getEvents
-      frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
-      #frames_temp - class - seg_worm.feature.event_ss
-      
-      #Assign event type to relevant frames
-      #----------------------------------------------------------------------
-      mask = frames_temp.getEventMask(num_frames)
-      motion_mode(mask) = FRAME_VALUES(iType)
   
-      #Take the start and stop indices and convert them to the structure
-      #used in the feature files ...
-      #----------------------------------------------------------------------
-      cur_field_name = FIELD_NAMES{iType}
-  
-      temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
-      all_events_struct.(cur_field_name) = temp.getFeatureStruct
+    #Determine when the event type occurred
+    #----------------------------------------------------------------------
+    ef = seg_worm.feature.event_finder
+    
+    ef.include_at_thr       = true
+    ef.minum_frames_thr       = worm_event_frames_threshold
+    ef.min_sum_thr          = min_distance{iType}
+    ef.include_at_sum_thr   = true
+    ef.data_for_sum_thr     = distance_per_frame
+    ef.min_inter_frames_thr = worm_event_min_interframes_threshold
+    
+    #seg_worm.feature.event_finder.getEvents
+    frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
+    #frames_temp - class - seg_worm.feature.event_ss
+    
+    #Assign event type to relevant frames
+    #----------------------------------------------------------------------
+    mask = frames_temp.getEventMask(num_frames)
+    motion_mode(mask) = FRAME_VALUES(iType)
+
+    #Take the start and stop indices and convert them to the structure
+    #used in the feature files ...
+    #----------------------------------------------------------------------
+    cur_field_name = FIELD_NAMES{iType}
+
+    temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
+    all_events_struct.(cur_field_name) = temp.getFeatureStruct
       
   end
   
