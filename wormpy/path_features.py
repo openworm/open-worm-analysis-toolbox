@@ -5,6 +5,8 @@
 
 from . import utils
 import numpy as np
+from . import feature_helpers
+from . import config
 
 class Range:
 
@@ -280,3 +282,61 @@ class Arena:
     temp.max_y  = saved_arena_elem['max']['y'].value      
     
     return temp
+
+def worm_path_curvature(x,y,fps,ventral_mode):
+  
+  """
+  
+  
+  """
+  
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m  
+  
+  BODY_I    = slice(44,3,-1)
+  
+#slice(*BODY_I)  
+  
+  #This was nanmean but I think mean will be fine. nanmean was
+  #causing the program to crash
+  diff_x = np.mean(np.diff(x[BODY_I,:],axis=0),axis=0)
+  diff_y = np.mean(np.diff(y[BODY_I,:],axis=0),axis=0)
+  avg_body_angles_d = np.arctan2(diff_y,diff_x)*180/np.pi  
+  
+  #compute_velocity - inputs don't make sense ...
+  #???? - sample_time??
+  #???? - bodyI, BODY_DIFF, 
+  speed, motion_direction = feature_helpers.compute_velocity(x, y, avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+
+  frame_scale      = feature_helpers.get_frames_per_sample(config.BODY_DIFF)
+  half_frame_scale = (frame_scale - 1) / 2
+
+  #Compute the angle differentials and distances.
+  speed = abs(speed);
+
+  #At each frame, we'll compute the differences in motion direction using 
+  #some frame in the future relative to the current frame
+  #
+  #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
+  #------------------------------------------------
+  diff_motion    = np.empty(speed.shape)
+  diff_motion[:] = np.NAN
+  
+  right_max_I = len(diff_motion) - frame_scale
+  diff_motion[0:right_max_I] = motion_direction[frame_scale:] - motion_direction[0:right_max_I]
+
+  with np.errstate(invalid='ignore'):
+    diff_motion[diff_motion >= 180]  -= 360;
+    diff_motion[diff_motion <= -180] += 360;
+  
+  distance_I_base    = slice(half_frame_scale,-(frame_scale+1),1)
+  distance_I_shifted = slice(half_frame_scale + frame_scale,-1,1)  
+    
+  distance    = np.empty(speed.shape)
+  distance[:] = np.NaN
+
+  distance[distance_I_base] = speed[distance_I_base] + speed[distance_I_shifted]*config.BODY_DIFF/2
+  
+  with np.errstate(invalid='ignore'):
+    distance[distance < 1] = np.NAN
+  
+  return (diff_motion/distance) * (np.pi/180);    

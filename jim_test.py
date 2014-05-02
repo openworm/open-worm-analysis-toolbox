@@ -5,16 +5,17 @@ Created on Wed Feb 19 13:38:39 2014
 @author: RNEL
 """
 
-"""
 import wormpy_example as we
  
 nw = we.example_nw()   
 
-from wormpy.WormFeatures import WormPath as wp #Temporary for directly accessing features  
+#from wormpy.WormFeatures import WormPath as wp #Temporary for directly accessing features  
+#temp = wp(nw)
 
+from wormpy.WormFeatures import WormPosture as wp
 temp = wp(nw)
-"""
 
+"""
 #TODO: Change this to the real comparison file ...
 #file_path = r'F:\worm_data\segworm_data\features\247 JU438 on food R_2010_11_25__12_18_40___1___5_features.mat'
 
@@ -26,3 +27,4 @@ worm = wf.from_disk(file_path)
 print worm.morphology
 
 #worm.path == temp
+"""

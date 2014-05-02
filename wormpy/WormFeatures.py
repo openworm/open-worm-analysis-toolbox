@@ -33,6 +33,7 @@ import collections #For namedtuple
 from wormpy import config
 from wormpy import feature_helpers
 from . import path_features
+from . import posture_features
 from . import utils
 
 #import pdb
@@ -174,7 +175,44 @@ class WormLocomotion():
     self.locomotion['omegas'] = 0
 
     self.locomotion['upsilons'] = 0
+    
+    #.motion
+    #  .forward
+    #  .backward
+    #  .paused
+    #  .mode - time series   
+    #.velocity
+    #  .headTip
+    #    .speed - time series   
+    #    .direction - time series   
+    #  .head - all have same format
+    #  .midbody
+    #  .tail
+    #  .tailTip
+    #.bends
+    #  .foraging
+    #    .amplitude - time series 
+    #    .angleSpeed - time series 
+    #  .head
+    #    .amplitude - time series 
+    #    .frequency - time series 
+    #  .midbody - same as head
+    #  .tail  - same as head
+    #.turns
+    #  .omegas
+    #  .upsilons
+    
   
+  @classmethod 
+  def from_disk(cls, m_var):
+    
+    self = cls.__new__(cls)
+
+    import pdb
+    pdb.set_trace()
+    
+    return self
+
     
 
 class WormPosture():
@@ -207,7 +245,7 @@ class WormPosture():
 
     # Now that we've populated the bends dictionary, add it to the posture
     # dictionary.
-    self.posture['bends'] = feature_helpers.get_bends(nw)
+    self.bends = posture_features.Bends(nw)
     
     # *** 2. Eccentricity & Orientation ***
     eccentricity_and_orientation = \
@@ -220,8 +258,8 @@ class WormPosture():
     amp_wave_track = \
       collections.namedtuple('amp_wave_track', 
                              ['amplitude', 'wavelength', 'track_length'])
-    amp_wave_track.amplitude = 'yay1'
-    amp_wave_track.wavelength = 'yay2'
+    amp_wave_track.amplitude    = 'yay1'
+    amp_wave_track.wavelength   = 'yay2'
     amp_wave_track.track_length = 'yay3'
 
     #amp_wave_track = get_amplitude_and_wavelength( \
@@ -229,9 +267,9 @@ class WormPosture():
     #                      self.skeletons_x(),
     #                      self.skeletons_y(),
     #                      self.data_dict['lengths'])
-    self.posture['amplitude'] = amp_wave_track.amplitude
-    self.posture['wavelength'] = amp_wave_track.wavelength
-    self.posture['track_length'] = amp_wave_track.track_length
+    self.amplitude    = amp_wave_track.amplitude
+    self.wavelength   = amp_wave_track.wavelength
+    self.track_length = amp_wave_track.track_length
 
     # TODO: change this to return multiple values as in 
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
@@ -248,7 +286,43 @@ class WormPosture():
 
     
     # *** 8. EigenProjection ***
+
+  @classmethod 
+  def from_disk(cls, p_var):
     
+    self = cls.__new__(cls)
+
+    #bends
+    #  .head
+    #    .mean
+    #    .std_dev
+    #  .neck
+    #  .midbody
+    #  .hips
+    #  .tail
+    #.amplitude
+    #  .max   - ts
+    #  .ratio - ts
+    #.wavelength
+    #  .primary - ts
+    #  .secondary - ts
+    #.track_length - ts (OLD: tracklength)
+    #.eccentricity - ts
+    #.kinks - ts
+    #.coils - event
+    #.directions - 
+    #  .tail2head - ts
+    #  .head - ts
+    #  .tail - ts
+    #.skeleton
+    #  .x - ts
+    #  .y - ts
+    #.eigen_projections [6 x frames] matrix (OLD:eigenProjection)
+
+    import pdb
+    pdb.set_trace()
+    
+    return self    
 
 class WormPath():
   
@@ -287,9 +361,9 @@ class WormPath():
     #---------------------------------------------------    
     self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
        
-    #Curvature (Done) - TODO: Move to path_features
+    #Curvature (Done)
     #---------------------------------------------------
-    self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
+    self.curvature = path_features.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
   #TODO: Move to class in path_features
   @classmethod
