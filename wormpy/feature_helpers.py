@@ -86,9 +86,13 @@ def interpolate_with_threshold(array, threshold):
   # Say array = [10, 12, 15, nan, 17, nan, nan, nan, -5]
   # Then np.isnan(array) = 
   # [False, False, False, True, False True, True, True, False]
-  # The x-coordinates of the interpolated values.
+  # Let's obtain the "x-coordinates" of the NaN entries.
   # e.g. [3, 5, 6, 7]
   x = np.flatnonzero(np.isnan(array))
+  
+  # (If we weren't using a threshold and just interpolating all NaNs, 
+  # we could skip the next four lines.)
+  
   # Group these together using a fancy trick from 
   # http://stackoverflow.com/questions/2154249/, since
   # the lambda function x:x[0]-x[1] on an enumerated list will
@@ -96,21 +100,20 @@ def interpolate_with_threshold(array, threshold):
   # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
   x_grouped = [list(group) for key, group in groupby(enumerate(x), lambda i:i[0]-i[1])]
   
-  # We want to know the first element from each "run"
+  # We want to know the first element from each "run", and the run's length
   # e.g. [(3, 1), (5, 3)]
   x_runs = [(i[0][1], len(i)) for i in x_grouped]
   
   # We need only interpolate on runs of length <= threshold
-  # e.g. if threshold = 2, then we have only [(3,1)]
+  # e.g. if threshold = 2, then we have only [(3, 1)]
   x_runs = [i for i in x_runs if i[1] <= threshold]
 
-  # now exapand the remaining runs
+  # now expand the remaining runs
   # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
   #      x would be [3, 5, 6, 7]
+  # this give us the x-coordinates of the values to be interpolated:
   x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
   
-  # The x-coordinates of the interpolated values.
-  #x = np.flatnonzero(to_interpolate)   
   # The x-coordinates of the data points, must be increasing.
   xp = np.flatnonzero(~np.isnan(array))
   # The y-coordinates of the data points, same length as xp
