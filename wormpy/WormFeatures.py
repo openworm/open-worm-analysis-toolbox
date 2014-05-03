@@ -238,35 +238,26 @@ class WormPosture():
     %
 
     """    
-    # Initialize self.posture as a blank dictionary we will add to
-    self.posture = {}  
+ 
 
     # *** 1. Bends ***
-
-    # Now that we've populated the bends dictionary, add it to the posture
-    # dictionary.
     self.bends = posture_features.Bends(nw)
-    
+      
     # *** 2. Eccentricity & Orientation ***
-    eccentricity_and_orientation = \
-            feature_helpers.get_eccentricity_and_orientation(nw.contour_x, 
-                                                             nw.contour_y)
-    self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
-    self.posture['orientation'] = eccentricity_and_orientation.orientation
-    
-    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
-    amp_wave_track = \
-      collections.namedtuple('amp_wave_track', 
-                             ['amplitude', 'wavelength', 'track_length'])
-    amp_wave_track.amplitude    = 'yay1'
-    amp_wave_track.wavelength   = 'yay2'
-    amp_wave_track.track_length = 'yay3'
+    #TODO: Need to install Shapely  
+    (self.eccentricity,self.orientation) = \
+       posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
 
-    #amp_wave_track = get_amplitude_and_wavelength( \
-    #                      self.posture['orientation'],
-    #                      self.skeletons_x(),
-    #                      self.skeletons_y(),
-    #                      self.data_dict['lengths'])
+    import pdb
+    pdb.set_trace()
+
+    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
+    amp_wave_track = posture_features.get_amplitude_and_wavelength(
+                          self.orientation,
+                          self.skeletons_x,
+                          self.skeletons_y,
+                          nw.data_dict['lengths'])    
+
     self.amplitude    = amp_wave_track.amplitude
     self.wavelength   = amp_wave_track.wavelength
     self.track_length = amp_wave_track.track_length

@@ -18,7 +18,6 @@ import numpy as np
 
 import collections
 from wormpy import config
-from . import path_features
 
 #import pdb
 
@@ -650,111 +649,5 @@ def get_worm_velocity(nw, ventral_mode=0):
   
   return velocity
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-"""
-
-
-
-
-
-def get_eccentricity_and_orientation(contour_x, contour_y):
-  """
-    get_eccentricity   
-   
-      [eccentricity, orientation] = seg_worm.feature_helpers.posture.getEccentricity(xOutline, yOutline, gridSize)
-   
-      Given x and y coordinates of the outline of a region of interest, fill
-      the outline with a grid of evenly spaced points and use these points in
-      a center of mass calculation to calculate the eccentricity and
-      orientation of the equivalent ellipse.
-   
-      Placing points in the contour is a well known computer science problem
-      known as the Point-in-Polygon problem.
-   
-      http://en.wikipedia.org/wiki/Point_in_polygon
-   
-      This function became a lot more complicated in an attempt to make it 
-      go much faster. The complication comes from the simplication that can
-      be made when the worm doesn't bend back on itself at all.
-   
-   
-      OldName: getEccentricity.m
-    
-   
-      Inputs:
-      =======================================================================
-      xOutline : [96 x num_frames] The x coordinates of the contour. In particular the contour
-                  starts at the head and goes to the tail and then back to
-                  the head (although no points are redundant)
-      yOutline : [96 x num_frames]  The y coordinates of the contour "  "
-      
-      N_ECCENTRICITY (a constant from config.py):
-                 (scalar) The # of points to place in the long dimension. More points
-                 gives a more accurate estimate of the ellipse but increases
-                 the calculation time.
-   
-      Outputs: a namedtuple containing:
-      =======================================================================
-      eccentricity - [1 x num_frames] The eccentricity of the equivalent ellipse
-      orientation  - [1 x num_frames] The orientation angle of the equivalent ellipse
-   
-      Nature Methods Description
-      =======================================================================
-      Eccentricity. 
-      ------------------
-      The eccentricity of the worm’s posture is measured using
-      the eccentricity of an equivalent ellipse to the worm’s filled contour.
-      The orientation of the major axis for the equivalent ellipse is used in
-      computing the amplitude, wavelength, and track length (described
-      below).
-   
-      Status
-      =======================================================================
-      The code below is finished although I want to break it up into smaller
-      functions. I also need to submit a bug report for the inpoly FEX code.
-
-  Translation of: SegwormMatlabClasses / 
-  +seg_worm / +feature_helpers / +posture / getEccentricity.m
-  """
-  # TODO: translate this function from Jim's code
-  EccentricityAndOrientation = \
-    collections.namedtuple('EccentricityAndOrientation', 
-                           ['eccentricity', 'orientation'])
-                           
-  EccentricityAndOrientation.eccentricity = 'eccentricity example'
-  EccentricityAndOrientation.wavelength = 'wavelength example'
-
-  return EccentricityAndOrientation
   
 

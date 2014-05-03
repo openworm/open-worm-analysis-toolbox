@@ -3,10 +3,16 @@
 Posture features  ...
 """
 
+from __future__ import division
+from . import utils
 import numpy as np
 import pdb
 import collections
 import warnings
+
+#http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
+from shapely.geometry.polygon import LinearRing
+from shapely.geometry import Point
 
 class Bends(object):
 
@@ -18,120 +24,179 @@ class Bends(object):
       
       # retrieve the part of the worm we are currently looking at:
       bend_angles = nw.get_partition(partition_key, 'angles')
-      
+
+      #TODO: Should probably merge all three below ...
+
       # shape = (n):
-      with warnings.catch_warnings(): #mean empty slice
-        temp_mean = np.nanmean(a=bend_angles, axis = 0) 
-      with warnings.catch_warnings(): #degrees of freedom <= 0 for slice
+      with warnings.catch_warnings(record=True) as w: #mean empty slice
+        temp_mean = np.nanmean(a=bend_angles, axis = 0)       
+        
+      with warnings.catch_warnings(record=True) as w: #degrees of freedom <= 0 for slice
         temp_std  = np.nanstd(a=bend_angles, axis = 0)
       
       #Sign the standard deviation (to provide the bend's dorsal/ventral orientation):
       #-------------------------------
-      
-      pdb.set_trace()
-      # First find all entries where the mean is negative
-      mask = np.ma.masked_where(condition=temp_mean < 0, a=temp_std).mask
-      # Now create a numpy array of -1 where the mask is True and 1 otherwise
-      sign_array = -np.ones(np.shape(mask)) * mask + \
-                    np.ones(np.shape(mask)) * (~mask)
-                    
-      # Finally, multiply the std_dev array by our sign_array
-      temp_std   = temp_std * sign_array
+      with warnings.catch_warnings(record=True) as w:
+        temp_std[temp_mean < 0] *= -1   
       
       setattr(self,partition_key,BendSection(temp_mean,temp_std))      
-    
+   
+  def __repr__(self):
+    return utils.print_object(self)     
+   
 class BendSection(object):
   
   def __init__(self,mean,std_dev):
     self.mean    = mean
     self.std_dev = std_dev
+    
+  def __repr__(self):
+    return utils.print_object(self)
 
+def get_eccentricity_and_orientation(contour_x, contour_y):
+  """
+    get_eccentricity   
+   
+      [eccentricity, orientation] = seg_worm.feature_helpers.posture.getEccentricity(xOutline, yOutline, gridSize)
+   
+      Given x and y coordinates of the outline of a region of interest, fill
+      the outline with a grid of evenly spaced points and use these points in
+      a center of mass calculation to calculate the eccentricity and
+      orientation of the equivalent ellipse.
+   
+      Placing points in the contour is a well known computer science problem
+      known as the Point-in-Polygon problem.
+   
+      http://en.wikipedia.org/wiki/Point_in_polygon
+   
+      This function became a lot more complicated in an attempt to make it 
+      go much faster. The complication comes from the simplication that can
+      be made when the worm doesn't bend back on itself at all.
+   
+   
+      OldName: getEccentricity.m
+    
+   
+      Inputs:
+      =======================================================================
+      xOutline : [96 x num_frames] The x coordinates of the contour. In particular the contour
+                  starts at the head and goes to the tail and then back to
+                  the head (although no points are redundant)
+      yOutline : [96 x num_frames]  The y coordinates of the contour "  "
+      
+      N_ECCENTRICITY (a constant from config.py):
+                 (scalar) The # of points to place in the long dimension. More points
+                 gives a more accurate estimate of the ellipse but increases
+                 the calculation time.
+   
+      Outputs: a namedtuple containing:
+      =======================================================================
+      eccentricity - [1 x num_frames] The eccentricity of the equivalent ellipse
+      orientation  - [1 x num_frames] The orientation angle of the equivalent ellipse
+   
+      Nature Methods Description
+      =======================================================================
+      Eccentricity. 
+      ------------------
+      The eccentricity of the worm’s posture is measured using
+      the eccentricity of an equivalent ellipse to the worm’s filled contour.
+      The orientation of the major axis for the equivalent ellipse is used in
+      computing the amplitude, wavelength, and track length (described
+      below).
+   
+      Status
+      =======================================================================
+      The code below is finished although I want to break it up into smaller
+      functions. I also need to submit a bug report for the inpoly FEX code.
+
+  Translation of: SegwormMatlabClasses / 
+  +seg_worm / +feature_helpers / +posture / getEccentricity.m
+  """
+  
+  
+  N_GRID_POINTS = 50 #TODO: Get from config ...
+  
+  x_range_all = np.ptp(contour_x,axis=0)
+  y_range_all = np.ptp(contour_y,axis=0)
+  grid_aspect_ratio = x_range_all/y_range_all
+  
+  #run_mask = np.logical_not(np.isnan(grid_aspect_ratio))
+
+  n_frames = length(x_range_all)
+  
+  eccentricity    = np.empty(n_frames)
+  eccentricity[:] = np.NAN
+  orientation     = np.empty(n_frames)
+  orientation[:]  = np.NAN
+
+  oh_yeah = 0  
+  for iFrame in range(n_frames):
+    cur_aspect_ratio = grid_aspect_ratio[iFrame]
+    if not np.isnan(cur_aspect_ratio):
+      if cur_aspect_ratio > 1:
+        #x size is larger so scale down the number of grid points in the y direction
+        wtf1 = np.linspace(np.min(contour_x[:,iFrame]), np.max(contour_x[:,iFrame]), num=N_GRID_POINTS);
+        wtf2 = np.linspace(np.min(contour_y[:,iFrame]), np.max(contour_y[:,iFrame]), num=np.round(N_GRID_POINTS / cur_aspect_ratio));
+      else:
+        #y size is larger so scale down the number of grid points in the x direction
+        #wtf1 = linspace(min(xOutline_mc(:,iFrame)), max(xOutline_mc(:,iFrame)), round(gridSize * gridAspectRatio));
+        #wtf2 = linspace(min(yOutline_mc(:,iFrame)), max(yOutline_mc(:,iFrame)), gridSize);  
+    
+    #[m,n] = meshgrid( wtf1 , wtf2 );
+    
+    # get the indices of the points inside of the polygon
+    #inPointInds = helper__inpolyNew([m(:) n(:)], [xOutline_mc(:,iFrame) yOutline_mc(:,iFrame)]);
+    
+    # get the x and y coordinates of the new set of points to be used in calculating eccentricity.
+    #x = m(inPointInds);
+    #y = n(inPointInds);    
+  
+    """
+        plot(xOutline_mc(:,iFrame),yOutline_mc(:,iFrame),'g-o')
+        hold on
+        scatter(x,y,'r')
+        hold off
+        axis equal
+        title(sprintf('%d',iFrame))
+        pause
+    """
+    
+    #[eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x,y);  
+  
+  
+  import pdb
+  pdb.set_trace()  
+
+  return (eccentricity,orientation)
+
+
+"""
 def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
-  """
+
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
+  
+  N_POINTS_FFT   = 512
+  HALF_N_FFT     = N_POINTS_FFT/2
+  MIN_DIST_PEAKS = 5  
+  WAVELENGTH_PCT_MAX_CUTOFF = 0.5 #TODO: Describe
+  WAVELENGTH_PCT_CUTOFF     = 2
+  
+  #TODO: Write in Python
+  #assert(size(sx,1) <= N_POINTS_FFT,'# of points used in the FFT must be more than the # of points in the skeleton')  
+  
+  theta_r = theta_d*(np.pi/180);  
+  
+  #Unrotate worm
+  #------------------------------
+  
+  import pdb
+  pdb.set_trace()
   
   
-     Inputs
-     =======================================================================
-     theta_d      : worm orientation based on fitting to an ellipse, in
-                     degrees
-     sx           : [49 x num_frames]
-     sy           : [49 x num_frames]
-     worm_lengths : [1 x num_frames], total length of each worm
   
   
-     Output: A dictionary with three elements:
-     =======================================================================
-     amplitude    :
-         .max       - [1 x num_frames] max y deviation after rotating major axis to x-axis
-         .ratio     - [1 x num_frames] ratio of y-deviations (+y and -y) with worm centered
-                      on the y-axis, ratio is computed to be less than 1
-     wavelength   :
-         .primary   - [1 x num_frames]
-         .secondary - [1 x num_frames] this might not always be valid, even 
-                       when the primary wavelength is defined
-     track_length  : [1 x num_frames]
-  
-     
-     Old Name: getAmpWavelength.m
-     TODO: This function was missing from some of the original code
-     distributions. I need to make sure I upload it.
   
   
-     Nature Methods Description
-     =======================================================================
-     Amplitude. 
-     ------------------
-     Worm amplitude is expressed in two forms: a) the maximum
-     amplitude found along the worm body and, b) the ratio of the maximum
-     amplitudes found on opposing sides of the worm body (wherein the smaller of
-     these two amplitudes is used as the numerator). The formula and code originate
-     from the publication “An automated system for measuring parameters of
-     nematode sinusoidal movement”6.
-     The worm skeleton is rotated to the horizontal axis using the orientation of the
-     equivalent ellipse and the skeleton’s centroid is positioned at the origin. The
-     maximum amplitude is defined as the maximum y coordinate minus the minimum
-     y coordinate. The amplitude ratio is defined as the maximum positive y coordinate
-     divided by the absolute value of the minimum negative y coordinate. If the
-     amplitude ratio is greater than 1, we use its reciprocal.
-  
-     Wavelength
-     ------------------------
-     Wavelength. The worm’s primary and secondary wavelength are computed by
-     treating the worm’s skeleton as a periodic signal. The formula and code
-     originate from the publication “An automated system for measuring
-     parameters of nematode sinusoidal movement”6. The worm’s skeleton is
-     rotated as described above for the amplitude. If there are any
-     overlapping skeleton points (the skeleton’s x coordinates are not
-     monotonically increasing or decreasing in sequence -- e.g., the worm is
-     in an S shape) then the shape is rejected, otherwise the Fourier
-     transform computed. The primary wavelength is the wavelength associated
-     with the largest peak in the transformed data. The secondary wavelength
-     is computed as the wavelength associated with the second largest
-     amplitude (as long as it exceeds half the amplitude of the primary
-     wavelength). The wavelength is capped at twice the value of the worm’s
-     length. In other words, a worm can never achieve a wavelength more than
-     double its size.
-  
-     Tracklength
-     -----------------------------
-     Track Length. The worm’s track length is the range of the skeleton’s
-     horizontal projection (as opposed to the skeleton’s arc length) after
-     rotating the worm to align it with the horizontal axis. The formula and
-     code originate from the publication “An automated system for measuring
-     parameters of nematode sinusoidal movement”.
-  
-  
-     Code based on:
-     ------------------------------------------------
-     BMC Genetics, 2005
-     C.J. Cronin, J.E. Mendel, S. Mukhtar, Young-Mee Kim, R.C. Stirb, J. Bruck,
-     P.W. Sternberg
-     "An automated system for measuring parameters of nematode
-     sinusoidal movement" BMC Genetics 2005, 6:5
-  
-  """
-  
-  """
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
                            ['amplitude', 'wavelength', 'track_length'])
@@ -141,7 +206,5 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   onw = nw.re_orient_and_centre()  
 
-
   return amp_wave_track
-  """
-  pass
+"""

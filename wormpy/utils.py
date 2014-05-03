@@ -4,6 +4,10 @@
 """
 import matplotlib.pyplot as plt
 
+def plot(data):
+  plt.plot(data)
+  plt.show()
+
 def imagesc(data):
   #http://matplotlib.org/api/pyplot_api.html?highlight=imshow#matplotlib.pyplot.imshow
   plt.imshow(data,aspect='auto')
