@@ -153,7 +153,8 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
   Returns
   ---------------------------------------
-  The locomotion events; a dict with event fields:
+  The locomotion events; a dict (called locally all_events_dict) 
+  with event fields:
     forward  - (event) forward locomotion
     paused   - (event) no locomotion (the worm is paused)
     backward - (event) backward locomotion
@@ -218,20 +219,18 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   worm_event_min_interframes_threshold = \
     config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
-  #DEBUG: this doesn't appear to be used.  Maybe change to an array,
-  # so it can be used as a replacement for FIELD_NAMES in the code below?
-  motion_codes  = {1: 'forward', -1:'backward', 0: 'paused'}
+  motion_codes  = ['forward', 'backward', 'paused']
+  frame_values  = [1,         -1,         0       ]
 
-  all_events_struct = {}
+  all_events_dict = {}
 
-  """  
-  #FIELD_NAMES  = {'forward' 'backward' 'paused'}
-  #FRAME_VALUES = [1 -1 0]
-  motion_mode = NaN(1,num_frames)
-  
-  
+  # start with a blank numpy array, full of NaNs:
+  motion_mode = np.zeros(num_frames, dtype='float') * np.NaN
+
   for iType in range(0,3):
-  
+    pass
+
+    """
     #Determine when the event type occurred
     #----------------------------------------------------------------------
     ef = seg_worm.feature.event_finder
@@ -248,23 +247,20 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     #Assign event type to relevant frames
     #----------------------------------------------------------------------
     mask = frames_temp.getEventMask(num_frames)
-    motion_mode(mask) = FRAME_VALUES(iType)
+    motion_mode(mask) = frame_values[iType]
 
     #Take the start and stop indices and convert them to the structure
     #used in the feature files ...
     #----------------------------------------------------------------------
-    cur_field_name = FIELD_NAMES{iType}
+    cur_field_name = motion_codes[iType]
 
     temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
-    all_events_struct.(cur_field_name) = temp.getFeatureStruct
-      
-  end
-  
-  all_events_struct.mode = motion_mode
-  
-  obj.motion = all_events_struct
-  """
+    all_events_dict[cur_field_name] = temp.getFeatureStruct
+    """
 
+  all_events_dict['mode'] = motion_mode
+  
+  return all_events_dict
 
 
 
