@@ -198,30 +198,39 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   #Paused stuffs
   #--------------------------------------------------------------------------
-  #                                         2.5 percent of its length  
   worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
   min_paused_speed     = -worm_pause_threshold
   max_paused_speed     = worm_pause_threshold
 
-  """
+  # Three lists, with entry 0 for forward,
+  #                   entry 1 for backward,
+  #                   entry 2 for paused.
+  # Note that there is no maximum forward speed nor minimum backward speed.
 
-  min_speeds   = {min_forward_speed       []                      min_paused_speed}
-  max_speeds   = {[]                      max_backward_speed      max_paused_speed}
-  min_distance = {min_forward_distance    min_backward_distance   []}
-  
+  min_speeds   = [min_forward_speed, [], min_paused_speed]
+  max_speeds   = [[], max_backward_speed, max_paused_speed]
+  min_distance = [min_forward_distance, min_backward_distance, []]
+
+
   #--------------------------------------------------------------------------
-  worm_event_frames_threshold          = fps * config.EVENT_FRAMES_THRESHOLD
-  worm_event_min_interframes_threshold = fps * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
+  worm_event_frames_threshold = \
+    config.FPS * config.EVENT_FRAMES_THRESHOLD
+  worm_event_min_interframes_threshold = \
+    config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
-  all_events_struct = struct
-  
-  motion_codes  = {1: 'forward', -1:'backward', 0:'paused'}
+  #DEBUG: this doesn't appear to be used.  Maybe change to an array,
+  # so it can be used as a replacement for FIELD_NAMES in the code below?
+  motion_codes  = {1: 'forward', -1:'backward', 0: 'paused'}
+
+  all_events_struct = {}
+
+  """  
   #FIELD_NAMES  = {'forward' 'backward' 'paused'}
   #FRAME_VALUES = [1 -1 0]
   motion_mode = NaN(1,num_frames)
   
   
-  for iType in range(1,4)   # change to (0,3)
+  for iType in range(0,3):
   
     #Determine when the event type occurred
     #----------------------------------------------------------------------
@@ -234,9 +243,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     ef.data_for_sum_thr     = distance_per_frame
     ef.min_inter_frames_thr = worm_event_min_interframes_threshold
     
-    #seg_worm.feature.event_finder.getEvents
     frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
-    #frames_temp - class - seg_worm.feature.event_ss
     
     #Assign event type to relevant frames
     #----------------------------------------------------------------------
@@ -257,7 +264,6 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   
   obj.motion = all_events_struct
   """
-  #return 0  # debug
 
 
 
