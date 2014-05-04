@@ -1,13 +1,32 @@
 #Locomotion Features#
  
 ###1. Velocity###
-The worm’s velocity is measured at the tip of the head and tail, at the head and tail themselves, and at the midbody. The velocity is composed of two parts, speed and direction (expressed as an angular speed) (Supplementary Fig. 4d). The velocity is signed negatively whenever the respective body part moves towards the tail (as opposed to the head). 
+The worm’s velocity is measured at the tip of the head and tail, at the head and tail themselves, and at the midbody. The velocity is composed of two parts, speed and direction (expressed as an angular speed) [(Supplementary Fig. 4d)](s4.md). The velocity is signed negatively whenever the respective body part moves towards the tail (as opposed to the head). 
 The head and tail tips’ instantaneous velocity is measured at each frame using a 1/4 second up to a 1/2 second window. For each frame, we search for a start frame 1/4 of a second before and an end frame 1/4 second after to delineate the worm’s instantaneous path. If the worm’s location is not known within either the start or end frame, we extend the search for a known location up to 1/2 second in either direction. If the worm’s location is still missing at either the start or end, the velocity is marked unknown at this point. The speed is defined as the distance between the centroids of the start and end frames (for the respective body parts) divided by the time between both frames. The direction is defined as the angle (between centroids) from the start to the end frame, relative to the worm’s overall body angle, divided by the time between both frames. The worm’s overall body angle is defined as the mean orientation of the angles, in the tail-to-head direction, between subsequent midbody skeleton points. The body angle is used to sign the velocity. If the head or tail tip’s start-to-end angle exceeds 90°, clockwise or anti-clockwise, relative to the overall worm body angle, the motion is towards the tail. In this case both the speed and direction are negatively signed. The head, midbody, and tail velocity are computed identically except they use a 1/2 second up to a 1 second window for choosing their start and end frames. 
 
 ###2. Motion States###
-The worm’s forward, backward, and paused motion states attempt to differentiate these event states unambiguously (Supplementary Fig. 4f). Therefore, ambiguous motion has no associated state. 
+
+The worm’s forward, backward, and paused motion states attempt to differentiate these event states unambiguously [(Supplementary Fig. 4f)](s4.md). Therefore, ambiguous motion has no associated state. 
 
 The motion states are computed from the worm’s velocity and length (described in the section on “Morphology”). Missing lengths are linearly interpolated between segmented frames. The following filtering criteria were chosen based on human labeling of events within a variety of N2 and mutant videos. The worm is defined in a state of forward motion when a period, more than half a second long, is observed wherein: a) the worm travels at least 5% of its mean length over the entire period; and, b) the worm’s speed is at least 5% of its length, per second, in each frame. The worm must maintain this speed almost continuously with permissible interruptions of, at most, a quarter second (this permits quick contradictory movements such as head withdrawal, body contractions, and segmentation noise). The criteria for backward motion is identical except the worm must be moving backwards (the midbody speed must be negatively signed). The worm is defined in a paused state when a period, more than half a second long, is observed wherein the worm’s forward and backward speed do not exceed 2.5% of its length, per second, in each frame. The worm must observe these speed limits almost continuously with permissible interruptions of, at most, a quarter second (once again, this permits quick contradictory movements). 
+
+Interpolated skeleton lengths:
+![](skeleton_lengths_interpolated.gif)
+
+Code to generate the above plot:
+
+    def get_motion_codes(midbody_speed, skeleton_lengths):
+		...  
+		#  Interpolate the missing lengths.
+		skeleton_lengths_interpolated = \
+	    	interpolate_with_threshold(skeleton_lengths, 
+	       		config.LONGEST_NAN_RUN_TO_INTERPOLATE)
+    
+		plt.plot(list(enumerate(skeleton_lengths_interpolated)), 
+	   			 skeleton_lengths_interpolated, 'r--',
+	   			 list(enumerate(skeleton_lengths)), skeleton_lengths, 'bs',)
+	  	plt.show()
+		...
 
 ###3. Crawling###
 Worm crawling is expressed as both an amplitude and frequency (Supplementary Fig. 4e). We measure these features instantaneously at the head, midbody, and tail. The amplitude and frequency are signed negatively whenever the worm’s ventral side is contained within the concave portion of its instantaneous bend. 
@@ -18,7 +37,7 @@ Worm bends are linearly interpolated across unsegmented frames. The motion state
 We use a Fourier transform to measure the amplitude and frequency within the window described above. The largest peak within the transform is chosen for the crawling amplitude and frequency. If the troughs on either side of the peak exceed 1/2 its height, the peak is rejected for being unclear and crawling is marked as undefined at the frame. Similarly, if the integral between the troughs is less than half the total integral, the peak is rejected for being weak. 
 
 ###4. Foraging###
-Worm foraging is expressed as both an amplitude and an angular speed (Supplementary Fig. 4g). Foraging is signed negatively whenever it is oriented towards the ventral side. In other words, if the nose is bent ventrally, the amplitude is signed negatively. Similarly, if the nose is moving ventrally, the angular speed is signed negatively. As a result, the amplitude and angular speed share the same sign roughly only half the time. Foraging is an ambiguous term in previous literature, encompassing both fine movements of the nose as well as larger swings associated with the head. Empirically we have observed that the nose movements are aperiodic while the head swings have periodicity. Therefore, we measure the aperiodic nose movements and term these foraging whereas the head swings are referred to as measures of head crawling (described earlier in this section). 
+Worm foraging is expressed as both an amplitude and an angular speed [(Supplementary Fig. 4g)](s4.md). Foraging is signed negatively whenever it is oriented towards the ventral side. In other words, if the nose is bent ventrally, the amplitude is signed negatively. Similarly, if the nose is moving ventrally, the angular speed is signed negatively. As a result, the amplitude and angular speed share the same sign roughly only half the time. Foraging is an ambiguous term in previous literature, encompassing both fine movements of the nose as well as larger swings associated with the head. Empirically we have observed that the nose movements are aperiodic while the head swings have periodicity. Therefore, we measure the aperiodic nose movements and term these foraging whereas the head swings are referred to as measures of head crawling (described earlier in this section). 
 Foraging movements can exceed 6Hz7 and, at 20-30fps, our video frame rates are just high enough to resolve the fastest movements. By contrast, the slowest foraging movements are simply a continuation of the crawling wave and present similar bounds on their dynamics. Therefore, we bound foraging between 1/30Hz (the lower bound used for crawling) and 10Hz. 
 
 To measure foraging, we split the head in two (skeleton points 1-4 and 5-8) and measure the angle between these sections. To do so, we measure the mean of the angle between subsequent skeleton points along each section, in the tail-to-head direction. The foraging angle is the difference between the mean of the angles of both sections. In other words, the foraging angle is simply the bend at the head. 

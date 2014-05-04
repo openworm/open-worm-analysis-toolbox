@@ -99,7 +99,8 @@ class WormLocomotion():
       +seg_worm / +features / @locomotion / locomotion.m
   
         properties
-          velocity:(head_tip, head, midbody, tail, tail_tip) x (speed, direction)
+          velocity:
+            (head_tip, head, midbody, tail, tail_tip) x (speed, direction)
           motion
           motion_mode
           is_paused
@@ -193,7 +194,7 @@ class WormPosture():
     self.posture['track_length'] = amp_wave_track.track_length
 
     # TODO: change this to return multiple values as in 
-    # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
+    # http://stackoverflow.com/questions/354883/
 
     # *** 4. Kinks ***
     
@@ -244,11 +245,13 @@ class WormPath():
   
     #Coordinates (Done)
     #---------------------------------------------------    
-    self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
+    self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),
+                                                nw.contour_y.mean(axis=0))
        
     #Curvature (Done) - TODO: Move to path_features
     #---------------------------------------------------
-    self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
+    self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,
+                                                         config.VENTRAL_MODE)
 
   #TODO: Move to class in path_features
   @classmethod
@@ -264,7 +267,9 @@ class WormPath():
     self.duration    = path_features.Duration.from_disk(path_var['duration']) 
 
     #TODO: I'd like to have these also be objects with from_disk methods
-    self.coordinates = self._create_coordinates(path_var['coordinates']['x'].value,path_var['coordinates']['y'].value)
+    self.coordinates = self._create_coordinates(
+                          path_var['coordinates']['x'].value,
+                          path_var['coordinates']['y'].value)
     self.curvature   = path_var['curvature'].value   
 
     return self

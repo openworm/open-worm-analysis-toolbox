@@ -21,6 +21,8 @@ import collections
 from wormpy import config
 from . import path_features
 
+import matplotlib.pyplot as plt
+
 #import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
@@ -47,7 +49,7 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
   
 """
 
-def interpolate_with_threshold(array, threshold):
+def interpolate_with_threshold(array, threshold=None):
   """
   Linearly interpolate a numpy array along one dimension but only 
   for missing data n frames from a valid data point.  That is, 
@@ -61,6 +63,7 @@ def interpolate_with_threshold(array, threshold):
   threshold: int
     The maximum size of a contiguous set of missing data points
     that gets interpolated.  Sets larger than this are left as NaNs.
+    If threshold is set to NaN then all points are interpolated.
   
   Returns
   ---------------------------------------
@@ -69,7 +72,8 @@ def interpolate_with_threshold(array, threshold):
   """
 
   """
-    # SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE
+  # SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
+  # HAVE NOT IMPLEMENTED YET
   # Check that any frames with NaN in at least one dimension must
   # have it in all:
   frames_with_at_least_one_NaN = np.all(np.isnan(array), frame_dimension)
@@ -79,10 +83,11 @@ def interpolate_with_threshold(array, threshold):
   assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
   frame_dropped = frames_with_at_least_one_NaN
   """
-  assert(threshold>=0)
-  if(threshold==0):  # everything gets left as NaN
+  assert(threshold == None or threshold >= 0)
+  
+  if(threshold == 0):  # everything gets left as NaN
     return array
-
+  
   # Say array = [10, 12, 15, nan, 17, nan, nan, nan, -5]
   # Then np.isnan(array) = 
   # [False, False, False, True, False True, True, True, False]
@@ -92,27 +97,28 @@ def interpolate_with_threshold(array, threshold):
   
   # (If we weren't using a threshold and just interpolating all NaNs, 
   # we could skip the next four lines.)
+  if(threshold != None):
+    # Group these together using a fancy trick from 
+    # http://stackoverflow.com/questions/2154249/, since
+    # the lambda function x:x[0]-x[1] on an enumerated list will
+    # group consecutive integers together
+    # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
+    x_grouped = [list(group) for key, group in groupby(enumerate(x), 
+                                                       lambda i:i[0]-i[1])]
+    
+    # We want to know the first element from each "run", and the run's length
+    # e.g. [(3, 1), (5, 3)]
+    x_runs = [(i[0][1], len(i)) for i in x_grouped]
+    
+    # We need only interpolate on runs of length <= threshold
+    # e.g. if threshold = 2, then we have only [(3, 1)]
+    x_runs = [i for i in x_runs if i[1] <= threshold]
   
-  # Group these together using a fancy trick from 
-  # http://stackoverflow.com/questions/2154249/, since
-  # the lambda function x:x[0]-x[1] on an enumerated list will
-  # group consecutive integers together
-  # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
-  x_grouped = [list(group) for key, group in groupby(enumerate(x), lambda i:i[0]-i[1])]
-  
-  # We want to know the first element from each "run", and the run's length
-  # e.g. [(3, 1), (5, 3)]
-  x_runs = [(i[0][1], len(i)) for i in x_grouped]
-  
-  # We need only interpolate on runs of length <= threshold
-  # e.g. if threshold = 2, then we have only [(3, 1)]
-  x_runs = [i for i in x_runs if i[1] <= threshold]
-
-  # now expand the remaining runs
-  # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
-  #      x would be [3, 5, 6, 7]
-  # this give us the x-coordinates of the values to be interpolated:
-  x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
+    # now expand the remaining runs
+    # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
+    #      x would be [3, 5, 6, 7]
+    # this give us the x-coordinates of the values to be interpolated:
+    x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
   
   # The x-coordinates of the data points, must be increasing.
   xp = np.flatnonzero(~np.isnan(array))
@@ -147,7 +153,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
   Returns
   ---------------------------------------
-  the locomotion events; a dict with event fields:
+  The locomotion events; a dict with event fields:
     forward  - (event) forward locomotion
     paused   - (event) no locomotion (the worm is paused)
     backward - (event) backward locomotion
@@ -168,47 +174,17 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   # distance per second / (frames per second) = distance per frame
   distance_per_frame = abs(midbody_speed / config.FPS)
 
+
   #  Interpolate the missing lengths.
+  skeleton_lengths = \
+    interpolate_with_threshold(skeleton_lengths, 
+                               config.LONGEST_NAN_RUN_TO_INTERPOLATE)
 
-  # First, create two boolean numpy arrays indicating whether the frame 
-  # has been dropped
-  frame_is_dropped = np.isnan(skeleton_lengths)
-  frame_is_good = ~frame_is_dropped
-  
-  # Flatnonzero returns a smaller array of the indexes of the True elements 
-  dropped_frames  = np.flatnonzero(frame_is_dropped)
-  good_frames     = np.flatnonzero(frame_is_good)
-  
-  # Basic validation that our new list of dropped frames contains precisely
-  # the same number of elements as the true elements of frame_is_dropped
-  assert(np.shape(dropped_frames)[0] ==
-         np.sum(frame_is_dropped))
-
-  # create a copy of the array (just for debugging purposes)
-  # that will contain interpolated values in place of the NaNs
-  skeleton_lengths2 = np.copy(skeleton_lengths) 
-
-  skeleton_lengths2[frame_is_dropped] = \
-    np.interp(dropped_frames, good_frames, skeleton_lengths[frame_is_good])
-
-
-
-  # TODO:
-  #http://docs.scipy.org/doc/numpy/reference/generated/numpy.interp.html
-         
-  """
-  https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40locomotion/getWormMotionCodes.m
-  dataI     = find(is_data)
-  interpI   = find(is_not_data)
-  if(~isempty(interpI) and length(dataI) > 1):
-      skeleton_lengths(interpI) = interp1(dataI, skeleton_lengths(dataI), interpI, 'linear')
-  
-  """  
-  
-  """
   #==========================================================================
-  worm_speed_threshold       = skeleton_lengths * config.SPEED_THRESHOLD_PCT
-  worm_distance_threshold    = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT 
+  # Make the speed and distance thresholds a fixed proportion of the 
+  # worm's length at the given frame:
+  worm_speed_threshold    = skeleton_lengths * config.SPEED_THRESHOLD_PCT
+  worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT 
   
   #Forward stuffs
   #--------------------------------------------------------------------------
@@ -226,6 +202,8 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
   min_paused_speed     = -worm_pause_threshold
   max_paused_speed     = worm_pause_threshold
+
+  """
 
   min_speeds   = {min_forward_speed       []                      min_paused_speed}
   max_speeds   = {[]                      max_backward_speed      max_paused_speed}
@@ -388,7 +366,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
       bounded at twice the scale.
 
       INPUTS:
-        frames_per_sample: our sample scale, in frames.  must be an odd integer
+        frames_per_sample: our sample scale, in frames. must be an odd integer
         good_frames_mask: shape (num_frames), false if underlying angle is NaN
   
        OUTPUTS:
@@ -658,7 +636,8 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # --------------------------------------------------------
   angular_speed = np.empty((num_frames))
   angular_speed.fill(np.NaN)
-  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,left_I, right_I,ventral_mode)
+  angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy,left_I, right_I,
+                                                    ventral_mode)
 
   # Sign the speed.
   #   We want to know how the worm's movement direction compares 
@@ -671,7 +650,8 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # with the change, not with the actual value
   body_direction = np.empty((num_frames))
   body_direction.fill(np.NaN)
-  body_direction[keep_mask] = motion_direction[keep_mask] - avg_body_angle[left_I]
+  body_direction[keep_mask] = motion_direction[keep_mask] - \
+                              avg_body_angle[left_I]
   
   # Force all angles to be within -pi and pi
   with np.errstate(invalid='ignore'):
@@ -687,7 +667,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # body_direction[i] lies in Q3 or Q4
   #
   with np.errstate(invalid='ignore'):
-    motion_direction[body_direction < 0] = -motion_direction[body_direction < 0]
+    motion_direction[body_direction < 0] = -motion_direction[body_direction<0]
     
   if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
      motion_direction = -motion_direction 
