@@ -20,6 +20,7 @@ from itertools import groupby
 import collections
 from wormpy import config
 from . import path_features
+from .EventFinder import EventFinder
 
 import matplotlib.pyplot as plt
 
@@ -228,8 +229,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   motion_mode = np.zeros(num_frames, dtype='float') * np.NaN
 
   for iType in range(0,3):
+    ef = EventFinder()
     pass
-
+    
     """
     #Determine when the event type occurred
     #----------------------------------------------------------------------
