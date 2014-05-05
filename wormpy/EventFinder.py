@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun May  4 22:33:36 2014
-
-EventFinder
-
-Finds the events in the frames of worm videos
-
-(From event_finder from the matlab code)
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/
-  master/%2Bseg_worm/%2Bfeature/%40event_finder/event_finder.m
-
-@author: mcurrie
+  Created on Sun May  4 22:33:36 2014
+  
+  EventFinder
+  
+  Finds the events in the frames of worm videos
+  
+  (From event_finder from the matlab code)
+  https://github.com/JimHokanson/SegwormMatlabClasses/blob/
+    master/%2Bseg_worm/%2Bfeature/%40event_finder/event_finder.m
+  
+  @author: mcurrie
 """
 
 class EventFinder:
