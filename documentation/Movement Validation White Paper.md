@@ -10,7 +10,7 @@ In the domain of Artificial Intelligence (AI), Turing [40] predicted that a legi
 
 The theory that a given simulated worm is a faithful reproduction of a real worm can be rendered rigorous and scientific by a similar technique, since one prediction of such a theory would be that it could pass an analogous “imitation game” for worms.  Of course, worms can’t form sentences, so the interrogator of the worm imitation game instead uses the contour outline of the worm body over time as the test material.  Harel [41] argues that if the simulated worm can convincingly conduct itself as a real worm would in a variety of test scenarios, it is has passed the Turing-like test.
 
-A method to analyze the worm body contour over time has been already developed by Schafer [42].  Schafer’s lab filmed hundreds of hours of videos of wild-type and mutant worms grazing on bacterial lawns in petri dishes.  The mutant worms were from 305 strains of C. elegans with genes knocked down using RNAi.  Since differences in behaviour between wild-type and mutant worms can be too subtle to see by manual observation [42], they further processed the worm videos into hundreds of statistical “features”, such as speed of locomotion, head movement amplitude, frequency of omega turns, etc.  The features of a given mutant were compared to a wild-type control.  Differences in the genetics and physiology of the mutant worms manifested as behavioural differences that were statistically distinguishable in the calculated feature data.  That is, as desired, the mutant worms could not successfully “imitate” the wild-type worms after their features were scrutinized.  Furthermore, this method enabled the lab to characterize the behavioural phenotype of the mutant worms.
+A method to analyze the worm body contour over time has been already developed by Schafer [42].  Schafer’s lab filmed hundreds of hours of videos of wild-type and mutant worms grazing on bacterial lawns in petri dishes.  The mutant worms were from 305 strains of *C. elegans* with genes knocked down using RNAi.  Since differences in behaviour between wild-type and mutant worms can be too subtle to see by manual observation [42], they further processed the worm videos into hundreds of statistical “features”, such as speed of locomotion, head movement amplitude, frequency of omega turns, etc.  The features of a given mutant were compared to a wild-type control.  Differences in the genetics and physiology of the mutant worms manifested as behavioural differences that were statistically distinguishable in the calculated feature data.  That is, as desired, the mutant worms could not successfully “imitate” the wild-type worms after their features were scrutinized.  Furthermore, this method enabled the lab to characterize the behavioural phenotype of the mutant worms.
 
 OpenWorm developed its “movement validation” tool by closely emulating the Schafer Lab’s technique of automatically comparing worms based on the quantifiable properties of their behaviour.  The tool compares videos of simulated and real worms by taking raw video, processing it into worm contour data, and then further processing into features.  The videos of real worms are taken directly from the Schafer Lab’s dataset.  A generalized test process is outlined in figure 2.
 
@@ -22,34 +22,30 @@ Later, worm ethology should also be tested in richer physical environments.  Rat
 
 ###OpenWorm on every desk and in every home###
 
-The OpenWorm project has two goals.  The first, discussed above, is to functionally reproduce the behaviour of the wild-type C. elegans in a variety of environmental contexts, to the extent that the simulated behaviour is statistically indistinguishable from recordings of real worms under analogous environmental conditions.  The testing framework discussed above should detect when this goal has been achieved.  Note that achieving this goal will answer the open question, discussed earlier, of what level of detail the nervous system must be modelled at to preserve the emergent, high-level behaviour of the worm.
+The OpenWorm project has two goals.  The first, discussed above, is to functionally reproduce the behaviour of the wild-type *C. elegans* in a variety of environmental contexts, to the extent that the simulated behaviour is statistically indistinguishable from recordings of real worms under analogous environmental conditions.  The testing framework discussed above should detect when this goal has been achieved.  Note that achieving this goal will answer the open question, discussed earlier, of what level of detail the nervous system must be modelled at to preserve the emergent, high-level behaviour of the worm.
 
-OpenWorm’s second goal is for the simulation to be a faithful biological model for C. elegans.  Traditionally, AI research has attempted to reproduce human-like intelligence without simulating the brain’s physiology. OpenWorm could have taken a similar approach by attempting an abstracted approach to modeling the behaviour of the worm without modeling any underlying worm biology. Such an approach might very well have been a quicker path to achieving the first goal.  However, such a model, even if it reproduces the macroscopic behaviour of the worm, would provide limited scientific insight to biologists, who would be unable to compare measurements they make in the lab to variables in the simulation.
+OpenWorm’s second goal is for the simulation to be a faithful biological model for *C. elegans*.  Traditionally, AI research has attempted to reproduce human-like intelligence without simulating the brain’s physiology. OpenWorm could have taken a similar approach by attempting an abstracted approach to modeling the behaviour of the worm without modeling any underlying worm biology. Such an approach might very well have been a quicker path to achieving the first goal.  However, such a model, even if it reproduces the macroscopic behaviour of the worm, would provide limited scientific insight to biologists, who would be unable to compare measurements they make in the lab to variables in the simulation.
 
 Instead, OpenWorm is being developed as a biological model, which will make it straightforward to extract time series data for physiological variables in the model, such as membrane potentials, ionic concentrations, body wall forces, etc.  Consequently, scientists can modify model parameters, run the simulation, extract biological data, and analyze the effects of the perturbation.
 
-The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in C. elegans labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations in silico before beginning the expensive and time-consuming work of conducting in vivo experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
+The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in *C. elegans* labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations in silico before beginning the expensive and time-consuming work of conducting in vivo experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
 
 ###References###
 
 [18] David Harel. A grand challenge for computing: towards full reactive modeling of a multi-cellular
 animal. In Verification, Model Checking, and Abstract Interpretation, pages 323–324. Springer, 2004.
 
-[39] Karl R Popper. The Logic of Scientific Discovery. Routledge, 1968.
+[39] Karl R. Popper. The Logic of Scientific Discovery. Routledge, 1968.
 
-[40] Alan M Turing. Computing machinery and intelligence. Mind, pages 433–460, 1950.
+[40] Alan M. Turing. Computing machinery and intelligence. Mind, pages 433–460, 1950.
 
 [41] David Harel. A Turing-like test for biological modeling. Nature Biotechnology, 23(4):495–496, 2005.
 
-[42] Eviatar Yemini, Tadas Jucikas, Laura J Grundy, André E X Brown, and William R Schafer. A database
-of Caenorhabditis elegans behavioral phenotypes. Nature Methods, 10(9):877–879, 2013.
+[42] Eviatar Yemini, Tadas Jucikas, Laura J. Grundy, André E. X. Brown, and William R. Schafer. A database
+of *Caenorhabditis elegans* behavioral phenotypes. Nature Methods, 10(9):877–879, 2013.
 
-[43] David M Raizen, John E Zimmerman, Matthew H Maycock, Uyen D Ta, Young-jai You, Meera V
-Sundaram, and Allan I Pack. Lethargus is a Caenorhabditis elegans sleep-like state. Nature,
-451(7178):569–572, 2008.
+[43] David M. Raizen, John E. Zimmerman, Matthew H Maycock, Uyen D Ta, Young-jai You, Meera V. Sundaram, and Allan I Pack. Lethargus is a *Caenorhabditis elegans* sleep-like state. Nature, 451(7178):569–572, 2008.
 
-[44] Julie Y Cho and Paul W Sternberg. Multilevel modulation of a sensory motor circuit during C. elegans
-sleep and arousal. Cell, 156(1):249–260, 2014.
+[44] Julie Y. Cho and Paul W. Sternberg. Multilevel modulation of a sensory motor circuit during *C. elegans* sleep and arousal. Cell, 156(1):249–260, 2014.
 
-[45] Evan L Ardiel and Catharine H Rankin. An elegant mind: learning and memory in Caenorhabditis
-elegans. Learning & Memory, 17(4):191–201, 2010.
+[45] Evan L. Ardiel and Catharine H. Rankin. An elegant mind: learning and memory in *Caenorhabditis elegans*. Learning & Memory, 17(4):191–201, 2010.
