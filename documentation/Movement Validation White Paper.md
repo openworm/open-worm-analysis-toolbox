@@ -16,7 +16,7 @@ OpenWorm developed its “movement validation” tool by closely emulating the S
 
 ![](test diagram.png)
 
-Harel has argued for a worm model verification framework that is ‘true to all known facts’. [18, 41]  Since many facts are known about how the worm behaves in response to stimuli, the Schafer lab dataset, which contains only recordings of worms passively browsing in a bacterial layer, will not suffice to fully test the model.  Stimulus-response test scenarios should be conducted, including: worms undergoing normal locomotion in order to locate food or avoid a noxious stimulus, and worms stimulated to move forward or backward by light touch.
+Harel has argued for a worm model verification framework that is "true to all known facts". [18, 41]  Since many facts are known about how the worm behaves in response to stimuli, the Schafer lab dataset, which contains only recordings of worms passively browsing in a bacterial layer, will not suffice to fully test the model.  Stimulus-response test scenarios should be conducted, including: worms undergoing normal locomotion in order to locate food or avoid a noxious stimulus, and worms stimulated to move forward or backward by light touch.
 
 Later, worm ethology should also be tested in richer physical environments.  Rather than merely simulating the worm on a plain Petri dish, a three-dimensional soil environment like the natural habitat of the worm could be used.  Additionally, scenarios should be devised to test appropriate changes to the behaviour of the worm over time.  This would extend the movement validation engine so the model could be tested for its ability to reproduce the sleep-like states [43,44] and the learning capabilities [45] of a real worm.
 
