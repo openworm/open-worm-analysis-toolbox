@@ -1,4 +1,4 @@
-#Movement Validation: The White Paper#
+#Movement Validation White Paper#
 
 *(What follows is excerpt from an unpublished revision (revised by @MichaelCurrie) to "OpenWorm: an open-science approach to modelling Caenorhabditis elegans", by Balázs Szigeti, Padraig Gleeson, Matteo Cantarelli, Michael Vella, Sergey Khayrulin, Andrey Palyanov, Michael Currie, Jim Hokanson, Timothy Busbice, Giovanni Idili, Stephen Larson)*
 
