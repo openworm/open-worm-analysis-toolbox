@@ -245,7 +245,7 @@ class WormPosture():
       
     # *** 2. Eccentricity & Orientation ***
     #TODO: Need to install Shapely  
-    (self.eccentricity,self.orientation) = \
+    self.eccentricity,self.orientation = \
        posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
 
     import pdb

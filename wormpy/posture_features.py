@@ -9,9 +9,11 @@ import numpy as np
 import pdb
 import collections
 import warnings
+import time
 
 #http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
-from shapely.geometry.polygon import LinearRing
+from shapely.geometry.polygon import Polygon
+from shapely.geometry import MultiPoint
 from shapely.geometry import Point
 
 class Bends(object):
@@ -113,45 +115,74 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   +seg_worm / +feature_helpers / +posture / getEccentricity.m
   """
   
+  t_obj = time.time()
   
   N_GRID_POINTS = 50 #TODO: Get from config ...
   
-  x_range_all = np.ptp(contour_x,axis=0)
-  y_range_all = np.ptp(contour_y,axis=0)
+  x_range_all       = np.ptp(contour_x,axis=0)
+  y_range_all       = np.ptp(contour_y,axis=0)
+  
+  x_mc = contour_x - np.mean(contour_x,axis=0) #mc - mean centered
+  y_mc = contour_y - np.mean(contour_y,axis=0)  
+  
   grid_aspect_ratio = x_range_all/y_range_all
   
   #run_mask = np.logical_not(np.isnan(grid_aspect_ratio))
 
-  n_frames = length(x_range_all)
+  n_frames = len(x_range_all)
   
   eccentricity    = np.empty(n_frames)
   eccentricity[:] = np.NAN
   orientation     = np.empty(n_frames)
   orientation[:]  = np.NAN
-
-  oh_yeah = 0  
+ 
+  #h__getEccentricityAndOrientation
   for iFrame in range(n_frames):
     cur_aspect_ratio = grid_aspect_ratio[iFrame]
+
+    
+    #------------------------------------------------------
     if not np.isnan(cur_aspect_ratio):
+      
+      cur_cx = x_mc[:,iFrame]
+      cur_cy = y_mc[:,iFrame]
+      poly = Polygon(zip(cur_cx,cur_cy))     
+      
       if cur_aspect_ratio > 1:
         #x size is larger so scale down the number of grid points in the y direction
-        wtf1 = np.linspace(np.min(contour_x[:,iFrame]), np.max(contour_x[:,iFrame]), num=N_GRID_POINTS);
-        wtf2 = np.linspace(np.min(contour_y[:,iFrame]), np.max(contour_y[:,iFrame]), num=np.round(N_GRID_POINTS / cur_aspect_ratio));
+        n1 = N_GRID_POINTS
+        n2 = np.round(N_GRID_POINTS / cur_aspect_ratio)
       else:
-        #y size is larger so scale down the number of grid points in the x direction
-        #wtf1 = linspace(min(xOutline_mc(:,iFrame)), max(xOutline_mc(:,iFrame)), round(gridSize * gridAspectRatio));
-        #wtf2 = linspace(min(yOutline_mc(:,iFrame)), max(yOutline_mc(:,iFrame)), gridSize);  
+        #y size is larger so scale down the number of grid points in the x direction        
+        n1 = np.round(N_GRID_POINTS * cur_aspect_ratio)
+        n2 = N_GRID_POINTS
     
-    #[m,n] = meshgrid( wtf1 , wtf2 );
     
-    # get the indices of the points inside of the polygon
-    #inPointInds = helper__inpolyNew([m(:) n(:)], [xOutline_mc(:,iFrame) yOutline_mc(:,iFrame)]);
+      wtf1 = np.linspace(np.min(x_mc[:,iFrame]), np.max(x_mc[:,iFrame]), num=n1);
+      wtf2 = np.linspace(np.min(y_mc[:,iFrame]), np.max(y_mc[:,iFrame]), num=n2);    
     
-    # get the x and y coordinates of the new set of points to be used in calculating eccentricity.
-    #x = m(inPointInds);
-    #y = n(inPointInds);    
-  
-    """
+      m,n = np.meshgrid( wtf1 , wtf2 );
+
+
+    
+      n_points = m.size
+      m_lin    = m.reshape(n_points)
+      n_lin    = n.reshape(n_points)  
+      in_worm  = np.zeros(n_points,dtype=np.bool)
+      for i in range(n_points):
+        p = Point(m_lin[i],n_lin[i])
+#        try:
+        in_worm[i] = poly.contains(p)
+#        except ValueError:
+#          import pdb
+#          pdb.set_trace()
+        
+      
+        x = m_lin[in_worm]
+        y = n_lin[in_worm]
+      
+      """
+        TODO: Finish this
         plot(xOutline_mc(:,iFrame),yOutline_mc(:,iFrame),'g-o')
         hold on
         scatter(x,y,'r')
@@ -159,10 +190,39 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
         axis equal
         title(sprintf('%d',iFrame))
         pause
-    """
+      """
     
+    
+      #First eccentricity value should be: 0.9743
+
+      #h__calculateSingleValues
+      N = float(len(x))
+      # Calculate normalized second central moments for the region.
+      uxx = np.sum(x*x)/N
+      uyy = np.sum(y*y)/N
+      uxy = np.sum(x*y)/N
+  
+      # Calculate major axis length, minor axis length, and eccentricity.
+      common               = np.sqrt((uxx - uyy)**2 + 4*(uxy**2))
+      majorAxisLength      = 2*np.sqrt(2)*np.sqrt(uxx + uyy + common)
+      minorAxisLength      = 2*np.sqrt(2)*np.sqrt(uxx + uyy - common)
+      eccentricity[iFrame] = 2*np.sqrt((majorAxisLength/2)**2 - (minorAxisLength/2)**2) / majorAxisLength
+  
+      # Calculate orientation.
+      if (uyy > uxx):
+        num = uyy - uxx + np.sqrt((uyy - uxx)**2 + 4*uxy**2)
+        den = 2*uxy
+      else:
+        num = 2*uxy
+        den = uxx - uyy + np.sqrt((uxx - uyy)**2 + 4*uxy**2)
+  
+      orientation[iFrame] = (180/np.pi) * np.arctan(num/den)
+
     #[eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x,y);  
   
+  elapsed = time.time() - t_obj
+  
+  print elapsed
   
   import pdb
   pdb.set_trace()  

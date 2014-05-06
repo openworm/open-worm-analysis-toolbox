@@ -4,7 +4,17 @@
 """
 import matplotlib.pyplot as plt
 
-def plot(data):
+
+#Training wheels for Jim :/
+def scatter(x,y):
+  plt.scatter(x,y)
+  plt.show()
+
+def plotxy(x,y):
+  plt.plot(x,y)
+  plt.show()
+
+def plotx(data):
   plt.plot(data)
   plt.show()
 
