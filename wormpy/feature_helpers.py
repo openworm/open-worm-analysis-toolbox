@@ -73,17 +73,18 @@ def interpolate_with_threshold(array, threshold=None):
   """
 
   """
-  # SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
-  # HAVE NOT IMPLEMENTED YET
-  # Check that any frames with NaN in at least one dimension must
-  # have it in all:
-  frames_with_at_least_one_NaN = np.all(np.isnan(array), frame_dimension)
-  frames_with_no_NaNs          = np.all(~np.isnan(array), frame_dimension)
-  # check that each frame is either True for one of these arrays or 
-  # the other but not both.
-  assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
-  frame_dropped = frames_with_at_least_one_NaN
+  # (SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
+  # HAVE NOT IMPLEMENTED YET)
+    # Check that any frames with NaN in at least one dimension must
+    # have it in all:
+    frames_with_at_least_one_NaN = np.all(np.isnan(array), frame_dimension)
+    frames_with_no_NaNs          = np.all(~np.isnan(array), frame_dimension)
+    # check that each frame is either True for one of these arrays or 
+    # the other but not both.
+    assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
+    frame_dropped = frames_with_at_least_one_NaN
   """
+  
   assert(threshold == None or threshold >= 0)
   
   if(threshold == 0):  # everything gets left as NaN
