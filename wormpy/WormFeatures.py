@@ -27,6 +27,7 @@
 
 """
 
+from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
 import collections #For namedtuple
@@ -244,24 +245,25 @@ class WormPosture():
     self.bends = posture_features.Bends(nw)
       
     # *** 2. Eccentricity & Orientation ***
-    #TODO: Need to install Shapely  
-    self.eccentricity,self.orientation = \
-       posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
+    #NOTE: This is VERY slow, leaving commented for now
+    #self.eccentricity,self.orientation = \
+    #   posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
 
-    import pdb
-    pdb.set_trace()
+    
 
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
+    """
     amp_wave_track = posture_features.get_amplitude_and_wavelength(
                           self.orientation,
-                          self.skeletons_x,
-                          self.skeletons_y,
+                          nw.skeleton_x,
+                          nw.skeleton_y,
                           nw.data_dict['lengths'])    
 
     self.amplitude    = amp_wave_track.amplitude
     self.wavelength   = amp_wave_track.wavelength
     self.track_length = amp_wave_track.track_length
-
+    """
+    
     # TODO: change this to return multiple values as in 
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
 
@@ -274,9 +276,17 @@ class WormPosture():
 
     # *** 7. Skeleton ***  
     # (already in morphology, but Schafer Lab put it here too)
-
+    nt = collections.namedtuple('skeleton',['x','y'])
+    self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
     
     # *** 8. EigenProjection ***
+    h = h5py.File(uconfig.EIGENWORM_PATH,'r')
+    eigen_worms = h['eigenWorms'].value
+    
+    N_EIGENWORMS_USE = 6 #TODO: Move
+
+    self.eigen_projection = posture_features.get_eigenworms(
+        nw.skeleton_x,nw.skeleton_y,np.transpose(eigen_worms),N_EIGENWORMS_USE)
 
   @classmethod 
   def from_disk(cls, p_var):

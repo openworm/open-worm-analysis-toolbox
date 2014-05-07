@@ -220,17 +220,12 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
     #[eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x,y);  
   
-  elapsed = time.time() - t_obj
   
-  print elapsed
+  elapsed_time = time.time() - t_obj
+  print('Elapsed time in seconds for eccentricity: %d' % elapsed_time)
   
-  import pdb
-  pdb.set_trace()  
-
   return (eccentricity,orientation)
 
-
-"""
 def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
@@ -267,4 +262,55 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   onw = nw.re_orient_and_centre()  
 
   return amp_wave_track
-"""
+  
+  
+def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
+  
+  """
+  
+  Parameters:
+  ---------------------------------
+  eigen_worms: [7,48]  
+
+  """  
+
+  angles   = np.arctan2(np.diff(sy,n=1,axis=0),np.diff(sx,n=1,axis=0))
+
+  n_frames = sx.shape[1]
+  
+  # need to deal with cases where angle changes discontinuously from -pi
+  # to pi and pi to -pi.  In these cases, subtract 2pi and add 2pi
+  # respectively to all remaining points.  This effectively extends the
+  # range outside the -pi to pi range.  Everything is re-centred later
+  # when we subtract off the mean.
+  false_row = np.zeros((1,n_frames),dtype=bool)
+  
+  #NOTE: By adding the row of falses, we shift the trues
+  #to the next value, which allows indices to match. Otherwise after every
+  #find statement we would need to add 1, I think this is a bit faster ...
+  
+  with np.errstate(invalid='ignore'):
+    mask_pos = np.concatenate((false_row,np.diff(angles,n=1,axis=0) > np.pi),axis=0) 
+    mask_neg = np.concatenate((false_row,np.diff(angles,n=1,axis=0) < -np.pi),axis=0)   
+
+  #Only fix the frames we need to, in which there is a jump in going from one
+  #segment to the next ...
+  fix_frames_I = (np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
+    
+  for cur_frame in fix_frames_I:
+    
+    positive_jump_I = (mask_pos[:,cur_frame]).nonzero()[0]
+    negative_jump_I = (mask_neg[:,cur_frame]).nonzero()[0]
+  
+    # subtract 2pi from remainging data after positive jumps
+    # Note that the jumps impact all subsequent frames
+    for cur_pos_jump in positive_jump_I:
+      angles[cur_pos_jump:,cur_frame] -= 2*np.pi
+      
+    # add 2pi to remaining data after negative jumps
+    for cur_neg_jump in negative_jump_I:
+      angles[cur_neg_jump:,cur_frame] += 2*np.pi
+
+  angles = angles - np.mean(angles,axis=0)  
+  
+  return np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
