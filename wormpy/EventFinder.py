@@ -67,8 +67,9 @@ class event_ss:
       self.end_Is = np.array([])
     else:
       self.end_Is   = end_Is
-    
-  def get_n_events(self):
+  
+  @property
+  def num_events(self):
     return len(self.start_Is)
 
   def get_event_mask(self, n_frames):
@@ -129,8 +130,8 @@ class event_ss:
     # at some point we could choose to alter this method and return this
     # variable since it stores information about which instance the 
     # element is a part of:
-    #is_first   = np.concatenate(np.ones(obj1.get_n_events(), dtype='bool'),
-    #                            np.ones(obj2.get_n_events(), dtype='bool'))
+    #is_first   = np.concatenate(np.ones(obj1.num_events, dtype='bool'),
+    #                            np.ones(obj2.num_events, dtype='bool'))
     #is_first_object = is_first[order_I]
     
     return event_ss(new_starts, new_ends)
