@@ -28,7 +28,11 @@ The Schafer Lab [1] at Cambridge University has taken thousands of hours of C. e
 
 We are using the WT2 analysis software, written in MATLAB, as a starting point for our own code development work.
 
-This full codebase is available in the [SegWormMatlabClasses](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
+This full codebase is available in the [SegWorm](https://github.com/openworm/SegWorm) repo.
+
+A revised version of this code, also in MatLab, is available in the [SegWormMatlabClasses](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
+
+This repo, intended to be a full Python translation of the SegWormMatlabClasses repo, is the only one of the three being actively worked on.
 
 
 ## Further Documentation ##
