@@ -268,11 +268,17 @@ class WormPosture():
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
 
     # *** 4. Kinks ***
+    self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
+        
     
 
     # *** 5. Coils ***
 
+
+
     # *** 6. Directions ***
+
+
 
     # *** 7. Skeleton ***  
     # (already in morphology, but Schafer Lab put it here too)

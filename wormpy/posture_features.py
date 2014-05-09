@@ -5,11 +5,14 @@ Posture features  ...
 
 from __future__ import division
 from . import utils
+from . import config
 import numpy as np
 import pdb
 import collections
 import warnings
 import time
+import scipy.ndimage.filters as filters
+
 
 #http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
@@ -262,6 +265,97 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   onw = nw.re_orient_and_centre()  
 
   return amp_wave_track
+
+def get_worm_kinks(bend_angles):
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
+
+
+
+  # Determine the bend segment length threshold.
+  n_angles = bend_angles.shape[0]
+  length_threshold = np.round(n_angles*config.KINK_LENGTH_THRESHOLD_PCT)  
+  
+  # Compute a gaussian filter for the angles.
+  #--------------------------------------------------------------------------
+  #JAH NOTE: This is a nice way of getting the appropriate odd value
+  #unlike the other code with so many if statements ...
+  #- see window code which tries to get an odd value ...
+  #- I'd like to go back and fix that code ...
+  half_length_thr = np.round(length_threshold / 2);
+  gauss_filter    = gausswin(half_length_thr * 2 + 1) / half_length_thr;
+  
+  # Compute the kinks for the worms.
+  n_frames       = bend_angles.shape[1]
+  n_kinks_all    = np.zeros((1,n_frames),dtype=float)
+  n_kinks_all[:] = np.NaN
+
+  #(np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
+
+  for iFrame in (np.any(bend_angles,axis=0)).nonzero()[0]:
+    smoothed_bend_angles = filters.convolve1d(bend_angles[:,iFrame],gauss_filter,cval=0,mode='constant')
+    pdb.set_trace()
+
+    #TODO: Implement:
+    #n_kinks_all[iFrame] = h__computeNumberOfKinks_New(smoothed_bend_angles,length_threshold);
+
+  """
+    %This code is nearly identical in getForaging
+    %-------------------------------------------------------
+    n_frames = length(smoothed_bend_angles);
+
+    dataSign      = sign(smoothed_bend_angles);
+    
+    if any(dataSign == 0)
+        %I don't expect that we'll ever actually reach 0
+        %The code for zero was a bit weird, it keeps counting if no sign
+        %change i.e. + + + 0 + + + => all +
+        %
+        %but if counts for both if sign change
+        % + + 0 - - - => 3 +s and 4 -s
+        error('Unhandled code case')
+    end
+    
+    sign_change_I = find(dataSign(2:end) ~= dataSign(1:end-1));
+
+    end_I   = [sign_change_I; n_frames];
+    start_I = [1; sign_change_I+1];
+
+    %All NaN values are considered sign changes, remove these ...
+    mask = isnan(smoothed_bend_angles(start_I));
+    start_I(mask) = [];
+    end_I(mask)   = [];
+    
+    %The old code had a provision for having NaN values in the middle
+    %of the worm. I have not translated that feature to the newer code. I
+    %don't think it will ever happen though for a valid frame, only on the
+    %edges should you have NaN values.
+    if ~isempty(start_I) && any(isnan(smoothed_bend_angles(start_I(1):end_I(end))))
+       error('Unhandled code case')
+    end
+    %-------------------------------------------------------
+    %End of identical code ...
+    
+    
+    lengths = end_I - start_I + 1;
+    
+    %Adjust lengths for first and last:
+    %Basically we allow NaN values to count towards the length for the
+    %first and last stretches
+    if ~isempty(lengths)
+       if start_I(1) ~= 1 %Due to leading NaNs
+          lengths(1) = lengths(1) + start_I(1)-1;  
+       end
+       if end_I(end) ~= n_frames %Due to trailing NaNs
+          lengths(end) = lengths(end) + (n_frames - end_I(end));
+       end
+    end
+    
+    n_kinks = sum(lengths >= length_threshold);
+    """
+  
+  
+  #return n_kinks_all;  
+  
   
   
 def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
@@ -314,3 +408,20 @@ def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
   angles = angles - np.mean(angles,axis=0)  
   
   return np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+  
+def gausswin(L,a = 2.5):
+   
+  #TODO: I am ignoring some corner cases ...   
+  
+  #L - negative, error  
+  
+  #L = 0
+  #w => empty
+  #L = 1
+  #w = 1      
+   
+  N = L - 1
+  n = np.arange(0,N+1) - N/2  
+  w = np.exp(-(1/2)*(a*n/(N/2))**2)
+  
+  return w
