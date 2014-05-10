@@ -3,7 +3,7 @@
 
 """
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 #Training wheels for Jim :/
 def scatter(x,y):
@@ -22,7 +22,118 @@ def imagesc(data):
   #http://matplotlib.org/api/pyplot_api.html?highlight=imshow#matplotlib.pyplot.imshow
   plt.imshow(data,aspect='auto')
   plt.show()
+
+def maxPeaksDist(x, dist,use_max,value_cutoff):
   
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Butil/maxPeaksDist.m
+ 
+  chain_code_lengths = colon(1,1,x.size)
+
+  # Is the vector larger than the search window?
+  winSize = 2*dist + 1
+  if chain_code_lengths[-1] < winSize:
+    temp_I = np.argmax(x)
+    return (x[temp_I],temp_I)
+    
+  #xt - "x for testing" in some places in the code below
+  #it will be quicker (and/or easier) to assume that we want the largest
+  #value. By negating the data we can look for maxima (which will tell us
+  #where the minima are)
+  if not use_max:
+    xt = -1*x
+  else:
+    xt = x
+    
+  #NOTE: I added left/right neighbor comparisions which really helped with
+  #the fft ..., a point can't be a peak if it is smaller than either of its
+  #neighbors
+  if use_max:    
+    #                                           %> left                     > right
+    #Matlab version:    
+    #could_be_a_peak = x > value_cutoff & [true x(2:end) > x(1:end-1)] & [x(1:end-1) > x(2:end) true];
+    #
+    #TODO: Simplify how this code looks
+    could_be_a_peak = np.logical_and(x > value_cutoff,np.concatenate((np.ones(1,dtype=np.bool),x[1:] > x[0:-1])))
+    could_be_a_peak = np.logical_and(could_be_a_peak,np.concatenate((x[0:-1] > x[1:],np.ones(1,dtype=np.bool))))
+
+    I1 = could_be_a_peak.nonzero()[0]    
+    I2 = np.argsort(-1*x[I1]) #-1 => we want largest first
+    I  = I1[I2]
+  else:
+    raise Exception("Not yet implemented")
+    import pdb
+    pdb.set_trace()
+    #could_be_a_peak = x < value_cutoff & [true x(2:end) < x(1:end-1)] & [x(1:end-1) < x(2:end) true];
+    #I1     = find(could_be_a_peak);
+    #[~,I2] = sort(x(I1));
+    #I = I1(I2);
+
+
+
+  n_points = x.size
+
+  #This code would need to be fixed if real distances
+  #are input ...
+  too_close = dist - 1
+
+  temp_I  = utils.colon(0,n_points-1,1)
+  start_I = temp_I - too_close #Note, separated by dist is ok
+  #This sets the off limits area, so we go in by 1
+  end_I   = temp_I + too_close
+  
+  start_I(start_I < 0) = 0
+  end_I(end_I > n_points-1) = n_points-1
+
+  #TODO: Finish translating
+  """
+  is_peak_mask   = false(1,n_points);
+  %a peak and thus can not be used as a peak
+  n_sort = length(I);
+  for iElem = 1:n_sort
+      cur_index = I(iElem);
+      if could_be_a_peak(cur_index)
+          %NOTE: Even if a point isn't the local max, it is greater
+          %than anything that is by it that is currently not taken
+          %(because of sorting), so it prevents these points
+          %from undergoing the expensive search of determining
+          %whether they are the min or max within their
+          %else from being used, so we might as well mark those indices
+          %within it's distance as taken as well
+          temp_indices = start_I(cur_index):end_I(cur_index);
+          could_be_a_peak(temp_indices) = false;
+          
+          %This line is really slow ...
+          %It would be better to precompute the max within a window
+          %for all windows ...
+          is_peak_mask(cur_index) = max(xt(temp_indices)) == xt(cur_index);
+      end
+  end
+  
+  indices = find(is_peak_mask);
+  peaks   = x(indices);
+  """
+  
+  #return (peaks,indices)
+  return None
+
+def colon(r1,inc,r2):
+  
+  """
+    Matlab's colon operator, althought it doesn't although inc is required
+  """
+  s = np.sign(inc)
+
+  if s == 0:
+    return np.zeros(1)
+  elif s == 1:
+    n = ((r2-r1)+2*np.spacing(r2-r1))//inc
+    return np.linspace(r1,r1+inc*n,n+1)
+  else: #s == -1:
+    #NOTE: I think this is slightly off as we start on the wrong end
+    #r1 should be exact, not r2
+    n  = ((r1-r2)+2*np.spacing(r1-r2))//np.abs(inc)
+    temp = np.linspace(r2,r2+np.abs(inc)*n,n+1)    
+    return temp[::-1]  
 
 def print_object(obj):
 
@@ -47,6 +158,10 @@ def print_object(obj):
 
     key_names      = [x for x in dict_local]    
     key_lengths    = [len(x) for x in key_names]
+    
+    if len(key_lengths) == 0:
+      return ""
+    
     max_key_length = max(key_lengths)
     key_padding    = [max_key_length - x for x in key_lengths]
     

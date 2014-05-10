@@ -35,18 +35,19 @@ VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
 
 
 """ Posture Features """
-
-
+#posture_features.get_worm_kinks
 KINK_LENGTH_THRESHOLD_PCT = 1/12 #This the fraction of the worm length
 #that a bend must be in order to be counted. Value is rounded to an 
 #integer sample. Threshold is inclusive.
+
+
     
-# Grid size for estimating eccentricity, this is the
+N_ECCENTRICITY = 50 # Grid size for estimating eccentricity, this is the
 # max # of points that will fill the wide dimension.
 # (scalar) The # of points to place in the long dimension. More points
 # gives a more accurate estimate of the ellipse but increases
 # the calculation time.
-N_ECCENTRICITY = 50     
+ 
 
 POSTURE_AMPLITURE_AND_WAVELENGTH = { \
   'N_POINTS_FFT': 512, 

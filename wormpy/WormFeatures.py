@@ -241,18 +241,18 @@ class WormPosture():
     """    
  
 
-    # *** 1. Bends ***
+    # *** 1. Bends *** DONE
     self.bends = posture_features.Bends(nw)
       
-    # *** 2. Eccentricity & Orientation ***
+    # *** 2. Eccentricity & Orientation *** DONE, SLOW
     #NOTE: This is VERY slow, leaving commented for now
     #self.eccentricity,self.orientation = \
     #   posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
 
     
-
-    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
-    """
+    #Temp input for next function ...
+    self.orientation = np.zeros(nw.skeleton_x.shape[1])
+    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio *** NOT DONE
     amp_wave_track = posture_features.get_amplitude_and_wavelength(
                           self.orientation,
                           nw.skeleton_x,
@@ -262,30 +262,28 @@ class WormPosture():
     self.amplitude    = amp_wave_track.amplitude
     self.wavelength   = amp_wave_track.wavelength
     self.track_length = amp_wave_track.track_length
-    """
     
     # TODO: change this to return multiple values as in 
     # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
 
-    # *** 4. Kinks ***
+    # *** 4. Kinks *** DONE
     self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
         
     
 
     # *** 5. Coils ***
+    
 
 
+    # *** 6. Directions *** DONE
+    self.directions = posture_features.Directions(nw.skeleton_x,nw.skeleton_y,nw.worm_partitions)
 
-    # *** 6. Directions ***
-
-
-
-    # *** 7. Skeleton ***  
+    # *** 7. Skeleton *** DONE
     # (already in morphology, but Schafer Lab put it here too)
     nt = collections.namedtuple('skeleton',['x','y'])
     self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
     
-    # *** 8. EigenProjection ***
+    # *** 8. EigenProjection *** DONE
     h = h5py.File(uconfig.EIGENWORM_PATH,'r')
     eigen_worms = h['eigenWorms'].value
     

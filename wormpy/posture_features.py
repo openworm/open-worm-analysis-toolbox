@@ -8,7 +8,6 @@ from . import utils
 from . import config
 import numpy as np
 import pdb
-import collections
 import warnings
 import time
 import scipy.ndimage.filters as filters
@@ -16,7 +15,6 @@ import scipy.ndimage.filters as filters
 
 #http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
-from shapely.geometry import MultiPoint
 from shapely.geometry import Point
 
 class Bends(object):
@@ -233,6 +231,7 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
   
+  
   N_POINTS_FFT   = 512
   HALF_N_FFT     = N_POINTS_FFT/2
   MIN_DIST_PEAKS = 5  
@@ -247,13 +246,128 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   #Unrotate worm
   #------------------------------
   
+  wwx = sx*np.cos(theta_r)  + sy*np.sin(theta_r)
+  wwy = sx*-np.sin(theta_r) + sy*np.cos(theta_r)
+
+  #Subtract mean
+  #-----------------------------------------------------------------
+  wwx = wwx - np.mean(wwx,axis=0)
+  wwy = wwy - np.mean(wwy,axis=0)
+  
+  # Calculate track amplitude
+  #--------------------------------------------------------------------------
+  amp1 = np.amax(wwy,axis=0)
+  amp2 = np.amin(wwy,axis=0)
+  amplitude_max = amp1 - amp2
+  amp2 = np.abs(amp2)
+  with np.errstate(invalid='ignore'):
+    amplitude_ratio = np.divide(np.minimum(amp1,amp2),np.maximum(amp1,amp2))  
+  
+  
+  # Calculate track length
+  #--------------------------------------------------------------------------
+  #NOTE: This is the x distance after rotation, and is different from the worm
+  #length which follows the skeleton. This will always be smaller than the
+  #worm length.
+  track_length = np.amax(wwx,axis=0) - np.amin(wwx,axis=0)
+    
+  # Wavelength calculation
+  #--------------------------------------------------------------------------
+  dwwx = np.diff(wwx,1,axis=0)
+  
+  #Does the sign change? This is a check to make sure that the change in x is
+  #always going one way or the other. Is sign of all differences the same as
+  #the sign of the first, or rather, are any of the signs not the same as the
+  #first sign, indicating a "bad worm orientation".
+  #
+  # NOT: This means that within a frame, if the worm x direction changes, then
+  # it is considered a bad worm and is not evaluated for wavelength
+  #
+  
+  with np.errstate(invalid='ignore'):
+    bad_worm_orientation = np.any(np.not_equal(np.sign(dwwx),np.sign(dwwx[0,:])),axis=0)
+
+  n_frames = bad_worm_orientation.size
+
+  p_wavelength    = np.zeros(n_frames)
+  p_wavelength[:] = np.NaN  
+  s_wavelength    = np.zeros(n_frames)
+  s_wavelength[:] = np.NaN
+
+
+  #NOTE: Right now this varies from worm to worm which means the spectral
+  #resolution varies as well from worm to worm
+  spatial_sampling_frequency = (wwx.shape[0]-1)/track_length
+  
+  ds = 1/spatial_sampling_frequency;
+
+  frames_to_calculate = (np.logical_not(bad_worm_orientation)).nonzero()[0]
+
+  for cur_frame in frames_to_calculate:
+    
+    #Create an evenly sampled x-axis, note that ds varies
+    x1 = wwx[0,cur_frame]
+    x2 = wwx[-1,cur_frame]
+    if x1 > x2:
+      iwwx = utils.colon(x1,-ds[cur_frame],x2)
+      iwwy = np.interp(iwwx,wwx[::-1,cur_frame],wwy[::-1,cur_frame])
+      iwwy = iwwy[::-1]
+    else:
+      iwwx = utils.colon(x1,ds[cur_frame],x2)
+      iwwy = np.interp(iwwx,wwx[:,cur_frame],wwy[:,cur_frame])
+      iwwy = iwwy[::-1]
+    
+    temp = np.fft.fft(iwwy,N_POINTS_FFT)
+       
+    if config.MIMIC_OLD_BEHAVIOUR:
+      iY = temp[0:HALF_N_FFT]
+      iY = iY*np.conjugate(iY)/N_POINTS_FFT
+    else:
+      iY = np.abs(temp[0:HALF_N_FFT])
+      
+    temp = utils.maxPeaksDist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
+      
+    #This is what the supplemental says, not what was done in the previous
+    #code. I'm not sure what was done for the actual paper, but I would
+    #guess they used power.
+    #
+    #This gets used when determining the secondary wavelength, as it must
+    #be greater than half the maximum to be considered a secondary
+    #wavelength.
+    
+    #NOTE: True Amplitude = 2*abs(fft)/(length_real_data i.e. 48 or 49, not 512)
+    #
+    #i.e. for a sinusoid of a given amplitude, the above formula would give
+    #you the amplitude of the sinusoid
+  
+    """
+    %Find peaks that are greater than the cutoff
+    [peaks,indx] = seg_worm.util.maxPeaksDist(iY, MIN_DIST_PEAKS,true,WAVELENGTH_PCT_MAX_CUTOFF*max(iY));
+    
+    %We sort the peaks so that the largest is at the first index and will
+    %be primary, this was not done in the previous version of the code
+    [~,I] = sort(-1*peaks); %Sort descending by multiplying by -1
+    indx  = indx(I);
+    
+    frequency_values = (indx-1)/N_POINTS_FFT*spatial_sampling_frequency(cur_frame);
+    
+    all_wavelengths = 1./frequency_values;
+    
+    p_temp = all_wavelengths(1);
+    
+    if length(indx) > 1
+        s_temp = all_wavelengths(2);
+    else
+        s_temp = NaN;
+    end
+    
+    worm_wavelength_max = WAVELENGTH_PCT_CUTOFF*worm_lengths(cur_frame);
+    """
+    
+    """
+    
   import pdb
   pdb.set_trace()
-  
-  
-  
-  
-  
   
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
@@ -263,8 +377,9 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
   amp_wave_track.track_length = 'yay3'
 
   onw = nw.re_orient_and_centre()  
-
-  return amp_wave_track
+  """
+  
+  return None
 
 def get_worm_kinks(bend_angles):
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
@@ -298,8 +413,8 @@ def get_worm_kinks(bend_angles):
     #-------------------------------------------------------
     n_frames = smoothed_bend_angles.shape[0]
 
-    #TODO: invalid value encountered in sign: FIX
-    dataSign = np.sign(smoothed_bend_angles)
+    with np.errstate(invalid='ignore'):
+      dataSign = np.sign(smoothed_bend_angles)
     
     if np.any(np.equal(dataSign,0)):
         #I don't expect that we'll ever actually reach 0
@@ -348,9 +463,50 @@ def get_worm_kinks(bend_angles):
     n_kinks_all[iFrame] = np.sum(lengths >= length_threshold)
     
   return n_kinks_all
+ 
+class Directions(object):
   
+  """
+
+  tail2head
+  head
+  tail
   
+  """
   
+  def __init__(self,sx,sy,wp):
+    
+    """
+    
+    wp : (worm paritions) from normalized worm, 
+    
+    """
+        
+    #These are the names of the final fields
+    NAMES = ['tail2head', 'head', 'tail']
+    
+    #For each set of indices, compute the centroids of the tip and tail then
+    #compute a direction vector between them (tip - tail)
+
+    TIP_I  = [wp['head'], wp['head_tip'], wp['tail_tip']] #I - "indices" - really a tuple of start,stop
+    TAIL_I = [wp['tail'], wp['head_base'], wp['tail_base']]
+
+    TIP_S  = [slice(*x) for x in TIP_I] #S - slice
+    TAIL_S = [slice(*x) for x in TAIL_I]
+      
+    for iVector in range(3):
+      tip_x  = np.mean(sx[TIP_S[iVector], :],axis=0)
+      tip_y  = np.mean(sy[TIP_S[iVector], :],axis=0)
+      tail_x = np.mean(sx[TAIL_S[iVector], :],axis=0)
+      tail_y = np.mean(sy[TAIL_S[iVector], :],axis=0)
+      
+      dir_value = 180/np.pi*np.arctan2(tip_y - tail_y, tip_x - tail_x)
+      setattr(self,NAMES[iVector],dir_value)
+   
+        
+  def __repr__(self):
+    return utils.print_object(self)         
+      
 def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
   
   """
