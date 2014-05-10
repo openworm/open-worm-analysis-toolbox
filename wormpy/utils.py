@@ -23,7 +23,7 @@ def imagesc(data):
   plt.imshow(data,aspect='auto')
   plt.show()
 
-def maxPeaksDist(x, dist,use_max,value_cutoff):
+def max_peaks_dist(x, dist,use_max,value_cutoff):
   
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Butil/maxPeaksDist.m
  

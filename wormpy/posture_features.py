@@ -325,7 +325,7 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     else:
       iY = np.abs(temp[0:HALF_N_FFT])
       
-    temp = utils.maxPeaksDist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
+    temp = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
     #This is what the supplemental says, not what was done in the previous
     #code. I'm not sure what was done for the actual paper, but I would
