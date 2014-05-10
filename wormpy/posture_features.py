@@ -286,75 +286,68 @@ def get_worm_kinks(bend_angles):
   
   # Compute the kinks for the worms.
   n_frames       = bend_angles.shape[1]
-  n_kinks_all    = np.zeros((1,n_frames),dtype=float)
+  n_kinks_all    = np.zeros(n_frames,dtype=float)
   n_kinks_all[:] = np.NaN
 
   #(np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
 
   for iFrame in (np.any(bend_angles,axis=0)).nonzero()[0]:
     smoothed_bend_angles = filters.convolve1d(bend_angles[:,iFrame],gauss_filter,cval=0,mode='constant')
-    pdb.set_trace()
-
-    #TODO: Implement:
-    #n_kinks_all[iFrame] = h__computeNumberOfKinks_New(smoothed_bend_angles,length_threshold);
-
-  """
-    %This code is nearly identical in getForaging
-    %-------------------------------------------------------
-    n_frames = length(smoothed_bend_angles);
-
-    dataSign      = sign(smoothed_bend_angles);
-    
-    if any(dataSign == 0)
-        %I don't expect that we'll ever actually reach 0
-        %The code for zero was a bit weird, it keeps counting if no sign
-        %change i.e. + + + 0 + + + => all +
-        %
-        %but if counts for both if sign change
-        % + + 0 - - - => 3 +s and 4 -s
-        error('Unhandled code case')
-    end
-    
-    sign_change_I = find(dataSign(2:end) ~= dataSign(1:end-1));
-
-    end_I   = [sign_change_I; n_frames];
-    start_I = [1; sign_change_I+1];
-
-    %All NaN values are considered sign changes, remove these ...
-    mask = isnan(smoothed_bend_angles(start_I));
-    start_I(mask) = [];
-    end_I(mask)   = [];
-    
-    %The old code had a provision for having NaN values in the middle
-    %of the worm. I have not translated that feature to the newer code. I
-    %don't think it will ever happen though for a valid frame, only on the
-    %edges should you have NaN values.
-    if ~isempty(start_I) && any(isnan(smoothed_bend_angles(start_I(1):end_I(end))))
-       error('Unhandled code case')
-    end
-    %-------------------------------------------------------
-    %End of identical code ...
-    
-    
-    lengths = end_I - start_I + 1;
-    
-    %Adjust lengths for first and last:
-    %Basically we allow NaN values to count towards the length for the
-    %first and last stretches
-    if ~isempty(lengths)
-       if start_I(1) ~= 1 %Due to leading NaNs
-          lengths(1) = lengths(1) + start_I(1)-1;  
-       end
-       if end_I(end) ~= n_frames %Due to trailing NaNs
-          lengths(end) = lengths(end) + (n_frames - end_I(end));
-       end
-    end
-    
-    n_kinks = sum(lengths >= length_threshold);
-    """
   
-  
-  #return n_kinks_all;  
+    #This code is nearly identical in getForaging
+    #-------------------------------------------------------
+    n_frames = smoothed_bend_angles.shape[0]
+
+    #TODO: invalid value encountered in sign: FIX
+    dataSign = np.sign(smoothed_bend_angles)
+    
+    if np.any(np.equal(dataSign,0)):
+        #I don't expect that we'll ever actually reach 0
+        #The code for zero was a bit weird, it keeps counting if no sign
+        #change i.e. + + + 0 + + + => all +
+        #
+        #but if counts for both if sign change
+        # + + 0 - - - => 3 +s and 4 -s    
+        raise Exception("Unhandled code case")
+    
+    sign_change_I = (np.not_equal(dataSign[1:],dataSign[0:-1])).nonzero()[0]
+
+    end_I   = np.concatenate((sign_change_I,n_frames*np.ones(1,dtype=np.result_type(sign_change_I))))
+    
+    wtf1    = np.zeros(1,dtype=np.result_type(sign_change_I))
+    wtf2    = sign_change_I+1
+    start_I = np.concatenate((wtf1,wtf2)) #+2? due to inclusion rules???
+
+    #All NaN values are considered sign changes, remove these ...
+    keep_mask = np.logical_not(np.isnan(smoothed_bend_angles[start_I]))
+
+    start_I = start_I[keep_mask]
+    end_I   = end_I[keep_mask]
+    
+    #The old code had a provision for having NaN values in the middle
+    #of the worm. I have not translated that feature to the newer code. I
+    #don't think it will ever happen though for a valid frame, only on the
+    #edges should you have NaN values.
+    if start_I.size != 0 and np.any(np.isnan(smoothed_bend_angles[start_I[0]:end_I[-1]])):
+       raise Exception("Unhandled code case")
+       
+    #-------------------------------------------------------
+    #End of identical code ...
+    
+    lengths = end_I - start_I + 1
+
+    #Adjust lengths for first and last:
+    #Basically we allow NaN values to count towards the length for the
+    #first and last stretches
+    if lengths.size != 0:
+       if start_I[0] != 0: #Due to leading NaNs
+          lengths[0] = end_I[0] + 1
+       if end_I[-1] != n_frames: #Due to trailing NaNs
+          lengths[-1] = n_frames - start_I[-1]
+    
+    n_kinks_all[iFrame] = np.sum(lengths >= length_threshold)
+    
+  return n_kinks_all
   
   
   
