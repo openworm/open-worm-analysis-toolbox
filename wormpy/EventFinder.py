@@ -290,7 +290,7 @@ def h__unifyEvents(startFrames, endFrames,
   
   # Unify small time gaps.
   #Translation: if the gap between events is small, merge the events
-  if ~isempty(min_inter_frames_thr):
+  if len(min_inter_frames_thr) > 0: #~isempty(min_inter_frames_thr):
       if include_at_inter_frames_thr:
           [startFrames,endFrames] = h__removeGaps(startFrames,endFrames,min_inter_frames_thr,@le); #  <=
       else: # the threshold is exclusive
@@ -321,15 +321,15 @@ def h__removeGaps(startFrames, endFrames, right_comparison_value, fh):
 
   
   """
-  pass
-  """
+  
   # Find small gaps.
   i = 1
 
-  while i < length(startFrames):
+  while i < len(startFrames):
     # Swallow the gaps.
     # NOTE: fh is either: <, <=, >, >=
     # NOTE: This implicitly uses a sample difference (time based) approach
+    """
     while i < length(startFrames) && fh(startFrames(i + 1) - endFrames(i) - 1,right_comparison_value):
       #This little bit removes the gap between two events
       endFrames(i)       = endFrames(i + 1) #Set end of this event to
@@ -337,11 +337,10 @@ def h__removeGaps(startFrames, endFrames, right_comparison_value, fh):
       #the next event
       startFrames(i + 1) = [] #delete the next event, it is redundant
       endFrames(i + 1)   = [] #delete the next event
-    
+    """
     # Advance.
     i += 1
-  """
-  pass
+
 
 def h__removeEventsByDataSum(startFrames, endFrames,
                              min_sum_thr, max_sum_thr,
@@ -357,13 +356,11 @@ def h__removeEventsByDataSum(startFrames, endFrames,
 
   
   """
-  pass 
 
-  """
-  if isempty(min_sum_thr) && isempty(max_sum_thr)
+  if len(min_sum_thr) == 0 and len(max_sum_thr) == 0:
      return 
-  end
-      
+  
+  """    
   #????? - why do we do a sum in one location and a mean in the other????
   #------------------------------------------------------------------
   # Compute the event sums.
