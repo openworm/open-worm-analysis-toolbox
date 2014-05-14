@@ -11,6 +11,7 @@ import pdb
 import warnings
 import time
 import scipy.ndimage.filters as filters
+import collections
 
 
 #http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
@@ -325,8 +326,10 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     else:
       iY = np.abs(temp[0:HALF_N_FFT])
       
-    temp = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
+    #Find peaks that are greater than the cutoff  
+    peaks,indx = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
+    pdb.set_trace()
     #This is what the supplemental says, not what was done in the previous
     #code. I'm not sure what was done for the actual paper, but I would
     #guess they used power.
@@ -340,46 +343,70 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     #i.e. for a sinusoid of a given amplitude, the above formula would give
     #you the amplitude of the sinusoid
   
+    #We sort the peaks so that the largest is at the first index and will
+    #be primary, this was not done in the previous version of the code
+    I = np.argsort(-1*peaks)
+    indx = indx[I]    
+
+    frequency_values = (indx - 1)/N_POINTS_FFT*spatial_sampling_frequency[cur_frame]
+    
+    all_wavelengths = 1/frequency_values
+    
+    p_temp = all_wavelengths[0]
+    
+    if indx.size > 1:
+      s_temp = all_wavelengths[1]
+    else:
+      s_temp = np.NaN
+      
+    worm_wavelength_max = WAVELENGTH_PCT_CUTOFF*worm_lengths[cur_frame]
+    
+    #Cap wavelengths ...
+    if p_temp > worm_wavelength_max:
+      p_temp = worm_wavelength_max
+      
+    
+    #??? Do we really want to keep this as well if p_temp == worm_2x?
+    #i.e., should the secondary wavelength be valid if the primary is also
+    #limited in this way ?????
+    if s_temp > worm_wavelength_max:
+        s_temp = worm_wavelength_max
+
+    #TODO: Not yet translated    
     """
-    %Find peaks that are greater than the cutoff
-    [peaks,indx] = seg_worm.util.maxPeaksDist(iY, MIN_DIST_PEAKS,true,WAVELENGTH_PCT_MAX_CUTOFF*max(iY));
-    
-    %We sort the peaks so that the largest is at the first index and will
-    %be primary, this was not done in the previous version of the code
-    [~,I] = sort(-1*peaks); %Sort descending by multiplying by -1
-    indx  = indx(I);
-    
-    frequency_values = (indx-1)/N_POINTS_FFT*spatial_sampling_frequency(cur_frame);
-    
-    all_wavelengths = 1./frequency_values;
-    
-    p_temp = all_wavelengths(1);
-    
-    if length(indx) > 1
-        s_temp = all_wavelengths(2);
-    else
-        s_temp = NaN;
+    if d_opts.mimic_old_behavior
+        mask = s_wavelength > p_wavelength;
+        [p_wavelength(mask),s_wavelength(mask)] = deal(s_wavelength(mask),p_wavelength(mask));
     end
+    """    
     
-    worm_wavelength_max = WAVELENGTH_PCT_CUTOFF*worm_lengths(cur_frame);
-    """
     
-    """
-    
-  import pdb
-  pdb.set_trace()
-  
+    p_wavelength[cur_frame] = p_temp
+    s_wavelength[cur_frame] = s_temp
+            
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
-                           ['amplitude', 'wavelength', 'track_length'])
-  amp_wave_track.amplitude = 'yay1'
-  amp_wave_track.wavelength = 'yay2'
-  amp_wave_track.track_length = 'yay3'
-
-  onw = nw.re_orient_and_centre()  
-  """
+                           ['amplitude_max', 'amplitude_ratio', 'primary_wavelength', 
+                            'secondary_wavelength', 'track_length'])
+                            
+  amp_wave_track.amplitude_max   = amplitude_max
+  amp_wave_track.amplitude_ratio = amplitude_ratio 
+  amp_wave_track.primary_wavelength   = p_wavelength
+  amp_wave_track.secondary_wavelength = s_wavelength  
+  amp_wave_track.track_length = track_length
   
-  return None
+  return amp_wave_track
+
+"""
+
+Old Vs New Code:
+  - power instead of magnitude is used for comparison
+  - primary and secondary wavelength may be switched ...
+  - error in maxPeaksDist for distance threshold, not sure where in code
+        - see frame 880 for example
+        - minus 1 just gives new problem - see 1794
+
+"""
 
 def get_worm_kinks(bend_angles):
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
@@ -463,7 +490,83 @@ def get_worm_kinks(bend_angles):
     n_kinks_all[iFrame] = np.sum(lengths >= length_threshold)
     
   return n_kinks_all
- 
+
+def get_worm_coils():
+  
+  #This function is very reliant on the MRC processor  
+  
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
+  
+  INTER_DATA_NAME = 'interDistance';
+  DATA_NAME = [];
+  
+  coiled_frames = h__getWormTouchFrames(frame_codes, FPS);
+
+  fps = config.FPS
+
+  COIL_FRAME_THRESHOLD = np.round(1/5 * fps);
+  
+  COIL_START_CODES = [105, 106];
+  FRAME_SEGMENTED  = 1 #Go back 1 frame, this is the end of the coil ...
+  
+  #Algorithm: Whenever a new start is found, find the first segmented frame, 
+  #that's the end.
+  
+  #Add on a frame to allow closing a coil at the end ...
+  
+  pdb.set_trace()  
+  
+  """
+  coil_start_mask = [frameCodes == COIL_START_CODES(1) | frameCodes == COIL_START_CODES(2) false];
+  
+  #NOTE: These are not guaranteed ends, just possible ends ...
+  end_coil_mask   = [frameCodes == FRAME_SEGMENTED true];
+  
+  in_coil = false;
+  coil_frame_start = 0;
+  
+  n_coils = 0;
+  
+  n_frames_p1 = length(frameCodes) + 1;
+  
+  for iFrame = 1:n_frames_p1
+      if in_coil
+          if end_coil_mask(iFrame)
+              
+              n_coil_frames = iFrame - coil_frame_start;
+              if n_coil_frames >= COIL_FRAME_THRESHOLD
+                  n_coils = n_coils + 1;
+                  
+                  touchFrames(n_coils).start = coil_frame_start; 
+                  touchFrames(n_coils).end   = iFrame - 1;
+              end
+              in_coil = false;
+          end
+      elseif coil_start_mask(iFrame)
+          in_coil = true;
+          coil_frame_start = iFrame;
+      end
+  end
+  
+  
+  
+  
+  
+  if d_opts.mimic_old_behavior
+      if ~isempty(coiled_frames) && coiled_frames(end).end == length(frame_codes)
+         coiled_frames(end).end   = coiled_frames(end).end - 1;
+         coiled_frames(end).start = coiled_frames(end).start - 1;
+      end
+  end
+  
+  coiled_events = seg_worm.feature.event(coiled_frames,FPS,midbody_distance,DATA_NAME,INTER_DATA_NAME);
+  
+  return coiled_events.getFeatureStruct;
+   
+  """
+
+  return None   
+   
 class Directions(object):
   
   """

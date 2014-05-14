@@ -4,6 +4,7 @@
 """
 import matplotlib.pyplot as plt
 import numpy as np
+import pdb
 
 #Training wheels for Jim :/
 def scatter(x,y):
@@ -61,7 +62,6 @@ def max_peaks_dist(x, dist,use_max,value_cutoff):
     I  = I1[I2]
   else:
     raise Exception("Not yet implemented")
-    import pdb
     pdb.set_trace()
     #could_be_a_peak = x < value_cutoff & [true x(2:end) < x(1:end-1)] & [x(1:end-1) < x(2:end) true];
     #I1     = find(could_be_a_peak);
@@ -76,15 +76,41 @@ def max_peaks_dist(x, dist,use_max,value_cutoff):
   #are input ...
   too_close = dist - 1
 
-  temp_I  = utils.colon(0,n_points-1,1)
+  temp_I  = colon(0,1,n_points-1)
   start_I = temp_I - too_close #Note, separated by dist is ok
   #This sets the off limits area, so we go in by 1
   end_I   = temp_I + too_close
   
-  start_I(start_I < 0) = 0
-  end_I(end_I > n_points-1) = n_points-1
+  start_I[start_I < 0] = 0
+  end_I[end_I > n_points] = n_points
 
-  #TODO: Finish translating
+
+  is_peak_mask = np.zeros(n_points,dtype=bool)
+  #a peak and thus can not be used as a peak
+    
+  for cur_index in I:
+    
+    #NOTE: This gets updated in the loop so we can't just iterate
+    #over these values
+    if could_be_a_peak[cur_index]:
+      #NOTE: Even if a point isn't the local max, it is greater
+      #than anything that is by it that is currently not taken
+      #(because of sorting), so it prevents these points
+      #from undergoing the expensive search of determining
+      #whether they are the min or max within their
+      #else from being used, so we might as well mark those indices
+      #within it's distance as taken as well
+      temp_indices = slice(start_I[cur_index],end_I[cur_index])
+      could_be_a_peak[temp_indices] = False
+      
+      #This line is really slow ...
+      #It would be better to precompute the max within a window
+      #for all windows ...
+      is_peak_mask[cur_index] = np.max(xt[temp_indices]) == xt[cur_index]
+  
+  indices = is_peak_mask.nonzero()
+  peaks   = x[indices]
+  
   """
   is_peak_mask   = false(1,n_points);
   %a peak and thus can not be used as a peak
@@ -113,9 +139,8 @@ def max_peaks_dist(x, dist,use_max,value_cutoff):
   peaks   = x(indices);
   """
   
-  #return (peaks,indices)
-  return None
-
+  return (peaks,indices)
+  
 def colon(r1,inc,r2):
   
   """

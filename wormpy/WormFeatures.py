@@ -245,6 +245,7 @@ class WormPosture():
     self.bends = posture_features.Bends(nw)
       
     # *** 2. Eccentricity & Orientation *** DONE, SLOW
+    #This has not been optimized, that Matlab version has
     #NOTE: This is VERY slow, leaving commented for now
     #self.eccentricity,self.orientation = \
     #   posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
@@ -259,12 +260,11 @@ class WormPosture():
                           nw.skeleton_y,
                           nw.data_dict['lengths'])    
 
-    self.amplitude    = amp_wave_track.amplitude
-    self.wavelength   = amp_wave_track.wavelength
-    self.track_length = amp_wave_track.track_length
-    
-    # TODO: change this to return multiple values as in 
-    # http://stackoverflow.com/questions/354883/how-do-you-return-multiple-values-in-python
+    self.amplitude_max        = amp_wave_track.amplitude_max
+    self.amplitude_ratio      = amp_wave_track.amplitude_ratio 
+    self.primary_wavelength   = amp_wave_track.p_wavelength
+    self.secondary_wavelength = amp_wave_track.s_wavelength  
+    self.track_length         = amp_wave_track.track_length
 
     # *** 4. Kinks *** DONE
     self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
@@ -272,7 +272,7 @@ class WormPosture():
     
 
     # *** 5. Coils ***
-    
+    self.coils = posture_features.get_worm_coils()
 
 
     # *** 6. Directions *** DONE
@@ -287,10 +287,12 @@ class WormPosture():
     h = h5py.File(uconfig.EIGENWORM_PATH,'r')
     eigen_worms = h['eigenWorms'].value
     
-    N_EIGENWORMS_USE = 6 #TODO: Move
+    N_EIGENWORMS_USE = 6 #TODO: Move to config
 
     self.eigen_projection = posture_features.get_eigenworms(
         nw.skeleton_x,nw.skeleton_y,np.transpose(eigen_worms),N_EIGENWORMS_USE)
+
+    #TODO: Add contours
 
   @classmethod 
   def from_disk(cls, p_var):
