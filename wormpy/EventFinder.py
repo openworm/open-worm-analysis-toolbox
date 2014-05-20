@@ -24,6 +24,11 @@
   @event_finder and @event_ss folders from:
   https://github.com/JimHokanson/SegwormMatlabClasses/blob/
     master/%2Bseg_worm/%2Bfeature/ )
+    
+    
+  How to use this module:
+  
+  ???
   
 """
 
@@ -139,7 +144,7 @@ class event_ss:
 
 class EventFinder:
   """
-  Class EventFinder
+  class EventFinder
   
   """
   
@@ -214,15 +219,15 @@ class EventFinder:
                                                  self.include_at_thr)
     
     # Get indices for runs of data matching criteria
-    [startFrames, endFrames] = h__getStartStopIndices(data, event_mask)
+    [start_frames, end_frames] = h__getStartStopIndices(data, event_mask)
     
     #Possible short circuit ...
-    if(len(startFrames)==0):
+    if(len(start_frames)==0):
       return event_ss()
     
     #In this function we remove gaps between events if the gaps are too small
     #(min_inter_frames_thr) or too large (max_inter_frames_thr)
-    [startFrames,endFrames] = h__unifyEvents(startFrames, endFrames, 
+    [start_frames, end_frames] = h__unifyEvents(start_frames, end_frames, 
                                              self.min_inter_frames_thr,
                                              self.max_inter_frames_thr,
                                              self.include_at_inter_frames_thr)
@@ -236,41 +241,43 @@ class EventFinder:
     
     # @JimHokanson NOTE: this should use data, but it doesn't
     #Perhaps there exists a correct version?
-    #[startFrames,endFrames] = h__unifyEvents(startFrames,endFrames,...
+    #[start_frames,end_frames] = h__unifyEvents(start_frames,end_frames,...
     #    obj.min_inter_frames_thr,...
     #    obj.max_inter_frames_thr,...
     #    obj.include_at_inter_frames_thr);
     
     #Filter events based on length
-    [startFrames,endFrames] = \
-      h__removeTooSmallOrLargeEvents(startFrames, endFrames,
+    [start_frames,end_frames] = \
+      h__removeTooSmallOrLargeEvents(start_frames, end_frames,
                                      self.min_frames_thr, self.max_frames_thr,
                                      self.include_at_frames_thr)
     
     #Filter events based on data sums during event
-    [startFrames,endFrames] = \
-      h__removeEventsByDataSum(startFrames, endFrames,
+    [start_frames,end_frames] = \
+      h__removeEventsByDataSum(start_frames, end_frames,
                                self.min_sum_thr, self.max_sum_thr,
                                self.include_at_sum_thr, 
                                data_for_sum_thr)
     
-    return event_ss(startFrames, endFrames)
+    return event_ss(start_frames, end_frames)
 
 
   
 # HELPER FUNCTIONS
 
-def h__unifyEvents(startFrames, endFrames, 
+def h__unifyEvents(start_frames, end_frames, 
                    min_inter_frames_thr, max_inter_frames_thr, 
                    include_at_inter_frames_thr):
   """
   
   Parameters
   ---------------------------------------
+  start_frames:
+  end_frames:
   
   Returns
   ---------------------------------------
-  [startFrames,endFrames]
+  [start_frames,end_frames]
 
   
   """
@@ -292,24 +299,24 @@ def h__unifyEvents(startFrames, endFrames,
   #Translation: if the gap between events is small, merge the events
   if len(min_inter_frames_thr) > 0: #~isempty(min_inter_frames_thr):
       if include_at_inter_frames_thr:
-          [startFrames,endFrames] = h__removeGaps(startFrames,endFrames,min_inter_frames_thr,@le); #  <=
+          [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_thr,@le); #  <=
       else: # the threshold is exclusive
-          [startFrames,endFrames] = h__removeGaps(startFrames,endFrames,min_inter_frames_thr,@lt); #  <
+          [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_thr,@lt); #  <
   
   #????? - when would this one ever be useful??????
   # Unify large time gaps.
   #Translation: if the gap between events is large, merge the events
   if ~isempty(max_inter_frames_thr):
       if include_at_inter_frames_thr:
-          [startFrames,endFrames] = h__removeGaps(startFrames,endFrames,max_inter_frames_thr,@ge); #  >=
+          [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_thr,@ge); #  >=
       else:
           # the threshold is exclusive
-          [startFrames,endFrames] = h__removeGaps(startFrames,endFrames,max_inter_frames_thr,@gt); #  >=
+          [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_thr,@gt); #  >=
   """
   pass
 
 
-def h__removeGaps(startFrames, endFrames, right_comparison_value, fh):
+def h__removeGaps(start_frames, end_frames, right_comparison_value, fh):
   """
   
   Parameters
@@ -317,7 +324,7 @@ def h__removeGaps(startFrames, endFrames, right_comparison_value, fh):
   
   Returns
   ---------------------------------------
-  [startFrames,endFrames]
+  [start_frames,end_frames]
 
   
   """
@@ -325,24 +332,24 @@ def h__removeGaps(startFrames, endFrames, right_comparison_value, fh):
   # Find small gaps.
   i = 1
 
-  while i < len(startFrames):
+  while i < len(start_frames):
     # Swallow the gaps.
     # NOTE: fh is either: <, <=, >, >=
     # NOTE: This implicitly uses a sample difference (time based) approach
     """
-    while i < length(startFrames) && fh(startFrames(i + 1) - endFrames(i) - 1,right_comparison_value):
+    while i < length(start_frames) && fh(start_frames(i + 1) - end_frames(i) - 1,right_comparison_value):
       #This little bit removes the gap between two events
-      endFrames(i)       = endFrames(i + 1) #Set end of this event to
+      end_frames(i)       = end_frames(i + 1) #Set end of this event to
       
       #the next event
-      startFrames(i + 1) = [] #delete the next event, it is redundant
-      endFrames(i + 1)   = [] #delete the next event
+      start_frames(i + 1) = [] #delete the next event, it is redundant
+      end_frames(i + 1)   = [] #delete the next event
     """
     # Advance.
     i += 1
 
 
-def h__removeEventsByDataSum(startFrames, endFrames,
+def h__removeEventsByDataSum(start_frames, end_frames,
                              min_sum_thr, max_sum_thr,
                              include_at_sum_thr, data_for_sum_thr):
   """
@@ -352,7 +359,7 @@ def h__removeEventsByDataSum(startFrames, endFrames,
   
   Returns
   ---------------------------------------
-  [startFrames,endFrames]
+  [start_frames,end_frames]
 
   
   """
@@ -364,16 +371,16 @@ def h__removeEventsByDataSum(startFrames, endFrames,
   #????? - why do we do a sum in one location and a mean in the other????
   #------------------------------------------------------------------
   # Compute the event sums.
-  eventSums = nan(length(startFrames), 1);
+  eventSums = nan(length(start_frames), 1);
   for i = 1:length(eventSums)
-      eventSums(i) = nansum(data_for_sum_thr((startFrames(i)):(endFrames(i))));
+      eventSums(i) = nansum(data_for_sum_thr((start_frames(i)):(end_frames(i))));
   end
   
   # Compute the event sum thresholds.
   if length(min_sum_thr) > 1 #i.e. if not a scaler
       newMinSumThr = nan(size(eventSums));
       for i = 1:length(newMinSumThr)
-          newMinSumThr(i) = nanmean(min_sum_thr((startFrames(i)):(endFrames(i))));
+          newMinSumThr(i) = nanmean(min_sum_thr((start_frames(i)):(end_frames(i))));
       end
       min_sum_thr = newMinSumThr;
   end
@@ -381,7 +388,7 @@ def h__removeEventsByDataSum(startFrames, endFrames,
   if length(max_sum_thr) > 1
       newMaxSumThr = nan(size(eventSums));
       for i = 1:length(newMaxSumThr)
-          newMaxSumThr(i) = nanmean(max_sum_thr((startFrames(i)):(endFrames(i))));
+          newMaxSumThr(i) = nanmean(max_sum_thr((start_frames(i)):(end_frames(i))));
       end
       max_sum_thr = newMaxSumThr;
   end
@@ -408,12 +415,12 @@ def h__removeEventsByDataSum(startFrames, endFrames,
   end
   
   # Remove the events.
-  startFrames(removeEvents) = [];
-  endFrames(removeEvents)   = [];
+  start_frames(removeEvents) = [];
+  end_frames(removeEvents)   = [];
   """
   pass
 
-def h__removeTooSmallOrLargeEvents(startFrames, endFrames,
+def h__removeTooSmallOrLargeEvents(start_frames, end_frames,
                                    min_frames_thr, max_frames_thr,
                                    include_at_frames_thr):
   """
@@ -424,7 +431,7 @@ def h__removeTooSmallOrLargeEvents(startFrames, endFrames,
   
   Returns
   ---------------------------------------
-  [startFrames,endFrames]
+  [start_frames,end_frames]
 
   
   """
@@ -434,7 +441,7 @@ def h__removeTooSmallOrLargeEvents(startFrames, endFrames,
   # Check the event frames.
   if ~(isempty(min_frames_thr) and isempty(max_frames_thr)):
       # Compute the event frames.
-      n_frames_per_event = endFrames - startFrames + 1
+      n_frames_per_event = end_frames - start_frames + 1
       
       # Remove small events.
       removeEvents = false(size(n_frames_per_event))
@@ -452,8 +459,8 @@ def h__removeTooSmallOrLargeEvents(startFrames, endFrames,
               removeEvents = removeEvents | n_frames_per_event > max_frames_thr
       
       # Remove the events.
-      startFrames(removeEvents) = []
-      endFrames(removeEvents)   = []
+      start_frames(removeEvents) = []
+      end_frames(removeEvents)   = []
       
   """  
   pass
