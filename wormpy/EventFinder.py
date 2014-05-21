@@ -9,7 +9,7 @@
   This module contains definitions for the following:
 
   Classes:
-    event_ss
+    EventSimpleStructure
     EventFinder
   
   Helper functions (should not be needed outside this module):
@@ -21,23 +21,25 @@
     h__getStartStopIndices  
   
   (The code for this module came from several files in the 
-  @event_finder and @event_ss folders from:
+  @event_finder and @EventSimpleStructure folders from:
   https://github.com/JimHokanson/SegwormMatlabClasses/blob/
     master/%2Bseg_worm/%2Bfeature/ )
     
     
   How to use this module:
   
-  ???
+  TODO: ???
+  
+  TODO: describe what the above classes and functions are for
   
 """
 
 import numpy as np
 
-class event_ss:
+class EventSimpleStructure:
   """
   Class:
-  seg_worm.feature.event_ss
+  seg_worm.feature.EventSimpleStructure
 
   "ss" stands for "simple structure"
   
@@ -104,20 +106,20 @@ class event_ss:
   @classmethod
   def merge(cls, obj1, obj2):
     """
-    Merges two instances of the event_ss class together via concatenation
+    Merges two instances of the EventSimpleStructure class together via concatenation
     
-    Acts as a factory, producing a third instance of the event_ss class
+    Acts as a factory, producing a third instance of the EventSimpleStructure class
     that is the concatenation of the first two.
 
     Parameters
     ---------------------------------------
     cls     : The static class parameter, associated with @classmethod
-    obj1    : event_ss instance
-    obj2    : event_ss instance
+    obj1    : EventSimpleStructure instance
+    obj2    : EventSimpleStructure instance
     
     Returns
     ---------------------------------------
-    event_ss : A new event_ss instance
+    EventSimpleStructure : A new EventSimpleStructure instance
     
     """
     all_starts = np.concatenate(obj1.start_Is, obj2.start_Is)
@@ -139,7 +141,7 @@ class event_ss:
     #                            np.ones(obj2.num_events, dtype='bool'))
     #is_first_object = is_first[order_I]
     
-    return event_ss(new_starts, new_ends)
+    return EventSimpleStructure(new_starts, new_ends)
 
 
 class EventFinder:
@@ -179,7 +181,7 @@ class EventFinder:
     self.max_inter_sum_thr = []
     self.include_at_inter_sum_thr = False
   
-  def getEvents(self, data, min_thr, max_thr):
+  def get_events(self, data, min_thr, max_thr):
     """
     Old Name: findEvent.m
     
@@ -191,7 +193,7 @@ class EventFinder:
     
     Returns
     ---------------------------------------
-    event_ss : Class seg_worm.feature.event_ss
+    An instance of class EventSimpleStructure
 
     Implementation Notes:
     ---------------------------------------
@@ -223,7 +225,7 @@ class EventFinder:
     
     #Possible short circuit ...
     if(len(start_frames)==0):
-      return event_ss()
+      return EventSimpleStructure()
     
     #In this function we remove gaps between events if the gaps are too small
     #(min_inter_frames_thr) or too large (max_inter_frames_thr)
@@ -259,7 +261,7 @@ class EventFinder:
                                self.include_at_sum_thr, 
                                data_for_sum_thr)
     
-    return event_ss(start_frames, end_frames)
+    return EventSimpleStructure(start_frames, end_frames)
 
 
   
