@@ -85,3 +85,5 @@ INTER_DATA_SUM_NAME = 'interDistance'
 LONGEST_NAN_RUN_TO_INTERPOLATE = None
 
 
+# used in WormPosture
+N_EIGENWORMS_USE = 6 

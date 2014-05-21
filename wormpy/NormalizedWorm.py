@@ -456,7 +456,14 @@ class NormalizedWorm():
       # TODO: turn this into a numpy array, probably
       # TODO: and possibly extract other things of value from 
       #       eigen_worms_file
-      self.eigen_worms = eigen_worms_file.values()
+      #self.eigen_worms = eigen_worms_file.values() # DEBUG: I think this is wrong
+
+      # DEBUG: another way to load eigenworms:
+      #h = h5py.File(uconfig.EIGENWORM_PATH,'r')
+      #eigen_worms = h['eigenWorms'].value
+
+
+      self.eigen_worms = eigen_worms_file.values() # DEBUG: I think this is wrong
 
   def num_frames(self): 
     """ the number of frames in the video

@@ -327,9 +327,10 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
       iY = np.abs(temp[0:HALF_N_FFT])
       
     #Find peaks that are greater than the cutoff  
-    peaks,indx = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
+    peaks, indx = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
-    pdb.set_trace()
+
+    #pdb.set_trace() # DEBUG
     #This is what the supplemental says, not what was done in the previous
     #code. I'm not sure what was done for the actual paper, but I would
     #guess they used power.
@@ -346,7 +347,7 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     #We sort the peaks so that the largest is at the first index and will
     #be primary, this was not done in the previous version of the code
     I = np.argsort(-1*peaks)
-    indx = indx[I]    
+    indx = indx[I]
 
     frequency_values = (indx - 1)/N_POINTS_FFT*spatial_sampling_frequency[cur_frame]
     
@@ -500,12 +501,11 @@ def get_worm_coils():
   INTER_DATA_NAME = 'interDistance';
   DATA_NAME = [];
   
-  coiled_frames = h__getWormTouchFrames(frame_codes, FPS);
+  """
+  coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
 
-  fps = config.FPS
-
-  COIL_FRAME_THRESHOLD = np.round(1/5 * fps);
-  
+  COIL_FRAME_THRESHOLD = np.round(1/5 * config.FPS);
+  """
   COIL_START_CODES = [105, 106];
   FRAME_SEGMENTED  = 1 #Go back 1 frame, this is the end of the coil ...
   
@@ -514,7 +514,7 @@ def get_worm_coils():
   
   #Add on a frame to allow closing a coil at the end ...
   
-  pdb.set_trace()  
+#  pdb.set_trace()    # DEBUG
   
   """
   coil_start_mask = [frameCodes == COIL_START_CODES(1) | frameCodes == COIL_START_CODES(2) false];
@@ -611,7 +611,6 @@ class Directions(object):
     return utils.print_object(self)         
       
 def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
-  
   """
   
   Parameters:
@@ -659,7 +658,8 @@ def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
 
   angles = angles - np.mean(angles,axis=0)  
   
-  return np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+  # DEBUG: hiding this error for now - @MichaelCurrie
+  return None # np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
   
 def gausswin(L,a = 2.5):
    

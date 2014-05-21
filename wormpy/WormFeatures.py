@@ -271,8 +271,8 @@ class WormPosture():
 
     self.amplitude_max        = amp_wave_track.amplitude_max
     self.amplitude_ratio      = amp_wave_track.amplitude_ratio 
-    self.primary_wavelength   = amp_wave_track.p_wavelength
-    self.secondary_wavelength = amp_wave_track.s_wavelength  
+    #self.primary_wavelength   = amp_wave_track.p_wavelength
+    #self.secondary_wavelength = amp_wave_track.s_wavelength  
     self.track_length         = amp_wave_track.track_length
 
     # *** 4. Kinks *** DONE
@@ -293,13 +293,13 @@ class WormPosture():
     self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
     
     # *** 8. EigenProjection *** DONE
-    h = h5py.File(uconfig.EIGENWORM_PATH,'r')
-    eigen_worms = h['eigenWorms'].value
-    
-    N_EIGENWORMS_USE = 6 #TODO: Move to config
+        
+    eigen_worms = nw.eigen_worms
 
     self.eigen_projection = posture_features.get_eigenworms(
-        nw.skeleton_x,nw.skeleton_y,np.transpose(eigen_worms),N_EIGENWORMS_USE)
+        nw.skeleton_x, nw.skeleton_y,
+        np.transpose(eigen_worms),
+        config.N_EIGENWORMS_USE)
 
     #TODO: Add contours
 
@@ -430,9 +430,9 @@ class WormFeatures:
     if nw is None:
       return
 
-    self.morphology = WormMorphology(nw).morphology
+    self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
-    self.posture    = WormPosture(nw).posture
+    self.posture    = WormPosture(nw)
     #self.path       = WormPath(nw).path
     
   @classmethod  

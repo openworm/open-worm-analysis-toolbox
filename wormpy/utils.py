@@ -24,8 +24,32 @@ def imagesc(data):
   plt.imshow(data,aspect='auto')
   plt.show()
 
-def max_peaks_dist(x, dist,use_max,value_cutoff):
+def max_peaks_dist(x, dist, use_max, value_cutoff):
+  """
+  MAXPEAKSDIST Find the maximum peaks in a vector. The peaks
+  are separated by, at least, the given distance.
   
+     seg_worm.util.maxPeaksDist
+     
+     [PEAKS INDICES] = seg_worm.util.maxPeaksDist(x, dist,use_max,value_cutoff,*chain_code_lengths)
+  
+     Inputs:
+         x                - the vector of values
+         dist             - the minimum distance between peaks
+         chainCodeLengths - the chain-code length at each index;
+                            if empty, the array indices are used instead
+  
+     Outputs:
+         peaks   - the maximum peaks
+         indices - the indices for the peaks
+  
+     See also MINPEAKSDIST, COMPUTECHAINCODELENGTHS
+  
+     ****************
+     Used in seg_worm.feature_helpers.posture.getAmplitudeAndWavelength
+  
+     NOTE: Outputs ARE NOT SORTED 
+  """
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Butil/maxPeaksDist.m
  
   chain_code_lengths = colon(1,1,x.size)
@@ -108,7 +132,7 @@ def max_peaks_dist(x, dist,use_max,value_cutoff):
       #for all windows ...
       is_peak_mask[cur_index] = np.max(xt[temp_indices]) == xt[cur_index]
   
-  indices = is_peak_mask.nonzero()
+  indices = is_peak_mask.nonzero()[0]
   peaks   = x[indices]
   
   """
