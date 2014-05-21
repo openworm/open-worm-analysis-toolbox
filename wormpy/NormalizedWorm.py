@@ -186,6 +186,9 @@ class NormalizedWorm():
   def get_partition(self, partition_key, data_key = 'skeletons', 
                     split_spatial_dimensions = False):
     """    
+    
+      #TODO: This should be documented better 
+    
       INPUT: a partition key, and an optional data key.
         If split_spatial_dimensions is True, the partition is returned 
         separated into x and y

@@ -26,5 +26,5 @@ worm = wf.from_disk(file_path)
 
 #print worm.morphology
 
-worm.morphology == temp
+print worm.morphology == temp
 

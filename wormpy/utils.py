@@ -108,7 +108,7 @@ def max_peaks_dist(x, dist,use_max,value_cutoff):
       #for all windows ...
       is_peak_mask[cur_index] = np.max(xt[temp_indices]) == xt[cur_index]
   
-  indices = is_peak_mask.nonzero()
+  indices = is_peak_mask.nonzero()[0]
   peaks   = x[indices]
   
   """

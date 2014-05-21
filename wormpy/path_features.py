@@ -7,6 +7,7 @@ from . import utils
 import numpy as np
 from . import feature_helpers
 from . import config
+from . import feature_comparisons as fc
 
 class Range:
 
@@ -55,15 +56,7 @@ class Range:
     value1 = self.value
     value2 = other.value
  
- 
-    #TODO: This code should be moved elsewhere ...
-    mask = ~(np.logical_or(np.isnan(value1),np.isnan(value2)))
-    
-    corr_mat = np.corrcoef(value1[mask],value2[mask])
-
-    c_value = corr_mat[1][0]    
-    
-    return c_value > 0.99    
+    return fc.corr_value_high(self.length,other.length,'path.range',0.99)  
 
 class Duration:
 

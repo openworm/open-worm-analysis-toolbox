@@ -27,6 +27,7 @@
 
 """
 
+from . import feature_comparisons as fc
 from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
@@ -80,7 +81,8 @@ class WormMorphology(object):
     # part of the worm the head, midbody and tail.
     #
     # shape of resulting arrays are (2, n)
-    width_dict = {k: np.mean(nw.get_partition(k, 'skeletons'), 0) \
+    
+    width_dict = {k: np.mean(nw.get_partition(k, 'widths'), 0) \
                   for k in ('head', 'midbody', 'tail')}
             
     #Make named tuple instead of dict
@@ -88,8 +90,9 @@ class WormMorphology(object):
     self.width = nt(**width_dict)
           
     #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        
-    self.area = nw.data_dict['head_areas'] + \
-                nw.data_dict['vulva_areas'] + \
+    self.area = nw.data_dict['tail_areas']      + \
+                nw.data_dict['head_areas']      + \
+                nw.data_dict['vulva_areas']     + \
                 nw.data_dict['non_vulva_areas']
                 
     self.area_per_length  = self.area/self.length
@@ -107,18 +110,9 @@ class WormMorphology(object):
     #TODO: More gracefully handle removal of the 2nd dimension ...
     self.length = m_var['length'].value[:,0]
     temp1 = m_var['width']
-    #import pdb
-    #pdb.set_trace()
+
     temp2 = {k: temp1[k].value[:,0] for k in ('head','midbody','tail')}
     
-    #I'm not sure why this doesn't work, 
-    #
-    # unhashable type: 'numpy.ndarray'
-    #
-    #temp2 = {
-    #'head',     temp1['head'].value[:,0],
-    #'midbody',  temp1['midbody'].value[:,0],
-    #'tail',     temp1['tail'].value[:,0]}
     nt = collections.namedtuple('Widths',['head','midbody','tail'])
     self.width  = nt(**temp2) 
 
@@ -130,13 +124,24 @@ class WormMorphology(object):
 
   def __eq__(self,other):
     
-    import pdb
-    pdb.set_trace()  
-    
-    return True
+    #TODO: Allow for a global config that provides more info ...    
+    #in case anything fails ...
+
+    #NOTE: Since all features are just attributes in this class we do
+    #the evaluation here rather than calling __eq__ on the classes
+
+    return \
+      fc.corr_value_high(self.length,other.length,'morph.length')  and \
+      fc.corr_value_high(self.area,other.area,'morph.area')      and \
+      fc.corr_value_high(self.area_per_length,other.area_per_length,'morph.area_per_length') and \
+      fc.corr_value_high(self.width_per_length,other.width_per_length,'morph.width_per_length') and \
+      fc.corr_value_high(self.width.head,other.width.head,'morph.width.head') and \
+      fc.corr_value_high(self.width.midbody,other.width.midbody,'morph.width.midbody') and \
+      fc.corr_value_high(self.width.tail,other.width.tail,'morph.width.tail')
+
 
   def __repr__(self):
-    return utils.print_object(self) 
+    return utils.print_object(self)  
     
   def save_for_gepetto(self):
     #See https://github.com/openworm/org.geppetto.recording/blob/master/org/geppetto/recording/CreateTestGeppettoRecording.py
@@ -407,6 +412,9 @@ class WormPath():
     return utils.print_object(self)  
     
   def __eq__(self,other):
+    
+    #fc.corr_value_high(self.length,other.length,'morph.length')  and \    
+    
     #TODO: Ensure both are of this class - i.e. check other
     #TODO: Actually implement this
     return self.range == other.range #and \
@@ -430,10 +438,10 @@ class WormFeatures:
     if nw is None:
       return
 
-    self.morphology = WormMorphology(nw).morphology
+    self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
-    self.posture    = WormPosture(nw).posture
-    #self.path       = WormPath(nw).path
+    self.posture    = WormPosture(nw)
+    self.path       = WormPath(nw)
     
   @classmethod  
   def from_disk(cls, file_path):
