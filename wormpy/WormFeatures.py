@@ -27,17 +27,19 @@
 
 """
 
+from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
 import collections #For namedtuple
 from wormpy import config
 from wormpy import feature_helpers
 from . import path_features
+from . import posture_features
 from . import utils
 
 #import pdb
 
-class WormMorphology():
+class WormMorphology(object):
   def __init__(self, nw):
     """
       Translation of: SegwormMatlabClasses / 
@@ -73,22 +75,72 @@ class WormMorphology():
   
     """
     
-    self.morphology = {}
-    self.morphology['length'] = nw.data_dict['lengths']
+    self.length = nw.data_dict['lengths']
     # each item in this sub-dictionary is the per-frame mean across some
     # part of the worm the head, midbody and tail.
     #
     # shape of resulting arrays are (2, n)
     width_dict = {k: np.mean(nw.get_partition(k, 'skeletons'), 0) \
                   for k in ('head', 'midbody', 'tail')}
-    self.morphology['width'] = width_dict
-    self.morphology['area'] = nw.data_dict['head_areas'] + \
-                              nw.data_dict['vulva_areas'] + \
-                              nw.data_dict['non_vulva_areas']
-    self.morphology['areaPerLength'] = self.morphology['area'] / \
-                                       self.morphology['length']
-    self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
-                                        self.morphology['length']
+            
+    #Make named tuple instead of dict
+    nt = collections.namedtuple('Widths',width_dict.keys())
+    self.width = nt(**width_dict)
+          
+    #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        
+    self.area = nw.data_dict['head_areas'] + \
+                nw.data_dict['vulva_areas'] + \
+                nw.data_dict['non_vulva_areas']
+                
+    self.area_per_length  = self.area/self.length
+    self.width_per_length = self.width.midbody/self.length
+
+  @classmethod 
+  def from_disk(cls, m_var):
+    
+    """
+    
+    Status: Done
+    """
+    self = cls.__new__(cls)   
+    
+    #TODO: More gracefully handle removal of the 2nd dimension ...
+    self.length = m_var['length'].value[:,0]
+    temp1 = m_var['width']
+    #import pdb
+    #pdb.set_trace()
+    temp2 = {k: temp1[k].value[:,0] for k in ('head','midbody','tail')}
+    
+    #I'm not sure why this doesn't work, 
+    #
+    # unhashable type: 'numpy.ndarray'
+    #
+    #temp2 = {
+    #'head',     temp1['head'].value[:,0],
+    #'midbody',  temp1['midbody'].value[:,0],
+    #'tail',     temp1['tail'].value[:,0]}
+    nt = collections.namedtuple('Widths',['head','midbody','tail'])
+    self.width  = nt(**temp2) 
+
+    self.area             = m_var['area'].value[:,0]
+    self.area_per_length  = m_var['areaPerLength'].value[:,0]
+    self.width_per_length = m_var['widthPerLength'].value[:,0]
+
+    return self
+
+  def __eq__(self,other):
+    
+    import pdb
+    pdb.set_trace()  
+    
+    return True
+
+  def __repr__(self):
+    return utils.print_object(self) 
+    
+  def save_for_gepetto(self):
+    #See https://github.com/openworm/org.geppetto.recording/blob/master/org/geppetto/recording/CreateTestGeppettoRecording.py
+    pass
 
 
 
@@ -133,7 +185,44 @@ class WormLocomotion():
     self.omegas = 0
 
     self.upsilons = 0
+    
+    #.motion
+    #  .forward
+    #  .backward
+    #  .paused
+    #  .mode - time series   
+    #.velocity
+    #  .headTip
+    #    .speed - time series   
+    #    .direction - time series   
+    #  .head - all have same format
+    #  .midbody
+    #  .tail
+    #  .tailTip
+    #.bends
+    #  .foraging
+    #    .amplitude - time series 
+    #    .angleSpeed - time series 
+    #  .head
+    #    .amplitude - time series 
+    #    .frequency - time series 
+    #  .midbody - same as head
+    #  .tail  - same as head
+    #.turns
+    #  .omegas
+    #  .upsilons
+    
   
+  @classmethod 
+  def from_disk(cls, m_var):
+    
+    self = cls.__new__(cls)
+
+    import pdb
+    pdb.set_trace()
+    
+    return self
+
     
 
 class WormPosture():
@@ -159,55 +248,97 @@ class WormPosture():
     %
 
     """    
-    # Initialize self.posture as a blank dictionary we will add to
-    self.posture = {}  
+ 
 
-    # *** 1. Bends ***
+    # *** 1. Bends *** DONE
+    self.bends = posture_features.Bends(nw)
+      
+    # *** 2. Eccentricity & Orientation *** DONE, SLOW
+    #This has not been optimized, that Matlab version has
+    #NOTE: This is VERY slow, leaving commented for now
+    #self.eccentricity,self.orientation = \
+    #   posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
 
-    # Now that we've populated the bends dictionary, add it to the posture
-    # dictionary.
-    self.posture['bends'] = feature_helpers.get_bends(nw)
     
-    # *** 2. Eccentricity & Orientation ***
-    eccentricity_and_orientation = \
-            feature_helpers.get_eccentricity_and_orientation(nw.contour_x, 
-                                                             nw.contour_y)
-    self.posture['eccentricity'] = eccentricity_and_orientation.eccentricity
-    self.posture['orientation'] = eccentricity_and_orientation.orientation
-    
-    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio ***
-    amp_wave_track = \
-      collections.namedtuple('amp_wave_track', 
-                             ['amplitude', 'wavelength', 'track_length'])
-    amp_wave_track.amplitude = 'yay1'
-    amp_wave_track.wavelength = 'yay2'
-    amp_wave_track.track_length = 'yay3'
+    #Temp input for next function ...
+    self.orientation = np.zeros(nw.skeleton_x.shape[1])
+    # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio *** NOT DONE
+    amp_wave_track = posture_features.get_amplitude_and_wavelength(
+                          self.orientation,
+                          nw.skeleton_x,
+                          nw.skeleton_y,
+                          nw.data_dict['lengths'])    
 
-    #amp_wave_track = get_amplitude_and_wavelength( \
-    #                      self.posture['orientation'],
-    #                      self.skeletons_x(),
-    #                      self.skeletons_y(),
-    #                      self.data_dict['lengths'])
-    self.posture['amplitude'] = amp_wave_track.amplitude
-    self.posture['wavelength'] = amp_wave_track.wavelength
-    self.posture['track_length'] = amp_wave_track.track_length
+    self.amplitude_max        = amp_wave_track.amplitude_max
+    self.amplitude_ratio      = amp_wave_track.amplitude_ratio 
+    self.primary_wavelength   = amp_wave_track.p_wavelength
+    self.secondary_wavelength = amp_wave_track.s_wavelength  
+    self.track_length         = amp_wave_track.track_length
 
-    # TODO: change this to return multiple values as in 
-    # http://stackoverflow.com/questions/354883/
-
-    # *** 4. Kinks ***
+    # *** 4. Kinks *** DONE
+    self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
+        
     
 
     # *** 5. Coils ***
+    self.coils = posture_features.get_worm_coils()
 
-    # *** 6. Directions ***
 
-    # *** 7. Skeleton ***  
+    # *** 6. Directions *** DONE
+    self.directions = posture_features.Directions(nw.skeleton_x,nw.skeleton_y,nw.worm_partitions)
+
+    # *** 7. Skeleton *** DONE
     # (already in morphology, but Schafer Lab put it here too)
+    nt = collections.namedtuple('skeleton',['x','y'])
+    self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
+    
+    # *** 8. EigenProjection *** DONE
+    h = h5py.File(uconfig.EIGENWORM_PATH,'r')
+    eigen_worms = h['eigenWorms'].value
+    
+    N_EIGENWORMS_USE = 6 #TODO: Move to config
 
+    self.eigen_projection = posture_features.get_eigenworms(
+        nw.skeleton_x,nw.skeleton_y,np.transpose(eigen_worms),N_EIGENWORMS_USE)
+
+    #TODO: Add contours
+
+  @classmethod 
+  def from_disk(cls, p_var):
     
-    # *** 8. EigenProjection ***
+    self = cls.__new__(cls)
+
+    #bends
+    #  .head
+    #    .mean
+    #    .std_dev
+    #  .neck
+    #  .midbody
+    #  .hips
+    #  .tail
+    #.amplitude
+    #  .max   - ts
+    #  .ratio - ts
+    #.wavelength
+    #  .primary - ts
+    #  .secondary - ts
+    #.track_length - ts (OLD: tracklength)
+    #.eccentricity - ts
+    #.kinks - ts
+    #.coils - event
+    #.directions - 
+    #  .tail2head - ts
+    #  .head - ts
+    #  .tail - ts
+    #.skeleton
+    #  .x - ts
+    #  .y - ts
+    #.eigen_projections [6 x frames] matrix (OLD:eigenProjection)
+
+    import pdb
+    pdb.set_trace()
     
+    return self    
 
 class WormPath():
   
@@ -247,10 +378,9 @@ class WormPath():
     self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),
                                                 nw.contour_y.mean(axis=0))
        
-    #Curvature (Done) - TODO: Move to path_features
+    #Curvature (Done)
     #---------------------------------------------------
-    self.curvature = feature_helpers.worm_path_curvature(sx,sy,config.FPS,
-                                                         config.VENTRAL_MODE)
+    self.curvature = path_features.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
 
   #TODO: Move to class in path_features
   @classmethod
@@ -313,7 +443,7 @@ class WormFeatures:
     
     self = cls(None)
     
-    #self.morphology = WormMorphology.from_disk(worm['morphology'])
+    self.morphology = WormMorphology.from_disk(worm['morphology'])
     #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
     #self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path'])
@@ -329,10 +459,11 @@ class WormFeatures:
     
     """
     return \
-      self.path       == other.path       #and \
+      self.path       == other.path       and \
+      self.morphology == other.morphology #and \
       #self.posture    == other.posture    and \
       #self.locomotion == other.locomotion and \
-      #self.morphology == other.morphology
+      #
 
         
     

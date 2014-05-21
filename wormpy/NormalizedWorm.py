@@ -11,6 +11,7 @@
 
 """
 
+import warnings
 import numpy as np
 import scipy.io
 import os
@@ -354,7 +355,10 @@ class NormalizedWorm():
         
     """
     s = self.data_dict['skeletons']
-    return np.nanmean(s, 0, keepdims=False)
+    with warnings.catch_warnings():
+      temp = np.nanmean(s, 0, keepdims=False)
+      
+    return temp
 
   def angle(self):
     """
