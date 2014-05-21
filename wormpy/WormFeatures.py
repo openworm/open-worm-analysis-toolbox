@@ -75,8 +75,7 @@ class WormMorphology(object):
   
     """
     
-    self.morphology = {}
-    self.morphology['length'] = nw.data_dict['lengths']
+    self.length = nw.data_dict['lengths']
     # each item in this sub-dictionary is the per-frame mean across some
     # part of the worm the head, midbody and tail.
     #
@@ -85,21 +84,24 @@ class WormMorphology(object):
                   for k in ('head', 'midbody', 'tail')}
             
     #Make named tuple instead of dict
-    #temp = namedtuple('Widths',width_dict.keys())
-    #self.width = temp(**width_dict)
-                    
-    self.morphology['width'] = width_dict
-    self.morphology['area'] = nw.data_dict['head_areas'] + \
-                              nw.data_dict['vulva_areas'] + \
-                              nw.data_dict['non_vulva_areas']
-    self.morphology['areaPerLength'] = self.morphology['area'] / \
-                                       self.morphology['length']
-    self.morphology['widthPerLength'] = self.morphology['width']['midbody'] / \
-                                        self.morphology['length']
+    nt = collections.namedtuple('Widths',width_dict.keys())
+    self.width = nt(**width_dict)
+          
+    #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        
+    self.area = nw.data_dict['head_areas'] + \
+                nw.data_dict['vulva_areas'] + \
+                nw.data_dict['non_vulva_areas']
+                
+    self.area_per_length  = self.area/self.length
+    self.width_per_length = self.width.midbody/self.length
 
   @classmethod 
   def from_disk(cls, m_var):
     
+    """
+    
+    Status: Done
+    """
     self = cls.__new__(cls)   
     
     #TODO: More gracefully handle removal of the 2nd dimension ...
@@ -125,6 +127,13 @@ class WormMorphology(object):
     self.width_per_length = m_var['widthPerLength'].value[:,0]
 
     return self
+
+  def __eq__(self,other):
+    
+    import pdb
+    pdb.set_trace()  
+    
+    return True
 
   def __repr__(self):
     return utils.print_object(self) 
@@ -447,8 +456,8 @@ class WormFeatures:
     
     """
     return \
-      self.path       == other.path       #and \
-      #self.morphology == other.morphology and \
+      self.path       == other.path       and \
+      self.morphology == other.morphology #and \
       #self.posture    == other.posture    and \
       #self.locomotion == other.locomotion and \
       #
