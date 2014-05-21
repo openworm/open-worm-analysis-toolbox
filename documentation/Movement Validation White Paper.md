@@ -33,7 +33,7 @@ The achievement of this second goal will hopefully make OpenWorm an indispensabl
 ###References###
 
 [18] David Harel. A grand challenge for computing: towards full reactive modeling of a multi-cellular
-animal. In Verification, Model Checking, and Abstract Interpretation, pages 323–324. Springer, 2004.
+animal. Verification, Model Checking, and Abstract Interpretation, pages 323–324. Springer, 2004.
 
 [39] Karl R. Popper. The Logic of Scientific Discovery. Routledge, 1968.
 
@@ -52,4 +52,4 @@ of *Caenorhabditis elegans* behavioral phenotypes. Nature Methods, 10(9):877–8
 
 
 ###Further Reading###
-[Ince et. al.  The case for open computer programs.  In Nature Perspectives, 2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
+[Ince et. al.  The case for open computer programs.  Nature Perspectives, 2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
