@@ -58,6 +58,8 @@ N.B.: numpy is a library for Python that is a dependency in this repo.  If you h
 1. Save [nanfunctions.py](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the numpy/lib/ directory, and
 2. Append the lines ```__all__ += nanfunctions.__all__``` and ```from .nanfunctions import *``` at the relevant places to numpy/lib/```__init__.py```.
 
+Also, you need to install Shapely, which is available [for Windows here](http://www.lfd.uci.edu/~gohlke/pythonlibs/).
+
 **HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/) - this can be used for debugging the file structure
 
 **Plotting:** matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.  FFMPEG is used for video processing.
