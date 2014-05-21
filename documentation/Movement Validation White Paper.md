@@ -49,3 +49,7 @@ of *Caenorhabditis elegans* behavioral phenotypes. Nature Methods, 10(9):877–8
 [44] Julie Y. Cho and Paul W. Sternberg. Multilevel modulation of a sensory motor circuit during *C. elegans* sleep and arousal. Cell, 156(1):249–260, 2014.
 
 [45] Evan L. Ardiel and Catharine H. Rankin. An elegant mind: learning and memory in *Caenorhabditis elegans*. Learning & Memory, 17(4):191–201, 2010.
+
+
+###Further Reading###
+[Ince et. al.  The case for open computer programs.  In Nature Perspectives, 2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
