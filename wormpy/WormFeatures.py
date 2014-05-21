@@ -151,7 +151,8 @@ class WormLocomotion():
       +seg_worm / +features / @locomotion / locomotion.m
   
         properties
-          velocity:(head_tip, head, midbody, tail, tail_tip) x (speed, direction)
+          velocity:
+            (head_tip, head, midbody, tail, tail_tip) x (speed, direction)
           motion
           motion_mode
           is_paused
@@ -164,27 +165,26 @@ class WormLocomotion():
     """
     self.locomotion = {}
 
-    self.locomotion['velocity'] = \
-      feature_helpers.get_worm_velocity(nw)
+    self.velocity = feature_helpers.get_worm_velocity(nw)
 
     midbody_distance = \
-      abs(self.locomotion['velocity']['midbody']['speed'] / config.FPS)
+      abs(self.velocity['midbody']['speed'] / config.FPS)
     
-    self.locomotion['motion_codes'] = \
+    self.motion_codes = \
       feature_helpers.get_motion_codes(midbody_distance, 
                                        nw.data_dict['lengths'])
   
-    self.locomotion['motion_mode'] = 0
+    self.motion_mode = 0
     
-    self.locomotion['is_paused'] = 0
+    self.is_paused = 0
 
-    self.locomotion['bends'] = 0
+    self.bends = 0
 
-    self.locomotion['foraging'] = 0
+    self.foraging = 0
 
-    self.locomotion['omegas'] = 0
+    self.omegas = 0
 
-    self.locomotion['upsilons'] = 0
+    self.upsilons = 0
     
     #.motion
     #  .forward
@@ -375,7 +375,8 @@ class WormPath():
   
     #Coordinates (Done)
     #---------------------------------------------------    
-    self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),nw.contour_y.mean(axis=0))
+    self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),
+                                                nw.contour_y.mean(axis=0))
        
     #Curvature (Done)
     #---------------------------------------------------
@@ -395,7 +396,9 @@ class WormPath():
     self.duration    = path_features.Duration.from_disk(path_var['duration']) 
 
     #TODO: I'd like to have these also be objects with from_disk methods
-    self.coordinates = self._create_coordinates(path_var['coordinates']['x'].value,path_var['coordinates']['y'].value)
+    self.coordinates = self._create_coordinates(
+                          path_var['coordinates']['x'].value,
+                          path_var['coordinates']['y'].value)
     self.curvature   = path_var['curvature'].value   
 
     return self
@@ -428,7 +431,7 @@ class WormFeatures:
       return
 
     self.morphology = WormMorphology(nw).morphology
-    self.locomotion = WormLocomotion(nw).locomotion
+    self.locomotion = WormLocomotion(nw)
     self.posture    = WormPosture(nw).posture
     #self.path       = WormPath(nw).path
     

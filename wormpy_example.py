@@ -14,7 +14,6 @@ import wormpy
 from wormpy import user_config
 
 
-
 def example_WormExperimentFile():
   """
     Returns an example instance of WormExperimentFile, using the file
@@ -162,8 +161,8 @@ with warnings.catch_warnings():
 
 # Plotting demonstration
 #wormpy.plot_frame_codes(nw)
-wp = wormpy.WormPlotter(nw, interactive=False)
-wp.show()
+#wp = wormpy.WormPlotter(nw, interactive=False)
+#wp.show()
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
 

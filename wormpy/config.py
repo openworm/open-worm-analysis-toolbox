@@ -79,5 +79,9 @@ EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
 
+# Interpolate only this length of NaN run; anything longer is
+# probably an omega turn.
+# If set to "None", interpolate all lengths (i.e. infinity)
+LONGEST_NAN_RUN_TO_INTERPOLATE = None
 
 
