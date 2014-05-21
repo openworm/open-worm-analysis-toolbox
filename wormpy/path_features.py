@@ -9,7 +9,7 @@ from . import feature_helpers
 from . import config
 from . import feature_comparisons as fc
 
-class Range:
+class Range(object):
 
   """
   Attributes
@@ -53,12 +53,10 @@ class Range:
     return utils.print_object(self)
     
   def __eq__(self,other):
-    value1 = self.value
-    value2 = other.value
  
-    return fc.corr_value_high(self.length,other.length,'path.range',0.99)  
+    return fc.corr_value_high(self.value,other.value,'path.range',0.99)  
 
-class Duration:
+class Duration(object):
 
   """
   Attributes:
@@ -199,6 +197,13 @@ class Duration:
     self.midbody = temp_duration[2]
     self.tail    = temp_duration[3]
 
+  def __eq__(self,other):
+    
+    import pdb
+    pdb.set_trace()
+
+    return None    
+    
   def __repr__(self):
     return utils.print_object(self)
 
@@ -217,7 +222,7 @@ class Duration:
     return temp
 
 
-class DurationElement:
+class DurationElement(object):
   
   def __init__(self,arena_coverage=None,fps=None):
 
@@ -231,13 +236,16 @@ class DurationElement:
   def __repr__(self):
     return utils.print_object(self)
    
-  @staticmethod 
-  def from_disk(saved_duration_elem):
-    temp = DurationElement(None)
-    temp.indices = saved_duration_elem['indices'].value
-    temp.times   = saved_duration_elem['times'].value
+  @classmethod 
+  def from_disk(cls,saved_duration_elem):
     
-class Arena:
+    self = cls.__new__(cls)        
+    self.indices = saved_duration_elem['indices'].value
+    self.times   = saved_duration_elem['times'].value
+    
+    return self
+    
+class Arena(object):
    
   def __init__(self, sx=None, sy=None, arena_size=None, create_null=False):
     
@@ -267,12 +275,12 @@ class Arena:
   @staticmethod 
   def from_disk(saved_arena_elem):
     temp = Arena(None)
-    temp.height = saved_arena_elem['height'].value
-    temp.width  = saved_arena_elem['width'].value
-    temp.min_x  = saved_arena_elem['min']['x'].value
-    temp.min_y  = saved_arena_elem['min']['y'].value
-    temp.max_x  = saved_arena_elem['max']['x'].value
-    temp.max_y  = saved_arena_elem['max']['y'].value      
+    temp.height = saved_arena_elem['height'].value[0,0]
+    temp.width  = saved_arena_elem['width'].value[0,0]
+    temp.min_x  = saved_arena_elem['min']['x'].value[0,0]
+    temp.min_y  = saved_arena_elem['min']['y'].value[0,0]
+    temp.max_x  = saved_arena_elem['max']['x'].value[0,0]
+    temp.max_y  = saved_arena_elem['max']['y'].value[0,0]      
     
     return temp
 

@@ -395,6 +395,8 @@ class WormPath():
 
   @classmethod 
   def from_disk(cls, path_var):
+    
+    #TODO: self = cls.__new__(cls)
     self = cls(None)   
     
     self.range       = path_features.Range.from_disk(path_var)
@@ -412,15 +414,18 @@ class WormPath():
     return utils.print_object(self)  
     
   def __eq__(self,other):
-    
+
     #fc.corr_value_high(self.length,other.length,'morph.length')  and \    
     
     #TODO: Ensure both are of this class - i.e. check other
     #TODO: Actually implement this
-    return self.range == other.range #and \
-    #self.duration == other.duration #and \
-    #self.coordinates == other.cordinates #and \
-    #self.curvature == other.curvature
+    return \
+      self.range == other.range and \
+      self.duration == other.duration and \
+      fc.corr_value_high(self.coordinates.x,other.coordinates.x,'path.coordinates.x') and \
+      fc.corr_value_high(self.coordinates.y,other.coordinates.y,'path.coordinates.y') and \
+      fc.corr_value_high(self.curvature,other.curvature,'path.curvature')
+
     
 class WormFeatures:
   """ 
