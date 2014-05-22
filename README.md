@@ -52,8 +52,7 @@ Information on [downloading data from the Schafer Lab repository](https://github
 
 ## Tools used ##
 
-**Language:** Python 3.x.  The code requires use of scientific computing packages (numpy, h5py), and as such getting the packages properly installed can be tricky. As such we recommend using Spyder IDE (Note, this isn't required)
-- https://code.google.com/p/spyderlib/ (see also: https://code.google.com/p/winpython/)
+**Language:** Python 3.x.  The code requires use of scientific computing packages (numpy, h5py), and as such getting the packages properly installed can be tricky. As such, if working in Windows, we recommend using [Spyder IDE](https://code.google.com/p/spyderlib/) and the [WinPython distribution](http://winpython.sourceforge.net/) for Windows.  ( (Note, this isn't required)
 
 **HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/) - this can be used for debugging the file structure
 
