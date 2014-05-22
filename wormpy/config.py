@@ -76,6 +76,7 @@ PAUSE_THRESHOLD_PCT   = 0.025
 EVENT_FRAMES_THRESHOLD = 0.5    # Half a second
 EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
 
+# Used in EventFinder
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
 

@@ -15,11 +15,14 @@ import warnings
 import numpy as np
 from itertools import groupby
 
-#np.seterr(all='raise')
+#np.seterr(all='raise')           # DEBUG
 
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
+from .EventFinder import MotionEvent   # DEBUG: is this a duplicate of
+                                       #        EventFinder? Not sure I 
+                                       #        understand Jim's code here.
 
 import matplotlib.pyplot as plt
 
@@ -82,6 +85,7 @@ def interpolate_with_threshold(array, threshold=None):
     # the other but not both.
     assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
     frame_dropped = frames_with_at_least_one_NaN
+
   """
   
   assert(threshold == None or threshold >= 0)
@@ -209,6 +213,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   #                   entry 2 for paused.
   # Note that there is no maximum forward speed nor minimum backward speed.
 
+  motion_codes  = ['forward', 'backward', 'paused']
+  frame_values  = [1,         -1,         0       ]
+
   min_speeds   = [min_forward_speed, [], min_paused_speed]
   max_speeds   = [[], max_backward_speed, max_paused_speed]
   min_distance = [min_forward_distance, min_backward_distance, []]
@@ -220,42 +227,40 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   worm_event_min_interframes_threshold = \
     config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
-  motion_codes  = ['forward', 'backward', 'paused']
-  frame_values  = [1,         -1,         0       ]
-
   all_events_dict = {}
 
-  # start with a blank numpy array, full of NaNs:
+  # Start with a blank numpy array, full of NaNs:
   motion_mode = np.zeros(num_frames, dtype='float') * np.NaN
 
-  for iType in range(0,3):
-    #Determine when the event type occurred
+  for i_type in range(0, 3):
+    # Determine when the event type occurred
     ef = EventFinder()
 
-    """
-    ef.include_at_thr       = true
-    ef.minum_frames_thr       = worm_event_frames_threshold
-    ef.min_sum_thr          = min_distance{iType}
-    ef.include_at_sum_thr   = true
+    ef.include_at_thr       = True
+    ef.minum_frames_thr     = worm_event_frames_threshold
+    ef.min_sum_thr          = min_distance[i_type]
+    ef.include_at_sum_thr   = True
     ef.data_for_sum_thr     = distance_per_frame
     ef.min_inter_frames_thr = worm_event_min_interframes_threshold
-    
-    frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
-    
-    #Assign event type to relevant frames
-    #----------------------------------------------------------------------
-    mask = frames_temp.getEventMask(num_frames)
-    motion_mode(mask) = frame_values[iType]
 
-    #Take the start and stop indices and convert them to the structure
-    #used in the feature files ...
-    #----------------------------------------------------------------------
-    cur_field_name = motion_codes[iType]
+    
+    frames_temp = ef.get_events(midbody_speed,
+                                min_speeds[i_type],
+                                max_speeds[i_type])
 
-    temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
-    all_events_dict[cur_field_name] = temp.getFeatureStruct
+    """  DEBUG: @MichaelCurrie: code not ready yet!
+    # Obtain only events entirely before the num_frames intervals
+    mask = frames_temp.get_event_mask(num_frames)
+
+    # Assign event type to relevant frames
+    motion_mode[mask] = frame_values[i_type]
+
+    # Take the start and stop indices and convert them to the structure
+    # used in the feature files
+    temp = MotionEvent(frames_temp, distance_per_frame)
+    all_events_dict[motion_codes[i_type]] = temp.get_feature_struct()
     """
-
+    
   all_events_dict['mode'] = motion_mode
   
   return all_events_dict
@@ -271,14 +276,18 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
   """ Obtain the "angle" of a subset of the 49 points
       of a worm, for each frame.
       
-      INPUT: 
-        segment_x, segment_y: numpy arrays of shape (p,n) where 
-                              p is the size of the partition of the 49 points
-                              n is the number of frames in the video
-        head_to_tail: True means the worm points are order head to tail.
+  Parameters
+  ---------------------------------------
+  segment_x, segment_y: numpy arrays of shape (p,n) where 
+    p is the size of the partition of the 49 points
+    n is the number of frames in the video
+  head_to_tail: bool
+  True means the worm points are order head to tail.
     
-      OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
-              (in degrees) for each frame of video
+  Returns
+  ---------------------------------------
+  A numpy array of shape (n) and stores the worm body's "angle" 
+  (in degrees) for each frame of video
 
   """
   
