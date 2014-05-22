@@ -90,6 +90,9 @@ class Duration(object):
     #    mean_width = mean(all_widths);    
     #end
 
+
+      
+
     #Return early if necessary
     #------------------------------------------------------------------------
     if len(sx) == 0 or np.isnan(sx).all():
@@ -101,9 +104,17 @@ class Duration(object):
       #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
       #    obj.duration = h__buildOutput(arena,durations);
       #    return;  
-     
-    mean_width = np.nanmean(widths)
-    scale      = 2.0**0.5/mean_width;
+    
+    if config.MIMIC_OLD_BEHAVIOUR:
+      s_points_temp = [nw.worm_partitions[x] for x in ('head', 'midbody', 'tail')]
+      temp_widths = [widths[x[0]:x[1],:] for x in s_points_temp]
+      mean_widths = [np.nanmean(x.reshape(x.size)) for x in temp_widths]
+      mean_width  = np.mean(mean_widths)      
+    else:
+      mean_width = np.nanmean(widths)    
+    
+    
+    scale      = 2.0**0.5/mean_width
      
     # Scale the skeleton and translate so that the minimum values are at 1
     #-------------------------------------------------------------------------
@@ -116,6 +127,7 @@ class Duration(object):
     y_scaled_min = np.nanmin(scaled_sy)
     y_scaled_max = np.nanmax(scaled_sy)
    
+    
     #Unfortunately needing to typecast to int for array indexing also
     #removes my ability to identify invalid values :/
     #Thus we precompute invalid values and then cast
@@ -124,7 +136,7 @@ class Duration(object):
     scaled_zeroed_sx = (scaled_sx - x_scaled_min).astype(int)
     scaled_zeroed_sy = (scaled_sy - y_scaled_min).astype(int)     
     
-    arena_size  = [y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]    
+    arena_size  = [y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]       
     ar = Arena(sx, sy, arena_size)
   
     #--------------------------------------------------------------------------
@@ -198,11 +210,13 @@ class Duration(object):
     self.tail    = temp_duration[3]
 
   def __eq__(self,other):
-    
-    import pdb
-    pdb.set_trace()
 
-    return None    
+    return \
+      self.arena   == other.arena and \
+      self.worm    == other.worm and \
+      self.head    == other.head and \
+      self.midbody == other.midbody and \
+      self.tail    == other.tail
     
   def __repr__(self):
     return utils.print_object(self)
@@ -225,7 +239,9 @@ class Duration(object):
 class DurationElement(object):
   
   def __init__(self,arena_coverage=None,fps=None):
-
+    
+  #TODO: Pass in name for __eq__
+    
     if arena_coverage is None:
       return
     
@@ -235,6 +251,11 @@ class DurationElement(object):
 
   def __repr__(self):
     return utils.print_object(self)
+   
+  def __eq__(self,other):
+    return \
+      fc.corr_value_high(self.indices,other.indices,'Duration.indices') and \
+      fc.corr_value_high(self.times,other.times,'Duration.times')
    
   @classmethod 
   def from_disk(cls,saved_duration_elem):
@@ -247,11 +268,12 @@ class DurationElement(object):
     
 class Arena(object):
    
-  def __init__(self, sx=None, sy=None, arena_size=None, create_null=False):
-    
-    if sx is None:
-      return
-    
+  """
+  
+  This is constructed from the Duration constructor.
+  """
+  def __init__(self, sx, sy, arena_size, create_null=False):
+
     if create_null:
       self.height = np.nan
       self.width  = np.nan
@@ -260,8 +282,6 @@ class Arena(object):
       self.max_x  = np.nan
       self.max_y  = np.nan
     else:
-      # Construct the empty arena(s).
-        
       self.height = arena_size[0]
       self.width  = arena_size[1]
       self.min_x  = np.nanmin(sx)
@@ -269,20 +289,32 @@ class Arena(object):
       self.max_x  = np.nanmax(sx)
       self.max_y  = np.nanmax(sy)    
     
+  def __eq__(self,other):
+    #NOTE: Due to rounding differences between Matlab and numpy
+    #the height and width values are different by 1
+    return \
+      fc.fp_isequal(self.height,other.height,'Arena.height',1) and \
+      fc.fp_isequal(self.width,other.width,'Arena.width',1)   and \
+      fc.fp_isequal(self.min_x,other.min_x,'Arena.min_x')   and \
+      fc.fp_isequal(self.min_y,other.min_y,'Arena.min_y')   and \
+      fc.fp_isequal(self.max_x,other.max_x,'Arena.max_x')   and \
+      fc.fp_isequal(self.max_y,other.max_y,'Arena.max_y')
+    
   def __repr__(self):
     return utils.print_object(self)
     
-  @staticmethod 
-  def from_disk(saved_arena_elem):
-    temp = Arena(None)
-    temp.height = saved_arena_elem['height'].value[0,0]
-    temp.width  = saved_arena_elem['width'].value[0,0]
-    temp.min_x  = saved_arena_elem['min']['x'].value[0,0]
-    temp.min_y  = saved_arena_elem['min']['y'].value[0,0]
-    temp.max_x  = saved_arena_elem['max']['x'].value[0,0]
-    temp.max_y  = saved_arena_elem['max']['y'].value[0,0]      
+  @classmethod 
+  def from_disk(cls,saved_arena_elem):
     
-    return temp
+    self = cls.__new__(cls)
+    self.height = saved_arena_elem['height'].value[0,0]
+    self.width  = saved_arena_elem['width'].value[0,0]
+    self.min_x  = saved_arena_elem['min']['x'].value[0,0]
+    self.min_y  = saved_arena_elem['min']['y'].value[0,0]
+    self.max_x  = saved_arena_elem['max']['x'].value[0,0]
+    self.max_y  = saved_arena_elem['max']['y'].value[0,0]      
+    
+    return self
 
 def worm_path_curvature(x,y,fps,ventral_mode):
   

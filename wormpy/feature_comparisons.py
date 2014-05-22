@@ -5,6 +5,12 @@ Insert description here
 
 import numpy as np
 
+def fp_isequal(x,y,feature_name,tol=1e-6):
+  if np.abs(x-y) <= tol:
+    return True
+  else:
+    print 'Values not equal: %s' % feature_name
+
 def corr_value_high(x,y,feature_name,high_corr_value=0.999):
   
   #NOTE: For now I am printing everything, eventually it would be nice
