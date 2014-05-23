@@ -27,6 +27,7 @@
 
 """
 
+import csv
 from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
@@ -170,6 +171,11 @@ class WormLocomotion():
     midbody_distance = \
       abs(self.velocity['midbody']['speed'] / config.FPS)
     
+    # DEBUG
+    #feature_helpers.write_to_CSV(
+    #      {'Midbody Speed': self.velocity['midbody']['speed']},
+    #      'michaeltest')
+
     self.motion_codes = \
       feature_helpers.get_motion_codes(midbody_distance, 
                                        nw.data_dict['lengths'])

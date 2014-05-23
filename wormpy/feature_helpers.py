@@ -17,6 +17,7 @@ from itertools import groupby
 
 #np.seterr(all='raise')           # DEBUG
 
+import csv
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
@@ -26,13 +27,78 @@ from .EventFinder import MotionEvent   # DEBUG: is this a duplicate of
 
 import matplotlib.pyplot as plt
 
-#import pdb
+import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
            'get_worm_velocity',                 # for locomotion
            'get_bends',                         # for posture
            'get_amplitude_and_wavelength',      # for posture
            'get_eccentricity_and_orientation']  # for posture
+
+def write_to_CSV(data_dict, filename):
+  """
+  Writes data to a CSV file, by saving it to the directory os.getcwd()
+  
+  Parameters
+  ---------------------------------------
+  data_dict: a dictionary where the values are 1-dimensional numpy arrays
+    What is to be written to the file.  data.keys() provide the headers,
+    and each column in turn is provided by the value for that key
+  filename: string
+    Name of file to be saved (not including the '.csv' part of the name)
+  
+  """
+  #if len(np.shape(data)) > 2:
+  #  raise Exception("data can have at most two dimensions")
+  
+  file = open(filename+'.csv', 'w')
+  writer = csv.writer(file, lineterminator='\n')
+
+
+  #data_dict['b'] = np.array([4.0,5,6]) # DEBUG
+  
+  # The first row of the file is the keys
+  writer.writerow(list(data_dict.keys()))
+
+  # Find the maximum number of rows across all our columns:
+  max_rows = max([len(x) for x in list(data_dict.values())])
+
+  # Combine all the dictionary entries so we can write them
+  # row-by-row.
+  dd = []
+  for column in data_dict.keys():
+    c = list(data_dict[column])
+    # Create a mask that shows True for any unused "rows"
+    m = np.concatenate([np.zeros(len(c),dtype=bool), 
+                        np.ones(max_rows-len(c), dtype=bool)])
+    # Create a masked array of size max_rows with unused entries masked
+    d = np.ma.array(np.resize(c, max_rows), mask=m)
+    # Convert the masked array to an ndarray with the masked values
+    # changed to NaNs
+    d = d.filled(np.NaN)
+    # Append this ndarray to our list
+    dd.append(d)
+  
+  # Combine each column's entries
+  data = np.vstack(dd)
+
+  # We need the transpose so the individual data lists become transposed
+  # to columns
+  data = data.transpose()
+  
+  # We need in the form of nested sequences to satisfy csv.writer
+  data = data.tolist()
+
+  for row in data:
+    # If data_row is just an integer, we need to wrap it
+    # in a [] since writerow() expects a sequence
+#    if(type(data_row) != list):
+#      writer.writerow([data_row])
+#    else:
+    writer.writerow(list(row))
+    
+  file.close()
+
 
 """----------------------------------------------------
     motion codes:
