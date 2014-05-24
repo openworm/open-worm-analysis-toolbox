@@ -48,11 +48,8 @@ def write_to_CSV(data_dict, filename):
     Name of file to be saved (not including the '.csv' part of the name)
   
   """
-  #if len(np.shape(data)) > 2:
-  #  raise Exception("data can have at most two dimensions")
-  
-  file = open(filename+'.csv', 'w')
-  writer = csv.writer(file, lineterminator='\n')
+  csv_file = open(filename+'.csv', 'w')
+  writer = csv.writer(csv_file, lineterminator='\n')
 
   # The first row of the file is the keys
   writer.writerow(list(data_dict.keys()))
@@ -62,39 +59,34 @@ def write_to_CSV(data_dict, filename):
 
   # Combine all the dictionary entries so we can write them
   # row-by-row.
-  dd = []
-  for column in data_dict.keys():
-    c = list(data_dict[column])
+  columns_to_write = []
+  for column_key in data_dict.keys():
+    column = list(data_dict[column_key])
     # Create a mask that shows True for any unused "rows"
-    m = np.concatenate([np.zeros(len(c),dtype=bool), 
-                        np.ones(max_rows-len(c), dtype=bool)])
+    m = np.concatenate([np.zeros(len(column),dtype=bool), 
+                        np.ones(max_rows-len(column), dtype=bool)])
     # Create a masked array of size max_rows with unused entries masked
-    d = np.ma.array(np.resize(c, max_rows), mask=m)
+    column_masked = np.ma.array(np.resize(column, max_rows), mask=m)
     # Convert the masked array to an ndarray with the masked values
     # changed to NaNs
-    d = d.filled(np.NaN)
+    column_masked = column_masked.filled(np.NaN)
     # Append this ndarray to our list
-    dd.append(d)
+    columns_to_write.append(column_masked)
   
-  # Combine each column's entries
-  data = np.vstack(dd)
+  # Combine each column's entries into an ndarray
+  data_ndarray = np.vstack(columns_to_write)
 
   # We need the transpose so the individual data lists become transposed
   # to columns
-  data = data.transpose()
+  data_ndarray = data_ndarray.transpose()
   
   # We need in the form of nested sequences to satisfy csv.writer
-  data = data.tolist()
+  rows_to_write = data_ndarray.tolist()
 
-  for row in data:
-    # If data_row is just an integer, we need to wrap it
-    # in a [] since writerow() expects a sequence
-#    if(type(data_row) != list):
-#      writer.writerow([data_row])
-#    else:
+  for row in rows_to_write:
     writer.writerow(list(row))
     
-  file.close()
+  csv_file.close()
 
 
 """----------------------------------------------------
