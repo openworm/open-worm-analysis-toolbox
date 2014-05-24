@@ -54,9 +54,6 @@ def write_to_CSV(data_dict, filename):
   file = open(filename+'.csv', 'w')
   writer = csv.writer(file, lineterminator='\n')
 
-
-  #data_dict['b'] = np.array([4.0,5,6]) # DEBUG
-  
   # The first row of the file is the keys
   writer.writerow(list(data_dict.keys()))
 
