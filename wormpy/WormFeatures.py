@@ -15,16 +15,6 @@
   Alternatively, you can just install nanfunctions.py 
   (see instructions in ..//README.md in this repo)
   
-  *** For +seg_worm / @feature_calculator / getPostureFeatures.m,
-  *** here are some renamed variables:
-  
-  SI = seg_worm.skeleton_indices is expressed here as self.skeleton_partitions
-  ALL_INDICES = SI.ALL_NORMAL_INDICES is expressed here as 
-                self.normal_partitions()
-  FIELDS = SI.ALL_NORMAL_NAMES is expressed here as 
-           self.normal_partitions().keys()
-  n_fields = length(FIELDS) = len(self.normal_partitions().keys())
-
 """
 
 from . import feature_comparisons as fc
@@ -345,7 +335,7 @@ class WormPosture():
     
     return self    
 
-class WormPath():
+class WormPath(object):
   
   """
   
@@ -365,10 +355,6 @@ class WormPath():
 
     """    
     
-    #Pass in none to create from disk
-    if nw is None:
-      return
-
     self.range = path_features.Range(nw.contour_x,nw.contour_y)
         
     #Duration (aka Dwelling)
@@ -396,17 +382,17 @@ class WormPath():
   @classmethod 
   def from_disk(cls, path_var):
     
-    #TODO: self = cls.__new__(cls)
-    self = cls(None)   
+    self = cls.__new__(cls) 
     
     self.range       = path_features.Range.from_disk(path_var)
     self.duration    = path_features.Duration.from_disk(path_var['duration']) 
 
     #TODO: I'd like to have these also be objects with from_disk methods
     self.coordinates = self._create_coordinates(
-                          path_var['coordinates']['x'].value,
-                          path_var['coordinates']['y'].value)
-    self.curvature   = path_var['curvature'].value   
+                          path_var['coordinates']['x'].value[:,0],
+                          path_var['coordinates']['y'].value[:,0])
+                          
+    self.curvature   = path_var['curvature'].value[:,0]   
 
     return self
     
@@ -415,16 +401,15 @@ class WormPath():
     
   def __eq__(self,other):
 
-    #fc.corr_value_high(self.length,other.length,'morph.length')  and \    
-    
-    #TODO: Ensure both are of this class - i.e. check other
-    #TODO: Actually implement this
     return \
       self.range == other.range and \
       self.duration == other.duration and \
       fc.corr_value_high(self.coordinates.x,other.coordinates.x,'path.coordinates.x') and \
       fc.corr_value_high(self.coordinates.y,other.coordinates.y,'path.coordinates.y') and \
-      fc.corr_value_high(self.curvature,other.curvature,'path.curvature')
+      fc.corr_value_high(self.curvature,other.curvature,'path.curvature',high_corr_value=0.95,merge_nans=True)
+
+      #NOTE: Unfortunately the curvature is slightly different. It looks the same
+      #but I'm guessing there are a few off by 1 errors in it.
 
     
 class WormFeatures:

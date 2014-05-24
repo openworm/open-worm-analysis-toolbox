@@ -29,7 +29,9 @@ MIMIC_OLD_BEHAVIOUR = True
 
 # Frames Per Second
 # (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
-FPS = 20                 
+# JAH to MC; Why?
+FPS = 25.8398 #This is the frame rate of the test video. This needs to be moved
+#elsewhere ...                
 VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
 
 

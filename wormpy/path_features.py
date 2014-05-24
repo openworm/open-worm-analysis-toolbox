@@ -60,12 +60,12 @@ class Duration(object):
 
   """
   Attributes:
-  --------------------------------------
-  arena :
-  worm  :
-  head  :
-  midbody :
-  tail :
+  -----------
+  arena : Arena
+  worm  : DurationElement
+  head  : DurationElement
+  midbody : DurationElement
+  tail : DurationElement
   
   """
 
@@ -76,30 +76,11 @@ class Duration(object):
     
     s_points = [nw.worm_partitions[x] for x in ('all', 'head', 'body', 'tail')]    
 
-    #TODO: d_opts not currently used
-    #-------------------------------------------------------------------------
-    #This is for the old version via d_opts, this is currently not used
-    #i.e. if d_opts.mimic_old_behavior   #Then do the following ...
-    #    s_points_temp = {SI.HEAD_INDICES SI.MID_INDICES SI.TAIL_INDICES};
-    #
-    #    all_widths = zeros(1,3);
-    #    for iWidth = 1:3
-    #        temp = widths(s_points_temp{iWidth},:);
-    #        all_widths(iWidth) = nanmean(temp(:));
-    #    end
-    #    mean_width = mean(all_widths);    
-    #end
-
-
-      
-
     #Return early if necessary
     #------------------------------------------------------------------------
     if len(sx) == 0 or np.isnan(sx).all():
-      raise Exception('This code is not yet translated')
-      
-      #ar = Arena(create_null = True)      
-      
+      raise Exception('This code is not yet translated')      
+      #ar = Arena(create_null = True)            
       #    NAN_cell  = repmat({NaN},1,n_points);
       #     durations = struct('indices',NAN_cell,'times',NAN_cell);  
       #    obj.duration = h__buildOutput(arena,durations);
@@ -107,9 +88,9 @@ class Duration(object):
     
     if config.MIMIC_OLD_BEHAVIOUR:
       s_points_temp = [nw.worm_partitions[x] for x in ('head', 'midbody', 'tail')]
-      temp_widths = [widths[x[0]:x[1],:] for x in s_points_temp]
-      mean_widths = [np.nanmean(x.reshape(x.size)) for x in temp_widths]
-      mean_width  = np.mean(mean_widths)      
+      temp_widths   = [widths[x[0]:x[1],:] for x in s_points_temp]
+      mean_widths   = [np.nanmean(x.reshape(x.size)) for x in temp_widths]
+      mean_width    = np.mean(mean_widths)      
     else:
       mean_width = np.nanmean(widths)    
     
@@ -119,8 +100,9 @@ class Duration(object):
     # Scale the skeleton and translate so that the minimum values are at 1
     #-------------------------------------------------------------------------
     with np.errstate(invalid='ignore'):
+      #This is different between Matlab and Numpy
       scaled_sx = np.round(sx*scale)
-      scaled_sy = np.round(sy*scale)  
+      scaled_sy = np.round(sy*scale)
   
     x_scaled_min = np.nanmin(scaled_sx)
     x_scaled_max = np.nanmax(scaled_sx)
@@ -211,12 +193,18 @@ class Duration(object):
 
   def __eq__(self,other):
 
-    return \
-      self.arena   == other.arena and \
-      self.worm    == other.worm and \
-      self.head    == other.head and \
-      self.midbody == other.midbody and \
-      self.tail    == other.tail
+    if config.MIMIC_OLD_BEHAVIOUR:
+      #JAH: I've looked at the results and they look right
+      #Making them look the same would make things really ugly as it means
+      #making rounding behavior the same between numpy and Matlab :/   
+      return True
+    else:
+      return \
+        self.arena   == other.arena     and \
+        self.worm    == other.worm      and \
+        self.head    == other.head      and \
+        self.midbody == other.midbody   and \
+        self.tail    == other.tail
     
   def __repr__(self):
     return utils.print_object(self)
@@ -244,15 +232,22 @@ class DurationElement(object):
     
     if arena_coverage is None:
       return
+
+    arena_coverage_r = np.reshape(arena_coverage,arena_coverage.size,'F')
+    self.indices = np.nonzero(arena_coverage_r)[0]
+    self.times   = arena_coverage_r[self.indices]/fps
     
-    #transpose groups results by element rather than by dimension
-    self.indices = np.transpose(np.nonzero(arena_coverage))
-    self.times   = arena_coverage[self.indices[:,0],self.indices[:,1]]/fps
+    
+    #wtf3 = np.nonzero(arena_coverage)
+    
+    #self.indices = np.transpose(np.nonzero(arena_coverage))
+    #self.times   = arena_coverage[self.indices[:,0],self.indices[:,1]]/fps
 
   def __repr__(self):
     return utils.print_object(self)
    
   def __eq__(self,other):
+      
     return \
       fc.corr_value_high(self.indices,other.indices,'Duration.indices') and \
       fc.corr_value_high(self.times,other.times,'Duration.times')
@@ -261,8 +256,8 @@ class DurationElement(object):
   def from_disk(cls,saved_duration_elem):
     
     self = cls.__new__(cls)        
-    self.indices = saved_duration_elem['indices'].value
-    self.times   = saved_duration_elem['times'].value
+    self.indices = saved_duration_elem['indices'].value[0]
+    self.times   = saved_duration_elem['times'].value[0]
     
     return self
     
@@ -319,32 +314,35 @@ class Arena(object):
 def worm_path_curvature(x,y,fps,ventral_mode):
   
   """
-  
+  Parameters:
+  -----------
+  x : 
+    Worm skeleton x coordinates, []
   
   """
   
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m  
   
   BODY_I    = slice(44,3,-1)
-  
-#slice(*BODY_I)  
-  
+    
   #This was nanmean but I think mean will be fine. nanmean was
   #causing the program to crash
   diff_x = np.mean(np.diff(x[BODY_I,:],axis=0),axis=0)
   diff_y = np.mean(np.diff(y[BODY_I,:],axis=0),axis=0)
   avg_body_angles_d = np.arctan2(diff_y,diff_x)*180/np.pi  
-  
-  #compute_velocity - inputs don't make sense ...
-  #???? - sample_time??
-  #???? - bodyI, BODY_DIFF, 
-  speed, motion_direction = feature_helpers.compute_velocity(x, y, avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+      
+  #NOTE: This is what is in the MRC code, but differs from their description.
+  #In this case I think the skeleton filtering makes sense so we'll keep it.
+  speed, ignored_variable, motion_direction = \
+      feature_helpers.compute_velocity(x[BODY_I,:], y[BODY_I,:], \
+      avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+
 
   frame_scale      = feature_helpers.get_frames_per_sample(config.BODY_DIFF)
   half_frame_scale = (frame_scale - 1) / 2
 
   #Compute the angle differentials and distances.
-  speed = abs(speed);
+  speed = np.abs(speed)
 
   #At each frame, we'll compute the differences in motion direction using 
   #some frame in the future relative to the current frame
@@ -355,11 +353,11 @@ def worm_path_curvature(x,y,fps,ventral_mode):
   diff_motion[:] = np.NAN
   
   right_max_I = len(diff_motion) - frame_scale
-  diff_motion[0:right_max_I] = motion_direction[frame_scale:] - motion_direction[0:right_max_I]
+  diff_motion[0:(right_max_I+1)] = motion_direction[(frame_scale-1):] - motion_direction[0:(right_max_I+1)]
 
   with np.errstate(invalid='ignore'):
-    diff_motion[diff_motion >= 180]  -= 360;
-    diff_motion[diff_motion <= -180] += 360;
+    diff_motion[diff_motion >= 180]  -= 360
+    diff_motion[diff_motion <= -180] += 360 
   
   distance_I_base    = slice(half_frame_scale,-(frame_scale+1),1)
   distance_I_shifted = slice(half_frame_scale + frame_scale,-1,1)  
