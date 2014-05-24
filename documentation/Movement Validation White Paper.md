@@ -28,7 +28,7 @@ OpenWorm’s second goal is for the simulation to be a faithful biological model
 
 Instead, OpenWorm is being developed as a biological model, which will make it straightforward to extract time series data for physiological variables in the model, such as membrane potentials, ionic concentrations, body wall forces, etc.  Consequently, scientists can modify model parameters, run the simulation, extract biological data, and analyze the effects of the perturbation.
 
-The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in *C. elegans* labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations in silico before beginning the expensive and time-consuming work of conducting in vivo experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
+The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in *C. elegans* labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations *in silico* before beginning the expensive and time-consuming work of conducting *in vivo* experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
 
 ###References###
 
