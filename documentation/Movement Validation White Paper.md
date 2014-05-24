@@ -53,3 +53,5 @@ of *Caenorhabditis elegans* behavioral phenotypes. Nature Methods, 10(9):877–8
 
 ###Further Reading###
 [Ince et. al.  The case for open computer programs.  Nature Perspectives, 2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
+
+[Cyrus Omar, Jonathan Aldrich, Richard C. Gerkin.  Collaborative Infrastructure for Test-Driven Scientific Model Valuation.](https://github.com/cyrus-/papers/raw/master/sciunit-icse14/sciunit-icse14.pdf)  ([SciUnit](https://github.com/scidash/sciunit)).  36th International Conference on Software Engineering, Hyderabad, India, 2014.
