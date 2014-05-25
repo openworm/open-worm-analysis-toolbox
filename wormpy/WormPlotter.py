@@ -8,7 +8,7 @@
   This follows the [animated subplots example]
   (http://matplotlib.org/1.3.0/examples/animation/subplots.html)
   in inheriting from TimedAnimation rather than 
-  using PyLab shell-type calls to construct the animation.
+  using PyLab-shell-type calls to construct the animation.
 
 """
 
@@ -25,25 +25,28 @@ from wormpy import config
 class WormPlotter(animation.TimedAnimation):
   
   def __init__(self, normalized_worm, interactive=False):
-    """ Initialize the animation of the worm's attributes.
+    """ 
+    Initialize the animation of the worm's attributes.
 
-        INPUT: 
-          normalized_worm: the NormalizedWorm object to be plotted.
-          
-          interactive: boolean, if interactive is set to False, then:
-          suppress the drawing of the figure, until an explicit plt.show()
-          is called.  this allows WormPlotter to be instantiated without 
-          just automatically being displayed.  Instead, the user must call
-          WormPlotter.show() to have plt.show() be called.
+    Parameters
+    ---------------------------------------
+    normalized_worm: the NormalizedWorm object to be plotted.
+    interactive: boolean
+      if interactive is set to False, then:
+        suppress the drawing of the figure, until an explicit plt.show()
+        is called.  this allows WormPlotter to be instantiated without 
+        just automatically being displayed.  Instead, the user must call
+        WormPlotter.show() to have plt.show() be called.
 
-        To initialize the animation, we must do six things:
-        
-        1. set up the data to be used from the normalized_worm
-        2. create the figure
-        3. create subplots in the figure, assigning them Axis handles
-        4. create Artist objects for all objects in the subplots 
-        5. assign the Artist objects to the correct Axis handle
-        6. call the base class __init__
+    Notes
+    ---------------------------------------
+    To initialize the animation, we must do six things:
+      1. set up the data to be used from the normalized_worm
+      2. create the figure
+      3. create subplots in the figure, assigning them Axis handles
+      4. create Artist objects for all objects in the subplots 
+      5. assign the Artist objects to the correct Axis handle
+      6. call the base class __init__
 
     """
     # A WormPlotter instance can be instantiated to be interactive,
@@ -163,19 +166,22 @@ class WormPlotter(animation.TimedAnimation):
                                              blit=True)
 
   def show(self):
-    """ draw the figure in a window on the screen
+    """ 
+    Draw the figure in a window on the screen
       
     """
     plt.show()
 
   def _draw_frame(self, framedata):
-    """ Called sequentially for each frame of the animation.  Thus
-        we must set our plot to look like it should for the given frame.
+    """ 
+    Called sequentially for each frame of the animation.  Thus
+    we must set our plot to look like it should for the given frame.
         
-      INPUT
-        framedata: 
-          an integer between 0 and the number of frames, giving
-          the current frame.
+    Parameters
+    ---------------------------------------
+    framedata: int
+      An integer between 0 and the number of frames, giving
+      the current frame.
       
     """
 
@@ -217,16 +223,18 @@ class WormPlotter(animation.TimedAnimation):
                            self.annotation4]
 
   def new_frame_seq(self):
-    """ Returns an iterator that iterates over the frames 
-        in the animation
+    """ 
+    Returns an iterator that iterates over the frames 
+    in the animation
       
     """
-    return iter(range(self.normalized_worm.num_frames()))
+    return iter(range(self.normalized_worm.num_frames))
 
   def _init_draw(self):
-    """ Called when first drawing the animation.
-        It is an abstract method in Animation, to be implemented here for
-        the first time.
+    """ 
+    Called when first drawing the animation.
+    It is an abstract method in Animation, to be implemented here for
+    the first time.
       
     """
     artists =  [self.line1W, self.line1W_head, self.line1C,
@@ -240,21 +248,40 @@ class WormPlotter(animation.TimedAnimation):
     #artists.extend([self.annotation2, self.patch1E])
     
 
-  def save(self, filename):
-    """ Save the animation as an mp4.
-        This requires ffmpeg or mencoder to be installed.
-        The extra_args ensure that the x264 codec is used, so that 
-        the video can be embedded in html5.  You may need to adjust 
-        this for your system: for more information, see
-        http://matplotlib.sourceforge.net/api/animation_api.html
-            
-        To install ffmpeg on windows, see
-        http://www.wikihow.com/Install-FFmpeg-on-Windows
+  def save(self, filename, 
+           file_title='C. elegans movement video',
+           file_comment='C. elegans movement video from Schafer lab'):
+    """ 
+    Save the animation as an mp4.
+    
+    Parameters
+    ---------------------------------------
+    filename: string
+      The name of the file to be saved as an mp4.
+
+    file_title: string (optional)
+      A title to be embedded in the file's saved metadata.
+
+    file_comment: string (optional)
+      A comment to be embedded in the file's saved metadata.
+
+    Notes
+    ---------------------------------------
+    Requires ffmpeg or mencoder to be installed.  To install ffmpeg 
+    on Windows, see:
+    http://www.wikihow.com/Install-FFmpeg-on-Windows
+
+    The code specifies extra_args=['-vcodec', 'libx264'], to ensure
+    that the x264 codec is used, so that the video can be embedded 
+    in html5.  You may need to adjust this for your system.  For more 
+    information, see:
+    http://matplotlib.sourceforge.net/api/animation_api.html
         
     """
     FFMpegWriter = animation.writers['ffmpeg']
-    metadata = dict(title='C. elegans movement video', artist='matplotlib',
-                    comment='C. elegans movement video from Shafer lab')
+    metadata = dict(title=file_title, 
+                    artist='matplotlib',
+                    comment=file_comment)
     writer = FFMpegWriter(fps=15, metadata=metadata)
     animation.TimedAnimation.save(self, filename, 
                                   writer=writer, fps=config.FPS, 
@@ -263,21 +290,28 @@ class WormPlotter(animation.TimedAnimation):
 
 
 def plot_frame_codes(normalized_worm):
-  """ Plot a pie chart of the frame codes of a normalized worm.  (An attempt
-      at replicating /documentation/Video%20Segmentation.gif)
-    
+  """ 
+  Plot a pie chart of the frame codes of a normalized worm.  (An 
+  attempt at replicating /documentation/Video%20Segmentation.gif)
+
+  Parameters
+  ---------------------------------------
+  normalized_worm: NormalizedWorm instance
+  
   """  
   # TODO: someday make this pie chart look nicer with:
-  # http://nxn.se/post/46440196846/making-nicer-looking-pie-charts-with-matplotlib
+  # http://nxn.se/post/46440196846/
+  
   nw = normalized_worm
   fc = nw.data_dict['frame_codes']
-  # create a dictionary of    frame code : frame code title   pairs
+
+  # Create a dictionary of    frame code : frame code title   pairs
   fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}
   
-  # a dictionary with the count for each frame code type
+  # A dictionary with the count for each frame code type
   counts = {i:np.bincount(fc)[i] for i in np.unique(fc)}
 
-  # display the pie chart  
+  # Display the pie chart  
   patches, texts, autotexts = plt.pie(x=list(counts.values()), 
           labels=list(fc_desc[d] for d in np.unique(fc)), 
           autopct='%1.1f%%',
@@ -289,6 +323,5 @@ def plot_frame_codes(normalized_worm):
     t.set_size('smaller')
   for t in autotexts:
     t.set_size('x-small')
-  
   
   

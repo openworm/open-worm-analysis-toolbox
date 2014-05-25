@@ -173,8 +173,13 @@ class WormLocomotion():
     
     # DEBUG
     #feature_helpers.write_to_CSV(
-    #      {'Midbody Speed': self.velocity['midbody']['speed']},
-    #      'michaeltest')
+    #      {
+    #        'Midbody Speed': self.velocity['midbody']['speed'],
+    #        'config.FPS': np.array([config.FPS],dtype='float'),
+    #        'lengths': nw.data_dict['lengths']
+    #      },
+    #      'motion_codes_input'
+    #      )
 
     self.motion_codes = \
       feature_helpers.get_motion_codes(midbody_distance, 

@@ -41,7 +41,7 @@ def write_to_CSV(data_dict, filename):
   
   Parameters
   ---------------------------------------
-  data_dict: a dictionary where the values are 1-dimensional numpy arrays
+  data_dict: a dictionary of 1-dim ndarrays of dtype=float
     What is to be written to the file.  data.keys() provide the headers,
     and each column in turn is provided by the value for that key
   filename: string
@@ -63,7 +63,7 @@ def write_to_CSV(data_dict, filename):
   for column_key in data_dict.keys():
     column = list(data_dict[column_key])
     # Create a mask that shows True for any unused "rows"
-    m = np.concatenate([np.zeros(len(column),dtype=bool), 
+    m = np.concatenate([np.zeros(len(column), dtype=bool), 
                         np.ones(max_rows-len(column), dtype=bool)])
     # Create a masked array of size max_rows with unused entries masked
     column_masked = np.ma.array(np.resize(column, max_rows), mask=m)
