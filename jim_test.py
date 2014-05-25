@@ -17,8 +17,8 @@ from wormpy.WormFeatures import WormPosture as wposture
 from wormpy.WormFeatures import WormMorphology as wmorph
 
 
-temp = wpath(nw)
-#temp = wm(nw)
+#temp = wpath(nw)
+#temp = wposture(nw)
 
 #This file was created from the Matlab GUI
 file_path = r'C:\Users\RNEL\Dropbox\worm_data\video\testing_with_GUI\results\mec-4 (u253) off food x_2010_04_21__17_19_20__1_features.mat'
@@ -28,5 +28,5 @@ worm = wf.from_disk(file_path)
 
 #print worm.morphology
 
-print worm.path == temp
+#print worm.path == temp
 

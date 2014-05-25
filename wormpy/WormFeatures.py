@@ -220,7 +220,7 @@ class WormLocomotion():
 
     
 
-class WormPosture():
+class WormPosture(object):
   def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
@@ -302,15 +302,12 @@ class WormPosture():
   def from_disk(cls, p_var):
     
     self = cls.__new__(cls)
+    self.bend = posture_features.Bends.from_disk(p_var['bends'])
+      
 
-    #bends
-    #  .head
-    #    .mean
-    #    .std_dev
-    #  .neck
-    #  .midbody
-    #  .hips
-    #  .tail
+
+    #TODO: JAH at this point
+
     #.amplitude
     #  .max   - ts
     #  .ratio - ts
@@ -412,7 +409,7 @@ class WormPath(object):
       #but I'm guessing there are a few off by 1 errors in it.
 
     
-class WormFeatures:
+class WormFeatures(object):
   """ 
     WormFeatures: takes as input a NormalizedWorm instance, and
     during initialization calculates all the features of the worm.
@@ -425,9 +422,6 @@ class WormFeatures:
   """
   def __init__(self, nw):
 
-    if nw is None:
-      return
-
     self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
     self.posture    = WormPosture(nw)
@@ -439,11 +433,11 @@ class WormFeatures:
     h = h5py.File(file_path,'r')
     worm = h['worm']
     
-    self = cls(None)
+    self = cls.__new__(cls) 
     
     self.morphology = WormMorphology.from_disk(worm['morphology'])
     #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
-    #self.posture    = WormPosture.from_disk(worm['posture'])
+    self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path'])
     
     return self
@@ -459,7 +453,7 @@ class WormFeatures:
     return \
       self.path       == other.path       and \
       self.morphology == other.morphology #and \
-      #self.posture    == other.posture    and \
+      #self.posture    == other.posture    #and \
       #self.locomotion == other.locomotion and \
       #
 

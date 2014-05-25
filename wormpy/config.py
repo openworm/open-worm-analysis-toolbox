@@ -39,11 +39,11 @@ VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
 """ Posture Features """
 #posture_features.get_worm_kinks
 KINK_LENGTH_THRESHOLD_PCT = 1/12 #This the fraction of the worm length
-#that a bend must be in order to be counted. Value is rounded to an 
-#integer sample. Threshold is inclusive.
+#that a bend must be in order to be counted. The # of worm points 
+#(this_value*worm_length_in_samples) is rounded to an integer value. 
+#The threshold value is inclusive.
 
-
-    
+#posture_features.get_eccentricity_and_orientation    
 N_ECCENTRICITY = 50 # Grid size for estimating eccentricity, this is the
 # max # of points that will fill the wide dimension.
 # (scalar) The # of points to place in the long dimension. More points
@@ -62,6 +62,8 @@ POSTURE_AMPLITURE_AND_WAVELENGTH = { \
 POSTURE_AMPLITURE_AND_WAVELENGTH['HALF_N_FFT'] = \
   POSTURE_AMPLITURE_AND_WAVELENGTH['N_POINTS_FFT']/2
 
+
+""" Locomotion Features """
 # used in get_velocity:
 TIP_DIFF  = 0.25
 BODY_DIFF = 0.5
