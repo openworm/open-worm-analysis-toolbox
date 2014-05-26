@@ -26,6 +26,8 @@ from wormpy.WormFeatures import WormFeatures as wf
 
 worm = wf.from_disk(file_path)
 
+print worm.posture
+
 #print worm.morphology
 
 #print worm.path == temp

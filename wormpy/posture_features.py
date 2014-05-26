@@ -350,7 +350,6 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     #Find peaks that are greater than the cutoff  
     peaks,indx = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
-    pdb.set_trace()
     #This is what the supplemental says, not what was done in the previous
     #code. I'm not sure what was done for the actual paper, but I would
     #guess they used power.
@@ -626,7 +625,17 @@ class Directions(object):
       
       dir_value = 180/np.pi*np.arctan2(tip_y - tail_y, tip_x - tail_x)
       setattr(self,NAMES[iVector],dir_value)
-   
+  
+  @classmethod 
+  def from_disk(cls,data):
+    
+    self = cls.__new__(cls)
+    
+    for key in data:
+      setattr(self,key,data[key])
+    
+    return self
+    
         
   def __repr__(self):
     return utils.print_object(self)         

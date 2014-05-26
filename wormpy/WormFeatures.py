@@ -304,33 +304,36 @@ class WormPosture(object):
     self = cls.__new__(cls)
     self.bend = posture_features.Bends.from_disk(p_var['bends'])
       
-
-
-    #TODO: JAH at this point
-
-    #.amplitude
-    #  .max   - ts
-    #  .ratio - ts
-    #.wavelength
-    #  .primary - ts
-    #  .secondary - ts
-    #.track_length - ts (OLD: tracklength)
-    #.eccentricity - ts
-    #.kinks - ts
-    #.coils - event
-    #.directions - 
-    #  .tail2head - ts
-    #  .head - ts
-    #  .tail - ts
-    #.skeleton
-    #  .x - ts
-    #  .y - ts
-    #.eigen_projections [6 x frames] matrix (OLD:eigenProjection)
-
-    import pdb
-    pdb.set_trace()
+    #NOTE: This will be considerably different for old vs new format. Currently
+    #only the old is implemented
+    temp_amp = p_var['amplitude']
+    self.amplitude_max   = temp_amp['max'].value
+    self.amplitude_ratio = temp_amp['ratio'].value
     
-    return self    
+    temp_wave = p_var['wavelength']
+    self.primary_wavelength   = temp_wave['primary']
+    self.secondary_wavelength = temp_wave['secondary']
+
+    self.track_length = p_var['tracklength'].value
+    self.eccentricity = p_var['eccentricity'].value
+    self.kinks        = p_var['kinks'].value
+    
+    #TODO: 
+    #self.coils        =    
+    
+    self.directions   = posture_features.Directions.from_disk(p_var['directions'])    
+      
+      
+    skeleton = p_var['skeleton']
+    nt = collections.namedtuple('skeleton',['x','y'])
+    self.skeleton = nt(skeleton['x'].value,skeleton['y'].value)
+
+    self.eigen_projection = p_var['eigenProjection'].value
+
+    return self
+
+  def __repr__(self):
+    return utils.print_object(self)  
 
 class WormPath(object):
   
