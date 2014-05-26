@@ -492,7 +492,7 @@ class NormalizedWorm():
     s1_rotated = []        
     
     # rotate the worm frame-by-frame and add these skeletons to a list
-    for frame_index in range(self.num_frames()):
+    for frame_index in range(self.num_frames):
       s1_rotated.append(rot_matrix[:,:,frame_index].dot(s1[:,:,frame_index]))
     #print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
       

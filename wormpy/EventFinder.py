@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-  Created on Sun May  4 22:33:36 2014
+  EventFinder.py
   
-  EventFinder.py:  
-  
-  A module for finding the events in the frames of worm videos.
-  
+  A module for finding the motion state of each frame of a worm video.
+
+  Contents
+  ---------------------------------------
   This module contains definitions for the following:
 
   Classes:
@@ -28,19 +28,36 @@
       h__removeGaps
       h__removeEventsByDataSum
       h__removeTooSmallOrLargeEvents
+
+  Usage
+  ---------------------------------------
+  LocomotionFeatures.get_motion_codes() calculates the motion codes for the
+  worm, and to do so, for each of the possible motion states (forward, 
+  backward, paused) it creates an instance of the EventFinder class,
+  sets up appropriate parameters, and then calls EventFinder.get_events()
+  to obtain an instance of EventSimpleStructure, the "result" class.
   
-  (The code for this module came from several files in the 
+  Then to format the result appropriately, the MotionEvent class is 
+  instantiated with our "result" and then get_feature_struct is called.
+  
+  So the flow from within LocomotionFeatures.get_motion_codes() is:
+    # (approximately):
+    ef = EventFinder()
+    ess = ef.get_events()
+    me = MotionEvent(ess)
+    return me.get_feature_struct
+  
+  Notes
+  ---------------------------------------
+  See https://github.com/openworm/movement_validation/blob/master/
+  documentation/Yemini%20Supplemental%20Data/Locomotion.md#2-motion-states
+  for a plain-English description of a motion state.
+
+  The code for this module came from several files in the 
   @event_finder and @EventSimpleStructure folders from:
   https://github.com/JimHokanson/SegwormMatlabClasses/blob/
-    master/%2Bseg_worm/%2Bfeature/ )
-    
-    
-  How to use this module:
-  
-  TODO: ???
-  
-  TODO: describe what the above classes and functions are for
-  
+    master/%2Bseg_worm/%2Bfeature/
+
 """
 
 import numpy as np

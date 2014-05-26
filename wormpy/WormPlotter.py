@@ -24,14 +24,20 @@ from wormpy import config
 
 class WormPlotter(animation.TimedAnimation):
   
-  def __init__(self, normalized_worm, interactive=False):
+  def __init__(self, normalized_worm, motion_mode=None, interactive=False):
     """ 
     Initialize the animation of the worm's attributes.
 
     Parameters
     ---------------------------------------
-    normalized_worm: the NormalizedWorm object to be plotted.
-    interactive: boolean
+    normalized_worm: NormalizedWorm
+      the NormalizedWorm object to be plotted.
+
+    motion_mode: 1-dimensional numpy array (optional)
+      The motion mode of the worm over time.  Must have 
+      length = normalized_worm.num_frames
+
+    interactive: boolean (optional)
       if interactive is set to False, then:
         suppress the drawing of the figure, until an explicit plt.show()
         is called.  this allows WormPlotter to be instantiated without 
@@ -55,6 +61,15 @@ class WormPlotter(animation.TimedAnimation):
     plt.interactive(interactive)
     
     # 1. set up the data to be used
+
+    self.motion_mode = motion_mode
+    self.motion_mode_options = {-1:'backward',
+                                 0:'paused',
+                                 1:'forward'}
+    self.motion_mode_colours = {-1:'b',      # blue
+                                 0:'r',       # red
+                                 1:'g'}      # green
+
     self.normalized_worm = normalized_worm
     # TODO: eventually we'll put this in a nicer place
     self.vulva_contours = self.normalized_worm.data_dict['vulva_contours']
@@ -91,6 +106,24 @@ class WormPlotter(animation.TimedAnimation):
     ax1.set_ylim(self.normalized_worm.position_limits(1))
     #ax1.set_aspect(aspect='equal', adjustable='datalim')
     #ax1.set_autoscale_on()    
+
+    self.annotation1a = ax1.annotate("(motion mode data not available)",
+                                     xy=(-10,10), xycoords='axes points',
+                                     horizontalalignment='right',
+                                     verticalalignment='top',
+                                     fontsize=10)
+
+    self.annotation1b = ax1.annotate("bottom right (points)",
+                                     xy=(-10,10), xycoords='axes points',
+                                     horizontalalignment='right',
+                                     verticalalignment='bottom',
+                                     fontsize=10)
+
+
+    # DEBUG: this doesn't appear to do anything,     
+    #it was an attempt to get it to refresh with diff titles                                    
+    #self.annotation1.animated = True  
+
     
     ax2 = plt.subplot2grid((3,3), (2,0))
     ax2.set_title('Morphology')    
@@ -104,6 +137,8 @@ class WormPlotter(animation.TimedAnimation):
                                                     connectionstyle="arc3,rad=.2"))
 
 
+
+
     ax3 = plt.subplot2grid((3,3), (2,1))
     ax3.set_title('Orientation-free')
     ax3.set_xlim((-500, 500))  # DON'T USE set_xbound, it changes dynmically
@@ -111,11 +146,11 @@ class WormPlotter(animation.TimedAnimation):
     ax3.set_aspect(aspect='equal', adjustable='datalim')
 
     ax4 = plt.subplot2grid((3,3), (2,2))
-    self.annotation4 = ax4.annotate("Segmentation status: ",
-                                    xy=(0,0), xycoords='data',
-                                    xytext=(10, 10), textcoords='data',
-                                    arrowprops=dict(arrowstyle="fancy",
-                                                    connectionstyle="arc3,rad=.2"))
+    #self.annotation4 = ax4.annotate("Segmentation status: ",
+    #                                xy=(0,0), xycoords='data',
+    #                                xytext=(10, 10), textcoords='data',
+    #                                arrowprops=dict(arrowstyle="fancy",
+    #                                                connectionstyle="arc3,rad=.2"))
 
     # 4. create Artist objects 
     self.line1W = Line2D([], [], color='green', linestyle='point marker', 
@@ -135,6 +170,12 @@ class WormPlotter(animation.TimedAnimation):
     self.line3W = Line2D([], [], color='black', marker='o', markersize=5)
     self.line3W_head = Line2D([], [], color='red', linestyle='point marker', 
                               marker='o', markersize=7) 
+    
+    self.artists_to_be_drawn = \
+                          [self.line1W, self.line1C, self.line1W_head, self.patch1E, self.annotation1a, self.annotation1b,
+                           self.line2W, self.line2C, self.line2C2, self.line2W_head, self.annotation2,
+                           self.line3W, self.line3W_head]
+    
     
     # 5. assign Artist objects to the relevant subplot
     ax1.add_line(self.line1W)
@@ -165,6 +206,31 @@ class WormPlotter(animation.TimedAnimation):
                                              interval=interval, 
                                              blit=True)
 
+  @property  
+  def num_frames(self):
+    """
+      Return the total number of frames in the animation
+      
+    """
+    return self.normalized_worm.num_frames
+
+  """
+    motion_mode is a numpy array of length num_frames giving the motion
+    type over time.  it must be loaded from features data as it is not
+    a property of the NormalizedWorm.
+  """
+  @property
+  def motion_mode(self):
+    return self._motion_mode
+  
+  @motion_mode.setter
+  def motion_mode(self, m):
+    self._motion_mode = m
+
+  @motion_mode.deleter
+  def motion_mode(self):
+    del self._motion_mode
+
   def show(self):
     """ 
     Draw the figure in a window on the screen
@@ -187,6 +253,13 @@ class WormPlotter(animation.TimedAnimation):
 
     i = framedata
 
+    # Make the canvas elements visible now
+    # (We made them invisible in _init_draw() so that the first
+    # frame of the animation wouldn't remain stuck on the canvas)
+    for l in self.artists_to_be_drawn:
+      l.set_visible(True)
+
+
     self.line1W.set_data(self.skeletons[:,0,i],
                          self.skeletons[:,1,i])
     self.line1W_head.set_data(self.skeletons[0,0,i],
@@ -195,6 +268,23 @@ class WormPlotter(animation.TimedAnimation):
                          self.vulva_contours[:,1,i])                              
     self.patch1E.center = (self.skeleton_centres[:,i])
     self.patch1E.angle = self.orientation[i]
+
+    # Set the values of our annotation text in the main subplot:
+
+    if self.motion_mode != None:
+      if self.motion_mode[i] == np.NaN:
+        self.patch1E.set_facecolor('w')
+        self.annotation1a.set_text("Motion mode: {}".format('NaN'))
+      else:
+        # Set the colour of the ellipse surrounding the worm to a colour
+        # corresponding to the current motion mode of the worm
+        self.patch1E.set_facecolor(self.motion_mode_colours[
+                                              self.motion_mode[i]])
+        # Annotate the current motion mode of the worm in text
+        self.annotation1a.set_text("Motion mode: {}".format(
+                    self.motion_mode_options[self.motion_mode[i]]))
+
+    self.annotation1b.set_text("Frame {} of {}".format(i, self.num_frames))
     
 
     self.line2W.set_data(self.skeletons_centred[:,0,i],
@@ -207,8 +297,6 @@ class WormPlotter(animation.TimedAnimation):
                           self.skeletons_centred[:,1,i] + (self.non_vulva_contours[:,1,i] - self.skeletons[:,1,i]))
     self.annotation2.xy = (self.skeletons_centred[0,0,i],
                            self.skeletons_centred[0,1,i])
-    self.annotation2.label = 'label'  # DEBUG
-    self.annotation2.text = 'text'    # DEBUG 
 
                             
     self.line3W.set_data(self.skeletons_rotated[:,0,i],
@@ -216,11 +304,7 @@ class WormPlotter(animation.TimedAnimation):
     self.line3W_head.set_data(self.skeletons_rotated[0,0,i],
                               self.skeletons_rotated[0,1,i])
 
-    
-    self._drawn_artists = [self.line1W, self.line1C, self.line1W_head, self.patch1E,
-                           self.line2W, self.line2C, self.line2C2, self.line2W_head, self.annotation2,
-                           self.line3W, self.line3W_head,
-                           self.annotation4]
+    self._drawn_artists = self.artists_to_be_drawn
 
   def new_frame_seq(self):
     """ 
@@ -243,6 +327,12 @@ class WormPlotter(animation.TimedAnimation):
 
     for l in artists:
       l.set_data([], [])
+
+    # Keep the drawing elements invisible for the first frame to avoid
+    # the first frame remaining on the canvas
+    for l in self.artists_to_be_drawn:
+      l.set_visible(False)
+
     
     # TODO: figure out how to clear the non-line elements
     #artists.extend([self.annotation2, self.patch1E])
