@@ -66,24 +66,25 @@ BODY_DIFF = 0.5
 
 
 # Used in get_motion_codes:
-
-#   These are a percentage of the length ...
+#-------------------------------
+# Interpolate only this length of NaN run; anything longer is
+# probably an omega turn.
+# If set to "None", interpolate all lengths (i.e. infinity)
+MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE = None
+# These are a percentage of the length
 SPEED_THRESHOLD_PCT   = 0.05
 DISTANCE_THRSHOLD_PCT = 0.05
 PAUSE_THRESHOLD_PCT   = 0.025
-
 #   These are times (s)
 EVENT_FRAMES_THRESHOLD = 0.5    # Half a second
 EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
-
 # Used in EventFinder
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
 
-# Interpolate only this length of NaN run; anything longer is
-# probably an omega turn.
-# If set to "None", interpolate all lengths (i.e. infinity)
-LONGEST_NAN_RUN_TO_INTERPOLATE = None
+
+
+
 
 
 # used in WormPosture

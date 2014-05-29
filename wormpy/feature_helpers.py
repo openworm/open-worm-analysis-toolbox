@@ -21,9 +21,7 @@ import csv
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
-from .EventFinder import MotionEvent   # DEBUG: is this a duplicate of
-                                       #        EventFinder? Not sure I 
-                                       #        understand Jim's code here.
+from .EventFinder import EventOutputStructure  
 
 import matplotlib.pyplot as plt
 
@@ -200,7 +198,9 @@ def interpolate_with_threshold(array, threshold=None):
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
   """ 
-  Calculate motion codes (a locomotion feature)
+  Calculate motion codes of the locomotion events
+
+  A locomotion feature.
 
   See feature description at 
     /documentation/Yemini%20Supplemental%20Data/Locomotion.md
@@ -224,10 +224,6 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
                 1 = forward locomotion
 
   """
-
-  # Compute the locomotion events.
-  #--------------------------------------------------------------------------
-  
   # Initialize the worm speed and video frames.
   num_frames = len(midbody_speed)
   
@@ -237,86 +233,89 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
 
   #  Interpolate the missing lengths.
-  skeleton_lengths = \
-    interpolate_with_threshold(skeleton_lengths, 
-                               config.LONGEST_NAN_RUN_TO_INTERPOLATE)
+  skeleton_lengths = interpolate_with_threshold(skeleton_lengths, 
+                 config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
 
-  #==========================================================================
+  #===================================
+  # SPACE CONSTRAINTS
   # Make the speed and distance thresholds a fixed proportion of the 
   # worm's length at the given frame:
   worm_speed_threshold    = skeleton_lengths * config.SPEED_THRESHOLD_PCT
   worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT 
+  worm_pause_threshold    = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
   
-  #Forward stuffs
-  #--------------------------------------------------------------------------
+  # Minimum speed and distance required for movement to 
+  # be considered "forward"
   min_forward_speed    = worm_speed_threshold
   min_forward_distance = worm_distance_threshold
   
-  #Backward stuffs
-  #--------------------------------------------------------------------------
+  # Minimum speed and distance required for movement to 
+  # be considered "backward"
   max_backward_speed    = -worm_speed_threshold
   min_backward_distance = worm_distance_threshold
   
-  #Paused stuffs
-  #--------------------------------------------------------------------------
-  worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
+  # Boundaries between which the movement would be considered "paused"
   min_paused_speed     = -worm_pause_threshold
   max_paused_speed     = worm_pause_threshold
 
-  # Three lists, with entry 0 for forward,
-  #                   entry 1 for backward,
-  #                   entry 2 for paused.
   # Note that there is no maximum forward speed nor minimum backward speed.
+  frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+  min_speeds   = {'forward': min_forward_speed, 
+                  'backward': [], 
+                  'paused': min_paused_speed}
+  max_speeds   = {'forward': [], 
+                  'backward': max_backward_speed, 
+                  'paused': max_paused_speed}
+  min_distance = {'forward': min_forward_distance, 
+                  'backward': min_backward_distance, 
+                  'paused': []}
 
-  motion_codes  = ['forward', 'backward', 'paused']
-  frame_values  = [1,         -1,         0       ]
-
-  min_speeds   = [min_forward_speed, [], min_paused_speed]
-  max_speeds   = [[], max_backward_speed, max_paused_speed]
-  min_distance = [min_forward_distance, min_backward_distance, []]
-
-
-  #--------------------------------------------------------------------------
+  #===================================
+  # TIME CONSTRAINTS
+  # The minimum number of frames an event had to be taking place for
+  # to be considered a legitimate event
   worm_event_frames_threshold = \
     config.FPS * config.EVENT_FRAMES_THRESHOLD
+  # Maximum number of contiguous contradicting frames within the event
+  # before the event is considered to be over.
   worm_event_min_interframes_threshold = \
     config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
+  # This is the dictionary this function will return.  Keys will be:
+  # 
   all_events_dict = {}
 
-  # Start with a blank numpy array, full of NaNs:
-  motion_mode = np.zeros(num_frames, dtype='float') * np.NaN
+  # Start with a blank numpy array, full of NaNs: 
+  all_events_dict['mode'] = np.zeros(num_frames, dtype='float') * np.NaN
 
-  for i_type in range(0, 3):
+  for motion_type in frame_values:
     # Determine when the event type occurred
     ef = EventFinder()
 
     ef.include_at_thr       = True
     ef.minum_frames_thr     = worm_event_frames_threshold
-    ef.min_sum_thr          = min_distance[i_type]
+    ef.min_sum_thr          = min_distance[motion_type]
     ef.include_at_sum_thr   = True
     ef.data_for_sum_thr     = distance_per_frame
     ef.min_inter_frames_thr = worm_event_min_interframes_threshold
 
     
     frames_temp = ef.get_events(midbody_speed,
-                                min_speeds[i_type],
-                                max_speeds[i_type])
+                                min_speeds[motion_type],
+                                max_speeds[motion_type])
 
     """  DEBUG: @MichaelCurrie: code not ready yet!
     # Obtain only events entirely before the num_frames intervals
     mask = frames_temp.get_event_mask(num_frames)
 
-    # Assign event type to relevant frames
-    motion_mode[mask] = frame_values[i_type]
+    # Assign event type to relevant frames of all_events_dict['mode']
+    all_events_dict['mode'][mask] = frame_values[motion_type]
 
     # Take the start and stop indices and convert them to the structure
     # used in the feature files
-    temp = MotionEvent(frames_temp, distance_per_frame)
-    all_events_dict[motion_codes[i_type]] = temp.get_feature_struct()
+    m_event = EventOutputStructure(frames_temp, distance_per_frame)
+    all_events_dict[motion_type] = m_event.get_feature_struct()
     """
-    
-  all_events_dict['mode'] = motion_mode
   
   return all_events_dict
 
