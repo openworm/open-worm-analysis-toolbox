@@ -164,9 +164,9 @@ with warnings.catch_warnings():
 
 # I just saved a plaintext file with the motioncodes extracted from
 # the features result file, by viewing the results file using HDFView
-#motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
-#wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
-#wp.show()
+motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
+wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
+wp.show()
 
 
 # At this point we could save the plot to a file:

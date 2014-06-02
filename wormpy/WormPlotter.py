@@ -272,7 +272,7 @@ class WormPlotter(animation.TimedAnimation):
     # Set the values of our annotation text in the main subplot:
 
     if self.motion_mode != None:
-      if self.motion_mode[i] == np.NaN:
+      if np.isnan(self.motion_mode[i]):
         self.patch1E.set_facecolor('w')
         self.annotation1a.set_text("Motion mode: {}".format('NaN'))
       else:

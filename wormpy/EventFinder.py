@@ -22,6 +22,13 @@
   
   Helper functions (should not be needed outside this module), called 
     in order by EventFinder.get_events():
+      get_possible_events_by_threshold
+      get_start_stop_indices
+      unify_events
+      remove_gaps
+      remove_events_by_data_sum
+      remove_too_small_or_large_events
+
       h__getPossibleEventsByThreshold
       h__getStartStopIndices  
       h__unifyEvents
