@@ -68,6 +68,8 @@
 """
 
 import numpy as np
+from itertools import groupby
+
 
 class EventSimpleStructure:
   """
@@ -190,86 +192,87 @@ class EventFinder:
     # Options
     self.include_at_threshold = False
     
-    #Sample-based
-    self.min_frames_threshold = []
-    self.max_frames_threshold = []
+    # Temporal thresholds
+    self.min_frames_threshold = None #(scalar or [1 x n_frames])
+    self.max_frames_threshold = None #(scalar or [1 x n_frames])
     self.include_at_frames_threshold = False    
+    self.min_inter_frames_threshold = None #(scalar or [1 x n_frames])
+    self.include_at_inter_frames_threshold = False
+
     
-    #Data-based    
-    self.min_sum_threshold = [] #(scalar or [1 x n_frames])
-    self.max_sum_threshold = [] #(scalar or [1 x n_frames])
-    self.include_at_sum_threshold = False
-       
+    # Space (distance) and space&time (speed) thresholds
+    self.min_distance_threshold = None #(scalar or [1 x n_frames])
+    self.max_distance_threshold = None #(scalar or [1 x n_frames])
+    self.include_at_distance_threshold = False
+    self.min_speed_threshold = None #(scalar or [1 x n_frames])
+    self.max_speed_threshold = None #(scalar or [1 x n_frames])
+    self.include_at_speed_threshold = False
+
+
     # The data for thresholding based on the sum, if empty the event
     # data is used
-    self.data_for_sum_threshold = [] 
+    # I don't understand the use of the term "sum" here, aren't we just
+    # thresholding based on "distance"?  I'm going to omit this
+    # functionality - @MichaelCurrie
+    #self.data_for_sum_threshold = [] 
        
-    # Sample-based
-    self.min_inter_frames_threshold = []
-    # @JimHokanson: ??? When would anyone want to join events if 
-    # the time between them is too long???
-    self.max_inter_frames_threshold = [] 
-    self.include_at_inter_frames_threshold = False
-       
+    """
+    #DEBUG: get rid of soon
     # @JimHokanson: This won't work, old code didn't support it
     # Data-based
-    self.min_inter_sum_threshold = []
-    self.max_inter_sum_threshold = []
+    self.min_inter_sum_threshold = None
+    self.max_inter_sum_threshold = None
     self.include_at_inter_sum_threshold = False
-  
-  def get_events(self, data, min_threshold, max_threshold):
     """
-    Old Name: findEvent.m
+  
+  def get_events(self, event_data):
+    """
+    Obtain the events implied by event_data, given how this instance
+    of EventFinder has been configured.
     
     Parameters
     ---------------------------------------
-    data    : [1 x n_frames]
-    min_threshold : [1 x n_frames]
-    max_threshold : [1 x n_frames]
+    event_data   : 1-d numpy array of length n
+      The events to be extracted
     
     Returns
     ---------------------------------------
     An instance of class EventSimpleStructure
 
-    Implementation Notes:
+    Notes:
     ---------------------------------------
     If the first/last event are solely preceded/followed by NaN
     frames, these frames are swallowed into the respective event.
-    
+
+    Formerly getEvents.m.  Originally it was findEvent.m.  
+
     """
     
     # Fix the data.
     # @MichaelCurrie: I don't understand what is going on here.  Why do
     # we need to copy the arrays passed as parameters?  Here I am 
     # directly copying @JimHokanson's MATLAB code without understanding.
-    data = np.copy(data)    
-    data_for_sum_threshold = np.copy(self.data_for_sum_threshold)
+    #event_data = np.copy(event_data)    
+    #data_for_sum_threshold = np.copy(self.data_for_sum_threshold)
     
-    if len(data_for_sum_threshold) == 0:
-      self.data_for_sum_threshold = np.copy(data)
+    #if len(data_for_sum_threshold) == 0:
+    #  self.data_for_sum_threshold = np.copy(event_data)
 
-    min_threshold = np.copy(min_threshold)
-    max_threshold = np.copy(max_threshold)
-
-
-    # For each frame, determine if it matches our threshold criteria
-    event_mask = self.get_possible_events_by_threshold(data, 
-                                                       min_threshold, 
-                                                       max_threshold)
-    """
+    # For each frame, determine if it matches our speed threshold criteria
+    speed_mask = self.get_speed_threshold_mask(event_data)
+    
     # Get indices for runs of data matching criteria
-    [start_frames, end_frames] = self.get_start_stop_indices(data, event_mask)
-    
-    # Possible short circuit ...
-    if(len(start_frames)==0):
+    starts_and_stops = self.get_start_stop_indices(event_data, speed_mask)
+
+    # Possible short circuit: if we have absolutely no qualifying events 
+    # in event_data, just exit early.
+    if(not starts_and_stops):
       return EventSimpleStructure()
-    
+
+    """
     # In this function we remove gaps between events if the gaps are too small
     #(min_inter_frames_threshold) or too large (max_inter_frames_threshold)
-    [start_frames, end_frames] = self.h__unifyEvents(start_frames, end_frames, 
-                                       self.min_inter_frames_threshold,
-                                       self.max_inter_frames_threshold,
-                                       self.include_at_inter_frames_threshold)
+    [start_frames, end_frames] = self.unify_events(start_frames, end_frames)
     
     # @JimHokanson: Is this really the same thing twice with 
     #               different values ???? I'm  99% sure this 
@@ -288,17 +291,11 @@ class EventFinder:
     
     # Filter events based on length
     [start_frames,end_frames] = \
-      self.h__removeTooSmallOrLargeEvents(start_frames, end_frames,
-                                     self.min_frames_threshold, 
-                                     self.max_frames_threshold,
-                                     self.include_at_frames_threshold)
-    
+      self.remove_too_small_or_large_events(start_frames, end_frames)
+      
     # Filter events based on data sums during event
     [start_frames,end_frames] = \
-      self.h__removeEventsByDataSum(start_frames, end_frames,
-                               self.min_sum_threshold, 
-                               self.max_sum_threshold,
-                               self.include_at_sum_threshold, 
+      self.remove_events_by_data_sum(start_frames, end_frames,
                                data_for_sum_threshold)
     
     return EventSimpleStructure(start_frames, end_frames)
@@ -306,20 +303,20 @@ class EventFinder:
     return EventSimpleStructure()
 
   
-  def get_possible_events_by_threshold(self, data, min_threshold, 
-                                                   max_threshold):
+  def get_speed_threshold_mask(self, event_data):
     """
-    Get possible events by threshold
+    Get possible events between the speed thresholds.  Return a mask
     
     Parameters
     ---------------------------------------
-    data
-    min_threshold
-    max_threshold
+    event_data: 1-d numpy array of instantaneous worm speeds
     
     Returns
     ---------------------------------------
-    event_mask
+    A 1-d boolean numpy array masking any instantaneous speeds falling
+    frame-by-frame within the boundaries specified by 
+    self.min_speed_threshold and self.max_speed_threshold, 
+    which are themselves 1-d arrays.
   
     Notes
     ---------------------------------------
@@ -327,45 +324,52 @@ class EventFinder:
     seg_worm/feature/event_finder/getEvents.m
     
     """
-    pass
-    """
-    # Start with a mask of all True
-    event_mask = np.ones((len(data)), dtype=bool)
 
-    if min_threshold.size > 0:      # if min_threshold is not empty
-        if self.include_at_threshold:
-            event_mask = data >= min_threshold
+    # Start with a mask that's all True since if neither min or max thresholds 
+    # were set there was nothing to mask.
+    event_mask = np.ones((len(event_data)), dtype=bool)
+
+    # If min_speed_threshold has been initialized to something...
+    if self.min_speed_threshold != None:  
+        if self.include_at_speed_threshold:
+            event_mask = event_data >= self.min_speed_threshold
         else:
-            event_mask = data > min_threshold
+            event_mask = event_data > self.min_speed_threshold
     
-    if max_threshold.size > 0:
-        if self.include_at_threshold:
-            event_mask = event_mask & data <= max_threshold
+    # If max_speed_threshold has been initialized to something...
+    if self.max_speed_threshold != None:
+        if self.include_at_speed_threshold:
+            event_mask = event_mask & (event_data <= self.max_speed_threshold)
         else:
-            event_mask = event_mask & data < max_threshold
-    """
-  
-  def h__getStartStopIndices(self, data, event_mask):
+            event_mask = event_mask & (event_data < self.max_speed_threshold)
+
+    return event_mask  
+
+
+  def get_start_stop_indices(self, event_data, event_mask):
     """
     From a numpy event mask, get the start and stop indices.  For
     example:
 
-    0 1 2 3  4 5 6 <- true indices
-    x n n y  y n n <- event
-    0 0 1 0 -1 0   <- diffs, 1 indicates start, -1 indicates end
-    1 2 3 4  5 6   <- indices of diffs
-        s    e     <- start and end
-    start matches its index
-    end is off by 1
+      0 1 2 3 4 5   <- true indices
+      F F T T F F   <- event_mask
+    F F F T T F F F <- bracketed_event_mask
+          s s       <- start and stop
+    So in this case we'd have as an output [(2,3)], for the one run 
+    that starts at 2 and ends at 3.
     
     Parameters
     ---------------------------------------
-    data
-    event_mask
+    event_data: 1-d float numpy array 
+      Instantaneous worm speeds
+    event_mask: 1-d boolean numpy array 
+      True if the frame is a possible event candidate for this event.
     
     Returns
     ---------------------------------------
-    [starts, stops]
+    starts_and_stops: 2-d int numpy array
+      An array of tuples giving the start and stop, respectively,
+      of each run of Trues in the event_mask.
   
     Notes
     ---------------------------------------
@@ -373,24 +377,102 @@ class EventFinder:
     seg_worm/feature/event_finder/getEvents.m
     
     """
-    pass
-    """
+    # Make sure our parameters are of the correct type and dimension
+    assert(type(event_data) == np.ndarray)
+    assert(type(event_mask) == np.ndarray)
+    assert(len(np.shape(event_data)) == 1)
+    assert(np.shape(event_data) == np.shape(event_mask))
+    assert(event_mask.dtype == bool)
+    assert(event_data.dtype == float)
+    
     # We concatenate falses to ensure event starts and stops at the edges
     # are caught
-    dEvent = diff([false; event_mask; false]);
+    bracketed_event_mask = np.concatenate([[False], event_mask, [False]])
+
+
+    # Let's obtain the "x-coordinates" of the True entries.
+    # e.g. If our bracketed_event_mask is
+    # [False, False, False, True, False True, True, True, False], then
+    # we obtain the array [3, 5, 6, 7]
+    x = np.flatnonzero(bracketed_event_mask)
+
+    # Group these together using a fancy trick from 
+    # http://stackoverflow.com/questions/2154249/, since
+    # the lambda function x:x[0]-x[1] on an enumerated list will
+    # group consecutive integers together
+    # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
+    x_grouped = [list(group) for key, group in groupby(enumerate(x), 
+                                                       lambda i:i[0]-i[1])]
+
+    # We want to know the first element from each "run", and the last element
+    # e.g. [[3, 4], [5, 7]]
+    starts_and_stops = [(i[0][1], i[-1][1]) for i in x_grouped]
+
+    # Early exit if we have no starts and stops at all
+    if not starts_and_stops:
+      return starts_and_stops
     
-    starts = find(dEvent == 1)
-    stops  = find(dEvent == -1) - 1
+    # If a run of NaNs precedes the first start index, all the way back to 
+    # the first element, then revise our first (start, stop) entry to include
+    # all those NaNs.
+    if np.all(np.isnan(event_data[:starts_and_stops[0][0]])):
+      starts_and_stops[0] = (0, starts_and_stops[0][1])
     
-    if isempty(starts):
-        return
+    # Same but with NaNs succeeding the final end index.    
+    if np.all(np.isnan(event_data[starts_and_stops[-1][1]:])):
+      starts_and_stops[-1] = (starts_and_stops[-1][0], event_data.size-1)
+      
+    return starts_and_stops
+
+  
+  def h__unifyEvents(self, starts_and_stops):
+    """
+    Combine events where the # of frames between them is less than
+    self.min_inter_frames_threshold (or if 
+    self.include_at_inter_frames_threshold == True, less than OR EQUAL to
+    self.min_inter_frames_threshold).
     
-    # Include NaNs at the start and end.
-    if all(isnan(data(1:(starts(1)-1)))):
-        starts(1) = 1
+    Parameters
+    ---------------------------------------
+    starts_and_stops: an array of (start, stop) duples
     
-    if all(isnan(data((stops(end)+1):end))):
-        stops(end) = length(data)
+    Returns
+    ---------------------------------------
+    new_starts_and_stops: an array of (start, stop) duples satisfying 
+    the above.
+    
+    """
+    
+    
+    #
+    #
+    #   These functions are run on the time between frames
+    #
+    """
+    #NOTE: This function could also exist for:
+    #- min_inter_sum_threshold
+    #- max_inter_sum_threshold
+    #
+    #   but the old code did not include any event_data in:
+    #   h__removeGaps
+    
+    # Unify small time gaps.
+    #Translation: if the gap between events is small, merge the events
+    if len(min_inter_frames_threshold) > 0: #~isempty(min_inter_frames_threshold):
+        if include_at_inter_frames_threshold:
+            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_threshold,@le); #  <=
+        else: # the threshold is exclusive
+            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_threshold,@lt); #  <
+    
+    #????? - when would this one ever be useful??????
+    # Unify large time gaps.
+    #Translation: if the gap between events is large, merge the events
+    if ~isempty(max_inter_frames_threshold):
+        if include_at_inter_frames_threshold:
+            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_threshold,@ge); #  >=
+        else:
+            # the threshold is exclusive
+            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_threshold,@gt); #  >=
     """
     pass
   
@@ -427,59 +509,6 @@ class EventFinder:
       """
       # Advance.
       i += 1
-  
-  
-  
-  def h__unifyEvents(self, start_frames, end_frames, 
-                     min_inter_frames_threshold, max_inter_frames_threshold, 
-                     include_at_inter_frames_threshold):
-    """
-    
-    Parameters
-    ---------------------------------------
-    start_frames:
-    end_frames:
-    
-    Returns
-    ---------------------------------------
-    [start_frames,end_frames]
-  
-    
-    """
-    
-    
-    #
-    #
-    #   These functions are run on the time between frames
-    #
-    """
-    #NOTE: This function could also exist for:
-    #- min_inter_sum_threshold
-    #- max_inter_sum_threshold
-    #
-    #   but the old code did not include any data in:
-    #   h__removeGaps
-    
-    # Unify small time gaps.
-    #Translation: if the gap between events is small, merge the events
-    if len(min_inter_frames_threshold) > 0: #~isempty(min_inter_frames_threshold):
-        if include_at_inter_frames_threshold:
-            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_threshold,@le); #  <=
-        else: # the threshold is exclusive
-            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,min_inter_frames_threshold,@lt); #  <
-    
-    #????? - when would this one ever be useful??????
-    # Unify large time gaps.
-    #Translation: if the gap between events is large, merge the events
-    if ~isempty(max_inter_frames_threshold):
-        if include_at_inter_frames_threshold:
-            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_threshold,@ge); #  >=
-        else:
-            # the threshold is exclusive
-            [start_frames,end_frames] = h__removeGaps(start_frames,end_frames,max_inter_frames_threshold,@gt); #  >=
-    """
-    pass
-  
   
   
   
@@ -530,8 +559,8 @@ class EventFinder:
     
     
   def h__removeEventsByDataSum(self, start_frames, end_frames,
-                               min_sum_threshold, max_sum_threshold,
-                               include_at_sum_threshold, data_for_sum_threshold):
+                               min_distance_threshold, max_distance_threshold,
+                               include_at_distance_threshold, data_for_sum_threshold):
     """
     
     Parameters
@@ -544,7 +573,7 @@ class EventFinder:
     
     """
   
-    if len(min_sum_threshold) == 0 and len(max_sum_threshold) == 0:
+    if len(min_distance_threshold) == 0 and len(max_distance_threshold) == 0:
        return 
     
     """    
@@ -557,40 +586,40 @@ class EventFinder:
     end
     
     # Compute the event sum thresholds.
-    if length(min_sum_threshold) > 1 #i.e. if not a scaler
+    if length(min_distance_threshold) > 1 #i.e. if not a scaler
         newMinSumThr = nan(size(eventSums));
         for i = 1:length(newMinSumThr)
-            newMinSumThr(i) = nanmean(min_sum_threshold((start_frames(i)):(end_frames(i))));
+            newMinSumThr(i) = nanmean(min_distance_threshold((start_frames(i)):(end_frames(i))));
         end
-        min_sum_threshold = newMinSumThr;
+        min_distance_threshold = newMinSumThr;
     end
     
-    if length(max_sum_threshold) > 1
+    if length(max_distance_threshold) > 1
         newMaxSumThr = nan(size(eventSums));
         for i = 1:length(newMaxSumThr)
-            newMaxSumThr(i) = nanmean(max_sum_threshold((start_frames(i)):(end_frames(i))));
+            newMaxSumThr(i) = nanmean(max_distance_threshold((start_frames(i)):(end_frames(i))));
         end
-        max_sum_threshold = newMaxSumThr;
+        max_distance_threshold = newMaxSumThr;
     end
         
     #Actual filtering of the data
     #------------------------------------------------------------------
     # Remove small events.
     removeEvents = false(size(eventSums));
-    if ~isempty(min_sum_threshold)
-        if include_at_sum_threshold
-            removeEvents = eventSums <= min_sum_threshold;
+    if ~isempty(min_distance_threshold)
+        if include_at_distance_threshold
+            removeEvents = eventSums <= min_distance_threshold;
         else
-            removeEvents = eventSums < min_sum_threshold;
+            removeEvents = eventSums < min_distance_threshold;
         end
     end
     
     # Remove large events.
-    if ~isempty(max_sum_threshold)
-        if include_at_sum_threshold
-            removeEvents =  removeEvents | eventSums >= max_sum_threshold;
+    if ~isempty(max_distance_threshold)
+        if include_at_distance_threshold
+            removeEvents =  removeEvents | eventSums >= max_distance_threshold;
         else
-            removeEvents =  removeEvents | eventSums > max_sum_threshold;
+            removeEvents =  removeEvents | eventSums > max_distance_threshold;
         end
     end
     

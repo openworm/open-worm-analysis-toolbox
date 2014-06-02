@@ -81,7 +81,9 @@ EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
 # Used in EventFinder
 DATA_SUM_NAME       = 'distance'
 INTER_DATA_SUM_NAME = 'interDistance'
-
+# Whether to use >= or > as the comparison:
+INCLUDE_AT_SPEED_THRESHOLD = True  
+INCLUDE_AT_DISTANCE_THRESHOLD = True
 
 
 

@@ -261,14 +261,14 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   # Note that there is no maximum forward speed nor minimum backward speed.
   frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
   min_speeds   = {'forward': min_forward_speed, 
-                  'backward': [], 
+                  'backward': None, 
                   'paused': min_paused_speed}
-  max_speeds   = {'forward': [], 
+  max_speeds   = {'forward': None, 
                   'backward': max_backward_speed, 
                   'paused': max_paused_speed}
   min_distance = {'forward': min_forward_distance, 
                   'backward': min_backward_distance, 
-                  'paused': []}
+                  'paused': None}
 
   #===================================
   # TIME CONSTRAINTS
@@ -286,23 +286,22 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   all_events_dict = {}
 
   # Start with a blank numpy array, full of NaNs: 
-  all_events_dict['mode'] = np.zeros(num_frames, dtype='float') * np.NaN
+  all_events_dict['mode'] = np.empty(num_frames, dtype='float') * np.NaN
 
   for motion_type in frame_values:
     # Determine when the event type occurred
     ef = EventFinder()
 
-    ef.include_at_thr       = True
-    ef.minum_frames_thr     = worm_event_frames_threshold
-    ef.min_sum_thr          = min_distance[motion_type]
-    ef.include_at_sum_thr   = True
-    ef.data_for_sum_thr     = distance_per_frame
-    ef.min_inter_frames_thr = worm_event_min_interframes_threshold
-
+    ef.include_at_threshold          = config.INCLUDE_AT_SPEED_THRESHOLD
+    ef.min_frames_threshold          = worm_event_frames_threshold
+    ef.min_distance_threshold        = min_distance[motion_type]
+    ef.min_speed_threshold           = min_speeds[motion_type]
+    ef.max_speed_threshold           = max_speeds[motion_type]
+    ef.include_at_distance_threshold = config.INCLUDE_AT_DISTANCE_THRESHOLD
+    ef.data_for_sum_threshold        = distance_per_frame
+    ef.min_inter_frames_threshold    = worm_event_min_interframes_threshold
     
-    frames_temp = ef.get_events(midbody_speed,
-                                min_speeds[motion_type],
-                                max_speeds[motion_type])
+    frames_temp = ef.get_events(midbody_speed)
 
     """  DEBUG: @MichaelCurrie: code not ready yet!
     # Obtain only events entirely before the num_frames intervals
