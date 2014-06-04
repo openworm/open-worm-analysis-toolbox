@@ -15,22 +15,78 @@ import warnings
 import numpy as np
 from itertools import groupby
 
-#np.seterr(all='raise')
+#np.seterr(all='raise')           # DEBUG
 
+import csv
 from . import utils
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
+from .EventFinder import EventOutputStructure  
 
 import matplotlib.pyplot as plt
 
-#import pdb
+import pdb
 
 __ALL__ = ['get_motion_codes',                  # for locomotion
            'get_worm_velocity',                 # for locomotion
            'get_bends',                         # for posture
            'get_amplitude_and_wavelength',      # for posture
            'get_eccentricity_and_orientation']  # for posture
+
+def write_to_CSV(data_dict, filename):
+  """
+  Writes data to a CSV file, by saving it to the directory os.getcwd()
+  
+  Parameters
+  ---------------------------------------
+  data_dict: a dictionary of 1-dim ndarrays of dtype=float
+    What is to be written to the file.  data.keys() provide the headers,
+    and each column in turn is provided by the value for that key
+  filename: string
+    Name of file to be saved (not including the '.csv' part of the name)
+  
+  """
+  csv_file = open(filename+'.csv', 'w')
+  writer = csv.writer(csv_file, lineterminator='\n')
+
+  # The first row of the file is the keys
+  writer.writerow(list(data_dict.keys()))
+
+  # Find the maximum number of rows across all our columns:
+  max_rows = max([len(x) for x in list(data_dict.values())])
+
+  # Combine all the dictionary entries so we can write them
+  # row-by-row.
+  columns_to_write = []
+  for column_key in data_dict.keys():
+    column = list(data_dict[column_key])
+    # Create a mask that shows True for any unused "rows"
+    m = np.concatenate([np.zeros(len(column), dtype=bool), 
+                        np.ones(max_rows-len(column), dtype=bool)])
+    # Create a masked array of size max_rows with unused entries masked
+    column_masked = np.ma.array(np.resize(column, max_rows), mask=m)
+    # Convert the masked array to an ndarray with the masked values
+    # changed to NaNs
+    column_masked = column_masked.filled(np.NaN)
+    # Append this ndarray to our list
+    columns_to_write.append(column_masked)
+  
+  # Combine each column's entries into an ndarray
+  data_ndarray = np.vstack(columns_to_write)
+
+  # We need the transpose so the individual data lists become transposed
+  # to columns
+  data_ndarray = data_ndarray.transpose()
+  
+  # We need in the form of nested sequences to satisfy csv.writer
+  rows_to_write = data_ndarray.tolist()
+
+  for row in rows_to_write:
+    writer.writerow(list(row))
+    
+  csv_file.close()
+
 
 """----------------------------------------------------
     motion codes:
@@ -83,6 +139,7 @@ def interpolate_with_threshold(array, threshold=None):
     # the other but not both.
     assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
     frame_dropped = frames_with_at_least_one_NaN
+
   """
   
   assert(threshold == None or threshold >= 0)
@@ -142,7 +199,9 @@ def interpolate_with_threshold(array, threshold=None):
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
   """ 
-  Calculate motion codes (a locomotion feature)
+  Calculate motion codes of the locomotion events
+
+  A locomotion feature.
 
   See feature description at 
     /documentation/Yemini%20Supplemental%20Data/Locomotion.md
@@ -166,10 +225,6 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
                 1 = forward locomotion
 
   """
-
-  # Compute the locomotion events.
-  #--------------------------------------------------------------------------
-  
   # Initialize the worm speed and video frames.
   num_frames = len(midbody_speed)
   
@@ -179,85 +234,88 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
 
   #  Interpolate the missing lengths.
-  skeleton_lengths = \
-    interpolate_with_threshold(skeleton_lengths, 
-                               config.LONGEST_NAN_RUN_TO_INTERPOLATE)
+  skeleton_lengths = interpolate_with_threshold(skeleton_lengths, 
+                 config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
 
-  #==========================================================================
+  #===================================
+  # SPACE CONSTRAINTS
   # Make the speed and distance thresholds a fixed proportion of the 
   # worm's length at the given frame:
   worm_speed_threshold    = skeleton_lengths * config.SPEED_THRESHOLD_PCT
   worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT 
+  worm_pause_threshold    = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
   
-  #Forward stuffs
-  #--------------------------------------------------------------------------
+  # Minimum speed and distance required for movement to 
+  # be considered "forward"
   min_forward_speed    = worm_speed_threshold
   min_forward_distance = worm_distance_threshold
   
-  #Backward stuffs
-  #--------------------------------------------------------------------------
+  # Minimum speed and distance required for movement to 
+  # be considered "backward"
   max_backward_speed    = -worm_speed_threshold
   min_backward_distance = worm_distance_threshold
   
-  #Paused stuffs
-  #--------------------------------------------------------------------------
-  worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT 
+  # Boundaries between which the movement would be considered "paused"
   min_paused_speed     = -worm_pause_threshold
   max_paused_speed     = worm_pause_threshold
 
-  # Three lists, with entry 0 for forward,
-  #                   entry 1 for backward,
-  #                   entry 2 for paused.
   # Note that there is no maximum forward speed nor minimum backward speed.
+  frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+  min_speeds   = {'forward': min_forward_speed, 
+                  'backward': None, 
+                  'paused': min_paused_speed}
+  max_speeds   = {'forward': None, 
+                  'backward': max_backward_speed, 
+                  'paused': max_paused_speed}
+  min_distance = {'forward': min_forward_distance, 
+                  'backward': min_backward_distance, 
+                  'paused': None}
 
-  min_speeds   = [min_forward_speed, [], min_paused_speed]
-  max_speeds   = [[], max_backward_speed, max_paused_speed]
-  min_distance = [min_forward_distance, min_backward_distance, []]
-
-
-  #--------------------------------------------------------------------------
+  #===================================
+  # TIME CONSTRAINTS
+  # The minimum number of frames an event had to be taking place for
+  # to be considered a legitimate event
   worm_event_frames_threshold = \
     config.FPS * config.EVENT_FRAMES_THRESHOLD
+  # Maximum number of contiguous contradicting frames within the event
+  # before the event is considered to be over.
   worm_event_min_interframes_threshold = \
     config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
   
-  motion_codes  = ['forward', 'backward', 'paused']
-  frame_values  = [1,         -1,         0       ]
-
+  # This is the dictionary this function will return.  Keys will be:
+  # 
   all_events_dict = {}
 
-  # start with a blank numpy array, full of NaNs:
-  motion_mode = np.zeros(num_frames, dtype='float') * np.NaN
+  # Start with a blank numpy array, full of NaNs: 
+  all_events_dict['mode'] = np.empty(num_frames, dtype='float') * np.NaN
 
-  for iType in range(0,3):
-    #Determine when the event type occurred
+  for motion_type in frame_values:
+    # Determine when the event type occurred
     ef = EventFinder()
 
-    """
-    ef.include_at_thr       = true
-    ef.minum_frames_thr       = worm_event_frames_threshold
-    ef.min_sum_thr          = min_distance{iType}
-    ef.include_at_sum_thr   = true
-    ef.data_for_sum_thr     = distance_per_frame
-    ef.min_inter_frames_thr = worm_event_min_interframes_threshold
+    # Space vs time constraints
+    ef.min_distance_threshold        = min_distance[motion_type]
+    ef.min_speed_threshold           = min_speeds[motion_type]
+    ef.max_speed_threshold           = max_speeds[motion_type]
+
+    # Time constraints
+    ef.min_frames_threshold          = worm_event_frames_threshold
+    ef.min_inter_frames_threshold    = worm_event_min_interframes_threshold
     
-    frames_temp = ef.getEvents(midbody_speed,min_speeds{iType},max_speeds{iType})
-    
-    #Assign event type to relevant frames
-    #----------------------------------------------------------------------
-    mask = frames_temp.getEventMask(num_frames)
-    motion_mode(mask) = frame_values[iType]
+    frames_temp = ef.get_events(midbody_speed, distance_per_frame)
 
-    #Take the start and stop indices and convert them to the structure
-    #used in the feature files ...
-    #----------------------------------------------------------------------
-    cur_field_name = motion_codes[iType]
+    """  DEBUG: @MichaelCurrie: code not ready yet!
+    # Obtain only events entirely before the num_frames intervals
+    mask = frames_temp.get_event_mask(num_frames)
 
-    temp = seg_worm.feature.event(frames_temp,fps,distance_per_frame,DATA_SUM_NAME,INTER_DATA_SUM_NAME)    
-    all_events_dict[cur_field_name] = temp.getFeatureStruct
+    # Assign event type to relevant frames of all_events_dict['mode']
+    all_events_dict['mode'][mask] = frame_values[motion_type]
+
+    # Take the start and stop indices and convert them to the structure
+    # used in the feature files
+    m_event = EventOutputStructure(frames_temp, distance_per_frame)
+    all_events_dict[motion_type] = m_event.get_feature_struct()
     """
-
-  all_events_dict['mode'] = motion_mode
   
   return all_events_dict
 
@@ -272,14 +330,18 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
   """ Obtain the "angle" of a subset of the 49 points
       of a worm, for each frame.
       
-      INPUT: 
-        segment_x, segment_y: numpy arrays of shape (p,n) where 
-                              p is the size of the partition of the 49 points
-                              n is the number of frames in the video
-        head_to_tail: True means the worm points are order head to tail.
+  Parameters
+  ---------------------------------------
+  segment_x, segment_y: numpy arrays of shape (p,n) where 
+    p is the size of the partition of the 49 points
+    n is the number of frames in the video
+  head_to_tail: bool
+  True means the worm points are order head to tail.
     
-      OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
-              (in degrees) for each frame of video
+  Returns
+  ---------------------------------------
+  A numpy array of shape (n) and stores the worm body's "angle" 
+  (in degrees) for each frame of video
 
   """
   
@@ -587,30 +649,34 @@ def get_frames_per_sample(sample_time):
 
 def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   """
-    compute_velocity:
-      The velocity is computed not using the nearest values but values
-      that are separated by a sufficient time (sample_time). 
-      If the encountered values are not valid (i.e. NaNs), the width of 
-      time is expanded up to a maximum of 2*sample_time (or technically, 
-      1 sample_time in either direction)
+  The velocity is computed not using the nearest values but values
+  that are separated by a sufficient time (sample_time). 
+  If the encountered values are not valid (i.e. NaNs), the width of 
+  time is expanded up to a maximum of 2*sample_time (or technically, 
+  1 sample_time in either direction)
 
-      INPUT:
-        sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
-              partition of worm's 49 points, and n is the number of frames 
-              in the video
+  Parameters
+  ----------------------------
+  sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
+        partition of worm's 49 points, and n is the number of frames 
+        in the video
+    The worm skeleton's x and y coordinates, respectively.
               
-        avg_body_angle: The angles between the mean of the first-order 
-                        differences.  Should have shape (n).
-        
-        sample_time: Time over which to compute velocity, in seconds.
-        
-        ventral_mode: 0, 1, or 2, specifying that the ventral side is...
-                        0 = unknown
-                        1 = clockwise
-                        2 = anticlockwise
-      OUTPUT:
-        Two numpy arrays of shape (n), for 
-        speed and direction, respectively.
+  avg_body_angle: 1-dimensional numpy array of floats, of size n.
+    The angles between the mean of the first-order differences.
+  
+  sample_time: int
+    Time over which to compute velocity, in seconds.
+  
+  ventral_mode: int
+    0, 1, or 2, specifying that the ventral side is...
+      0 = unknown
+      1 = clockwise
+      2 = anticlockwise
+
+  Returns
+  ----------------------------
+  Two numpy arrays of shape (n), for speed and direction, respectively.
         
   """
   
@@ -684,7 +750,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   with np.errstate(invalid='ignore'):
     body_direction = (body_direction + 180) % (360) - 180
   
-  # Sign speed[i] as negative if the angle 
+  # Sign speed[i] as negative if the angle
   # body_direction[i] lies in Q2 or Q3
   with np.errstate(invalid='ignore'):
     speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
@@ -710,22 +776,28 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
 def get_worm_velocity(nw, ventral_mode=0):
   """
-    get_worm_velocity:
-      Compute the worm velocity (speed & direction) at the
-      head-tip/head/midbody/tail/tail-tip
-   
-    INPUTS: nw: a NormalizedWorm instance
-            ventral_mode: the ventral side mode:
-              0 = unknown
-              1 = clockwise
-              2 = anticlockwise
-    OUTPUT: a two-tiered dictionary containing
-              the partitions in the first tier:
-                headTip = the tip of the head (1/12 the worm at 0.25s)
-                head    = the head (1/6 the worm at 0.5s)
-                midbody = the midbody (2/6 the worm at 0.5s)
-                tail    = the tail (1/6 the worm at 0.5s)
-                tailTip = the tip of the tail (1/12 the worm at 0.25s)
+  Compute the worm velocity (speed & direction) at the
+  head-tip/head/midbody/tail/tail-tip
+
+  Parameters
+  ----------------------------
+  nw: a NormalizedWorm instance
+
+  ventral_mode: int
+    The ventral side mode:
+      0 = unknown
+      1 = clockwise
+      2 = anticlockwise
+
+  Returns
+  ----------------------------
+  A two-tiered dictionary containing the partitions 
+  in the first tier:
+    headTip = the tip of the head (1/12 the worm at 0.25s)
+    head    = the head (1/6 the worm at 0.5s)
+    midbody = the midbody (2/6 the worm at 0.5s)
+    tail    = the tail (1/6 the worm at 0.5s)
+    tailTip = the tip of the tail (1/12 the worm at 0.25s)
               and 'speed' and 'direction' in the second tier.
 
   """

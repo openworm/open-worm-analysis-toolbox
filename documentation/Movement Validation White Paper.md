@@ -24,16 +24,16 @@ Later, worm ethology should also be tested in richer physical environments.  Rat
 
 The OpenWorm project has two goals.  The first, discussed above, is to functionally reproduce the behaviour of the wild-type *C. elegans* in a variety of environmental contexts, to the extent that the simulated behaviour is statistically indistinguishable from recordings of real worms under analogous environmental conditions.  The testing framework discussed above should detect when this goal has been achieved.  Note that achieving this goal will answer the open question, discussed earlier, of what level of detail the nervous system must be modelled at to preserve the emergent, high-level behaviour of the worm.
 
-OpenWorm’s second goal is for the simulation to be a faithful biological model for *C. elegans*.  Traditionally, AI research has attempted to reproduce human-like intelligence without simulating the brain’s physiology. OpenWorm could have taken a similar approach by attempting an abstracted approach to modeling the behaviour of the worm without modeling any underlying worm biology. Such an approach might very well have been a quicker path to achieving the first goal.  However, such a model, even if it reproduces the macroscopic behaviour of the worm, would provide limited scientific insight to biologists, who would be unable to compare measurements they make in the lab to variables in the simulation.
+OpenWorm’s second goal is for the simulation to be a faithful biological model for *C. elegans*.  Traditionally, AI research has attempted to reproduce human-like intelligence without simulating the brain’s physiology. OpenWorm could have taken a similar approach by attempting an abstracted approach to modeling the behaviour of the worm without modeling much underlying worm biology. Such an approach might very well have been a quicker path to achieving the first goal.  However, such a model, even if it reproduces the macroscopic behaviour of the worm, would provide limited scientific insight to biologists, who would be unable to compare measurements they make in the lab to variables in the simulation.
 
 Instead, OpenWorm is being developed as a biological model, which will make it straightforward to extract time series data for physiological variables in the model, such as membrane potentials, ionic concentrations, body wall forces, etc.  Consequently, scientists can modify model parameters, run the simulation, extract biological data, and analyze the effects of the perturbation.
 
-The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in *C. elegans* labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations in silico before beginning the expensive and time-consuming work of conducting in vivo experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
+The achievement of this second goal will hopefully make OpenWorm an indispensable software tool in *C. elegans* labs worldwide.  Just like modifications to cars are analyzed in computer-aided design (CAD) programs before being tested on the road, scientists could make perturbations *in silico* before beginning the expensive and time-consuming work of conducting *in vivo* experiments.  Conversely, having many scientist users will engender a feedback process that will make development more data-driven, helping to improve the biological realism of the OpenWorm model in the first place.
 
 ###References###
 
 [18] David Harel. A grand challenge for computing: towards full reactive modeling of a multi-cellular
-animal. In Verification, Model Checking, and Abstract Interpretation, pages 323–324. Springer, 2004.
+animal. Verification, Model Checking, and Abstract Interpretation, pages 323–324. Springer, 2004.
 
 [39] Karl R. Popper. The Logic of Scientific Discovery. Routledge, 1968.
 
@@ -49,3 +49,9 @@ of *Caenorhabditis elegans* behavioral phenotypes. Nature Methods, 10(9):877–8
 [44] Julie Y. Cho and Paul W. Sternberg. Multilevel modulation of a sensory motor circuit during *C. elegans* sleep and arousal. Cell, 156(1):249–260, 2014.
 
 [45] Evan L. Ardiel and Catharine H. Rankin. An elegant mind: learning and memory in *Caenorhabditis elegans*. Learning & Memory, 17(4):191–201, 2010.
+
+
+###Further Reading###
+[Ince et. al.  The case for open computer programs.  Nature Perspectives, 2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
+
+[Cyrus Omar, Jonathan Aldrich, Richard C. Gerkin.  Collaborative Infrastructure for Test-Driven Scientific Model Valuation.](https://github.com/cyrus-/papers/raw/master/sciunit-icse14/sciunit-icse14.pdf)  ([SciUnit](https://github.com/scidash/sciunit)).  36th International Conference on Software Engineering, Hyderabad, India, 2014.

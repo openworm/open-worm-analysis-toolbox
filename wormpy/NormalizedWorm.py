@@ -18,73 +18,74 @@ import os
 from wormpy import config
 
 class NormalizedWorm():
-  """ NormalizedWorm encapsulates the normalized measures data, loaded
-      from the two files, one for the eigenworm data and the other for 
-      the rest.
+  """ 
+  NormalizedWorm encapsulates the normalized measures data, loaded
+  from the two files, one for the eigenworm data and the other for 
+  the rest.
 
-      This will be an intermediate representation, between the parsed,
-      normalized worms, and the "feature" sets. The goal is to take in the
-      code from normWorms and to have a well described set of properties
-      for rewriting the feature code.
+  This will be an intermediate representation, between the parsed,
+  normalized worms, and the "feature" sets. The goal is to take in the
+  code from normWorms and to have a well described set of properties
+  for rewriting the feature code.
 
-    PROPERTIES / METHODS FROM JIM'S MATLAB CODE:
-    * first column is original name
-    * second column is renamed name, if renamed.
+  PROPERTIES / METHODS FROM JIM'S MATLAB CODE:
+  * first column is original name
+  * second column is renamed name, if renamed.
 
-    properties / dynamic methods:
-      eigen_worms      
-      
-      IN data_dict:
-      
-      EIGENWORM_PATH
-      segmentation_status   
-      frame_codes
-      vulva_contours        [49,2,4642]
-      non_vulva_contours    [49,2,4642]
-      skeletons
-      angles
-      in_out_touches
-      lengths
-      widths
-      head_areas
-      tail_areas
-      vulva_areas
-      non_vulva_areas      
-      
-      n_frames               num_frames()
-      x                      skeletons_x()
-      y                      skeletons_y()
-      contour_x       
-      contour_y       
+  properties / dynamic methods:
+    eigen_worms      
     
-    static methods:
-      getObject              load_normalized_data(self, data_path)
-      createObjectFromFiles  load_normalized_blocks(self, blocks_path)
-                             * this last one not actually implemented yet *
-                             * since I believe it is deprecated in Jim's *
-                             * code *
+    IN data_dict:
+    
+    EIGENWORM_PATH
+    segmentation_status   
+    frame_codes
+    vulva_contours        [49,2,4642]
+    non_vulva_contours    [49,2,4642]
+    skeletons
+    angles
+    in_out_touches
+    lengths
+    widths
+    head_areas
+    tail_areas
+    vulva_areas
+    non_vulva_areas      
+    
+    n_frames               num_frames
+    x                      skeletons_x
+    y                      skeletons_y
+    contour_x              
+    contour_y       
+  
+  static methods:
+    getObject              load_normalized_data(self, data_path)
+    createObjectFromFiles  load_normalized_blocks(self, blocks_path)
+                           * this last one not actually implemented yet *
+                           * since I believe it is deprecated in Jim's *
+                           * code *
       
 
   """
 
   """
-       translated from:
-       seg_worm.skeleton_indices
-    
-       This was originally created for feature processing. I found a lot
-       of off by 1 errors in the feature processing.
-    
-       Used in: (list is not comprehensive)
-       --------------------------------------------------------
-       - posture bends
-       - posture directions
-    
-       NOTE: These are hardcoded for now. I didn't find much use in trying
-       to make this dynamic based on some maximum value.
-    
-       Typical Usage:
-       --------------------------------------------------------
-       SI = seg_worm.skeleton_indices;
+  translated from:
+  seg_worm.skeleton_indices
+  
+  This was originally created for feature processing. @JimHokanson 
+  found a lot of off-by-1 errors in the feature processing.
+  
+  Used in: (list is not comprehensive)
+  --------------------------------------------------------
+  - posture bends
+  - posture directions
+  
+  NOTE: These are hardcoded for now. I didn't find much use in trying
+  to make this dynamic based on some maximum value.
+  
+  Typical Usage:
+  --------------------------------------------------------
+  SI = seg_worm.skeleton_indices;
 
   """
   # The normalized worm contains precisely 49 points per frame.  Here
@@ -102,8 +103,15 @@ class NormalizedWorm():
   eigen_worms = None
 
   def __init__(self, data_file_path, eigen_worm_file_path):
-    """ initialize this instance by loading both the worm and 
+    """ 
+    Initialize this instance by loading both the worm and 
     the eigen_worm data
+
+    Parameters
+    ---------------------------------------
+    data_file_path: string
+    
+    eigen_worm_file_path: string
     
     """
     self.load_normalized_data(data_file_path)
@@ -150,12 +158,17 @@ class NormalizedWorm():
       self.worm_partitions['midbody'] = (20, 29)
 
   def get_partition_subset(self, partition_type):
-    """ there are various ways of partitioning the worm's 49 points.
+    """ 
+    There are various ways of partitioning the worm's 49 points.
     this method returns a subset of the worm partition dictionary
-    
-    (translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
-    +seg_worm / @skeleton_indices / skeleton_indices.m)
-    
+
+    Parameters
+    ---------------------------------------
+    partition_type: string
+      e.g. 'head'
+      
+    Usage
+    ---------------------------------------
     For example, to see the mean of the head and the mean of the neck, 
     use the partition subset, 'first_third', like this:
     
@@ -172,6 +185,11 @@ class NormalizedWorm():
     width_dict = {k: np.mean(nw.get_partition(k), 0) \
               for k in s.keys()}
 
+    Notes
+    ---------------------------------------    
+    Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+    +seg_worm / @skeleton_indices / skeleton_indices.m
+
     """
 
     # parition_type is assumed to be a key for the dictionary
@@ -186,6 +204,13 @@ class NormalizedWorm():
   def get_partition(self, partition_key, data_key = 'skeletons', 
                     split_spatial_dimensions = False):
     """    
+    Retrieve partition of a measurement of the worm, that is, across all
+    available frames but across only a subset of the 49 points.
+    
+    Parameters
+    ---------------------------------------    
+    partition_key: string
+      The desired partition.  e.g. 'head', 'tail', etc.
     
       #TODO: This should be documented better 
     
@@ -195,6 +220,23 @@ class NormalizedWorm():
       OUTPUT: a numpy array containing the data requested, cropped to just
               the partition requested.
               (so the shape might be, say, 4xn if data is 'angles')
+      
+    data_key: string  (optional)
+      The desired measurement (default is 'skeletons')
+
+    split_spatial_dimensions: bool    (optional)
+      If True, the partition is returned separated into x and y
+
+    Returns
+    ---------------------------------------    
+    A numpy array containing the data requested, cropped to just
+    the partition requested.
+    (so the shape might be, say, 4xn if data is 'angles')
+
+    Notes
+    ---------------------------------------    
+    Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+    +seg_worm / @skeleton_indices / skeleton_indices.m
       
     """
     #We use numpy.split to split a data_dict element into three, cleaved
@@ -212,9 +254,13 @@ class NormalizedWorm():
       return partition
     
   def load_normalized_data(self, data_file_path):
-    """ Load the norm_obj.mat file into this class
-      
-        This is a translation of getObject from Jim's original code
+    """ 
+    Load the norm_obj.mat file into this class
+
+    Notes
+    ---------------------------------------    
+    Translated from getObject in SegwormMatlabClasses
+    
     """
     
     if(not os.path.isfile(data_file_path)):
@@ -289,7 +335,7 @@ class NormalizedWorm():
     
   def load_frame_code_descriptions(self):
     """
-      Load the frame_codes descriptions, which are stored in a .csv file
+    Load the frame_codes descriptions, which are stored in a .csv file
       
     """
     file_path = os.path.join(os.path.abspath(os.getcwd()),
@@ -312,31 +358,37 @@ class NormalizedWorm():
     
 
   def load_normalized_blocks(self, blocks_path):
-    """ Processes all the MatLab data "blocks" created from the raw 
-        video into one coherent set of data.  This is a translation 
-        of createObjectFromFiles from Jim's original code.
+    """ 
+    Processes all the MatLab data "blocks" created from the raw 
+    video into one coherent set of data.  This is a translation 
+    of createObjectFromFiles from Jim's original code.
         
-        MICHAEL: This appears to be the old way of doing this.
-        I'll hold off translating this "block" processor.  
-        I think norm_obj.mat actually maps directly
-        to the structure I need.
+    Notes
+    ---------------------------------------    
+    From @MichaelCurrie: This appears to be the old way of doing this.
+    I'll hold off translating this "block" processor.  
+    I think norm_obj.mat actually maps directly to the structure I need.
+    
     """
     pass
 
 
   def rotate(self, theta_d):
-    """ rotate:
-    
-        Returns a NormalizedWorm instance with each frame rotated by 
-        the amount given in the per-frame theta_d array.
+    """   
+    Returns a NormalizedWorm instance with each frame rotated by 
+    the amount given in the per-frame theta_d array.
 
-        INPUT: theta_d, the frame-by-frame rotation angle in degrees.        
-               A 1-dimensional n-element array where n is the number of
-               frames, giving a rotation angle for each frame.
-               e.g. to align the worm onto the x axis, 
-        
-        OUTPUT: A new NormalizedWorm instance with the same worm, rotated
-        in each frame by the requested amount.
+    Parameters
+    ---------------------------------------    
+    theta_d: 1-dimensional ndarray of dtype=float
+      The frame-by-frame rotation angle in degrees.
+      A 1-dimensional n-element array where n is the number of
+      frames, giving a rotation angle for each frame.
+    
+    Returns
+    ---------------------------------------    
+    A new NormalizedWorm instance with the same worm, rotated
+    in each frame by the requested amount.
     
     """
     #theta_r = theta_d * (np.pi / 180)
@@ -352,9 +404,12 @@ class NormalizedWorm():
 
   def centre(self):
     """
-      centre:
-        Returns a numpy array of length n, giving for each frame
-        the mean of the skeleton points
+    Frame-by-frame mean of the skeleton points
+
+    Returns
+    ---------------------------------------    
+    A numpy array of length n, where n is the number of
+    frames, giving for each frame the mean of the skeleton points.
         
     """
     s = self.data_dict['skeletons']
@@ -365,9 +420,12 @@ class NormalizedWorm():
 
   def angle(self):
     """
-      angle:
-        Returns a numpy array of length n, giving for each frame
-        the angle formed by the first and last skeleton point.
+    Frame-by-frame mean of the skeleton points
+
+    Returns
+    ---------------------------------------    
+    A numpy array of length n, giving for each frame
+    the angle formed by the first and last skeleton point.
         
     """
     s = self.data_dict['skeletons']
@@ -378,13 +436,12 @@ class NormalizedWorm():
 
   def translate_to_centre(self):
     """ 
-      translate_to_centre:      
-        Returns a NormalizedWorm instance with each frame moved so the 
-        centroid of the worm is 0,0
+    Return a NormalizedWorm instance with each frame moved so the 
+    centroid of the worm is 0,0
 
-        INPUT: none.  (it is an attribute of self, of course)
-        
-        OUTPUT: A NormalizedWorm instance with the above properties.
+    Returns
+    ---------------------------------------    
+    A NormalizedWorm instance with the above properties.
 
     """
     s = self.data_dict['skeletons']
@@ -396,21 +453,33 @@ class NormalizedWorm():
     return s - s_mean
        
   def rotate_and_translate(self):
-    # to perform this matrix multiplication we are multiplying:
-    # rot_matrix * s
-    # this is shape 2 x 2 x n, times 2 x 49 x n.
-    # basically we want the first matrix treated as two-dimensional,
-    # and the second matrix treated as one-dimensional,
-    # with the results applied elementwise in the other dimensions.
+    """
+    Perform both a rotation and a translation of the skeleton
+
+    Returns
+    ---------------------------------------    
+    A numpy array, which is the centred and rotated normalized
+    worm skeleton.
+
+    Notes
+    ---------------------------------------    
+    To perform this matrix multiplication we are multiplying:
+      rot_matrix * s
+    This is shape 2 x 2 x n, times 2 x 49 x n.
+    Basically we want the first matrix treated as two-dimensional,
+    and the second matrix treated as one-dimensional,
+    with the results applied elementwise in the other dimensions.
     
-    # to make this work I believe we need to pre-broadcast rot_matrix into
-    # the skeleton points dimension (the one with 49 points) so that we have
-    # 2 x 2 x 49 x n, times 2 x 49 x n
+    To make this work I believe we need to pre-broadcast rot_matrix into
+    the skeleton points dimension (the one with 49 points) so that we have
+      2 x 2 x 49 x n, times 2 x 49 x n
     #s1 = np.rollaxis(self.skeletons, 1)
     
     #rot_matrix = np.ones(np.shape(s1)) * rot_matrix
     
     #self.skeletons_rotated = rot_matrix.dot(self.skeletons)    
+    
+    """
     
     skeletons_centred = self.translate_to_centre()
     orientation = self.angle()
@@ -432,7 +501,7 @@ class NormalizedWorm():
     s1_rotated = []        
     
     # rotate the worm frame-by-frame and add these skeletons to a list
-    for frame_index in range(self.num_frames()):
+    for frame_index in range(self.num_frames):
       s1_rotated.append(rot_matrix[:,:,frame_index].dot(s1[:,:,frame_index]))
     #print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
       
@@ -445,9 +514,20 @@ class NormalizedWorm():
 
 
   def load_eigen_worms(self, eigen_worm_file_path):
-    """ load_eigen_worms takes a file path and loads the eigen_worms
-        which are stored in a MatLab data file
-        This is a translation of get.eigen_worms(obj) in Jim's original code
+    """ 
+    Load the eigen_worms, which are stored in a MatLab data file
+    
+        
+    Parameters
+    ---------------------------------------    
+    eigen_worm_file_path: string
+      file location of the eigenworm file to be loaded
+
+
+    Notes
+    ---------------------------------------    
+    Translation of get.eigen_worms(obj) in SegwormMatlabClasses
+      
     """
     if(not os.path.isfile(eigen_worm_file_path)):
       raise Exception("Eigenworm file not found: " + eigen_worm_file_path)
@@ -459,28 +539,44 @@ class NormalizedWorm():
       # TODO: turn this into a numpy array, probably
       # TODO: and possibly extract other things of value from 
       #       eigen_worms_file
-      self.eigen_worms = eigen_worms_file.values()
+      #self.eigen_worms = eigen_worms_file.values() # DEBUG: I think this is wrong
 
+      # DEBUG: another way to load eigenworms:
+      #h = h5py.File(uconfig.EIGENWORM_PATH,'r')
+      #eigen_worms = h['eigenWorms'].value
+
+
+      self.eigen_worms = eigen_worms_file.values() # DEBUG: I think this is wrong
+
+  @property
   def num_frames(self): 
-    """ the number of frames in the video
-        ndarray.shape returns a tuple of array dimensions.
-        the frames are along the first dimension i.e. [0].
+    """ 
+    The number of frames in the video.
+    
+    Returns
+    ---------------------------------------    
+    int
+      number of frames in the video
+      
     """
+    
+    # ndarray.shape returns a tuple of array dimensions.
+    # the frames are along the first dimension i.e. [0].
     return self.data_dict['skeletons'].shape[2]
-
-  def n_frames(self):
-    """ for backwards compatibility with Jim's code, let's define n_frames
-        (it does exactly the same thing as num_frames)
-    """
-    return self.num_frames()
 
 
   def position_limits(self, dimension, measurement='skeletons'):  
-    """ Maximum extent of worm's travels projected onto a given axis
-        PARAMETERS:
-          dimension: specify 0 for X axis, or 1 for Y axis.
-    NOTE: Dropped frames show up as NaN.  
-          nanmin returns the min ignoring such NaNs.        
+    """ 
+    Maximum extent of worm's travels projected onto a given axis
+
+    Parameters    
+    ---------------------------------------        
+    dimension: specify 0 for X axis, or 1 for Y axis.
+
+    Notes
+    ---------------------------------------    
+    Dropped frames show up as NaN.
+    nanmin returns the min ignoring such NaNs.
     
     """
     d = self.data_dict[measurement]
@@ -499,13 +595,13 @@ class NormalizedWorm():
     """
     vc  = self.data_dict['vulva_contours']
     nvc = self.data_dict['non_vulva_contours']
-    return np.concatenate((vc[:,0,:],nvc[-2:0:-1,0,:]))    
+    return np.concatenate((vc[:,0,:], nvc[-2:0:-1,0,:]))    
 
   @property
   def contour_y(self):
     vc  = self.data_dict['vulva_contours']
     nvc = self.data_dict['non_vulva_contours']
-    return np.concatenate((vc[:,1,:],nvc[-2:0:-1,1,:]))    
+    return np.concatenate((vc[:,1,:], nvc[-2:0:-1,1,:]))    
 
   @property
   def skeleton_x(self):

@@ -17,6 +17,7 @@
   
 """
 
+import csv
 from . import feature_comparisons as fc
 from . import user_config as uconfig
 import h5py #For loading from disk 
@@ -76,7 +77,7 @@ class WormMorphology(object):
                   for k in ('head', 'midbody', 'tail')}
             
     #Make named tuple instead of dict
-    nt = collections.namedtuple('Widths',width_dict.keys())
+    nt = collections.namedtuple('Widths', width_dict.keys())
     self.width = nt(**width_dict)
           
     #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        
@@ -165,6 +166,16 @@ class WormLocomotion():
     midbody_distance = \
       abs(self.velocity['midbody']['speed'] / config.FPS)
     
+    # DEBUG
+    #feature_helpers.write_to_CSV(
+    #      {
+    #        'Midbody Speed': self.velocity['midbody']['speed'],
+    #        'config.FPS': np.array([config.FPS],dtype='float'),
+    #        'lengths': nw.data_dict['lengths']
+    #      },
+    #      'motion_codes_input'
+    #      )
+
     self.motion_codes = \
       feature_helpers.get_motion_codes(midbody_distance, 
                                        nw.data_dict['lengths'])
@@ -266,8 +277,8 @@ class WormPosture(object):
 
     self.amplitude_max        = amp_wave_track.amplitude_max
     self.amplitude_ratio      = amp_wave_track.amplitude_ratio 
-    self.primary_wavelength   = amp_wave_track.p_wavelength
-    self.secondary_wavelength = amp_wave_track.s_wavelength  
+    #self.primary_wavelength   = amp_wave_track.p_wavelength
+    #self.secondary_wavelength = amp_wave_track.s_wavelength  
     self.track_length         = amp_wave_track.track_length
 
     # *** 4. Kinks *** DONE
@@ -288,13 +299,13 @@ class WormPosture(object):
     self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
     
     # *** 8. EigenProjection *** DONE
-    h = h5py.File(uconfig.EIGENWORM_PATH,'r')
-    eigen_worms = h['eigenWorms'].value
-    
-    N_EIGENWORMS_USE = 6 #TODO: Move to config
+        
+    eigen_worms = nw.eigen_worms
 
     self.eigen_projection = posture_features.get_eigenworms(
-        nw.skeleton_x,nw.skeleton_y,np.transpose(eigen_worms),N_EIGENWORMS_USE)
+        nw.skeleton_x, nw.skeleton_y,
+        np.transpose(eigen_worms),
+        config.N_EIGENWORMS_USE)
 
     #TODO: Add contours
 
