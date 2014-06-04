@@ -211,6 +211,15 @@ class NormalizedWorm():
     ---------------------------------------    
     partition_key: string
       The desired partition.  e.g. 'head', 'tail', etc.
+    
+      #TODO: This should be documented better 
+    
+      INPUT: a partition key, and an optional data key.
+        If split_spatial_dimensions is True, the partition is returned 
+        separated into x and y
+      OUTPUT: a numpy array containing the data requested, cropped to just
+              the partition requested.
+              (so the shape might be, say, 4xn if data is 'angles')
       
     data_key: string  (optional)
       The desired measurement (default is 'skeletons')

@@ -15,19 +15,10 @@
   Alternatively, you can just install nanfunctions.py 
   (see instructions in ..//README.md in this repo)
   
-  *** For +seg_worm / @feature_calculator / getPostureFeatures.m,
-  *** here are some renamed variables:
-  
-  SI = seg_worm.skeleton_indices is expressed here as self.skeleton_partitions
-  ALL_INDICES = SI.ALL_NORMAL_INDICES is expressed here as 
-                self.normal_partitions()
-  FIELDS = SI.ALL_NORMAL_NAMES is expressed here as 
-           self.normal_partitions().keys()
-  n_fields = length(FIELDS) = len(self.normal_partitions().keys())
-
 """
 
 import csv
+from . import feature_comparisons as fc
 from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
@@ -81,7 +72,8 @@ class WormMorphology(object):
     # part of the worm the head, midbody and tail.
     #
     # shape of resulting arrays are (2, n)
-    width_dict = {k: np.mean(nw.get_partition(k, 'skeletons'), 0) \
+    
+    width_dict = {k: np.mean(nw.get_partition(k, 'widths'), 0) \
                   for k in ('head', 'midbody', 'tail')}
             
     #Make named tuple instead of dict
@@ -89,8 +81,9 @@ class WormMorphology(object):
     self.width = nt(**width_dict)
           
     #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        
-    self.area = nw.data_dict['head_areas'] + \
-                nw.data_dict['vulva_areas'] + \
+    self.area = nw.data_dict['tail_areas']      + \
+                nw.data_dict['head_areas']      + \
+                nw.data_dict['vulva_areas']     + \
                 nw.data_dict['non_vulva_areas']
                 
     self.area_per_length  = self.area/self.length
@@ -108,18 +101,9 @@ class WormMorphology(object):
     #TODO: More gracefully handle removal of the 2nd dimension ...
     self.length = m_var['length'].value[:,0]
     temp1 = m_var['width']
-    #import pdb
-    #pdb.set_trace()
+
     temp2 = {k: temp1[k].value[:,0] for k in ('head','midbody','tail')}
     
-    #I'm not sure why this doesn't work, 
-    #
-    # unhashable type: 'numpy.ndarray'
-    #
-    #temp2 = {
-    #'head',     temp1['head'].value[:,0],
-    #'midbody',  temp1['midbody'].value[:,0],
-    #'tail',     temp1['tail'].value[:,0]}
     nt = collections.namedtuple('Widths',['head','midbody','tail'])
     self.width  = nt(**temp2) 
 
@@ -131,13 +115,24 @@ class WormMorphology(object):
 
   def __eq__(self,other):
     
-    import pdb
-    pdb.set_trace()  
-    
-    return True
+    #TODO: Allow for a global config that provides more info ...    
+    #in case anything fails ...
+
+    #NOTE: Since all features are just attributes in this class we do
+    #the evaluation here rather than calling __eq__ on the classes
+
+    return \
+      fc.corr_value_high(self.length,other.length,'morph.length')  and \
+      fc.corr_value_high(self.area,other.area,'morph.area')      and \
+      fc.corr_value_high(self.area_per_length,other.area_per_length,'morph.area_per_length') and \
+      fc.corr_value_high(self.width_per_length,other.width_per_length,'morph.width_per_length') and \
+      fc.corr_value_high(self.width.head,other.width.head,'morph.width.head') and \
+      fc.corr_value_high(self.width.midbody,other.width.midbody,'morph.width.midbody') and \
+      fc.corr_value_high(self.width.tail,other.width.tail,'morph.width.tail')
+
 
   def __repr__(self):
-    return utils.print_object(self) 
+    return utils.print_object(self)  
     
   def save_for_gepetto(self):
     #See https://github.com/openworm/org.geppetto.recording/blob/master/org/geppetto/recording/CreateTestGeppettoRecording.py
@@ -236,7 +231,7 @@ class WormLocomotion():
 
     
 
-class WormPosture():
+class WormPosture(object):
   def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
@@ -318,40 +313,40 @@ class WormPosture():
   def from_disk(cls, p_var):
     
     self = cls.__new__(cls)
-
-    #bends
-    #  .head
-    #    .mean
-    #    .std_dev
-    #  .neck
-    #  .midbody
-    #  .hips
-    #  .tail
-    #.amplitude
-    #  .max   - ts
-    #  .ratio - ts
-    #.wavelength
-    #  .primary - ts
-    #  .secondary - ts
-    #.track_length - ts (OLD: tracklength)
-    #.eccentricity - ts
-    #.kinks - ts
-    #.coils - event
-    #.directions - 
-    #  .tail2head - ts
-    #  .head - ts
-    #  .tail - ts
-    #.skeleton
-    #  .x - ts
-    #  .y - ts
-    #.eigen_projections [6 x frames] matrix (OLD:eigenProjection)
-
-    import pdb
-    pdb.set_trace()
+    self.bend = posture_features.Bends.from_disk(p_var['bends'])
+      
+    #NOTE: This will be considerably different for old vs new format. Currently
+    #only the old is implemented
+    temp_amp = p_var['amplitude']
+    self.amplitude_max   = temp_amp['max'].value
+    self.amplitude_ratio = temp_amp['ratio'].value
     
-    return self    
+    temp_wave = p_var['wavelength']
+    self.primary_wavelength   = temp_wave['primary']
+    self.secondary_wavelength = temp_wave['secondary']
 
-class WormPath():
+    self.track_length = p_var['tracklength'].value
+    self.eccentricity = p_var['eccentricity'].value
+    self.kinks        = p_var['kinks'].value
+    
+    #TODO: 
+    #self.coils        =    
+    
+    self.directions   = posture_features.Directions.from_disk(p_var['directions'])    
+      
+      
+    skeleton = p_var['skeleton']
+    nt = collections.namedtuple('skeleton',['x','y'])
+    self.skeleton = nt(skeleton['x'].value,skeleton['y'].value)
+
+    self.eigen_projection = p_var['eigenProjection'].value
+
+    return self
+
+  def __repr__(self):
+    return utils.print_object(self)  
+
+class WormPath(object):
   
   """
   
@@ -371,10 +366,6 @@ class WormPath():
 
     """    
     
-    #Pass in none to create from disk
-    if nw is None:
-      return
-
     self.range = path_features.Range(nw.contour_x,nw.contour_y)
         
     #Duration (aka Dwelling)
@@ -401,16 +392,18 @@ class WormPath():
 
   @classmethod 
   def from_disk(cls, path_var):
-    self = cls(None)   
+    
+    self = cls.__new__(cls) 
     
     self.range       = path_features.Range.from_disk(path_var)
     self.duration    = path_features.Duration.from_disk(path_var['duration']) 
 
     #TODO: I'd like to have these also be objects with from_disk methods
     self.coordinates = self._create_coordinates(
-                          path_var['coordinates']['x'].value,
-                          path_var['coordinates']['y'].value)
-    self.curvature   = path_var['curvature'].value   
+                          path_var['coordinates']['x'].value[:,0],
+                          path_var['coordinates']['y'].value[:,0])
+                          
+    self.curvature   = path_var['curvature'].value[:,0]   
 
     return self
     
@@ -418,14 +411,19 @@ class WormPath():
     return utils.print_object(self)  
     
   def __eq__(self,other):
-    #TODO: Ensure both are of this class - i.e. check other
-    #TODO: Actually implement this
-    return self.range == other.range #and \
-    #self.duration == other.duration #and \
-    #self.coordinates == other.cordinates #and \
-    #self.curvature == other.curvature
+
+    return \
+      self.range == other.range and \
+      self.duration == other.duration and \
+      fc.corr_value_high(self.coordinates.x,other.coordinates.x,'path.coordinates.x') and \
+      fc.corr_value_high(self.coordinates.y,other.coordinates.y,'path.coordinates.y') and \
+      fc.corr_value_high(self.curvature,other.curvature,'path.curvature',high_corr_value=0.95,merge_nans=True)
+
+      #NOTE: Unfortunately the curvature is slightly different. It looks the same
+      #but I'm guessing there are a few off by 1 errors in it.
+
     
-class WormFeatures:
+class WormFeatures(object):
   """ 
     WormFeatures: takes as input a NormalizedWorm instance, and
     during initialization calculates all the features of the worm.
@@ -438,13 +436,10 @@ class WormFeatures:
   """
   def __init__(self, nw):
 
-    if nw is None:
-      return
-
     self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
     self.posture    = WormPosture(nw)
-    #self.path       = WormPath(nw).path
+    self.path       = WormPath(nw)
     
   @classmethod  
   def from_disk(cls, file_path):
@@ -452,11 +447,11 @@ class WormFeatures:
     h = h5py.File(file_path,'r')
     worm = h['worm']
     
-    self = cls(None)
+    self = cls.__new__(cls) 
     
     self.morphology = WormMorphology.from_disk(worm['morphology'])
     #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
-    #self.posture    = WormPosture.from_disk(worm['posture'])
+    self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path'])
     
     return self
@@ -472,7 +467,7 @@ class WormFeatures:
     return \
       self.path       == other.path       and \
       self.morphology == other.morphology #and \
-      #self.posture    == other.posture    and \
+      #self.posture    == other.posture    #and \
       #self.locomotion == other.locomotion and \
       #
 

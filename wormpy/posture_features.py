@@ -22,6 +22,7 @@ class Bends(object):
 
   def __init__(self,nw):
     
+    #TODO: I don't like this being in normalized worm
     p = nw.get_partition_subset('normal')
   
     for partition_key in p.keys():
@@ -48,12 +49,32 @@ class Bends(object):
   def __repr__(self):
     return utils.print_object(self)     
    
+  @classmethod 
+  def from_disk(cls,saved_bend_data):
+    
+    self = cls.__new__(cls) 
+  
+    for partition_key in saved_bend_data.keys():
+      setattr(self,partition_key,BendSection.from_disk(saved_bend_data[partition_key]))   
+
+    return self
+   
 class BendSection(object):
   
   def __init__(self,mean,std_dev):
     self.mean    = mean
     self.std_dev = std_dev
+   
+  @classmethod 
+  def from_disk(cls,saved_bend_data):
     
+    self = cls.__new__(cls) 
+
+    self.mean   = saved_bend_data['mean'].value
+    self.stdDev = saved_bend_data['stdDev'].value
+    
+    return self
+   
   def __repr__(self):
     return utils.print_object(self)
 
@@ -605,7 +626,17 @@ class Directions(object):
       
       dir_value = 180/np.pi*np.arctan2(tip_y - tail_y, tip_x - tail_x)
       setattr(self,NAMES[iVector],dir_value)
-   
+  
+  @classmethod 
+  def from_disk(cls,data):
+    
+    self = cls.__new__(cls)
+    
+    for key in data:
+      setattr(self,key,data[key])
+    
+    return self
+    
         
   def __repr__(self):
     return utils.print_object(self)         

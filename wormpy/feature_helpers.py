@@ -18,6 +18,7 @@ from itertools import groupby
 #np.seterr(all='raise')           # DEBUG
 
 import csv
+from . import utils
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
@@ -424,12 +425,24 @@ def h__computeAngularSpeed(segment_x, segment_y,
 
 
 def h__getVelocityIndices(frames_per_sample, good_frames_mask):
-  """ Compute the speed using back/front nearest neighbours, avoiding NaNs,
-      bounded at twice the scale.
+  """ 
+  
+  For each point, we calculate the velocity using frames prior to and following
+  a frame. Given that some frames are not valid (have NaN), we move the index
+  backward (prior frame) or forward (following frame), essentially slightly
+  widening the time frame over which the velocity is computed.
+  
+  This function determines what the indices are that each frame will use to 
+  calculate the velocity at that frame. For example, at frame 5 we might decide
+  to use frames 2 and 8.
 
-      INPUTS:
-        frames_per_sample: our sample scale, in frames. must be an odd integer
-        good_frames_mask: shape (num_frames), false if underlying angle is NaN
+  Parameters:
+  -----------
+  frames_per_sample : int
+    Our sample scale, in frames. The integer must be odd.
+    
+  good_frames_mask : 
+    Shape (num_frames), false if underlying angle is NaN
   
        OUTPUTS:
          keep_mask : shape (num_frames), this is used to indicate 
@@ -442,6 +455,14 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
          right_I   : shape (n_valid_velocity_values)
   
   """
+  
+  """
+  Approach, rather than interating over each frame, we iterate over the
+  possible shifts. Since this tends to be significantly less than the # of
+  frames, we save a bit of time in the execution.
+
+  """  
+  
   # Require that frames_per_sample be an odd integer
   assert(type(frames_per_sample)==int)
   assert(frames_per_sample%2==1)
@@ -464,6 +485,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   # See below for more details
   middle_I = np.array(np.arange(start_index, end_index, 1) + half_scale,
                       dtype='int32')
+                      
   # @MichaelCurrie: Wouldn't this make more sense?
   #middle_I = np.arange(start_index, end_index + half_scale, 1) + half_scale  
   
@@ -528,7 +550,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   # Instead of looping over each centered velocity, we loop over each possible
   # shift. A shift is valid if the frame of the shift is good, and we have yet
   # to encounter a match for that centered index
-  for shift_size in range(half_scale, scale_minus_1):
+  for shift_size in range(half_scale, frames_per_sample):
       # We grab indices that are the appropriate distance from the current
       # value. If we have not yet found a bound on the given side, and the
       # index is valid, we keep it.
@@ -685,12 +707,17 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # --------------------------------------------------------
 
   # Centroid of the current skeletal segment, frame-by-frame:
+
+
+  #NOTE: In Matlab this is done only over a certain range of the body
+  #TODO: Who calls this, can we just hard code mimic old behavior here???
+
   x_mean = np.mean(sx, 0)
   y_mean = np.mean(sy, 0)
   
   dX  = x_mean[right_I] - x_mean[left_I]
   dY  = y_mean[right_I] - y_mean[left_I]
-  
+    
   distance = np.sqrt(dX**2 + dY**2)
   time     = (right_I - left_I) / config.FPS
   
@@ -731,19 +758,18 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   # (Added for wormPathCurvature)
   # Sign motion_direction[i] as negative if the angle 
   # body_direction[i] lies in Q3 or Q4
-  #
+    
   with np.errstate(invalid='ignore'):
     motion_direction[body_direction < 0] = -motion_direction[body_direction<0]
     
   if(ventral_mode == 2): # i.e. if ventral side is anticlockwise:
      motion_direction = -motion_direction 
     
-  return speed, angular_speed
+  return speed, angular_speed, motion_direction
 
   # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
   # did we both to calculate them?
   #            'body_direction': body_direction,
-  #            'motion_direction': motion_direction
 
 
 
