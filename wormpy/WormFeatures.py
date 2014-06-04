@@ -85,7 +85,7 @@ class WormMorphology(object):
                   for k in ('head', 'midbody', 'tail')}
             
     #Make named tuple instead of dict
-    nt = collections.namedtuple('Widths',width_dict.keys())
+    nt = collections.namedtuple('Widths', width_dict.keys())
     self.width = nt(**width_dict)
           
     #TODO: The access from nw should be cleaned up, e.g. nw.head_areas        

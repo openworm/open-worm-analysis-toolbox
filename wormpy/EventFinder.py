@@ -68,8 +68,9 @@
 """
 
 import numpy as np
+import operator
 from itertools import groupby
-
+from wormpy import config
 
 class EventSimpleStructure:
   """
@@ -187,11 +188,8 @@ class EventFinder:
   containing the desired events from a given block of data.
   
   """
-  
+
   def __init__(self):
-    # Options
-    self.include_at_threshold = False
-    
     # Temporal thresholds
     self.min_frames_threshold = None #(scalar or [1 x n_frames])
     self.max_frames_threshold = None #(scalar or [1 x n_frames])
@@ -203,10 +201,10 @@ class EventFinder:
     # Space (distance) and space&time (speed) thresholds
     self.min_distance_threshold = None #(scalar or [1 x n_frames])
     self.max_distance_threshold = None #(scalar or [1 x n_frames])
-    self.include_at_distance_threshold = False
+    self.include_at_distance_threshold = config.INCLUDE_AT_DISTANCE_THRESHOLD
     self.min_speed_threshold = None #(scalar or [1 x n_frames])
     self.max_speed_threshold = None #(scalar or [1 x n_frames])
-    self.include_at_speed_threshold = False
+    self.include_at_speed_threshold = config.INCLUDE_AT_SPEED_THRESHOLD
 
 
     # The data for thresholding based on the sum, if empty the event
@@ -214,7 +212,7 @@ class EventFinder:
     # I don't understand the use of the term "sum" here, aren't we just
     # thresholding based on "distance"?  I'm going to omit this
     # functionality - @MichaelCurrie
-    #self.data_for_sum_threshold = [] 
+    #self.distance_data = [] 
        
     """
     #DEBUG: get rid of soon
@@ -225,15 +223,17 @@ class EventFinder:
     self.include_at_inter_sum_threshold = False
     """
   
-  def get_events(self, event_data):
+  def get_events(self, speed_data, distance_data):
     """
     Obtain the events implied by event_data, given how this instance
     of EventFinder has been configured.
     
     Parameters
     ---------------------------------------
-    event_data   : 1-d numpy array of length n
-      The events to be extracted
+    speed_data   : 1-d numpy array of length n
+      Gives the per-frame instantaneous speed as % of skeleton length
+    distance_data   : 1-d numpy array of length n
+      Gives the per-frame distance travelled as % of skeleton length
     
     Returns
     ---------------------------------------
@@ -253,27 +253,26 @@ class EventFinder:
     # we need to copy the arrays passed as parameters?  Here I am 
     # directly copying @JimHokanson's MATLAB code without understanding.
     #event_data = np.copy(event_data)    
-    #data_for_sum_threshold = np.copy(self.data_for_sum_threshold)
+    #distance_data = np.copy(self.distance_data)
     
-    #if len(data_for_sum_threshold) == 0:
-    #  self.data_for_sum_threshold = np.copy(event_data)
+    #if len(distance_data) == 0:
+    #  self.distance_data = np.copy(event_data)
 
     # For each frame, determine if it matches our speed threshold criteria
-    speed_mask = self.get_speed_threshold_mask(event_data)
+    speed_mask = self.get_speed_threshold_mask(speed_data)
     
-    # Get indices for runs of data matching criteria
-    starts_and_stops = self.get_start_stop_indices(event_data, speed_mask)
+    # Get indices for runs of data matching speed criteria
+    starts_and_stops = self.get_start_stop_indices(speed_data, speed_mask)
 
     # Possible short circuit: if we have absolutely no qualifying events 
     # in event_data, just exit early.
     if(not starts_and_stops):
       return EventSimpleStructure()
 
+    # In this function we remove time gaps between events if the gaps 
+    # are too small (min_inter_frames_threshold)
+    starts_and_stops = self.unify_events(starts_and_stops)
     """
-    # In this function we remove gaps between events if the gaps are too small
-    #(min_inter_frames_threshold) or too large (max_inter_frames_threshold)
-    [start_frames, end_frames] = self.unify_events(start_frames, end_frames)
-    
     # @JimHokanson: Is this really the same thing twice with 
     #               different values ???? I'm  99% sure this 
     #               isn't done right
@@ -296,7 +295,7 @@ class EventFinder:
     # Filter events based on data sums during event
     [start_frames,end_frames] = \
       self.remove_events_by_data_sum(start_frames, end_frames,
-                               data_for_sum_threshold)
+                               distance_data)
     
     return EventSimpleStructure(start_frames, end_frames)
     """
@@ -351,7 +350,7 @@ class EventFinder:
     From a numpy event mask, get the start and stop indices.  For
     example:
 
-      0 1 2 3 4 5   <- true indices
+      0 1 2 3 4 5   <- indices
       F F T T F F   <- event_mask
     F F F T T F F F <- bracketed_event_mask
           s s       <- start and stop
@@ -425,7 +424,7 @@ class EventFinder:
     return starts_and_stops
 
   
-  def h__unifyEvents(self, starts_and_stops):
+  def unify_events(self, starts_and_stops):
     """
     Combine events where the # of frames between them is less than
     self.min_inter_frames_threshold (or if 
@@ -438,8 +437,7 @@ class EventFinder:
     
     Returns
     ---------------------------------------
-    new_starts_and_stops: an array of (start, stop) duples satisfying 
-    the above.
+    A new array of (start, stop) duples satisfying the above.
     
     """
     
@@ -449,12 +447,6 @@ class EventFinder:
     #   These functions are run on the time between frames
     #
     """
-    #NOTE: This function could also exist for:
-    #- min_inter_sum_threshold
-    #- max_inter_sum_threshold
-    #
-    #   but the old code did not include any event_data in:
-    #   h__removeGaps
     
     # Unify small time gaps.
     #Translation: if the gap between events is small, merge the events
@@ -477,38 +469,56 @@ class EventFinder:
     pass
   
   
-  def h__removeGaps(self, start_frames, end_frames, right_comparison_value, fh):
+  def remove_gaps(self, starts_and_stops, threshold, 
+                  comparison_operator):
     """
+    Remove time gaps in the events that are smaller/larger than a given 
+    threshold value.
+    
+    That is, apply a greedy right-concatenation to any (start, stop) duples 
+    within threshold of each other.
     
     Parameters
     ---------------------------------------
-      
+    starts_and_stops: a list of (start, stop) duples
+      The start and stop indexes of the events
+    threshold: int
+      Number of frames to do the comparison on
+    comparison_operator: a comparison function
+      One of operator.lt, le, ge, gt
     
     Returns
     ---------------------------------------
-    [start_frames,end_frames]
-  
+    A new numpy array of (start, stop) duples giving the indexes 
+    of the events with the gaps removed.
     
     """
+    assert(comparison_operator == operator.lt or
+           comparison_operator == operator.le or
+           comparison_operator == operator.gt or
+           comparison_operator == operator.ge)
+
+    new_starts_and_stops = []
+    num_groups = np.shape(starts_and_stops)[0]
     
-    # Find small gaps.
-    i = 1
-  
-    while i < len(start_frames):
-      # Swallow the gaps.
-      # NOTE: fh is either: <, <=, >, >=
-      # NOTE: This implicitly uses a sample difference (time based) approach
-      """
-      while i < length(start_frames) && fh(start_frames(i + 1) - end_frames(i) - 1,right_comparison_value):
-        #This little bit removes the gap between two events
-        end_frames(i)       = end_frames(i + 1) #Set end of this event to
-        
-        #the next event
-        start_frames(i + 1) = [] #delete the next event, it is redundant
-        end_frames(i + 1)   = [] #delete the next event
-      """
-      # Advance.
-      i += 1
+    i = 0
+    while(i < num_groups):
+      # Now advance through groups to the right, 
+      # continuing as long as they satisfy our comparison operator
+      j = i 
+      while(j+1 < num_groups and comparison_operator(
+             starts_and_stops[j+1][0] - starts_and_stops[j][1],
+             threshold)):
+        j += 1
+
+      # Add this largest possible start/stop duple to our NEW revised list        
+      new_starts_and_stops.append((starts_and_stops[i][0], 
+                                   starts_and_stops[j][1]))
+      i = j + 1
+    
+    return new_starts_and_stops      
+      
+    return np.array(new_starts_and_stops)
   
   
   
@@ -560,7 +570,7 @@ class EventFinder:
     
   def h__removeEventsByDataSum(self, start_frames, end_frames,
                                min_distance_threshold, max_distance_threshold,
-                               include_at_distance_threshold, data_for_sum_threshold):
+                               include_at_distance_threshold, distance_data):
     """
     
     Parameters
@@ -582,7 +592,7 @@ class EventFinder:
     # Compute the event sums.
     eventSums = nan(length(start_frames), 1);
     for i = 1:length(eventSums)
-        eventSums(i) = nansum(data_for_sum_threshold((start_frames(i)):(end_frames(i))));
+        eventSums(i) = nansum(distance_data((start_frames(i)):(end_frames(i))));
     end
     
     # Compute the event sum thresholds.

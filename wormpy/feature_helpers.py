@@ -292,16 +292,16 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     # Determine when the event type occurred
     ef = EventFinder()
 
-    ef.include_at_threshold          = config.INCLUDE_AT_SPEED_THRESHOLD
-    ef.min_frames_threshold          = worm_event_frames_threshold
+    # Space vs time constraints
     ef.min_distance_threshold        = min_distance[motion_type]
     ef.min_speed_threshold           = min_speeds[motion_type]
     ef.max_speed_threshold           = max_speeds[motion_type]
-    ef.include_at_distance_threshold = config.INCLUDE_AT_DISTANCE_THRESHOLD
-    ef.data_for_sum_threshold        = distance_per_frame
+
+    # Time constraints
+    ef.min_frames_threshold          = worm_event_frames_threshold
     ef.min_inter_frames_threshold    = worm_event_min_interframes_threshold
     
-    frames_temp = ef.get_events(midbody_speed)
+    frames_temp = ef.get_events(midbody_speed, distance_per_frame)
 
     """  DEBUG: @MichaelCurrie: code not ready yet!
     # Obtain only events entirely before the num_frames intervals
@@ -627,30 +627,34 @@ def get_frames_per_sample(sample_time):
 
 def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   """
-    compute_velocity:
-      The velocity is computed not using the nearest values but values
-      that are separated by a sufficient time (sample_time). 
-      If the encountered values are not valid (i.e. NaNs), the width of 
-      time is expanded up to a maximum of 2*sample_time (or technically, 
-      1 sample_time in either direction)
+  The velocity is computed not using the nearest values but values
+  that are separated by a sufficient time (sample_time). 
+  If the encountered values are not valid (i.e. NaNs), the width of 
+  time is expanded up to a maximum of 2*sample_time (or technically, 
+  1 sample_time in either direction)
 
-      INPUT:
-        sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
-              partition of worm's 49 points, and n is the number of frames 
-              in the video
+  Parameters
+  ----------------------------
+  sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
+        partition of worm's 49 points, and n is the number of frames 
+        in the video
+    The worm skeleton's x and y coordinates, respectively.
               
-        avg_body_angle: The angles between the mean of the first-order 
-                        differences.  Should have shape (n).
-        
-        sample_time: Time over which to compute velocity, in seconds.
-        
-        ventral_mode: 0, 1, or 2, specifying that the ventral side is...
-                        0 = unknown
-                        1 = clockwise
-                        2 = anticlockwise
-      OUTPUT:
-        Two numpy arrays of shape (n), for 
-        speed and direction, respectively.
+  avg_body_angle: 1-dimensional numpy array of floats, of size n.
+    The angles between the mean of the first-order differences.
+  
+  sample_time: int
+    Time over which to compute velocity, in seconds.
+  
+  ventral_mode: int
+    0, 1, or 2, specifying that the ventral side is...
+      0 = unknown
+      1 = clockwise
+      2 = anticlockwise
+
+  Returns
+  ----------------------------
+  Two numpy arrays of shape (n), for speed and direction, respectively.
         
   """
   
@@ -719,7 +723,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   with np.errstate(invalid='ignore'):
     body_direction = (body_direction + 180) % (360) - 180
   
-  # Sign speed[i] as negative if the angle 
+  # Sign speed[i] as negative if the angle
   # body_direction[i] lies in Q2 or Q3
   with np.errstate(invalid='ignore'):
     speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
@@ -746,22 +750,28 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
 def get_worm_velocity(nw, ventral_mode=0):
   """
-    get_worm_velocity:
-      Compute the worm velocity (speed & direction) at the
-      head-tip/head/midbody/tail/tail-tip
-   
-    INPUTS: nw: a NormalizedWorm instance
-            ventral_mode: the ventral side mode:
-              0 = unknown
-              1 = clockwise
-              2 = anticlockwise
-    OUTPUT: a two-tiered dictionary containing
-              the partitions in the first tier:
-                headTip = the tip of the head (1/12 the worm at 0.25s)
-                head    = the head (1/6 the worm at 0.5s)
-                midbody = the midbody (2/6 the worm at 0.5s)
-                tail    = the tail (1/6 the worm at 0.5s)
-                tailTip = the tip of the tail (1/12 the worm at 0.25s)
+  Compute the worm velocity (speed & direction) at the
+  head-tip/head/midbody/tail/tail-tip
+
+  Parameters
+  ----------------------------
+  nw: a NormalizedWorm instance
+
+  ventral_mode: int
+    The ventral side mode:
+      0 = unknown
+      1 = clockwise
+      2 = anticlockwise
+
+  Returns
+  ----------------------------
+  A two-tiered dictionary containing the partitions 
+  in the first tier:
+    headTip = the tip of the head (1/12 the worm at 0.25s)
+    head    = the head (1/6 the worm at 0.5s)
+    midbody = the midbody (2/6 the worm at 0.5s)
+    tail    = the tail (1/6 the worm at 0.5s)
+    tailTip = the tip of the tail (1/12 the worm at 0.25s)
               and 'speed' and 'direction' in the second tier.
 
   """
