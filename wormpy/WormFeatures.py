@@ -180,6 +180,9 @@ class WormLocomotion():
       feature_helpers.get_motion_codes(midbody_distance, 
                                        nw.data_dict['lengths'])
   
+    import pdb
+    pdb.set_trace
+  
     self.motion_mode = 0
     
     self.is_paused = 0

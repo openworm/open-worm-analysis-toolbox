@@ -15,7 +15,13 @@ nw = we.example_nw()
 from wormpy.WormFeatures import WormPath as wpath
 from wormpy.WormFeatures import WormPosture as wposture
 from wormpy.WormFeatures import WormMorphology as wmorph
+from wormpy.WormFeatures import WormLocomotion as wmotion
 
+
+temp = wmotion(nw)
+
+import pdb
+pdb.set_trace()
 
 #temp = wpath(nw)
 #temp = wposture(nw)

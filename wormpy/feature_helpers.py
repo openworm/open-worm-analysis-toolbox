@@ -302,10 +302,10 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     ef.min_frames_threshold          = worm_event_frames_threshold
     ef.min_inter_frames_threshold    = worm_event_min_interframes_threshold
     
+    #Output is of type: wormpy.EventFinder.EventSimpleStructure
     frames_temp = ef.get_events(midbody_speed, distance_per_frame)
 
-    """  DEBUG: @MichaelCurrie: code not ready yet!
-    # Obtain only events entirely before the num_frames intervals
+    #Get mask for assigning motion code to parts of the array
     mask = frames_temp.get_event_mask(num_frames)
 
     # Assign event type to relevant frames of all_events_dict['mode']
@@ -315,7 +315,6 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     # used in the feature files
     m_event = EventOutputStructure(frames_temp, distance_per_frame)
     all_events_dict[motion_type] = m_event.get_feature_struct()
-    """
   
   return all_events_dict
 
@@ -656,7 +655,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
   1 sample_time in either direction)
 
   Parameters
-  ----------------------------
+  ----------
   sx, sy: Two numpy arrays of shape (p, n) where p is the size of the 
         partition of worm's 49 points, and n is the number of frames 
         in the video
@@ -675,8 +674,8 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
       2 = anticlockwise
 
   Returns
-  ----------------------------
-  Two numpy arrays of shape (n), for speed and direction, respectively.
+  -------
+  Three numpy arrays of shape (n), speed, angular_speed, motion_direction
         
   """
   
@@ -776,6 +775,10 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
 def get_worm_velocity(nw, ventral_mode=0):
   """
+  
+  This is for the 'velocity' locomotion feature. The helper function,
+  'compute_velocity' is used elsewhere  
+  
   Compute the worm velocity (speed & direction) at the
   head-tip/head/midbody/tail/tail-tip
 
@@ -828,7 +831,7 @@ def get_worm_velocity(nw, ventral_mode=0):
     speed, direction = compute_velocity(x, y, 
                                         avg_body_angle, 
                                         sample_time_values[partition_key], 
-                                        ventral_mode)
+                                        ventral_mode)[0:2]
     velocity[partition_key] = {'speed': speed, 'direction': direction}
   
   return velocity

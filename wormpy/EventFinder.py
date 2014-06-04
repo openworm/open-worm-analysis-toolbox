@@ -49,8 +49,10 @@
   
   So the flow from within LocomotionFeatures.get_motion_codes() is:
     # (approximately):
-    ef = EventFinder()
-    ess = ef.get_events()
+    ef  = EventFinder() #This creates an object to find events and allows
+    #population of properties because the method is so complicated
+    ess = ef.get_events() #This returns a simple structure with the bare 
+    #information necessary to move on
     me = EventOutputStructure(ess)
     return me.get_feature_struct
   
@@ -87,15 +89,6 @@ class EventSimpleStructure:
   
   """    
   def __init__(self, start_Is=None, end_Is=None):
-    # @MichaelCurrie: in @JimHokanson's original code there were lines
-    # to change start_Is and end_Is from column to row vectors, if
-    # necessary.  Because here we use numpy arrays, they are not 
-    # treated as matrices so we don't need to care.
-    #if(np.shape(start_Is)[0] > 1):
-    #    start_Is = np.transpose(start_Is)
-    
-    #if(np.shape(end_Is)[0] > 1):
-    #    end_Is = np.transpose(end_Is)
     
     if(start_Is == None):
       self.start_Is = np.array([])
@@ -111,6 +104,11 @@ class EventSimpleStructure:
   def num_events(self):
     return len(self.start_Is)
 
+    # @JimHokanson TODO
+    # seg_worm.events.events2stats - move here
+    # fromStruct - from the old struct version ...
+
+
   def get_event_mask(self, n_frames):
     """
     Parameters
@@ -123,15 +121,15 @@ class EventSimpleStructure:
     only between start_Is[i] and end_Is[i], where 0 <= i < n_frames
     
     """
-    # @JimHokanson TODO
-    # seg_worm.events.events2stats - move here
-    # fromStruct - from the old struct version ...
+
     
     # Create empty array of all False
     mask = np.zeros(n_frames, dtype='bool')
 
-    for i_frame in range(n_frames):
-      mask[self.start_Is[i_frame]:self.end_Is[i_frame]] = True
+    for cur_start,cur_end in zip(self.start_Is,self.end_Is):
+      mask[cur_start:cur_end] = True
+    #for i_frame in range(n_frames):
+    #  mask[self.start_Is[i_frame]:self.end_Is[i_frame]] = True
     
     return mask
 
@@ -161,7 +159,7 @@ class EventSimpleStructure:
     # @JimHokanson TODO: Would be good to check that events don't overlap ...
     
     new_starts = np.sort(all_starts)
-    order_I = np.argsort(all_starts)
+    order_I    = np.argsort(all_starts)
         
     new_ends   = all_ends[order_I]
     
@@ -213,16 +211,7 @@ class EventFinder:
     # thresholding based on "distance"?  I'm going to omit this
     # functionality - @MichaelCurrie
     #self.distance_data = [] 
-       
-    """
-    #DEBUG: get rid of soon
-    # @JimHokanson: This won't work, old code didn't support it
-    # Data-based
-    self.min_inter_sum_threshold = None
-    self.max_inter_sum_threshold = None
-    self.include_at_inter_sum_threshold = False
-    """
-  
+         
   def get_events(self, speed_data, distance_data):
     """
     Obtain the events implied by event_data, given how this instance
@@ -703,10 +692,155 @@ class EventOutputStructure:
     %
     %}
   """
-  def __init__(self, frames_temp, distance_per_frame):
+  def __init__(self, frames_temp, distance_per_frame, \
+    compute_distance_per_event = False):
+    
+    """
+      fps
+        n_video_frames
+        
+        %INPUTS
+        %------------------------------------------------------------------
+        start_Is %[1 n_events]
+        end_Is   %[1 n_events]
+        data_sum_name %[1 n_events]
+        inter_data_sum_name %[1 n_events], last value is NaN
+        
+        %Outputs - see events2stats
+        %------------------------------------------------------------------
+        event_durations %[1 n_events]
+        inter_event_durations %[1 n_events], last value is NaN
+        
+        %These two properties are missing if the input names
+        %are empty
+        data_sum_values
+        inter_data_sum_values
+        
+        total_time
+        frequency
+        time_ratio
+        data_ratio %[1 1] mig
+    
+    """
+    
+    #JAH TO MC - why frames_temp and not event_ss    
+
+    #JAH QUESTION: - why are we getting no events on our first call?
+    import pdb
+    pdb.set_trace()    
+    
+    self.fps = config.FPS 
+    self.n_video_frames = distance_per_frame.size   
+    self.start_Is = frames_temp.start_Is
+    self.end_Is   = frames_temp.end_Is
+    self.n_events = len(self.start_Is)
+    
+    #We probably won't use these      
+    #self.data_sum_name = 'distance'
+    #self.inter_data_sum_name = 'interDistance'
+    
+    
+    #TODO: n_events_for_stats    
+    """
+      value = obj.n_events;
+                if value > 1
+                if obj.start_Is(1) == 1
+                    value = value - 1;
+                end
+                if obj.end_Is(end) == obj.n_video_frames
+                    value = value - 1;
+                end
+            end
+            
+        self.n_events_for_stats = value
+    
+    """
+    
+    temp_data_sum       = np.zeros(self.n_events, dtype='float')
+    temp_inter_data_sum = np.zeros(self.n_events, dtype='float')    
+    
+    #TODO: What do we want to call these arrays, in the output version
+    #we have, depending upon whether 'compute_distance_per_event' is true or
+    #false we get (from get_feature_struct, which we might remove)
+    """
+        => Rough matlab/python code mix :)
+        
+        i.e. we have an attribute in one, and a structure with 
+        2 attributes in the other        
+        
+            if not compute_distance_per_event:
+                s.timeRatio = obj.time_ratio;
+            else:
+                s.ratio.time     = obj.time_ratio;
+                s.ratio.distance = obj.data_ratio;
+            end
+    
+    """
+
+    #In the output    
+    
+    if self.n_events == 0:
+      #TODO: Assign any necessary variables to empty
+      return
+  
+    
+
+    
+    self.event_durations = (self.start_Is - self.end_Is)/self.fps
+    
+    self.inter_event_durations = np.concatenate(((self.start_Is[1:] - self.end_Is[:-1])/self.fps,np.NaN));      
+    
+    self.total_time = self.n_video_frames/self.fps
+    self.frequency  = self.n_events_for_stats/self.total_time
+    
+    
+    if compute_distance_per_event:
+      
+      
+      """
+
+   
+                temp = temp_data_sum
+                for iEvent = 1:obj.n_events
+                    temp(iEvent) = nansum(data(obj.start_Is(iEvent):obj.end_Is(iEvent)));
+                end
+                obj.data_sum_values = temp;
+
+
+      """      
+      
+      pass
+    
+    #TODO: Computer interdistance (We always do this)
+    """
+
+                temp = temp_inter_data_sum
+                for iEvent = 1:(obj.n_events-1)
+                    start_frame  = obj.end_Is(iEvent)+1;
+                    end_frame    = obj.start_Is(iEvent+1)-1;
+                    temp(iEvent) = nansum(data(start_frame:end_frame));
+                end
+
+            
+    
+    
+    """
+    
+    """ TODO: Translate this
+            obj.time_ratio = nansum(obj.event_durations) / obj.total_time;
+            if ~isempty(obj.data_sum_name)
+               obj.data_ratio = nansum(obj.data_sum_values)/nansum(data); 
+            end
+
+    """    
+    
+    
+    import pdb
+    pdb.set_trace()
     pass
 
   def get_feature_struct(self):
+    #This may no longer be needed, just work with the class itself ...
     pass
   
   """
