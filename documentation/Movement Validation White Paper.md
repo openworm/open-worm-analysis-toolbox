@@ -4,7 +4,7 @@
 
 ### Evaluating the worm simulation ###
 
-Popper [39] reasoned that a theory must make predictions that can in principle turn out to be false, for the theory to be considered scientific.  That is, a theory must make predictions that can be compared to observations. For example, general relativity predicts the orbital period of Mercury. Astronomers can observe the orbital period of Mercury and compare it to the value predicted by the theory.  Without falsifiable predictions, it is impossible to distinguish between mutually incompatible theories of reality, which is the objective of a scientific investigation.
+Popper [39] reasoned that for a theory to be considered scientific, it must make predictions that can in principle turn out to be false when compared with observations. For example, general relativity predicts the orbital period of Mercury. Astronomers can observe the orbital period of Mercury and compare it to the value predicted by the theory.  Without falsifiable predictions, it is impossible to distinguish between mutually incompatible theories of reality, which is the objective of a scientific investigation.
 
 In the domain of Artificial Intelligence (AI), Turing [40] predicted that a legitimate simulated human intelligence could win an “imitation game” (popularly known as the Turing Test).  The simulation tries to fool an interrogator chatting with it by text into thinking that the interrogator was chatting with a real human.  If the simulation fails to fool the interrogator, the theory that it is a faithful reproduction of a human intelligence should be considered false.  By articulating a falsifiable prediction of the theory that humans could be simulated on computers, Turing rendered the notion of AI a scientific one.
 
