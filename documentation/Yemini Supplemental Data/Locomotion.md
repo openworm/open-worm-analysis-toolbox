@@ -48,7 +48,7 @@ If the head or tail tip’s start-to-end angle exceeds 90°, clockwise or anti-c
 
 The worm’s forward, backward, and paused motion states attempt to differentiate these event states unambiguously:
 
-![](fig 4 e - crawling.gif).
+![](fig 4 f - motion states.gif).
 
 *A 25 second window of worm motion reveals 2 forward, 3 backward, and roughly 5 paused events. A short, small peak (between the second and third pauses) that may have been forward motion, remains unclassified due to ambiguity.*
 
