@@ -11,6 +11,7 @@
 import os
 import warnings
 import wormpy
+import matplotlib.pyplot as plt
 import numpy as np
 from wormpy import user_config
 from wormpy import feature_helpers
@@ -161,7 +162,8 @@ with warnings.catch_warnings():
 
 
 # Plotting demonstration
-#wormpy.plot_frame_codes(nw)
+wormpy.plot_frame_codes(nw)
+plt.tight_layout()
 
 # I just saved a plaintext file with the motioncodes extracted from
 # the features result file, by viewing the results file using HDFView
@@ -174,6 +176,5 @@ wp.show()
 #wp.save('test_sub.mp4')
 
 
-
-# feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_codes['mode'], 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
+feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_codes['mode'], 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 
