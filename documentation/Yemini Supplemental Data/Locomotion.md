@@ -1,5 +1,7 @@
 #Locomotion Features#
 
+There are four locomotion features: bends, motion, turns, and velocity.  Here they are in the actual HDF5 file storing them:
+
 ![](Locomotion%20-%20basic%20tree.gif)
  
 ###1. Velocity###
