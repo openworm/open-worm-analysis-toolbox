@@ -11,6 +11,7 @@
 import os
 import warnings
 import wormpy
+import numpy as np
 from wormpy import user_config
 from wormpy import feature_helpers
 
