@@ -30,8 +30,9 @@ MIMIC_OLD_BEHAVIOUR = True
 # Frames Per Second
 # (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
 # JAH to MC; Why?
-FPS = 25.8398 #This is the frame rate of the test video. This needs to be moved
-#elsewhere ...                
+#This is the frame rate of the test video. 
+# TODO: This needs to be moved elsewhere, in fact made into a parameter
+FPS = 25.8398 
 VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
 
 
@@ -80,16 +81,22 @@ SPEED_THRESHOLD_PCT   = 0.05
 DISTANCE_THRSHOLD_PCT = 0.05
 PAUSE_THRESHOLD_PCT   = 0.025
 #   These are times (s)
-EVENT_FRAMES_THRESHOLD = 0.5    # Half a second
-EVENT_MIN_INTER_FRAMES_THRESHOLD = 0.25
-# Used in EventFinder
+EVENT_MIN_FRAMES_THRESHOLD = 0.5    # Half a second
+EVENT_MAX_INTER_FRAMES_THRESHOLD = 0.25
+
+# The following two are used in EventOutputStructure...
+# When retrieving the final structure
+# this is the name given to the field that contains the
+# sum of the input data during the event
 DATA_SUM_NAME       = 'distance'
+# same as above but for BETWEEN events
 INTER_DATA_SUM_NAME = 'interDistance'
+
 # Whether to use >= or > as the comparison:
 INCLUDE_AT_SPEED_THRESHOLD = True  
 INCLUDE_AT_DISTANCE_THRESHOLD = True
-
-
+INCLUDE_AT_FRAMES_THRESHOLD = False
+INCLUDE_AT_INTER_FRAMES_THRESHOLD = False
 
 
 

@@ -49,6 +49,8 @@ Further documentation of worm movement data is available at @JimHokanson's [open
 
 Information on [downloading data from the Schafer Lab repository](https://github.com/openworm/OpenWorm/issues/82), from @slarson in the initial issue prompting the creation of this repo.
 
+[Commit Often, Perfect Later, Publish Once: Git best practices](http://sethrobertson.github.io/GitBestPractices/)
+
 
 ## Tools used ##
 

@@ -12,7 +12,7 @@ import os
 import warnings
 import wormpy
 from wormpy import user_config
-
+from wormpy import feature_helpers
 
 def example_WormExperimentFile():
   """
@@ -171,4 +171,8 @@ wp.show()
 
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
+
+
+
+# feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_codes['mode'], 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 

@@ -163,9 +163,6 @@ class WormLocomotion():
 
     self.velocity = feature_helpers.get_worm_velocity(nw)
 
-    midbody_distance = \
-      abs(self.velocity['midbody']['speed'] / config.FPS)
-    
     # DEBUG
     #feature_helpers.write_to_CSV(
     #      {
@@ -177,11 +174,8 @@ class WormLocomotion():
     #      )
 
     self.motion_codes = \
-      feature_helpers.get_motion_codes(midbody_distance, 
+      feature_helpers.get_motion_codes(self.velocity['midbody']['speed'], 
                                        nw.data_dict['lengths'])
-  
-    import pdb
-    pdb.set_trace
   
     self.motion_mode = 0
     
@@ -234,7 +228,7 @@ class WormLocomotion():
 
     
 
-class WormPosture(object):
+class WormPosture():
   def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
@@ -349,7 +343,7 @@ class WormPosture(object):
   def __repr__(self):
     return utils.print_object(self)  
 
-class WormPath(object):
+class WormPath():
   
   """
   
