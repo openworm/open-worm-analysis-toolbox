@@ -134,7 +134,7 @@ class WormMorphology(object):
 
 
 
-class WormLocomotion():
+class WormLocomotion(object):
   def __init__(self, nw):
     """
       Translation of: SegwormMatlabClasses / 
@@ -153,7 +153,6 @@ class WormLocomotion():
         end
 
     """
-    self.locomotion = {}
 
     self.velocity = feature_helpers.get_worm_velocity(nw)
 
@@ -167,7 +166,7 @@ class WormLocomotion():
     #      'motion_codes_input'
     #      )
 
-    self.motion_codes = \
+    self.motion_events = \
       feature_helpers.get_motion_codes(self.velocity['midbody']['speed'], 
                                        nw.data_dict['lengths'])
   
@@ -183,11 +182,7 @@ class WormLocomotion():
 
     self.upsilons = 0
     
-    #.motion
-    #  .forward
-    #  .backward
-    #  .paused
-    #  .mode - time series   
+ 
     #.velocity
     #  .headTip
     #    .speed - time series   
@@ -215,6 +210,29 @@ class WormLocomotion():
     
     self = cls.__new__(cls)
 
+    #bends
+    #motion
+    #turns
+
+    velocity = {}
+    
+    #velocity
+    #------------------------------
+    velocity_ref = m_var['velocity']
+    for key in velocity_ref:
+        value = velocity_ref[key]
+        temp_speed = _extract_time_from_disk(value,'speed')
+        temp_direc = _extract_time_from_disk(value,'direction')
+        velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
+        
+    self.velocity = velocity
+
+    #motion
+    #------------------------------    
+    #motion_codes
+
+    
+
     import pdb
     pdb.set_trace()
     
@@ -222,7 +240,7 @@ class WormLocomotion():
 
     
 
-class WormPosture():
+class WormPosture(object):
   def __init__(self, nw):
     """
     Translation of: SegwormMatlabClasses / 
@@ -337,7 +355,7 @@ class WormPosture():
   def __repr__(self):
     return utils.print_object(self)  
 
-class WormPath():
+class WormPath(object):
   
   """
   
@@ -441,7 +459,7 @@ class WormFeatures(object):
     self = cls.__new__(cls) 
     
     self.morphology = WormMorphology.from_disk(worm['morphology'])
-    #self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
+    self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
     self.posture    = WormPosture.from_disk(worm['posture'])
     self.path = WormPath.from_disk(worm['path'])
     
@@ -463,5 +481,13 @@ class WormFeatures(object):
       #
 
         
-    
+def _extract_time_from_disk(parent_ref,name):
+        
+    """
+    This is for handling Matlab save vs Python save when we get to that point.
+    """        
+        
+    temp = parent_ref[name]
+    return temp[0]    
+
     

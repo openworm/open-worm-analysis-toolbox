@@ -315,15 +315,12 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
     # Take the start and stop indices and convert them to the structure
     # used in the feature files
-    m_event = EventListForOutput(event_list, 
-                                 distance_per_frame,
-                                 config.DATA_SUM_NAME,
-                                 config.INTER_DATA_SUM_NAME)
+    m_event = EventListForOutput(event_list, distance_per_frame, True)
 
     # Record this motion_type to our all_events_dict!
     # Assign event type to relevant frames of all_events_dict['mode']
     all_events_dict['mode'][event_mask] = frame_values[motion_type]
-    all_events_dict[motion_type] = m_event.get_feature_dict()
+    all_events_dict[motion_type] = m_event
   
   return all_events_dict
 
