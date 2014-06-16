@@ -4,11 +4,25 @@
 
 ###1. Range###
  
-The centroid of the worm’s entire path is computed. The range is defined as the distance of the worm’s midbody from this overall centroid, in each frame (Supplementary Fig. 1h). 
+The centroid of the worm’s entire path is computed. The range is defined as the distance of the worm’s midbody from this overall centroid, in each frame.  For example: 
+
+![](fig 4 h - range.gif)
+
+*The range is defined, per frame, as the distance of the worm’s midbody from its final path centroid. The central dot displays the final path centroid. The two arrows display the range at early and late times within the experiment.*
 
 ###2. Dwelling###
 
-The worm dwelling is computed for the head, midbody, tail, and the entire worm (Supplementary Fig. 1i). The worm’s width is assumed to be the mean of its head, midbody, and tail widths across all frames. The skeleton’s minimum and maximum location, for the x and y axes, is used to create a rectangular boundary. This boundary is subdivided into a grid wherein each grid square has a diagonal the same length as the worm’s width. When skeleton points are present on a grid square, their corresponding body part is computed as dwelling within that square. The dwelling for each grid square is integrated to define the dwelling distribution for each body part. For each body part, untouched grid squares are ignored. 
+The worm dwelling is computed for the head, midbody, tail, and the entire worm.  For example:
+
+![](fig 4 i - dwelling.gif)
+
+*The locations of worm dwelling are shown as a heatmap. A
+single location of dwelling dominates faint traces of the worm’s path during motion.*
+
+The worm’s width is assumed to be the mean of its head, midbody, and tail widths across all frames. The skeleton’s minimum and maximum location, for the x and y axes, is used to create a rectangular boundary. This boundary is subdivided into a grid wherein each grid square has a diagonal the same length as the worm’s width. When skeleton points are present on a grid square, their corresponding body part is computed as dwelling within that square. The dwelling for each grid square is integrated to define the dwelling distribution for each body part. For each body part, untouched grid squares are ignored. 
+
+
+
 
 ###3. Curvature###
 

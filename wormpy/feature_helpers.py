@@ -22,7 +22,7 @@ from . import utils
 import collections
 from wormpy import config
 from .EventFinder import EventFinder
-from .EventFinder import EventOutputStructure  
+from .EventFinder import EventListForOutput
 
 import matplotlib.pyplot as plt
 
@@ -224,6 +224,10 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
                 0 = no locomotion (the worm is paused)
                 1 = forward locomotion
 
+  Notes
+  ---------------------------------------
+  Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
+
   """
   # Initialize the worm speed and video frames.
   num_frames = len(midbody_speed)
@@ -275,12 +279,12 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   # TIME CONSTRAINTS
   # The minimum number of frames an event had to be taking place for
   # to be considered a legitimate event
-  worm_event_frames_threshold = \
-    config.FPS * config.EVENT_FRAMES_THRESHOLD
+  min_frames_threshold = \
+    config.FPS * config.EVENT_MIN_FRAMES_THRESHOLD
   # Maximum number of contiguous contradicting frames within the event
   # before the event is considered to be over.
-  worm_event_min_interframes_threshold = \
-    config.FPS * config.EVENT_MIN_INTER_FRAMES_THRESHOLD
+  max_interframes_threshold = \
+    config.FPS * config.EVENT_MAX_INTER_FRAMES_THRESHOLD
   
   # This is the dictionary this function will return.  Keys will be:
   # 
@@ -290,31 +294,36 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   all_events_dict['mode'] = np.empty(num_frames, dtype='float') * np.NaN
 
   for motion_type in frame_values:
-    # Determine when the event type occurred
+    # We will use EventFinder to determine when the 
+    # event type "motion_type" occurred
     ef = EventFinder()
 
-    # Space vs time constraints
+    # "Space and time" constraints
     ef.min_distance_threshold        = min_distance[motion_type]
+    ef.max_distance_threshold        = None # we are not constraining max dist
     ef.min_speed_threshold           = min_speeds[motion_type]
     ef.max_speed_threshold           = max_speeds[motion_type]
 
-    # Time constraints
-    ef.min_frames_threshold          = worm_event_frames_threshold
-    ef.min_inter_frames_threshold    = worm_event_min_interframes_threshold
+    # "Time" constraints
+    ef.min_frames_threshold          = min_frames_threshold
+    ef.max_inter_frames_threshold    = max_interframes_threshold
     
-    #Output is of type: wormpy.EventFinder.EventSimpleStructure
-    frames_temp = ef.get_events(midbody_speed, distance_per_frame)
+    event_list = ef.get_events(midbody_speed, distance_per_frame)
 
-    #Get mask for assigning motion code to parts of the array
-    mask = frames_temp.get_event_mask(num_frames)
-
-    # Assign event type to relevant frames of all_events_dict['mode']
-    all_events_dict['mode'][mask] = frame_values[motion_type]
+    # Obtain only events entirely before the num_frames intervals
+    event_mask = event_list.get_event_mask(num_frames)
 
     # Take the start and stop indices and convert them to the structure
     # used in the feature files
-    m_event = EventOutputStructure(frames_temp, distance_per_frame)
-    all_events_dict[motion_type] = m_event.get_feature_struct()
+    m_event = EventListForOutput(event_list, 
+                                 distance_per_frame,
+                                 config.DATA_SUM_NAME,
+                                 config.INTER_DATA_SUM_NAME)
+
+    # Record this motion_type to our all_events_dict!
+    # Assign event type to relevant frames of all_events_dict['mode']
+    all_events_dict['mode'][event_mask] = frame_values[motion_type]
+    all_events_dict[motion_type] = m_event.get_feature_dict()
   
   return all_events_dict
 
@@ -534,7 +543,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
   #                          position(left_indices(I))
   left_I  = np.empty(len(middle_I), dtype='int32')
   right_I = np.empty(len(middle_I), dtype='int32')
-  # numpy arrays cannot accept NaN, which is a float concept, but
+  # numpy integer arrays cannot accept NaN, which is a float concept, but
   # filling them with NaN fills them with the largest negative number
   # possible, -2**31.  We can easily filter for this later.
   left_I.fill(np.NaN)
