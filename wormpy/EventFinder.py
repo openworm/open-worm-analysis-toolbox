@@ -21,7 +21,7 @@
 
     EventOutputStructure
       __init__
-      get_feature_struct
+      get_feature_dict
       
 
   Usage
@@ -33,14 +33,14 @@
   to obtain an instance of EventList, the "result" class.
   
   Then to format the result appropriately, the EventOutputStructure class is 
-  instantiated with our "result" and then get_feature_struct is called.
+  instantiated with our "result" and then get_feature_dict is called.
   
   So the flow from within LocomotionFeatures.get_motion_codes() is:
     # (approximately):
     ef = EventFinder()
     event_list = ef.get_events()
     me = EventOutputStructure(event_list)
-    return me.get_feature_struct
+    return me.get_feature_dict
 
   EventOutputStructure is used by not just get_motion_codes but also ...
   DEBUG (add the other uses (e.g. upsilons))
@@ -52,7 +52,7 @@
   for a plain-English description of a motion state.
 
   The code for this module came from several files in the 
-  @event_finder and @event_ss folders from:
+  @event_finder, @event, and @event_ss folders from:
   https://github.com/JimHokanson/SegwormMatlabClasses/blob/
     master/%2Bseg_worm/%2Bfeature/
 
