@@ -156,6 +156,13 @@ class NormalizedWorm():
     # change the partition definitions.
     if(config.MIMIC_OLD_BEHAVIOUR):
       self.worm_partitions['midbody'] = (20, 29)
+      
+    # DEBUG: (Note from @MichaelCurrie:)
+    # This should be set by the normalized worm file, since each
+    # worm subjected to an experiment is manually examined to find the 
+    # vulva so the ventral mode can be determined.  Here we just set 
+    # the ventral mode to a default value as a stopgap measure
+    self.ventral_mode = config.DEFAULT_VENTRAL_MODE
 
   def get_partition_subset(self, partition_type):
     """ 
@@ -564,6 +571,14 @@ class NormalizedWorm():
     # the frames are along the first dimension i.e. [0].
     return self.data_dict['skeletons'].shape[2]
 
+  @property
+  def is_segmented(self):
+    """
+    Returns a 1-d boolean numpy array of whether 
+    or not, frame-by-frame, the given frame was segmented
+
+    """
+    return self.data_dict['segmentation_status'] == 's'
 
   def position_limits(self, dimension, measurement='skeletons'):  
     """ 

@@ -162,19 +162,19 @@ with warnings.catch_warnings():
 
 
 # Plotting demonstration
-wormpy.plot_frame_codes(nw)
-plt.tight_layout()
+#wormpy.plot_frame_codes(nw)
+#plt.tight_layout()
 
 # I just saved a plaintext file with the motioncodes extracted from
 # the features result file, by viewing the results file using HDFView
-motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
-wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
-wp.show()
+#motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
+#wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
+#wp.show()
 
 
 # At this point we could save the plot to a file:
 #wp.save('test_sub.mp4')
 
 
-feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_codes['mode'], 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
+feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 

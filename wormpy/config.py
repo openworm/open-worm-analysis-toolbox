@@ -33,7 +33,8 @@ MIMIC_OLD_BEHAVIOUR = True
 #This is the frame rate of the test video. 
 # TODO: This needs to be moved elsewhere, in fact made into a parameter
 FPS = 25.8398 
-VENTRAL_MODE = 0   # DEBUG: might not need to be here but used in Path code
+# DEBUG: might not need to be here but used in Path code and Locomotion code
+DEFAULT_VENTRAL_MODE = 0   
 
 
 
