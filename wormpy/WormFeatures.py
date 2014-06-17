@@ -13,6 +13,7 @@
 
 import csv
 from . import feature_comparisons as fc
+from . import EventFinder
 from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
@@ -169,8 +170,13 @@ class WormLocomotion(object):
     self.motion_events = \
       feature_helpers.get_motion_codes(self.velocity['midbody']['speed'], 
                                        nw.data_dict['lengths'])
-  
-    self.motion_mode = 0
+                                       
+    #TODO: I'm not a big fan of how this is done ...
+    self.motion_mode = self.motion_events['mode']
+        
+    del self.motion_events['mode']
+    
+    
     
     self.is_paused = 0
 
@@ -204,7 +210,58 @@ class WormLocomotion(object):
     #  .omegas
     #  .upsilons
     
+ 
+  def __repr__(self):
+    return utils.print_object(self)  
+    
+  def __eq__(self,other):
+    
+    #TODO: Allow for a global config that provides more info ...    
+    #in case anything fails ...
+
+    #NOTE: Since all features are just attributes in this class we do
+    #the evaluation here rather than calling __eq__ on the classes
+
+    #self_velocity  = self.velocity
+    #other_velocity = other.velocity
+
+
   
+    #velocities_same = [self_velocity[x] == other_velocity[x] for x in self_velocity]
+    for key in self.velocity:
+      self_speed      = self.velocity[key]['speed']
+      self_direction  = self.velocity[key]['direction']
+      other_speed     = other.velocity[key]['speed']
+      other_direction = other.velocity[key]['direction']
+
+      same_speed = fc.corr_value_high(self_speed,other_speed,'locomotion.velocity.' + key + '.speed')
+      
+      if not same_speed:
+        return False
+        
+      same_direction =  fc.corr_value_high(self_direction,other_direction,'locomotion.velocity.' + key + '.speed') 
+      
+      if not same_direction:
+        return False
+        
+    
+    #TODO: Provide error info
+    motion_events_same = [self.motion_events[x] == other.motion_events[x] for x in self.motion_events]  
+    #self_motion_events  = self.motion_events
+    #other_motion_events = other.motion_events
+
+    if not all(motion_events_same):
+      #TODO: Why not
+      for key,is_same in zip(self.motion_events,motion_events_same):
+        if not is_same:
+          print 'Yo mama'
+      return False
+
+    #same_motion_events = [self_velocity[x] == other_velocity[x] for x in self_velocity]
+
+    return False
+      
+    
   @classmethod 
   def from_disk(cls, m_var):
     
@@ -218,23 +275,47 @@ class WormLocomotion(object):
     
     #velocity
     #------------------------------
+    
     velocity_ref = m_var['velocity']
     for key in velocity_ref:
         value = velocity_ref[key]
         temp_speed = _extract_time_from_disk(value,'speed')
         temp_direc = _extract_time_from_disk(value,'direction')
         velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
-        
+     
+    #NOTE: This only valid for MRC
+     
+    velocity['head_tip'] = velocity.pop('headTip') 
+    velocity['tail_tip'] = velocity.pop('tailTip')      
+     
     self.velocity = velocity
 
     #motion
     #------------------------------    
-    #motion_codes
-
+    self.motion_events = {}
     
-
-    import pdb
-    pdb.set_trace()
+    if 'motion' in m_var.keys():
+      #Old MRC Format:
+      # - forward, backward, paused, mode
+      motion_ref = m_var['motion']
+      for key in ['forward','backward','paused']:
+        self.motion_events[key] = EventFinder.EventListForOutput.from_disk(motion_ref[key],'MRC')
+       
+      self.motion_mode = _extract_time_from_disk(motion_ref,'mode')      
+    else:
+      raise Exception('Not yet implemented')
+    
+    #bends - NYI
+    #--------------------
+    #    foraging: [1x1 struct]
+    #        head: [1x1 struct]
+    #     midbody: [1x1 struct]
+    #        tail: [1x1 struct]    
+    
+    #turns - NYI    
+    #--------------------
+    #    omegas: [1x1 struct]
+    #    upsilons: [1x1 struct] 
     
     return self
 
@@ -461,7 +542,7 @@ class WormFeatures(object):
     self.morphology = WormMorphology.from_disk(worm['morphology'])
     self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
     self.posture    = WormPosture.from_disk(worm['posture'])
-    self.path = WormPath.from_disk(worm['path'])
+    self.path       = WormPath.from_disk(worm['path'])
     
     return self
     
@@ -475,11 +556,9 @@ class WormFeatures(object):
     """
     return \
       self.path       == other.path       and \
-      self.morphology == other.morphology #and \
-      #self.posture    == other.posture    #and \
-      #self.locomotion == other.locomotion and \
-      #
-
+      self.morphology == other.morphology and \
+      self.posture    == other.posture    and \
+      self.locomotion == other.locomotion
         
 def _extract_time_from_disk(parent_ref,name):
         
@@ -487,7 +566,14 @@ def _extract_time_from_disk(parent_ref,name):
     This is for handling Matlab save vs Python save when we get to that point.
     """        
         
-    temp = parent_ref[name]
-    return temp[0]    
+    temp = parent_ref[name].value
+    
+    #Assuming vector, need to fix for eigenvectors
+    if temp.shape[0] > temp.shape[1]:
+      wtf = temp[:,0]
+    else:
+      wtf = temp[0,:]
+    
+    return wtf    
 
     

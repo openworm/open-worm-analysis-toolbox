@@ -60,9 +60,13 @@
 
 import numpy as np
 import operator
+import h5py
+import warnings
+
 from itertools import groupby
 from wormpy import config
-import warnings
+from . import feature_comparisons as fc
+from . import utils
 
 
 
@@ -766,8 +770,27 @@ class EventListForOutput(object):
     end_I    = event_list.end_Is  
     n_events = len(start_I)
     
-    if n_events == 0:
+    self.is_null = n_events == 0    
+    
+    if self.is_null:
+      
       return
+      
+      
+    """
+    num_video_frames
+    start_frames
+    end_frames
+    event_durations
+    time_between_events
+    distance_during_events
+    distance_between_events
+    total_time
+    frequency
+    time_ratio
+    data_ratio
+    num_events_for_stats
+    """      
       
     self.num_video_frames = len(distance_per_frame)
 
@@ -776,7 +799,7 @@ class EventListForOutput(object):
     self.end_frames   = end_I
     
     #Old Name: time
-    self.event_durations = (start_I - end_I + 1) / FPS
+    self.event_durations = (end_I - start_I + 1) / FPS
     
     #Old Name: interTime
     self.time_between_events = (start_I[1:] - end_I[:-1] - 1) / FPS
@@ -793,11 +816,11 @@ class EventListForOutput(object):
       
     #Old Name: distance
     #Distance moved between events
-    self.distance_between_events = np.zeros(n_events)
+    self.distance_between_events = np.zeros(n_events-1)
     for i in range(n_events-1):
       self.distance_between_events[i] = \
         np.nansum(distance_per_frame[end_I[i]+1:start_I[i+1]-1])
-    self.distance_between_events[-1] = np.NaN
+    #self.distance_between_events[-1] = np.NaN
     
     
     
@@ -847,6 +870,127 @@ class EventListForOutput(object):
     
     """
     EventList.get_event_mask(self.num_video_frames)
+
+  @classmethod
+  def from_disk(cls,event_ref,ref_format):
+
+    """
+    ref_format : {'MRC'}
+    """
+
+    self = cls.__new__(cls)
+    
+
+    """
+    num_video_frames
+    start_frames
+    end_frames
+    event_durations
+    time_between_events
+    distance_during_events
+    distance_between_events
+    total_time
+    frequency
+    time_ratio
+    data_ratio
+    num_events_for_stats
+    """
+    
+    if ref_format is 'MRC':
+      
+      
+      frames    = event_ref['frames']
+      
+      #???? How to tell if bad
+      #h5py._hl.dataset.Dataset      
+      
+
+      
+      if type(frames) == h5py._hl.dataset.Dataset:
+        self.is_null = True
+        return
+      else:
+          self.is_null = False
+      
+      frame_values = {}
+      file_ref = frames.file
+      for key in frames:
+        ref_array = frames[key]
+        #Yikes, getting the indexing right here was a PITA
+        frame_values[key] = np.array([file_ref[x[0]][0][0] for x in ref_array])
+
+      
+      self.start_frames            = frame_values['start']
+      self.end_frames              = frame_values['end']
+      self.event_durations         = frame_values['time']    
+      self.time_between_events     = frame_values['interTime']       
+      self.distance_between_events = frame_values['interDistance']  
+
+      self.frequency = event_ref['frequency'].value[0][0]
+      
+      if 'ratio' in event_ref.keys():
+        ratio     = event_ref['ratio']
+        self.distance_during_events = frame_values['distance']
+        self.time_ratio = ratio['time']
+        self.data_ratio = ratio['distance']
+      else:
+        self.time_ratio = event_ref['timeRatio'].value[0][0]
+        self.data_ratio = []
+        self.distance_during_events = []
+    else:
+      raise Exception('Other formats not yet supported :/')
+
+    #import pdb
+    #pdb.set_trace()
+
+    #num_video_frames - CRAP: :/
+    #Look away ...
+    temp_length = file_ref['worm/morphology/length']
+    self.num_video_frames = len(temp_length)
+    
+    #total_time - CRAP :/
+    self.total_time = self.num_events_for_stats / self.frequency
+    
+    return self
+
+  def __repr__(self):
+    return utils.print_object(self)  
+
+  def __eq__(self,other):
+    
+    #Current status: mismatch in # of forward events
+
+    import pdb
+    pdb.set_trace()
+
+    return False
+
+    """
+    THINGS TO COMPARE:
+    ---------------------
+    num_video_frames
+    start_frames
+    end_frames
+    event_durations
+    time_between_events
+    distance_during_events
+    distance_between_events
+    total_time
+    frequency
+    time_ratio
+    data_ratio
+    num_events_for_stats    
+    """
+    
+    """
+        return \
+      fc.fp_isequal(self.height,other.height,'Arena.height',1) and \
+      fc.fp_isequal(self.width,other.width,'Arena.width',1)   and \
+      fc.fp_isequal(self.min_x,other.min_x,'Arena.min_x')   and \
+      fc.fp_isequal(self.min_y,other.min_y,'Arena.min_y')   and \
+      fc.fp_isequal(self.max_x,other.max_x,'Arena.max_x')   and \
+      fc.fp_isequal(self.max_y,other.max_y,'Arena.max_y')
+    """
 
   # TODO: find out if anyone actually uses this method.
   #@staticmethod

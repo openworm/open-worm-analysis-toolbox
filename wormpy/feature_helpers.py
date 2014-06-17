@@ -818,7 +818,7 @@ def get_worm_velocity(nw, ventral_mode=0):
   
   avg_body_angle = get_partition_angles(nw, partition_key='body',
                                         data_key='skeletons', 
-                                        head_to_tail=True)  # reverse
+                                        head_to_tail=False)  # reverse
   
   sample_time_values = \
     {
@@ -834,6 +834,10 @@ def get_worm_velocity(nw, ventral_mode=0):
   
   for partition_key in partition_keys:
     x, y = nw.get_partition(partition_key, 'skeletons', True)
+    
+   #import pdb
+    #pdb.set_trace()      
+    
     speed, direction = compute_velocity(x, y, 
                                         avg_body_angle, 
                                         sample_time_values[partition_key], 
