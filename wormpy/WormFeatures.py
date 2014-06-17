@@ -14,7 +14,6 @@
 import csv
 from . import feature_comparisons as fc
 from . import EventFinder
-from . import user_config as uconfig
 import h5py #For loading from disk 
 import numpy as np
 import collections #For namedtuple
@@ -23,44 +22,44 @@ from wormpy import feature_helpers
 from . import path_features
 from . import posture_features
 from . import utils
+from . import locomotion_bends
 
 #import pdb
 
 class WormMorphology(object):
-  def __init__(self, nw):
-    """
-      Translation of: SegwormMatlabClasses / 
-      +seg_worm / @feature_calculator / getMorphologyFeatures.m
-      
-      Nature Methods Description
-      =======================================================================
-       
-      Morphology Features 
-       
-      1. Length. Worm length is computed from the segmented skeleton by
-      converting the chain-code pixel length to microns.
-      
-      2. Widths. Worm width is computed from the segmented skeleton. The
-      head, midbody, and tail widths are measured as the mean of the widths
-      associated with the skeleton points covering their respective sections.
-      These widths are converted to microns.
-      
-      3. Area. The worm area is computed from the number of pixels within the
-      segmented contour. The sum of the pixels is converted to microns2.
-       
-      4. Area/Length.
-       
-      5. Midbody Width/Length.
-      
-      get_morphology_features:
-      * Takes nw, and generates a structure called "morphology"
-      
-      %Old files that served as a reference ...
-      %------------------------------------------------------------
-      %morphology_process.m
-      %schaferFeatures_process.m
+  """
+  The worm's morphology features class.
+
+  Nature Methods Description
+  ---------------------------------------    
+  1. Length. Worm length is computed from the segmented skeleton by
+  converting the chain-code pixel length to microns.
   
-    """
+  2. Widths. Worm width is computed from the segmented skeleton. The
+  head, midbody, and tail widths are measured as the mean of the widths
+  associated with the skeleton points covering their respective sections.
+  These widths are converted to microns.
+  
+  3. Area. The worm area is computed from the number of pixels within the
+  segmented contour. The sum of the pixels is converted to microns2.
+   
+  4. Area/Length.
+   
+  5. Midbody Width/Length.
+  
+
+  Notes
+  ---------------------------------------    
+  Formerly SegwormMatlabClasses / 
+  +seg_worm / @feature_calculator / getMorphologyFeatures.m
+
+  Old files that served as a reference:
+    morphology_process.m
+    schaferFeatures_process.m
+  
+  """
+  
+  def __init__(self, nw):
     
     self.length = nw.data_dict['lengths']
     # each item in this sub-dictionary is the per-frame mean across some
@@ -136,27 +135,68 @@ class WormMorphology(object):
 
 
 class WormLocomotion(object):
-  def __init__(self, nw):
+  """
+  The worm's locomotion features class.
+
+  Properties
+  ---------------------------------------    
+  velocity:
+    (head_tip, head, midbody, tail, tail_tip) x (speed, direction)
+  motion
+  motion_mode
+  is_paused
+  bends
+  foraging
+  omegas
+  upsilons
+
+  Properties (full listing)
+  ---------------------------------------    
+
+  .velocity
+    .headTip
+      .speed - time series   
+      .direction - time series   
+    .head - all have same format
+    .midbody
+    .tail
+    .tailTip
+  .motion
+    .forward
+    .backward
+    .paused
+    .mode - time series   
+  .bends
+    .foraging
+      .amplitude - time series 
+      .angleSpeed - time series 
+    .head
+      .amplitude - time series 
+      .frequency - time series 
+    .midbody - same as head
+    .tail  - same as head
+  .turns
+    .omegas
+    .upsilons
+
+
+  Notes
+  ---------------------------------------    
+  Formerly SegwormMatlabClasses / 
+    +seg_worm / +features / @locomotion / locomotion.m
+
+  """
+
+
+  def __init__(self, normalized_worm):
     """
-      Translation of: SegwormMatlabClasses / 
-      +seg_worm / +features / @locomotion / locomotion.m
-  
-        properties
-          velocity:
-            (head_tip, head, midbody, tail, tail_tip) x (speed, direction)
-          motion
-          motion_mode
-          is_paused
-          bends
-          foraging
-          omegas
-          upsilons
-        end
+    Initialization function for WormLocomotion
+
+    Parameters
+    ---------------------------------------    
+    normalized_worm: a NormalizedWorm instance
 
     """
-
-    self.velocity = feature_helpers.get_worm_velocity(nw)
-
     # DEBUG
     #feature_helpers.write_to_CSV(
     #      {
@@ -167,50 +207,37 @@ class WormLocomotion(object):
     #      'motion_codes_input'
     #      )
 
+    # let's use a shorthand
+    nw = normalized_worm
+
+    self.velocity = feature_helpers.get_worm_velocity(nw)
+
     self.motion_events = \
       feature_helpers.get_motion_codes(self.velocity['midbody']['speed'], 
                                        nw.data_dict['lengths'])
                                        
     #TODO: I'm not a big fan of how this is done ...
     self.motion_mode = self.motion_events['mode']
-        
+
     del self.motion_events['mode']
     
-    
-    
-    self.is_paused = 0
+    self.is_paused = self.motion_mode == 0
 
-    self.bends = 0
+    self.bends = locomotion_bends.LocomotionCrawlingBends(
+                                                  nw.data_dict['angles'],
+                                                  self.is_paused,
+                                                  nw.is_segmented)
 
-    self.foraging = 0
+    self.foraging = locomotion_bends.LocomotionForagingBends(
+                                                  nw.skeleton_x,
+                                                  nw.skeleton_y,
+                                                  nw.is_segmented,
+                                                  nw.ventral_mode)
 
     self.omegas = 0
 
     self.upsilons = 0
     
- 
-    #.velocity
-    #  .headTip
-    #    .speed - time series   
-    #    .direction - time series   
-    #  .head - all have same format
-    #  .midbody
-    #  .tail
-    #  .tailTip
-    #.bends
-    #  .foraging
-    #    .amplitude - time series 
-    #    .angleSpeed - time series 
-    #  .head
-    #    .amplitude - time series 
-    #    .frequency - time series 
-    #  .midbody - same as head
-    #  .tail  - same as head
-    #.turns
-    #  .omegas
-    #  .upsilons
-    
- 
   def __repr__(self):
     return utils.print_object(self)  
     
@@ -234,19 +261,25 @@ class WormLocomotion(object):
       other_speed     = other.velocity[key]['speed']
       other_direction = other.velocity[key]['direction']
 
-      same_speed = fc.corr_value_high(self_speed,other_speed,'locomotion.velocity.' + key + '.speed')
+      same_speed = fc.corr_value_high(self_speed,
+                                      other_speed,
+                                      'locomotion.velocity.' + key + '.speed')
       
       if not same_speed:
         return False
         
-      same_direction =  fc.corr_value_high(self_direction,other_direction,'locomotion.velocity.' + key + '.speed') 
+      same_direction =  fc.corr_value_high(
+                                      self_direction,
+                                      other_direction,
+                                      'locomotion.velocity.' + key + '.speed') 
       
       if not same_direction:
         return False
         
     
     #TODO: Provide error info
-    motion_events_same = [self.motion_events[x] == other.motion_events[x] for x in self.motion_events]  
+    motion_events_same = [self.motion_events[x] == other.motion_events[x] 
+                              for x in self.motion_events]  
     #self_motion_events  = self.motion_events
     #other_motion_events = other.motion_events
 
@@ -254,10 +287,11 @@ class WormLocomotion(object):
       #TODO: Why not
       for key,is_same in zip(self.motion_events,motion_events_same):
         if not is_same:
-          print 'Yo mama'
+          print('Yo mama')
       return False
 
-    #same_motion_events = [self_velocity[x] == other_velocity[x] for x in self_velocity]
+    #same_motion_events = [self_velocity[x] == other_velocity[x] 
+    #                          for x in self_velocity]
 
     return False
       
@@ -299,20 +333,21 @@ class WormLocomotion(object):
       # - forward, backward, paused, mode
       motion_ref = m_var['motion']
       for key in ['forward','backward','paused']:
-        self.motion_events[key] = EventFinder.EventListForOutput.from_disk(motion_ref[key],'MRC')
+        self.motion_events[key] = \
+          EventFinder.EventListForOutput.from_disk(motion_ref[key],'MRC')
        
       self.motion_mode = _extract_time_from_disk(motion_ref,'mode')      
     else:
       raise Exception('Not yet implemented')
     
-    #bends - NYI
+    #TODO: bends - Not Yet Implemented
     #--------------------
     #    foraging: [1x1 struct]
     #        head: [1x1 struct]
     #     midbody: [1x1 struct]
     #        tail: [1x1 struct]    
     
-    #turns - NYI    
+    #TODO: turns - Not Yet Implemented
     #--------------------
     #    omegas: [1x1 struct]
     #    upsilons: [1x1 struct] 
@@ -322,29 +357,44 @@ class WormLocomotion(object):
     
 
 class WormPosture(object):
-  def __init__(self, nw):
+  """
+  Worm posture feature class.
+  
+  Notes
+  ---------------------------------------    
+  Formerly SegwormMatlabClasses / 
+  +seg_worm / @feature_calculator / getPostureFeatures.m
+
+  Former usage: 
+  
+  posture = seg_worm.feature_calculator.getPostureFeatures(nw)
+
+  Prior to this, it was originally "schaferFeatures_process"
+
+  Formerly,
+  - Indices were inconsistently defined for bends relative to other code
+  - stdDev for bends is signed as well, based on means ...
+
+  Unfinished Status
+  ---------------------------------------    
+  (@JimHokanson, is this still true?)
+  - seg_worm.feature_helpers.posture.wormKinks - not yet examined
+  - distance - missing input to function, need to process locomotion
+    first
+
+  """    
+
+  def __init__(self, normalized_worm):
     """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getPostureFeatures.m
+    Initialization function for WormPosture
 
-    %
-    %   posture = seg_worm.feature_calculator.getPostureFeatures(nw)
-    %
-    %   Old Files
-    %   - schaferFeatures_process
-    %
-    %   NOTES:
-    %   - Indices were inconsistently defined for bends relative to other code
-    %   - stdDev for bends is signed as well, based on means ...
-    %
-    %   UNFINISHED STATUS:
-    %   - seg_worm.feature_helpers.posture.wormKinks - not yet examined
-    %   - distance - missing input to function, need to process locomotion
-    %   first
-    %
+    Parameters
+    ---------------------------------------    
+    normalized_worm: a NormalizedWorm instance
 
-    """    
- 
+    """
+    # Let's use a shorthand
+    nw = normalized_worm    
 
     # *** 1. Bends *** DONE
     self.bends = posture_features.Bends(nw)
@@ -353,7 +403,8 @@ class WormPosture(object):
     #This has not been optimized, that Matlab version has
     #NOTE: This is VERY slow, leaving commented for now
     #self.eccentricity,self.orientation = \
-    #   posture_features.get_eccentricity_and_orientation(nw.contour_x,nw.contour_y)
+    #   posture_features.get_eccentricity_and_orientation(nw.contour_x,
+    #                                                     nw.contour_y)
 
     
     #Temp input for next function ...
@@ -374,14 +425,13 @@ class WormPosture(object):
     # *** 4. Kinks *** DONE
     self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
         
-    
-
     # *** 5. Coils ***
     self.coils = posture_features.get_worm_coils()
 
-
     # *** 6. Directions *** DONE
-    self.directions = posture_features.Directions(nw.skeleton_x,nw.skeleton_y,nw.worm_partitions)
+    self.directions = posture_features.Directions(nw.skeleton_x,
+                                                  nw.skeleton_y,
+                                                  nw.worm_partitions)
 
     # *** 7. Skeleton *** DONE
     # (already in morphology, but Schafer Lab put it here too)
@@ -389,7 +439,6 @@ class WormPosture(object):
     self.skeleton = nt(nw.skeleton_x,nw.skeleton_y)
     
     # *** 8. EigenProjection *** DONE
-        
     eigen_worms = nw.eigen_worms
 
     self.eigen_projection = posture_features.get_eigenworms(
@@ -422,7 +471,8 @@ class WormPosture(object):
     #TODO: 
     #self.coils        =    
     
-    self.directions   = posture_features.Directions.from_disk(p_var['directions'])    
+    self.directions   = posture_features.Directions.from_disk(
+                                                      p_var['directions'])    
       
       
     skeleton = p_var['skeleton']
@@ -437,24 +487,35 @@ class WormPosture(object):
     return utils.print_object(self)  
 
 class WormPath(object):
-  
   """
+  Worm posture feature class.
   
-  Attributes:
+  Properties
   ------------------------
   range :
   duration :
   coordinates :
   curvature :
   
+  Notes
+  ---------------------------------------    
+  Formerly SegwormMatlabClasses / 
+  +seg_worm / @feature_calculator / getPathFeatures.m
+  
   """
   
-  def __init__(self, nw):
+  def __init__(self, normalized_worm):
     """
-    Translation of: SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getPathFeatures.m
+    Initialization function for WormPosture
+
+    Parameters
+    ---------------------------------------    
+    normalized_worm: a NormalizedWorm instance
+
 
     """    
+    # Let's use a shorthand
+    nw = normalized_worm    
     
     self.range = path_features.Range(nw.contour_x,nw.contour_y)
         
@@ -472,7 +533,9 @@ class WormPath(object):
        
     #Curvature (Done)
     #---------------------------------------------------
-    self.curvature = path_features.worm_path_curvature(sx,sy,config.FPS,config.VENTRAL_MODE)
+    self.curvature = path_features.worm_path_curvature(sx, sy,
+                                                       config.FPS,
+                                                       nw.ventral_mode)
 
   #TODO: Move to class in path_features
   @classmethod
@@ -505,9 +568,14 @@ class WormPath(object):
     return \
       self.range == other.range and \
       self.duration == other.duration and \
-      fc.corr_value_high(self.coordinates.x,other.coordinates.x,'path.coordinates.x') and \
-      fc.corr_value_high(self.coordinates.y,other.coordinates.y,'path.coordinates.y') and \
-      fc.corr_value_high(self.curvature,other.curvature,'path.curvature',high_corr_value=0.95,merge_nans=True)
+      fc.corr_value_high(self.coordinates.x, other.coordinates.x,
+                         'path.coordinates.x') and \
+      fc.corr_value_high(self.coordinates.y, other.coordinates.y,
+                         'path.coordinates.y') and \
+      fc.corr_value_high(self.curvature, other.curvature,
+                         'path.curvature',
+                         high_corr_value=0.95,
+                         merge_nans=True)
 
       #NOTE: Unfortunately the curvature is slightly different. It looks the same
       #but I'm guessing there are a few off by 1 errors in it.
