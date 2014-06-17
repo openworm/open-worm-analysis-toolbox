@@ -20,8 +20,8 @@ from wormpy.WormFeatures import WormLocomotion as wmotion
 
 temp = wmotion(nw)
 
-import pdb
-pdb.set_trace()
+#import pdb
+#pdb.set_trace()
 
 #temp = wpath(nw)
 #temp = wposture(nw)
@@ -32,7 +32,10 @@ from wormpy.WormFeatures import WormFeatures as wf
 
 worm = wf.from_disk(file_path)
 
-print worm.posture
+print worm.locomotion == temp
+
+
+#print worm.posture
 
 #print worm.morphology
 
