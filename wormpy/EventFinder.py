@@ -140,6 +140,9 @@ class EventFinder:
     # of the data matching our above speed criteria
     event_candidates = self.get_start_stop_indices(speed_data, speed_mask)
 
+    #ERROR: start is not at 0
+    #??? Starts might all be off by 1 ...
+
     # Possible short circuit: if we have absolutely no qualifying events 
     # in event_data, just exit early.
     if not event_candidates.size:
@@ -158,10 +161,8 @@ class EventFinder:
 
     # Remove events that aren't at least
     # self.min_frames_threshold in length
-    event_candidates = \
-      self.remove_too_small_events(event_candidates)
+    event_candidates = self.remove_too_small_events(event_candidates)
       
-
   
     # For each candidate event, sum the instantaneous speed at all 
     # frames in the event, and decide if the worm moved enough distance
@@ -241,7 +242,8 @@ class EventFinder:
     ---------------------------------------
     event_candidates: 2-d int numpy array
       An array of tuples giving the start and stop, respectively,
-      of each run of Trues in the event_mask.
+      of each run of Trues in the event_mask. IMPORTANTLY, these are indices,
+      NOT slice values
   
     Notes
     ---------------------------------------
@@ -266,15 +268,19 @@ class EventFinder:
     # e.g. If our bracketed_event_mask is
     # [False, False, False, True, False True, True, True, False], then
     # we obtain the array [3, 5, 6, 7]
-    x = np.flatnonzero(bracketed_event_mask)
+    x = np.flatnonzero(bracketed_event_mask) - 1
+
+    
 
     # Group these together using a fancy trick from 
     # http://stackoverflow.com/questions/2154249/, since
     # the lambda function x:x[0]-x[1] on an enumerated list will
     # group consecutive integers together
     # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
+    #list(group)
     x_grouped = [list(group) for key, group in groupby(enumerate(x), 
                                                        lambda i:i[0]-i[1])]
+
 
     # We want to know the first element from each "run", and the last element
     # e.g. [[3, 4], [5, 7]]
@@ -291,7 +297,7 @@ class EventFinder:
       event_candidates[0] = (0, event_candidates[0][1])
     
     # Same but with NaNs succeeding the final end index.    
-    if np.all(np.isnan(event_data[event_candidates[-1][1]:])):
+    if np.all(np.isnan(event_data[event_candidates[-1][1]+1:])):
       event_candidates[-1] = (event_candidates[-1][0], event_data.size-1)
       
     return np.array(event_candidates)
@@ -335,7 +341,7 @@ class EventFinder:
       # continuing as long as they satisfy our comparison operator
       j = i 
       while(j+1 < num_groups and comparison_operator(
-             event_candidates[j+1][0] - event_candidates[j][1],
+             event_candidates[j+1][0] - event_candidates[j][1] - 1,
              threshold)):
         j += 1
 
@@ -593,7 +599,7 @@ class EventList:
     if value > 1:
       if self.start_Is[0] == 0:
         value = value - 1
-      if self.end_Is[-1] == self.num_video_frames:
+      if self.end_Is[-1] == self.num_video_frames-1:
         value = value - 1
 
     return value
@@ -795,6 +801,7 @@ class EventListForOutput(object):
     self.num_video_frames = len(distance_per_frame)
 
     #Old Names: start and end
+    #NOTE: These are the exact frames, the end is NOT setup for slicing
     self.start_frames = start_I
     self.end_frames   = end_I
     
@@ -810,7 +817,7 @@ class EventListForOutput(object):
       self.distance_during_events = np.zeros(n_events)
       for i in range(n_events):
         self.distance_during_events[i] = \
-          np.nansum(distance_per_frame[start_I[i]:end_I[i]])    
+          np.nansum(distance_per_frame[start_I[i]:end_I[i]+1])    
     else:
       self.distance_during_events = []
       
@@ -819,10 +826,8 @@ class EventListForOutput(object):
     self.distance_between_events = np.zeros(n_events-1)
     for i in range(n_events-1):
       self.distance_between_events[i] = \
-        np.nansum(distance_per_frame[end_I[i]+1:start_I[i+1]-1])
+        np.nansum(distance_per_frame[end_I[i]+1:start_I[i+1]])
     #self.distance_between_events[-1] = np.NaN
-    
-    
     
     self.total_time = self.num_video_frames / FPS
     
@@ -834,7 +839,7 @@ class EventListForOutput(object):
     
     if compute_distance_during_event:
       self.data_ratio = np.nansum(self.distance_during_events) \
-                        / np.nansum(self.distance_between_events)
+                        / np.nansum(distance_per_frame)
     else:
       self.data_ratio = []
 
@@ -846,8 +851,8 @@ class EventListForOutput(object):
     value = len(self.start_frames)
     if value > 1:
       if self.start_frames[0] == 0:
-        value = value - 1
-      if self.end_frames[-1] == self.num_video_frames:
+        value = value - 1      
+      if self.end_frames[-1] == self.num_video_frames-1:
         value = value - 1
 
     return value
@@ -908,9 +913,9 @@ class EventListForOutput(object):
       
       if type(frames) == h5py._hl.dataset.Dataset:
         self.is_null = True
-        return
+        return self
       else:
-          self.is_null = False
+        self.is_null = False
       
       frame_values = {}
       file_ref = frames.file
@@ -923,16 +928,18 @@ class EventListForOutput(object):
       self.start_frames            = frame_values['start']
       self.end_frames              = frame_values['end']
       self.event_durations         = frame_values['time']    
-      self.time_between_events     = frame_values['interTime']       
-      self.distance_between_events = frame_values['interDistance']  
+      
+      #Remove NaN value at end
+      self.time_between_events     = frame_values['interTime'][:-1]    
+      self.distance_between_events = frame_values['interDistance'][:-1]  
 
       self.frequency = event_ref['frequency'].value[0][0]
       
       if 'ratio' in event_ref.keys():
         ratio     = event_ref['ratio']
         self.distance_during_events = frame_values['distance']
-        self.time_ratio = ratio['time']
-        self.data_ratio = ratio['distance']
+        self.time_ratio = ratio['time'][0][0]
+        self.data_ratio = ratio['distance'][0][0]
       else:
         self.time_ratio = event_ref['timeRatio'].value[0][0]
         self.data_ratio = []
@@ -956,14 +963,25 @@ class EventListForOutput(object):
   def __repr__(self):
     return utils.print_object(self)  
 
-  def __eq__(self,other):
-    
-    #Current status: mismatch in # of forward events
-
-    import pdb
-    pdb.set_trace()
-
-    return False
+  def test_equality(self, other, event_name):
+        
+    if self.is_null and other.is_null:
+      return True
+    elif self.is_null != other.is_null:
+      return False         
+        
+    #TODO: Add an integer equality comparison with name printing
+    return \
+      fc.fp_isequal(self.num_video_frames,other.num_video_frames,event_name + '.num_video_frames') and \
+      fc.corr_value_high(self.start_frames,other.start_frames,event_name + '.start_frames') and \
+      fc.corr_value_high(self.end_frames,other.end_frames,event_name + '.end_frames')   and \
+      fc.corr_value_high(self.event_durations,other.event_durations,event_name + '.event_durations')   and \
+      fc.corr_value_high(self.distance_during_events,other.distance_during_events,'Arena.min_y')   and \
+      fc.fp_isequal(self.total_time,other.total_time,event_name + '.total_time',0.01) and \
+      fc.fp_isequal(self.frequency,other.frequency,event_name + '.frequency',0.01) and \
+      fc.fp_isequal(self.time_ratio,other.time_ratio,event_name + '.time_ratio',0.01) and \
+      fc.fp_isequal(self.data_ratio,other.data_ratio,event_name + '.data_ratio',0.01) and \
+      fc.fp_isequal(self.num_events_for_stats,other.num_events_for_stats,event_name + '.total_time')
 
     """
     THINGS TO COMPARE:
