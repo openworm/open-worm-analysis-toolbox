@@ -130,7 +130,7 @@ class EventFinder:
 
     """
     # Override distance_data with speed_data if it was not provided
-    if not distance_data.size:
+    if distance_data is None:
       distance_data = speed_data
         
     # For each frame, determine if it matches our speed threshold criteria
@@ -173,6 +173,8 @@ class EventFinder:
 
     return EventList(event_candidates)
 
+  def __repr__(self):
+    return utils.print_object(self)  
   
   def get_speed_threshold_mask(self, event_data):
     """
@@ -481,7 +483,7 @@ class EventFinder:
 
 
 
-class EventList:
+class EventList(object):
   """
   A list of events.
 
@@ -543,6 +545,9 @@ class EventList:
     if(self.end_Is == None):
       self.end_Is = np.array([], dtype=int)
   
+  def __repr__(self):
+    return utils.print_object(self)  
+    
   @property
   def starts_and_stops(self):
     """
@@ -663,29 +668,28 @@ class EventList:
     
     Returns
     ---------------------------------------
+    Tuple (EventList,is_from_first_object)
     EventList: A new EventList instance
     
     """
-    all_starts = np.concatenate(obj1.start_Is, obj2.start_Is)
-    all_ends   = np.concatenate(obj1.end_Is,   obj2.end_Is)
+    
+    #self = cls.__new__(cls)    
+        
+    all_starts = np.concatenate((obj1.start_Is, obj2.start_Is))
+    all_ends   = np.concatenate((obj1.end_Is,   obj2.end_Is))
     
     # @JimHokanson TODO: Would be good to check that events don't overlap ...
     
     new_starts = np.sort(all_starts)
-    order_I = np.argsort(all_starts)
+    order_I    = np.argsort(all_starts)
         
     new_ends   = all_ends[order_I]
+            
+    is_from_first_object = order_I < obj1.start_Is.size    
     
-    # Since we have sorted and intermingled the two sets of events, we
-    # have lost information about which instance the events are a part of
-    # at some point we could choose to alter this method and return this
-    # variable since it stores information about which instance the 
-    # element is a part of:
-    #is_first   = np.concatenate(np.ones(obj1.num_events, dtype='bool'),
-    #                            np.ones(obj2.num_events, dtype='bool'))
-    #is_first_object = is_first[order_I]
+    starts_stops = np.transpose(np.vstack((new_starts,new_ends)))   
     
-    return EventList(new_starts, new_ends)
+    return (EventList(starts_stops),is_from_first_object)
 
 
 
@@ -736,7 +740,7 @@ class EventListForOutput(object):
   """
  
   def __init__(self, event_list, distance_per_frame, 
-               compute_distance_during_event = False):
+               compute_distance_during_event = False,make_null=False):
     """
     Initialize an instance of EventListForOutput
     
@@ -769,6 +773,10 @@ class EventListForOutput(object):
 
     # Calculate the features
     #self.calculate_features(config.FPS)
+
+    if make_null:
+      self.is_null = True
+      return
 
     #Some local variables
     FPS      = config.FPS    

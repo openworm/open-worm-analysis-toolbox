@@ -224,6 +224,7 @@ class WormLocomotion(object):
     
     self.is_paused = self.motion_mode == 0
 
+    """
     self.bends = locomotion_bends.LocomotionCrawlingBends(
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
@@ -234,10 +235,12 @@ class WormLocomotion(object):
                                                   nw.skeleton_y,
                                                   nw.is_segmented,
                                                   nw.ventral_mode)
+    """                                             
+
 
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
-    self.turns = locomotion_turns.LocomotionTurns(nw.data_dict['angles'],
+    self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
                                                   is_stage_movement,
                                                   midbody_distance,
                                                   nw.skeleton_x,
