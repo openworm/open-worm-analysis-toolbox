@@ -25,21 +25,20 @@ import numpy as np
 from . import feature_helpers
 from . import config
 
+
 class LocomotionCrawlingBends(object):
   """
   Locomotion Crawling Bends Feature.
+
   
   Properties
   ---------------------------------------    
-  .head
-    .amplitude
-    .frequency
-  .mid
-    .amplitude
-    .frequency
-  .tail
-    .amplitude
-    .frequency
+  head = {'amplitude': int, 'frequency': int}
+  midbody = {'amplitude': int, 'frequency': int}
+  tail = {'amplitude': int, 'frequency': int}
+  
+  , where int is a variable of type int.
+
 
   Methods
   ---------------------------------------    
@@ -51,7 +50,7 @@ class LocomotionCrawlingBends(object):
     and 
     h__getBandwidth(self, data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
     
-    which calls seg_worm.util.maxPeaksDis
+    , which calls seg_worm.util.maxPeaksDis
 
 
   Notes
@@ -130,7 +129,7 @@ class LocomotionCrawlingBends(object):
 
   def __init__(self, bend_angles, is_paused, is_segmented_mask):
     """
-    Compute the temporal bending frequency at the head, midbody, and tail.
+    Compute the temporal bending frequency at the head, midbody, and tail.    
     
     Parameters
     ---------------------------------------    
@@ -139,8 +138,6 @@ class LocomotionCrawlingBends(object):
     is_segmented_mask : [1 x n_frames]
     
     """
-    pass
-  
     minBodyWinTime = 0.5
     minBodyWin     = round(minBodyWinTime * config.FPS)
     maxBodyWinTime = 15
@@ -216,24 +213,24 @@ class LocomotionCrawlingBends(object):
   
   def h__getBendData(self, avg_bend_angles, options, is_paused):
     """
-    TODO: implement options as an *args parameter
-    
+    Compute the bend amplitude and frequency.
+
+    Parameters
+    ----------------------
+    avg_bend_angles : [1 x n_frames]
+    options         : Dictionary
+      This is defined in the calling function
+    is_paused       : [1 x n_frames]
+      Whether or not the worm is considered to be paused during the frame
+
     Notes
     ----------------------
-    Formerly [amplitude,frequency] = h__getBendData(avg_bend_angles, fps, options, is_paused)
-    #
-    #
-    Compute the bend amplitude and frequency.
-    #
-    #
-    Inputs
-    =======================================================================
-    avg_bend_angles : [1 x n_frames]
-    options         : (struct), this is defined in the calling function
-    is_paused       : [1 x n_frames], whether or not the worm is considered
-                      to be paused during the frame
-    #
-    
+    Formerly [amplitude,frequency] = h__getBendData(avg_bend_angles, 
+                                                    fps, options, is_paused)
+
+    TODO: implement options as an *args parameter
+
+    """
     INIT_MAX_I_FOR_BANDWIDTH = 2000 #TODO: Relate this to a real frequency ...
     #and pass it in from higher up. This number is NOT IMPORTANT TO THE OUTCOME
     #and is only to the speed in which the function runs. We try and find the
@@ -243,11 +240,10 @@ class LocomotionCrawlingBends(object):
     #in the FFT. We might also change this to being a percentage of the # of
     #points. Currently this is around 25% of the # of samples.
     
+    return [None, None]  # DEBUG
+
+    """
     #Options extraction
-    #----------------------------------
-    """
-    return [None, None]
-    """
     min_window = options.minWin
     max_window = options.maxWin
     max_freq   = options.maxFreq
@@ -256,24 +252,25 @@ class LocomotionCrawlingBends(object):
     max_amp_pct_bandwidth   = options.max_amp_pct_bandwidth
     peakEnergyThr = options.peakEnergyThr
     
-    # TODO: This needs to be cleaned up ...
-    [back_zeros_I,front_zeros_I] = self.h__getBoundingZeroIndices(avg_bend_angles,min_window)
+    # TODO: This needs to be cleaned up ...  - @JimHokanson
+    [back_zeros_I, front_zeros_I] = \
+            self.h__getBoundingZeroIndices(avg_bend_angles,
+                                           min_window)
     
-    n_frames = length(avg_bend_angles)
+    n_frames = len(avg_bend_angles)
     
-    left_distances  = (1:n_frames) - back_zeros_I
-    right_distances = front_zeros_I - (1:n_frames)
-    half_distances  = max(left_distances,right_distances)
+    left_distances  = np.array(range(n_frames)) - back_zeros_I
+    right_distances = front_zeros_I - np.array(range(n_frames))
+    half_distances  = np.maximum(left_distances, right_distances)
     
-    
-    left_bounds  = (1:n_frames) - half_distances
-    right_bounds = (1:n_frames) + half_distances
+    left_bounds  = np.array(range(n_frames)) - half_distances
+    right_bounds = np.array(range(n_frames)) + half_distances
     
     #Compute conditions by which we will ignore frames:
     #--------------------------------------------------------------------------
     #- frame is not bounded on both sides by a sign change
     #- avg_bend_angles is NaN, this will only happen on the edges because we
-        interpolate over the other frames ... (we just don't extrapolate)
+    #    interpolate over the other frames ... (we just don't extrapolate)
     #- the sign change region is too large
     #- the bounds we settle on exceed the data region
     #- mode segmentation determined the frame was a paused frame
@@ -281,80 +278,267 @@ class LocomotionCrawlingBends(object):
     #
     #??? - what about large NaN regions, are those paused regions???
     
-    is_bad_mask  = back_zeros_I == 0 | front_zeros_I == 0 | isnan(avg_bend_angles) | half_distances > max_window
-    is_bad_mask  = is_bad_mask | left_bounds < 1 | right_bounds > n_frames | is_paused
+    is_bad_mask  = back_zeros_I == 0 | \
+                   front_zeros_I == 0 | \
+                   np.isnan(avg_bend_angles) | \
+                   half_distances > max_window | \
+                   left_bounds < 1 | \
+                   right_bounds > n_frames | \
+                   is_paused
     
     
     # Compute the short-time Fourier transforms (STFT).
     fft_max_I   = fft_n_samples / 2 #Maximum index to keep for frequency analysis
     freq_scalar = (config.FPS / 2) * 1/(fft_max_I - 1)
     
-    n_frames = length(avg_bend_angles)
-    
-    amps  = NaN(1,n_frames)
-    freqs = NaN(1,n_frames)
-    for iFrame = find(~is_bad_mask)
-        
-        windowed_data   = avg_bend_angles(left_bounds(iFrame):right_bounds(iFrame))
-        data_win_length = length(windowed_data)
-        
-        #fft frequency and bandwidth
-        #----------------------------------------------------------------------
-        # Compute the real part of the STFT.
-        #These two steps take a lot of time ...
-        fft_data = fft(windowed_data, fft_n_samples)
-        fft_data = abs(fft_data(1:fft_max_I))
-        
-        # Find the peak frequency.
-        [maxPeak,maxPeakI] = max(fft_data)
-                
-        #NOTE: If this is true, we'll never bound the peak on the left ...
-        if maxPeakI == 1
-            continue
-        end
-        
-        #TODO: Not sure if this value is correct ...
-        unsigned_freq = freq_scalar*(maxPeakI - 1)
-        
-        if unsigned_freq > max_freq || unsigned_freq < min_freq
-           continue 
-        end
-        
-        [peakStartI,peakEndI] = self.h__getBandwidth(data_win_length,fft_data,maxPeakI,INIT_MAX_I_FOR_BANDWIDTH)
-        
-        #Store data
-        #----------------------------------------------------------------------
-        if ~(isempty(peakStartI) or isempty(peakEndI) or
-                fft_data(peakStartI) > max_amp_pct_bandwidth*maxPeak or #The minimums can't be too big
-                fft_data(peakEndI)   > max_amp_pct_bandwidth*maxPeak or 
-                sum(fft_data(peakStartI:peakEndI) .^ 2) < peakEnergyThr * sum(fft_data .^ 2)) #Needs to have enough energy
-    
-            # Convert the peak to a time frequency.
-            dataSign      = sign(mean(windowed_data)) # sign the data
-            amps(iFrame)  = (2 * fft_data(maxPeakI) / data_win_length) * dataSign
-            freqs(iFrame) = unsigned_freq * dataSign
-        end
-        
-    end
+    amps  = np.empty(n_frames) * np.NaN
+    freqs = np.empty(n_frames) * np.NaN
+    for iFrame in np.flatnonzero(~is_bad_mask):
+      windowed_data   = avg_bend_angles[left_bounds[iFrame]:
+                                        right_bounds[iFrame]]
+      data_win_length = len(windowed_data)
+      
+      #
+      # fft frequency and bandwidth
+      #
+      # Compute the real part of the STFT.
+      # These two steps take a lot of time ...
+      fft_data = np.fft.fft(windowed_data, fft_n_samples)
+      fft_data = abs(fft_data[1:fft_max_I])
+      
+      # Find the peak frequency.
+      [maxPeak, maxPeakI] = max(fft_data)
+              
+      # NOTE: If this is true, we'll never bound the peak on the left ...
+      if maxPeakI == 1:
+        continue
+      
+      #TODO: Not sure if this value is correct ...
+      unsigned_freq = freq_scalar * (maxPeakI - 1)
+      
+      if not (min_freq <= unsigned_freq <= max_freq):
+        continue 
+      
+      [peakStartI,peakEndI] = \
+              self.h__getBandwidth(data_win_length,
+                                   fft_data,
+                                   maxPeakI,
+                                   INIT_MAX_I_FOR_BANDWIDTH)
+      
+      #Store data
+      #----------------------------------------------------------------------
+      if not (peakStartI.size == 0 or \
+              peakEndI.size == 0 or \
+              # The minimums can't be too big:
+              fft_data(peakStartI) > (max_amp_pct_bandwidth*maxPeak) or \
+              fft_data(peakEndI)   > (max_amp_pct_bandwidth*maxPeak) or \
+              # Needs to have enough energy:
+              (sum(fft_data[peakStartI:peakEndI] ** 2) <
+              (peakEnergyThr * sum(fft_data ** 2))) 
+              ): 
+  
+        # Convert the peak to a time frequency.
+        dataSign      = np.sign(np.nanmean(windowed_data)) # sign the data
+        amps[iFrame]  = (2 * fft_data[:maxPeakI] / data_win_length) * dataSign
+        freqs[iFrame] = unsigned_freq * dataSign
+
+    return [amps, freqs]
     """
     
+  
+
+  
+  def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
+    """
+    The goal of this function is to bound each index by 
+    DEBUG
+
+    Parameters
+    ----------------------
+    avg_bend_angles : [1 x n_frames]
+    min_win_size    : int
+      The minimum size of the data window
     
-  
-  
-  
-  
-  
+    Returns
+    ----------------------
+    back_zeros_I    : [1 x n_frames]
+      For each frame, this specifies a preceding frame in which a 
+      change in the bend angle occurs. Invalid entries are 
+      indicated by 0.
+    front_zeros_I   : [1 x n_frames]
+    
+    Notes
+    ----------------------
+    Formerly [back_zeros_I,front_zeros_I] = \
+            h__getBoundingZeroIndices(avg_bend_angles,min_win_size)
+      
+    """
+
+    #Getting sign change indices ...
+    #---------------------------------------
+    #The old code found sign changes for every frame, even though 
+    #the sign changes never changed. Instead we find all sign changes, 
+    #and then for each frame know which frame to the left and right 
+    #have sign changes. We do this in such a way so that if we need to 
+    #look further to the left or right, it is really easy to get the 
+    #next answer.
+    sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
+                       np.sign(avg_bend_angles[1:])
+    sign_change_I  = np.flatnonzero(sign_change_mask)
+    n_sign_changes = len(sign_change_I)
+    
+    """
+    To get the correct frame numbers, we need to do the following 
+    depending on whether or not the bound is the left (backward) 
+    bound or the right (forward) bound. 
+    
+    Note from @JimHokanson: I haven't really thought through why 
+    this is, but it mimics the old code.
+    
+    for left bounds   - at sign changes - don't subtract or add
+    for right bounds  - we need to add 1
+
+    
+    Let's say we have sign changes at indices 3  6  9
+    What we need ...
+            1 2 3 4 5 6 7  9  10  Indices
+    Left  = 0 0 0 3 3 3 6  6  6   - at 4, the left sign change is at 3
+    Right = 4 4 4 7 7 7 10 10 0   - at 4, the right sign change is at 7
+    
+    NOTE: The values above are the final indices or values, but instead we
+    want to work with the indices, so we need:
+     
+            1 2 3 4 5 6 7  9  10  Indices
+    Left  = 0 0 0 1 1 1 2  2  2 - left_sign_change_I
+    Right = 1 1 1 2 2 2 3  3  3 - right_sign_change_I
+    
+    we also need:
+    left_values  = [3 6 9]  #the sign change indices
+    right_values = [4 7 10] #+1
+    
+    So this says:
+    left_sign_change_I(7) => 2
+    left_values(2) => 6, our sign change is at 6
+    
+    Let's say we need to expand further to the left, then we take 
+    left_sign_change_I(7) - 1 => 1
+    left_values(1) => 3, our new sign change is at 3
+    
+    Further:
+    left_sign_change_I(7) - 2 => 0
+    We've gone too far, nothing at index 0, set to invalid
+    """
+
+    """    
+    n_frames = len(avg_bend_angles)
+    
+    # For each element in the array, these values indicate which 
+    # sign change index to use ...
+    left_sign_change_I  = zeros(1,n_frames)
+    left_sign_change_I(sign_change_I + 1) = 1 
+    # We increment at values to the right of the sign changes
+    left_sign_change_I = cumsum(left_sign_change_I) 
+    # This is a little Matlab trick in which something like:
+    # 1 0 0 1 0 0 1 0 0 
+    # becomes:
+    # 1 1 1 2 2 2 3 3 3 
+    # so now at each frame, we get the index of the value
+    # that is to the left.
+    
+    right_sign_change_I    = np.zeros(n_frames)
+    right_sign_change_I[sign_change_I[1:end-1] + 1] = 1
+    right_sign_change_I[1] = 1
+    right_sign_change_I    = cumsum(right_sign_change_I)
+    # We must have nothing to the right of the last change:
+    right_sign_change_I[sign_change_I[end] + 1:end] = 0 
+    
+    # These are the actual indices that each sign crossing index points to
+    #
+    # We keep these separate as it makes it easier to go the next value, by
+    # incrementing the pointer index, rather than doing a search
+    left_values  = sign_change_I
+    right_values = sign_change_I + 1 
+    #----------------------------------------------------------------
+    
+    back_zeros_I  = np.zeros(n_frames)
+    front_zeros_I = np.zeros(n_frames)
+    
+    for iFrame in range(n_frames):
+      cur_left_index  = left_sign_change_I[iFrame]
+      cur_right_index = right_sign_change_I[iFrame]
+
+      if left_sign_change_I(iFrame) == 0 or \
+           right_sign_change_I(iFrame) == 0:
+        continue
+      
+      back_zero_I  = left_values[cur_left_index]
+      front_zero_I = right_values[cur_right_index]
+      
+      use_values = True
+      
+      # Expand the zero-crossing window.
+      #----------------------------------------------------------------------
+      # Note from @JimHokanson: We center on the sample by using the larger of the two gaps.
+      #This means the gap size is 2*larger_window, where the half window size
+      #is:
+      #left_window_size  = iFrame - back_zero_I
+      #right_window_size = front_zero_I - iFrame
+      #
+      #so in reality we should use:
+      #
+      #front_zero_I - iFrame < min_win_size/2 && iFrame - back_zero_I < min_win_size/2
+      #
+      #By not doing this, we overshoot the minimum window size that we need
+      #to use. Consider window sizes that are in terms of the minimum window
+      #size.
+      #
+      #i.e. 0.5w means the left or right window is half min_win_size
+      #
+      #Consider we have:
+      #0.5w left 
+      #0.3w right
+      #
+      #If we stopped now, we would get a windows size of 2*0.5w or w, which
+      #is what we want.
+      #
+      #Since we keep going, the right window will expand, let's say:
+      #0.5w left
+      #0.7w right
+      #
+      #Now in the calling function we will center on the frame and the total 
+      #window distance will be 2*0.7w or 1.4w, which is larger than we
+      #needed.
+      
+      while (front_zero_I - back_zero_I + 1) < min_win_size:
+        #Expand the smaller of the two windows
+        #----------------------------------------------------
+        #  left_window_size       right_window_size
+        if (iFrame - back_zero_I) < (front_zero_I - iFrame):
+          #Then expand to the left
+          cur_left_index = cur_left_index - 1
+          if cur_left_index == 0:
+            use_values = False
+            break
+          back_zero_I  = left_values(cur_left_index)
+        else:
+          #Expand to the right 
+          cur_right_index = cur_right_index + 1
+          if cur_right_index > n_sign_changes:
+            use_values = False
+            break
+          front_zero_I = right_values(cur_right_index)
+        
+        if use_values:
+          back_zeros_I(iFrame)  = back_zero_I
+          front_zeros_I(iFrame) = front_zero_I
+    
+    return [back_zeros_I, front_zeros_I]
+    """
   
   
   
   def h__getBandwidth(self, data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH):
     """
-    
-    Notes
-    -----------------
-    Formerly [peak_start_I,peak_end_I] = h__getBandwidth(data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
-    #
-    # 
     The goal is to find minimum 'peaks' that border the maximal frequency
     response.
       
@@ -362,252 +546,70 @@ class LocomotionCrawlingBends(object):
     range of frequencies, as execution time is proportional to the length
     of the input data. If this fails we use the full data set.
     
-    Inputs
-    =======================================================================
+    Parameters
+    ---------------------------------------    
     data_win_length : length of real data (ignoring zero padding) that 
                       went into computing the FFT
     fft_data        : output of the fft function
     max_peak_I      : location (index) of the maximum of fft_data
     INIT_MAX_I_FOR_BANDWIDTH : see code
-    #
-    Outputs
-    =======================================================================
+
+    Returns
+    ---------------------------------------    
     peak_start_I : (scalar)
     peak_end_I   : (scalar)
-    #
-    See Also:
-    seg_worm.util.maxPeaksDist
+
+    Notes
+    -----------------
+    Formerly [peak_start_I,peak_end_I] = h__getBandwidth(data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
+
+    See also, formerly: seg_worm.util.maxPeaksDist
     """
     pass
     """
     peakWinSize = round(sqrt(data_win_length))
   
     # Find the peak bandwidth.
-    #----------------------------------------------------------------------
-    
-    
-    if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH
-        
-        #NOTE: It is incorrect to filter by the maximum here, as we want to
-        #allow matching a peak that will later be judged invalid. If we
-        #filter here we may find another smaller peak which will not be
-        #judged invalid later on.
-        [~, min_peaks_I] = seg_worm.util.maxPeaksDist(fft_data(1:INIT_MAX_I_FOR_BANDWIDTH), peakWinSize,false,Inf)
-  
-        peak_start_I = min_peaks_I(find(min_peaks_I < max_peak_I,1))
-        peak_end_I   = min_peaks_I(find(min_peaks_I > max_peak_I,1))
-    else
-        peak_start_I = []
-        peak_end_I   = []
-    end
+    if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
+      #NOTE: It is incorrect to filter by the maximum here, as we want to
+      #allow matching a peak that will later be judged invalid. If we
+      #filter here we may find another smaller peak which will not be
+      #judged invalid later on.
+      [~, min_peaks_I] = seg_worm.util.maxPeaksDist(
+                                  fft_data[1:INIT_MAX_I_FOR_BANDWIDTH], 
+                                  peakWinSize, 
+                                  False, 
+                                  Inf)
+
+      peak_start_I = min_peaks_I[np.flatnonzero(min_peaks_I < max_peak_I)]
+      peak_end_I   = min_peaks_I[np.flatnonzero(min_peaks_I > max_peak_I)]
+    else:
+      peak_start_I = []
+      peak_end_I   = []
     
     #NOTE: Besides checking for an empty value, we also need to ensure that
     #the minimum didn't come too close to the data border, as more data
     #could invalidate the result we have.
-    if isempty(peak_end_I) || peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH   
-        [~, min_peaks_I] = seg_worm.util.maxPeaksDist(fft_data, peakWinSize,false,Inf)
+    if isempty(peak_end_I) or \
+           peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH:
+      [~, min_peaks_I] = seg_worm.util.maxPeaksDist(fft_data, 
+                                                    peakWinSize,
+                                                    False, 
+                                                    Inf)
   
-        peak_start_I = min_peaks_I(find(min_peaks_I < max_peak_I,1))
-        peak_end_I   = min_peaks_I(find(min_peaks_I > max_peak_I,1))      
-    end
-    """
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
-    """
-    Notes
-    ----------------------
-    Formerly [back_zeros_I,front_zeros_I] = h__getBoundingZeroIndices(avg_bend_angles,min_win_size)
-    #
-    #
-    The goal of this function is to bound each index by 
-    #
-    Inputs
-    =====================================================
-    avg_bend_angles : [1 x n_frames]
-    min_win_size    : (scalar), the minimum size of the data window
-    #
-    Outputs
-    =======================================================================
-    back_zeros_I    : [1 x n_frames] For each frame, this specifies a
-                    proceeding frame in which a change in the bend angle
-                    occurs. Invalid entries are indicated by 0.
-    front_zeros_I   : [1 x n_frames]
-    #  
-    """
-    pass
-    """
-    #Getting sign change indices ...
-    #--------------------------------------------------------------------------
-    #The old code found sign changes for every frame, even though the sign
-    #changes never changed. Instead we find all sign changes, and then for each
-    #frame know which frame to the left and right have sign changes. We do this
-    #in such a way so that if we need to look further to the left or right, it
-    #is really easy to get the next answer.
-    
-    sign_change_I  = find(sign(avg_bend_angles(2:end)) ~= sign(avg_bend_angles(1:end-1)))
-    n_sign_changes = length(sign_change_I)
-    
-    #To get the correct frame numbers, we need to do the following depending on
-    #whether or not the bound is the left (backward) bound or the right
-    #(forward) bound. JAH NOTE: I haven't really thought through why this is, but
-    #it mimics the old code.
-    #
-    #
-    #for left bounds   - at sign changes - don't subtract or add
-    #for right bounds  - we need to add 1
-    
-    
-    #Let's say we have sign changes at indices 3  6  9
-    #What we need ...
-         1 2 3 4 5 6 7  9  10  Indices
-    #Left  = 0 0 0 3 3 3 6  6  6   - at 4, the left sign change is at 3
-    #Right = 4 4 4 7 7 7 10 10 0   - at 4, the right sign change is at 7
-    #
-    #NOTE: The values above are the final indices or values, but instead we
-    #want to work with the indices, so we need:
-    #
-         1 2 3 4 5 6 7  9  10  Indices
-    #Left  = 0 0 0 1 1 1 2  2  2 - left_sign_change_I
-    #Right = 1 1 1 2 2 2 3  3  3 - right_sign_change_I
-    #
-    we also need:
-    left_values  = [3 6 9]  #the sign change indices
-    right_values = [4 7 10] #+1
-    #
-    So this says:
-    left_sign_change_I(7) => 2
-    left_values(2) => 6, our sign change is at 6
-    #
-    Let's say we need to expand further to the left, then we take 
-    left_sign_change_I(7) - 1 => 1
-    left_values(1) => 3, our new sign change is at 3
-    #
-    Further:
-    left_sign_change_I(7) - 2 => 0
-    We've gone too far, nothing at index 0, set to invalid
-    
-    
-    # dSignChange = diff(sign_change_I)
-    
-    n_frames = length(avg_bend_angles)
-    
-    #For each element in the array, these values indicate which sign change
-    #index to use ...
-    left_sign_change_I  = zeros(1,n_frames)
-    left_sign_change_I(sign_change_I + 1) = 1 #We increment at values to the 
-    #right of the sign changes
-    left_sign_change_I = cumsum(left_sign_change_I) #This is a little Matlab
-    #trick in which something like:
-    #1 0 0 1 0 0 1 0 0 
-    becomes:
-    #1 1 1 2 2 2 3 3 3 - so now at each frame, we get the index of the value
-    #that is to the left
-    
-    right_sign_change_I    = zeros(1,n_frames)
-    right_sign_change_I(sign_change_I(1:end-1)+1) = 1
-    right_sign_change_I(1) = 1
-    right_sign_change_I    = cumsum(right_sign_change_I)
-    right_sign_change_I(sign_change_I(end)+1:end) = 0 #Nothing to the right of the last change ...
-    
-    #These are the actual indices that each sign crossing index points to
-    #
-    #We keep these separate as it makes it easier to go the next value, by
-    #incrementing the pointer index, rather than doing a search
-    left_values  = sign_change_I
-    right_values = sign_change_I + 1 
-    #--------------------------------------------------------------------------
-    
-    back_zeros_I  = zeros(1,n_frames)
-    front_zeros_I = zeros(1,n_frames)
-    
-    for iFrame = 1:n_frames
-        
-        cur_left_index  = left_sign_change_I(iFrame)
-        cur_right_index = right_sign_change_I(iFrame)
-        if left_sign_change_I(iFrame) == 0 || right_sign_change_I(iFrame) == 0
-            continue
-        end
-        
-        back_zero_I  = left_values(cur_left_index)
-        front_zero_I = right_values(cur_right_index)
-        
-        use_values = true
-        
-        # Expand the zero-crossing window.
-        #----------------------------------------------------------------------
-        #JAH NOTE: We center on the sample by using the larger of the two gaps.
-        #This means the gap size is 2*larger_window, where the half window size
-        #is:
-        #left_window_size  = iFrame - back_zero_I
-        #right_window_size = front_zero_I - iFrame
-        #
-        #so in reality we should use:
-        #
-        #front_zero_I - iFrame < min_win_size/2 && iFrame - back_zero_I < min_win_size/2
-        #
-        #By not doing this, we overshoot the minimum window size that we need
-        #to use. Consider window sizes that are in terms of the minimum window
-        #size.
-        #
-        #i.e. 0.5w means the left or right window is half min_win_size
-        #
-        #Consider we have:
-        #0.5w left 
-        #0.3w right
-        #
-        #If we stopped now, we would get a windows size of 2*0.5w or w, which
-        #is what we want.
-        #
-        #Since we keep going, the right window will expand, let's say:
-        #0.5w left
-        #0.7w right
-        #
-        #Now in the calling function we will center on the frame and the total 
-        #window distance will be 2*0.7w or 1.4w, which is larger than we
-        #needed.
-        
-        while front_zero_I - back_zero_I + 1 < min_win_size
-            
-            #Expand the smaller of the two windows
-            #----------------------------------------------------
-            #  left_window_size       right_window_size
-            if iFrame - back_zero_I < front_zero_I - iFrame
-                #Then expand to the left
-                cur_left_index = cur_left_index - 1
-                if cur_left_index == 0
-                    use_values = false
-                    break
-                end
-                back_zero_I  = left_values(cur_left_index)
-            else
-                #Expand to the right 
-                cur_right_index = cur_right_index + 1
-                if cur_right_index > n_sign_changes
-                    use_values = false
-                    break
-                end
-                front_zero_I = right_values(cur_right_index)
-            end
-        end
-        
-        if use_values
-            back_zeros_I(iFrame)  = back_zero_I
-            front_zeros_I(iFrame) = front_zero_I
-        end
-    end
-    """
-  
+      peak_start_I = min_peaks_I(np.flatnonzero(min_peaks_I < max_peak_I))
+      peak_end_I   = min_peaks_I(np.flatnonzero(min_peaks_I > max_peak_I))      
 
-
-
+    return [peak_start_I, peak_end_I]
+    """
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
@@ -714,7 +716,8 @@ class LocomotionForagingBends(object):
 
   def __init__(self, sx, sy, is_segmented_mask, ventral_mode):
     """
-    Compute the temporal bending frequency at the head, midbody, and tail.
+    Initialize an instance of LocomotionForagingBends
+
     
     Parameters
     ---------------------------------------    
@@ -725,255 +728,270 @@ class LocomotionForagingBends(object):
     
     """
     pass
+    self.amplitude  = None
+    self.angleSpeed = None
 
     """
     SI = seg_worm.skeleton_indices
-    NOSE_I = SI.HEAD_TIP_INDICES(end:-1:1) %flip to maintain orientation for
-    %angles and consistency with old code ...
+    # Flip to maintain orientation for angles and consistency with old code:
+    NOSE_I = SI.HEAD_TIP_INDICES(end:-1:1) 
     NECK_I = SI.HEAD_BASE_INDICES(end:-1:1)
     
-    MIN_NOSE_WINDOW = round(0.1*config.FPS)
-    MAX_NOSE_INTERP = 2*MIN_NOSE_WINDOW - 1
+    MIN_NOSE_WINDOW = round(0.1 * config.FPS)
+    MAX_NOSE_INTERP = 2 * MIN_NOSE_WINDOW - 1
     
-    nose_x = sx(NOSE_I,:)
-    nose_y = sy(NOSE_I,:)
-    neck_x = sx(NECK_I,:)
-    neck_y = sy(NECK_I,:)
-    
+    nose_x = sx[NOSE_I,:]
+    nose_y = sy[NOSE_I,:]
+    neck_x = sx[NECK_I,:]
+    neck_y = sy[NECK_I,:]
+
     # Step 1: Interpolation of skeleton indices
     #---------------------------------------    
-
-    interp_nose_mask = h__getNoseInterpolationIndices(is_segmented_mask,MAX_NOSE_INTERP)
+    interp_nose_mask = self.h__getNoseInterpolationIndices(is_segmented_mask,
+                                                           MAX_NOSE_INTERP)
     
-    dataI       = find(is_segmented_mask)
-    noseInterpI = find(interp_nose_mask)
+    dataI       = np.flatnonzero(is_segmented_mask)
+    noseInterpI = np.flatnonzero(interp_nose_mask)
     
-    nose_xi = h__interpData(nose_x,dataI,noseInterpI)
-    nose_yi = h__interpData(nose_y,dataI,noseInterpI)
-    neck_xi = h__interpData(neck_x,dataI,noseInterpI)
-    neck_yi = h__interpData(neck_y,dataI,noseInterpI)
+    nose_xi = self.h__interpData(nose_x, dataI, noseInterpI)
+    nose_yi = self.h__interpData(nose_y, dataI, noseInterpI)
+    neck_xi = self.h__interpData(neck_x, dataI, noseInterpI)
+    neck_yi = self.h__interpData(neck_y, dataI, noseInterpI)
     
     # Step 2: Calculation of the bend angles
     #---------------------------------------    
-    nose_bends = h__computeNoseBends(nose_xi,nose_yi,neck_xi,neck_yi)
+    nose_bends = self.h__computeNoseBends(nose_xi,nose_yi,neck_xi,neck_yi)
     
     # Step 3: 
     #---------------------------------------    
-    [nose_amps, nose_freqs] = h__foragingData(nose_bends, MIN_NOSE_WINDOW)
+    [nose_amps, nose_freqs] = self.h__foragingData(nose_bends, 
+                                                   MIN_NOSE_WINDOW)
     
     if ventral_mode > 1:
-        nose_amps  = -nose_amps
-        nose_freqs = -nose_freqs
+      nose_amps  = -nose_amps
+      nose_freqs = -nose_freqs
     
     self.amplitude  = nose_amps
     self.angleSpeed = nose_freqs
-    
     """
 
-  def h__computeNoseBends(nose_x, nose_y, neck_x, neck_y):
+
+  def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
     """
     Compute the difference in angles between the nose and neck (really the
     head tip and head base).
     
-    Formerly nose_bends_d = h__computeNoseBends(nose_x,nose_y,neck_x,neck_y)
-    
-    Inputs
-    ======================================================
+    Parameters
+    ---------------------------------------    
     nose_x: [4 x n_frames]
     nose_y: [4 x n_frames]
     neck_x: [4 x n_frames]
     neck_y: [4 x n_frames]
 
-    Outputs
-    ======================================================
+    Returns
+    ---------------------------------------    
     nose_bends_d
 
-    """
-    pass
+    Notes
+    ---------------------------------------    
+    Formerly nose_bends_d = h__computeNoseBends(nose_x,nose_y,neck_x,neck_y)
+
     """
 
-    noseAngles = h__computeAvgAngles(nose_x,nose_y)
-    neckAngles = h__computeAvgAngles(neck_x,neck_y)
+    noseAngles = self.h__computeAvgAngles(nose_x,nose_y)
+    neckAngles = self.h__computeAvgAngles(neck_x,neck_y)
     
-    %TODO: These three should be a method, calculating the difference
-    %in angles and ensuring all results are within +/- 180
-    nose_bends_d  = (noseAngles - neckAngles)'*180/pi
+    # TODO: These three should be a method, calculating the difference
+    # in angles and ensuring all results are within +/- 180
+    nose_bends_d  = (noseAngles - neckAngles) * (180/np.pi)
     
-    nose_bends_d(nose_bends_d > 180)  = nose_bends_d(nose_bends_d > 180) - 360
-    nose_bends_d(nose_bends_d < -180) = nose_bends_d(nose_bends_d < -180) + 360
-    end
+    nose_bends_d[nose_bends_d > 180]  = nose_bends_d[nose_bends_d > 180] - 360
+    nose_bends_d[nose_bends_d < -180] = nose_bends_d[nose_bends_d < -180] + 360
+    
+    return nose_bends_d
+
+    
+  def h__computeAvgAngles(self, x, y):
     """
-    
-  def h__computeAvgAngles(x, y):
-    """
-    
-    
-    Formerly angles = h__computeAvgAngles(x,y)
-    
-    
     Take average difference between successive x and y skeleton points, the
     compute the arc tangent from those averages.
+
+    Parameters
+    ---------------------------------------    
+    x
+    y
+
+    Returns
+    ---------------------------------------    
+    angles
     
+    Notes
+    ---------------------------------------    
     Simple helper for h__computeNoseBends
+    
     """
     pass
-    """
-    avg_diff_x = mean(diff(x,1,1))
-    avg_diff_y = mean(diff(y,1,1))
+    avg_diff_x = np.mean(np.diff(x,1,1))
+    avg_diff_y = np.mean(np.diff(y,1,1))
     
-    angles = atan2(avg_diff_y,avg_diff_x)
-    """
+    angles = np.atan2(avg_diff_y,avg_diff_x)
 
-  def h__interpData(x_old, good_data_I, fix_data_I):
+    return angles
+
+
+  def h__interpData(self, x_old, good_data_I, fix_data_I):
     """
     
-    
-    Formerly x_new = h__interpData(x_old,good_data_I,fix_data_I)
-    
-    TODO: move to: seg_worm.feature_helpers.interpolateNanData
-    
-    Inputs
-    =======================================================================
+    Parameters
+    ---------------------------------------    
     x_old       : [4 x n_frames]
     good_data_I : [1 x m]
     fix_data_I  : [1 x n]
+
+    Notes
+    ---------------------------------------    
+    Formerly x_new = h__interpData(x_old,good_data_I,fix_data_I)
+    
+    TODO: move to: seg_worm.feature_helpers.interpolateNanData
     """
     pass
     """
     x_new = x_old
     
-    #NOTE: This version is a bit weird because the size of y is not 1d
-    for i1 = 1:size(x_old,1)
-       x_new(i1,fix_data_I) = interp1(good_data_I,x_old(i1,good_data_I),fix_data_I,'linear',NaN) 
-    end
+    # NOTE: This version is a bit weird because the size of y is not 1d
+    for i1 = range(np.shape(x_old)[0]):
+       x_new(i1, fix_data_I) = interp1(good_data_I,
+                                       x_old(i1,good_data_I),
+                                       fix_data_I,
+                                       'linear',
+                                       np.NaN) 
     
     """
 
 
-def h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_width):
-  """
-  
-  
-  Formerly interp_data_mask = h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_width)
-  
-  Interpolate data:
-  - but don't extrapolate
-  - don't interpolate if the gap is too large
-  
-  Inputs
-  =======================================================================
-  is_segmented_mask :
-  max_nose_interp_sample_width : Maximum # of frames that 
-  
-  Outputs
-  =======================================================================
-  interp_data_mask : [1 x n_frames} whether or not to interpolate a data point
-  
-  Note from @JimHokason: 
-  I'm considering replacing this and other interpolation code
-  with a specific function for all feature processing.
-
-  Note from @MichaelCurrie:
-  I made this function, it's called feature_helpers.interpolate_with_threshold
-  TODO: use it here, replacing this function.
-
-  """
-  pass
-  
-  """
-  % Find the start and end indices for missing data chunks.
-  isNotData        = ~is_segmented_mask
-  interp_data_mask = isNotData
-  diffIsNotData    = diff(isNotData)
-  
-  startNotDataI    = find(diffIsNotData == 1)
-  endNotDataI      = find(diffIsNotData == -1) - 1
-  
-  % Don't interpolate missing data at the very start and end.
-  %--------------------------------------------------------------------------
-  if ~isempty(startNotDataI) && (isempty(endNotDataI) || startNotDataI(end) > endNotDataI(end))
-      interp_data_mask(startNotDataI(end):end) = false
-      startNotDataI(end) = []
-  end
-  
-  if ~isempty(endNotDataI) && (isempty(startNotDataI) || startNotDataI(1) > endNotDataI(1))
-      interp_data_mask(1:endNotDataI(1)) = false
-      endNotDataI(1) = []
-  end
-  
-  % Don't interpolate large missing chunks of data.
-  for i = 1:length(startNotDataI)
-      if endNotDataI(i) - startNotDataI(i) > max_nose_interp_sample_width
-          interp_data_mask(startNotDataI(i):endNotDataI(i)) = false
-      end
-  end
-  
-  """
-
-
-
-  def h__foragingData(nose_bend_angle_d, min_win_size):
+  def h__getNoseInterpolationIndices(self, is_segmented_mask,max_nose_interp_sample_width):
     """
+    Interpolate data:
+    - but don't extrapolate
+    - don't interpolate if the gap is too large
+
     
-    Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, min_win_size, fps)
+    Parameters
+    ---------------------------------------    
+    is_segmented_mask :
+    max_nose_interp_sample_width : Maximum # of frames that 
+
     
+    Returns
+    ---------------------------------------    
+    interp_data_mask : [1 x n_frames} whether or not to interpolate a data point
+
+
+    Notes
+    ---------------------------------------    
+    Formerly interp_data_mask = h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_width)
+    
+    Note from @JimHokason: 
+    I'm considering replacing this and other interpolation code
+    with a specific function for all feature processing.
+  
+    Note from @MichaelCurrie:
+    I made this function, it's called feature_helpers.interpolate_with_threshold
+    TODO: use it here, replacing this function.
+  
+    """
+    pass
+    
+    """
+    % Find the start and end indices for missing data chunks.
+    isNotData        = ~is_segmented_mask
+    interp_data_mask = isNotData
+    diffIsNotData    = np.diff(isNotData)
+    
+    startNotDataI    = np.flatnonzero(diffIsNotData == 1)
+    endNotDataI      = np.flatnonzero(diffIsNotData == -1) - 1
+    
+    % Don't interpolate missing data at the very start and end.
+    %--------------------------------------------------------------------------
+    if startNotDataI.size > 0 and \
+              (endNotDataI.size == 0 or startNotDataI[end] > endNotDataI[end]):
+      interp_data_mask[startNotDataI[end]:end] = false
+      startNotDataI[end] = []
+    
+    if endNotDataI.size > 0 and \
+              (startNotDataI.size == 0 or startNotDataI[1] > endNotDataI[1]):
+      interp_data_mask[1:endNotDataI[1]] = False
+      endNotDataI[1] = []
+    
+    # Don't interpolate large missing chunks of data.
+    for i = 1:length(startNotDataI):
+      if (endNotDataI[i] - startNotDataI[i]) > max_nose_interp_sample_width:
+        interp_data_mask[startNotDataI[i]:endNotDataI[i]] = False
+    
+    """
+
+
+
+  def h__foragingData(self, nose_bend_angle_d, min_win_size):
+    """
     Compute the foraging amplitude and angular speed.
     
     
-    Inputs
-    =======================================================================
+    Parameters
+    ---------------------------------------    
     nose_bend_angle_d : [n_frames x 1]
     min_win_size : (scalar)
+
     
-    Outputs
-    =======================================================================
+    Returns
+    ---------------------------------------    
     amps   : [1 x n_frames]
     speeds : [1 x n_frames]
-    
-    
+
+
+    Notes
+    ---------------------------------------    
+    Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, 
+                                             min_win_size, fps)
+
     """
     pass
     
     """
     # Clean up the signal with a gaussian filter.
-    if min_win_size > 0
-        gaussFilter       = gausswin(2 * min_win_size + 1) / min_win_size
-        nose_bend_angle_d = conv(nose_bend_angle_d, gaussFilter, 'same')
-        
-        %Remove partial data frames ...
-        nose_bend_angle_d(1:min_win_size) = NaN
-        nose_bend_angle_d((end - min_win_size + 1):end) = NaN
-    end
+    if min_win_size > 0:
+      gaussFilter       = gausswin(2 * min_win_size + 1) / min_win_size
+      nose_bend_angle_d = conv(nose_bend_angle_d, gaussFilter, 'same')
+      
+      # Remove partial data frames ...
+      nose_bend_angle_d[1:min_win_size] = np.NaN
+      nose_bend_angle_d[(end - min_win_size + 1):end] = np.NaN
     
-    %Calculate amplitudes
+    # Calculate amplitudes
     amps = h__getAmps(nose_bend_angle_d)
     
     
-    %Calculate angular speed
-    % Compute the speed centered between the back and front foraging movements.
-    %
-    %  1     2    3
-     d1    d2     d1 = 2 - 1,   d2 = 3 - 2
-         x        assign to x, avg of d1 and d2
+    # Calculate angular speed
+    # Compute the speed centered between the back and front foraging movements.
+    #
+    #  1     2    3
+    # d1    d2     d1 = 2 - 1,   d2 = 3 - 2
+    #     x        assign to x, avg of d1 and d2
     
-    %???? - why multiply and not divide by fps????
+    #???? - why multiply and not divide by fps????
     
     d_data = diff(nose_bend_angle_d) * config.FPS
-    speeds = NaN(size(amps))
-    speeds(2:end-1) = (d_data(1:(end - 1)) + d_data(2:end)) / 2
+    speeds = np.empty(amps.size) * np.NaN
+    speeds[2:end-1] = (d_data[1:(end - 1)] + d_data[2:end]) / 2
     
     
-    %Propagate NaN for speeds to amps
-    amps(isnan(speeds)) = NaN
+    # Propagate NaN for speeds to amps
+    amps[np.isnan(speeds)] = np.NaN
     
     """
 
-  def h__getAmps(nose_bend_angle_d):
+  def h__getAmps(self, nose_bend_angle_d):
     """
-    
-    Formerly amps = h__getAmps(nose_bend_angle_d):
-    
-    
     In between all sign changes, get the maximum or minimum value and
     apply to all indices that have the same sign within the stretch
     
@@ -982,37 +1000,41 @@ def h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_widt
     1 2 3 2 1 -1 -2 -1 1 2 2 5 becomes
     3 3 3 3 3 -2 -2 -2 5 5 5 5
     
+    Notes
+    ---------------------------------------    
+    Formerly amps = h__getAmps(nose_bend_angle_d):
+
     NOTE: This code is very similar to wormKinks
+    
     """
+
     pass
     """
     n_frames = length(nose_bend_angle_d)
     
     dataSign      = sign(nose_bend_angle_d)
-    sign_change_I = find(dataSign(2:end) ~= dataSign(1:end-1))
+    sign_change_I = np.flatnonzero(dataSign(2:end) ~= dataSign(1:end-1))
     
     end_I   = [sign_change_I; n_frames]
     start_I = [1; sign_change_I+1]
     
-    %All Nan values are considered sign changes, remove these ...
+    # All Nan values are considered sign changes, remove these ...
     mask = isnan(nose_bend_angle_d(start_I))
-    start_I(mask) = []
-    end_I(mask)   = []
+    start_I[mask] = []
+    end_I[mask]   = []
     
-    amps = NaN(1,n_frames)
+    amps = np.empty(n_frames) * np.NaN
     
-    %For each chunk, get max or min, depending on whether the data is positive
-    %or negative ...
-    for iChunk = 1:length(start_I)
-       cur_start = start_I(iChunk)
-       cur_end   = end_I(iChunk)
-       
-       if nose_bend_angle_d(cur_start) > 0
-           amps(cur_start:cur_end) = max(nose_bend_angle_d(cur_start:cur_end))
-       else
-           amps(cur_start:cur_end) = min(nose_bend_angle_d(cur_start:cur_end))
-       end
-    end
+    # For each chunk, get max or min, depending on whether the data is positive
+    # or negative ...
+    for iChunk = 1:length(start_I):
+      cur_start = start_I(iChunk)
+      cur_end   = end_I(iChunk)
+     
+      if nose_bend_angle_d(cur_start) > 0:
+        amps(cur_start:cur_end) = max(nose_bend_angle_d(cur_start:cur_end))
+      else:
+        amps(cur_start:cur_end) = min(nose_bend_angle_d(cur_start:cur_end))
     """
 
 
