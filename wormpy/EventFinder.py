@@ -160,8 +160,6 @@ class EventFinder:
     # self.min_frames_threshold in length
     event_candidates = \
       self.remove_too_small_events(event_candidates)
-      
-
   
     # For each candidate event, sum the instantaneous speed at all 
     # frames in the event, and decide if the worm moved enough distance
@@ -472,9 +470,6 @@ class EventFinder:
 
 
 
-
-
-
 class EventList:
   """
   A list of events.
@@ -709,7 +704,7 @@ class EventListForOutput(object):
     %.frames    - event_stats (from event2stats)
     %.frequency -
     
-    THSI IS ALL OUTDATED
+    THIS IS ALL OUTDATED
     
     
     properties
@@ -744,10 +739,10 @@ class EventListForOutput(object):
       on the feature that is calling this function (i.e. isn't the same input
       for all features calling this class)
       
-    compute_distance_during_event : logical (default False)       
+    compute_distance_during_event : boolean (default False)       
       
     Original Code:
-    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeature/%40event/event.m
+    SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeature/%40event/event.m
     """    
 
     #Used by:
