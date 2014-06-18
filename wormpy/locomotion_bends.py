@@ -21,8 +21,8 @@ Contains two classes:
     .angleSpeed
 
 """
-
-
+from .NormalizedWorm import NormalizedWorm
+from . import config
 
 class LocomotionCrawlingBends(object):
   """
@@ -44,7 +44,7 @@ class LocomotionCrawlingBends(object):
   ---------------------------------------    
   __init__(self, bend_angles, is_paused, is_segmented_mask)
   calls...
-  h__getBendData(self, avg_bend_angles, fps, options, is_paused)
+  h__getBendData(self, avg_bend_angles, options, is_paused)
   calls...
     h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size)
     and 
@@ -140,53 +140,48 @@ class LocomotionCrawlingBends(object):
     """
     pass
   
-    """
     minBodyWinTime = 0.5
-    minBodyWin     = round(minBodyWinTime * fps)
+    minBodyWin     = round(minBodyWinTime * config.FPS)
     maxBodyWinTime = 15
-    maxBodyWin     = round(maxBodyWinTime * fps)
-    options = struct( ...
-        'minWin',   minBodyWin, ...
-        ... 
-        'maxWin',   maxBodyWin, ...
-        ... 
-        'res',      2^14, ... # the FFT is quantized below this resolution
-        ... 
-        'headI',    6:10, ... # centered at the head (1/6 the worm)
-        ... 
-        'midI',     23:27, ... # centered at the middle of the worm
-        ... 
-        'tailI',    40:44, ... # centered at the tail (1/6 the worm)
-        ... 
-        'minFreq',  1 / (4 * maxBodyWinTime), ... # require at least 50% of the wave
-        ... 
-        'maxFreq',  fps / 4, ... # with 4 frames we can resolve 75% of a wave ????
-        'max_amp_pct_bandwidth', 0.5,...
-        'peakEnergyThr',0.5)
+    maxBodyWin     = round(maxBodyWinTime * config.FPS)
+
+    generic_nw = NormalizedWorm()
+
+    options = {'minWin': minBodyWin,
+               'maxWin': maxBodyWin,
+               'res': 2**14,
+               'headI': (6,10),
+               'midI': (23,27),
+               'tailI': (40,44),
+               # Require at least 50% of the wave:               
+               'minFreq': 1 / (4 * maxBodyWinTime),  
+               # With 4 frames we can resolve 75% of a wave????:
+               'maxFreq': config.FPS / 4,            
+               'max_amp_pct_bandwidth': 0.5,
+               'peakEnergyThr': 0.5}
     
+
     #max_amp_pct_bandwidth - when determining the bandwidth,
     #the minimums that are found can't exceed this percentage of the maximum.
     #Doing so invalidates the result,
     #
     #
-    Why are the indices used that are used ????
+    # DEBUG: Why are the indices used that are used ????
     #
-    #NOTE: These indices are not symettric. Should we use the skeleton indices
-    #instead, or move these to the skeleton indices???
+    # NOTE: These indices are not symettric. Should we use the skeleton indices
+    # instead, or move these to the skeleton indices???
     #
     #SI = seg_worm.skeleton_indices
-    
-    # No worm data.
+    """    
+    # Special Case: No worm data.
     #------------------------------------
-    if ~any(is_segmented_mask)
-        nanData = nan(1, length(is_segmented_mask))
-        bend_struct = struct('frequency',nanData,'amplitude',nanData)
-        bends = struct( ...
-            'head',     bend_struct, ...
-            'mid',      bend_struct, ...
-            'tail',     bend_struct)
-        return
-    end
+    if ~np.any(is_segmented_mask):
+      nanData = np.empty(len(is_segmeneted_mask)) * np.NaN
+      bend_dict = {'frequency': None, 'amplitude': None}
+      self.head = bend_dict.copy()
+      self.midbody = bend_dict.copy()
+      self.tail = bend_dict.copy()
+      return
     
     #Set things up for the loop
     #------------------------------------
@@ -199,29 +194,34 @@ class LocomotionCrawlingBends(object):
     dataI       = find(is_segmented_mask)
     interpI     = find(~is_segmented_mask)
     
-    bends = struct()
-    for iBend = 1:3
-        
-        cur_indices     = all_indices{iBend}
-        avg_bend_angles = mean(bend_angles(cur_indices,:), 1)
+    bends = {}
+    for iBend = 1:3:
+      cur_indices     = all_indices{iBend}
+      avg_bend_angles = mean(bend_angles(cur_indices,:), 1)
+  
+      if ~isempty(interpI) and length(dataI) > 1:
+          avg_bend_angles(interpI) = interp1(dataI, 
+                                             avg_bend_angles(dataI), 
+                                             interpI, 
+                                             interpType, 
+                                             np.NaN)
+      
+      [amps,freqs] = self.h__getBendData(avg_bend_angles,options,is_paused)
+      
+      bends[section{iBend}] = {}
+      bends[section{iBend}]['frequency'] = freqs
+      bends[section{iBend}]['amplitude'] = amps
     
-        if ~isempty(interpI) && length(dataI) > 1
-            avg_bend_angles(interpI) = interp1(dataI, avg_bend_angles(dataI), interpI, interpType, NaN)
-        end
-        
-        [amps,freqs] = self.h__getBendData(avg_bend_angles,fps,options,is_paused)
-        
-        bends.(section{iBend}).frequency = freqs
-        bends.(section{iBend}).amplitude = amps
-    end
-        
-    obj.bends = bends
-  
+    # turn our bends dictionary into properties of the class itself
+    self.head = bends['head']
+    self.midbody = bends['midbody']
+    self.tail = bends['tail']
     """
   
-  
-  def h__getBendData(self, avg_bend_angles, fps, options, is_paused):
+  def h__getBendData(self, avg_bend_angles, options, is_paused):
     """
+    TODO: implement options as an *args parameter
+    
     Notes
     ----------------------
     Formerly [amps,freqs] = h__getBendData(avg_bend_angles, fps, options, is_paused)
@@ -229,12 +229,10 @@ class LocomotionCrawlingBends(object):
     #
     Compute the bend amplitude and frequency.
     #
-    h__getBendData(avg_bend_angles, fps, options, is_paused)
     #
     Inputs
     =======================================================================
     avg_bend_angles : [1 x n_frames]
-    fps             : (scalar)
     options         : (struct), this is defined in the calling function
     is_paused       : [1 x n_frames], whether or not the worm is considered
                       to be paused during the frame
@@ -293,7 +291,7 @@ class LocomotionCrawlingBends(object):
     
     # Compute the short-time Fourier transforms (STFT).
     fft_max_I   = fft_n_samples / 2 #Maximum index to keep for frequency analysis
-    freq_scalar = (fps / 2) * 1/(fft_max_I - 1)
+    freq_scalar = (config.FPS / 2) * 1/(fft_max_I - 1)
     
     n_frames = length(avg_bend_angles)
     
@@ -739,7 +737,7 @@ class LocomotionForagingBends(object):
     %angles and consistency with old code ...
     NECK_I = SI.HEAD_BASE_INDICES(end:-1:1)
     
-    MIN_NOSE_WINDOW = round(0.1*FPS)
+    MIN_NOSE_WINDOW = round(0.1*config.FPS)
     MAX_NOSE_INTERP = 2*MIN_NOSE_WINDOW - 1
     
     nose_x = sx(NOSE_I,:)
@@ -766,7 +764,7 @@ class LocomotionForagingBends(object):
     
     # Step 3: 
     #---------------------------------------    
-    [nose_amps, nose_freqs] = h__foragingData(nose_bends, MIN_NOSE_WINDOW, FPS)
+    [nose_amps, nose_freqs] = h__foragingData(nose_bends, MIN_NOSE_WINDOW)
     
     if ventral_mode > 1:
         nose_amps  = -nose_amps
@@ -919,7 +917,7 @@ def h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_widt
 
 
 
-  def h__foragingData(nose_bend_angle_d, min_win_size, fps):
+  def h__foragingData(nose_bend_angle_d, min_win_size):
     """
     
     Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, min_win_size, fps)
@@ -931,7 +929,6 @@ def h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_widt
     =======================================================================
     nose_bend_angle_d : [n_frames x 1]
     min_win_size : (scalar)
-    fps : (scalar)
     
     Outputs
     =======================================================================
@@ -966,7 +963,7 @@ def h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_widt
     
     %???? - why multiply and not divide by fps????
     
-    d_data = diff(nose_bend_angle_d) * fps
+    d_data = diff(nose_bend_angle_d) * config.FPS
     speeds = NaN(size(amps))
     speeds(2:end-1) = (d_data(1:(end - 1)) + d_data(2:end)) / 2
     

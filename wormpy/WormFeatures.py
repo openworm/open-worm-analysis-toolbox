@@ -23,6 +23,7 @@ from . import path_features
 from . import posture_features
 from . import utils
 from . import locomotion_bends
+from . import locomotion_turns
 
 #import pdb
 
@@ -234,9 +235,15 @@ class WormLocomotion(object):
                                                   nw.is_segmented,
                                                   nw.ventral_mode)
 
-    self.omegas = 0
+    midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
+    is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
 
-    self.upsilons = 0
+#obj.getOmegaAndUpsilonTurns(nw.angles,is_stage_movement,midbody_distance,nw.x,nw.y,FPS);
+
+    #self.turns = locomotion_turns.LocomotionTurns(
+    #bend_angles, is_stage_movement, midbody_distance, sx, sy):
+
+
     
   def __repr__(self):
     return utils.print_object(self)  

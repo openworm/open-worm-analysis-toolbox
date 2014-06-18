@@ -102,20 +102,25 @@ class NormalizedWorm():
   #       and the # of pairs is one less than the # of samples
   eigen_worms = None
 
-  def __init__(self, data_file_path, eigen_worm_file_path):
+  def __init__(self, data_file_path=None, eigen_worm_file_path=None):
     """ 
     Initialize this instance by loading both the worm and 
     the eigen_worm data
 
     Parameters
     ---------------------------------------
-    data_file_path: string
+    data_file_path: string  (optional)
+      if None is specified, no data is loaded      
     
-    eigen_worm_file_path: string
+    eigen_worm_file_path: string  (optional)
+      if None is specified, no eigen worm data is loaded
     
     """
-    self.load_normalized_data(data_file_path)
-    self.load_eigen_worms(eigen_worm_file_path)
+    if data_file_path:
+      self.load_normalized_data(data_file_path)
+
+    if eigen_worm_file_path:
+      self.load_eigen_worms(eigen_worm_file_path)
     
     # all are valid partitions of the worm's 49 skeleton points:
     # all    
@@ -207,6 +212,15 @@ class NormalizedWorm():
     # subset of interest, p.
     return {k: self.worm_partitions[k] for k in p}
 
+  def partition_mask(self, partition_key):
+    """
+    Returns a boolean numpy array corresponding to the partition requested.
+    
+    """
+    mask = np.zeros(49, dtype=bool)
+    mask[self.worm_partitions[partition_key][0]:
+         self.worm_partitions[partition_key][1]] = True
+    return mask
 
   def get_partition(self, partition_key, data_key = 'skeletons', 
                     split_spatial_dimensions = False):
