@@ -21,7 +21,8 @@ Contains two classes:
     .angleSpeed
 
 """
-from .NormalizedWorm import NormalizedWorm
+import numpy as np
+from . import feature_helpers
 from . import config
 
 class LocomotionCrawlingBends(object):
@@ -145,8 +146,6 @@ class LocomotionCrawlingBends(object):
     maxBodyWinTime = 15
     maxBodyWin     = round(maxBodyWinTime * config.FPS)
 
-    generic_nw = NormalizedWorm()
-
     options = {'minWin': minBodyWin,
                'maxWin': maxBodyWin,
                'res': 2**14,
@@ -172,12 +171,13 @@ class LocomotionCrawlingBends(object):
     # instead, or move these to the skeleton indices???
     #
     #SI = seg_worm.skeleton_indices
-    """    
+
     # Special Case: No worm data.
     #------------------------------------
     if ~np.any(is_segmented_mask):
-      nanData = np.empty(len(is_segmeneted_mask)) * np.NaN
-      bend_dict = {'frequency': None, 'amplitude': None}
+      nan_data = np.empty(len(is_segmented_mask)) * np.NaN
+      bend_dict = {'frequency': nan_data.copy(), 
+                   'amplitude': nan_data.copy()}
       self.head = bend_dict.copy()
       self.midbody = bend_dict.copy()
       self.tail = bend_dict.copy()
@@ -185,38 +185,34 @@ class LocomotionCrawlingBends(object):
     
     #Set things up for the loop
     #------------------------------------
-    section     = {'head'           'midbody'       'tail'}
-    all_indices = {options.headI    options.midI    options.tailI}
-    
-    #Initialize interpolation - we'll interpolate over all frames but no extrapolation
-    #--------------------------------------------------------------------------
-    interpType  = 'linear'
-    dataI       = find(is_segmented_mask)
-    interpI     = find(~is_segmented_mask)
+    #    section     = {'head'           'midbody'       'tail'}
+    bends_partitions = {'head': (6, 10),
+                        'midbody': (23,27),
+                        'tail': (40,44)}
     
     bends = {}
-    for iBend = 1:3:
-      cur_indices     = all_indices{iBend}
-      avg_bend_angles = mean(bend_angles(cur_indices,:), 1)
-  
-      if ~isempty(interpI) and length(dataI) > 1:
-          avg_bend_angles(interpI) = interp1(dataI, 
-                                             avg_bend_angles(dataI), 
-                                             interpI, 
-                                             interpType, 
-                                             np.NaN)
+    for cur_partition in bends_partitions.keys():
+      # Find the mean bend angle for the current partition, across all frames
+      avg_bend_angles = np.nanmean(
+              bend_angles[bends_partitions[cur_partition][0]:
+                          bends_partitions[cur_partition][1], :])
+                          
+      # Ensure there are both data and gaps if we are going to interpolate      
+      if not(np.all(is_segmented_mask) or np.any(is_segmented_mask)):
+        avg_bend_angles = feature_helpers.interpolate(avg_bend_angles)
+
+      [amplitude, frequency] = self.h__getBendData(avg_bend_angles, 
+                                                   options, 
+                                                   is_paused)
       
-      [amps,freqs] = self.h__getBendData(avg_bend_angles,options,is_paused)
-      
-      bends[section{iBend}] = {}
-      bends[section{iBend}]['frequency'] = freqs
-      bends[section{iBend}]['amplitude'] = amps
+      bends[cur_partition] = {}
+      bends[cur_partition]['amplitude'] = amplitude
+      bends[cur_partition]['frequency'] = frequency
     
     # turn our bends dictionary into properties of the class itself
     self.head = bends['head']
     self.midbody = bends['midbody']
     self.tail = bends['tail']
-    """
   
   def h__getBendData(self, avg_bend_angles, options, is_paused):
     """
@@ -224,7 +220,7 @@ class LocomotionCrawlingBends(object):
     
     Notes
     ----------------------
-    Formerly [amps,freqs] = h__getBendData(avg_bend_angles, fps, options, is_paused)
+    Formerly [amplitude,frequency] = h__getBendData(avg_bend_angles, fps, options, is_paused)
     #
     #
     Compute the bend amplitude and frequency.
@@ -250,7 +246,7 @@ class LocomotionCrawlingBends(object):
     #Options extraction
     #----------------------------------
     """
-    pass
+    return [None, None]
     """
     min_window = options.minWin
     max_window = options.maxWin
@@ -328,10 +324,9 @@ class LocomotionCrawlingBends(object):
         
         #Store data
         #----------------------------------------------------------------------
-        if ~(   isempty(peakStartI)                           || ...
-                isempty(peakEndI)                             || ...
-                fft_data(peakStartI) > max_amp_pct_bandwidth*maxPeak    || ... #The minimums can't be too big
-                fft_data(peakEndI)   > max_amp_pct_bandwidth*maxPeak    || ... 
+        if ~(isempty(peakStartI) or isempty(peakEndI) or
+                fft_data(peakStartI) > max_amp_pct_bandwidth*maxPeak or #The minimums can't be too big
+                fft_data(peakEndI)   > max_amp_pct_bandwidth*maxPeak or 
                 sum(fft_data(peakStartI:peakEndI) .^ 2) < peakEnergyThr * sum(fft_data .^ 2)) #Needs to have enough energy
     
             # Convert the peak to a time frequency.
