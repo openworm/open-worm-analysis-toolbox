@@ -237,11 +237,11 @@ class WormLocomotion(object):
 
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
-
-#obj.getOmegaAndUpsilonTurns(nw.angles,is_stage_movement,midbody_distance,nw.x,nw.y,FPS);
-
-    #self.turns = locomotion_turns.LocomotionTurns(
-    #bend_angles, is_stage_movement, midbody_distance, sx, sy):
+    self.turns = locomotion_turns.LocomotionTurns(nw.data_dict['angles'],
+                                                  is_stage_movement,
+                                                  midbody_distance,
+                                                  nw.skeleton_x,
+                                                  nw.skeleton_y)
 
 
     

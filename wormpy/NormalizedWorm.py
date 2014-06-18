@@ -423,6 +423,7 @@ class NormalizedWorm():
     # TODO
     return self        
 
+  @property
   def centre(self):
     """
     Frame-by-frame mean of the skeleton points
@@ -439,6 +440,7 @@ class NormalizedWorm():
       
     return temp
 
+  @property
   def angle(self):
     """
     Frame-by-frame mean of the skeleton points
