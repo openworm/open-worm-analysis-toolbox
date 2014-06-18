@@ -287,11 +287,16 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     config.FPS * config.EVENT_MAX_INTER_FRAMES_THRESHOLD
   
   # This is the dictionary this function will return.  Keys will be:
-  # 
+  # forward
+  # backward
+  # paused
+  # mode
   all_events_dict = {}
 
   # Start with a blank numpy array, full of NaNs: 
   all_events_dict['mode'] = np.empty(num_frames, dtype='float') * np.NaN
+
+  
 
   for motion_type in frame_values:
     # We will use EventFinder to determine when the 
@@ -309,6 +314,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     ef.max_inter_frames_threshold    = max_interframes_threshold
     
     event_list = ef.get_events(midbody_speed, distance_per_frame)
+
+    #Start at 1, not 7 for forward
+    #What happens from 1900 to 1907
 
     # Obtain only events entirely before the num_frames intervals
     event_mask = event_list.get_event_mask(num_frames)

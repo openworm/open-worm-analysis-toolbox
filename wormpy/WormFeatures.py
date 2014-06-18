@@ -271,7 +271,6 @@ class WormLocomotion(object):
       same_speed = fc.corr_value_high(self_speed,
                                       other_speed,
                                       'locomotion.velocity.' + key + '.speed')
-      
       if not same_speed:
         return False
         
@@ -279,28 +278,40 @@ class WormLocomotion(object):
                                       self_direction,
                                       other_direction,
                                       'locomotion.velocity.' + key + '.speed') 
-      
       if not same_direction:
         return False
         
-    
-    #TODO: Provide error info
-    motion_events_same = [self.motion_events[x] == other.motion_events[x] 
+    #---------------------------------
+     
+    #Test motion events 
+    #---------------------------------    
+    motion_events_same = [self.motion_events[x].test_equality(\
+      other.motion_events[x],'locomotion.motion_events.' + x)
                               for x in self.motion_events]  
-    #self_motion_events  = self.motion_events
-    #other_motion_events = other.motion_events
 
     if not all(motion_events_same):
-      #TODO: Why not
-      for key,is_same in zip(self.motion_events,motion_events_same):
-        if not is_same:
-          print('Yo mama')
+      return False
+      
+    #Test motion codes
+    if not fc.corr_value_high(self.motion_mode,other.motion_mode,'locomotion.motion_mode'):
       return False
 
-    #same_motion_events = [self_velocity[x] == other_velocity[x] 
-    #                          for x in self_velocity]
+    
+    #TODO: bends - Not Yet Implemented
+    #--------------------
+    #    foraging: [1x1 struct]
+    #        head: [1x1 struct]
+    #     midbody: [1x1 struct]
+    #        tail: [1x1 struct]    
+    
+    #TODO: turns - Not Yet Implemented
+    #--------------------
+    #    omegas: [1x1 struct]
+    #    upsilons: [1x1 struct]     
+    
 
-    return False
+    return True
+
       
     
   @classmethod 
