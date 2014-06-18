@@ -40,8 +40,13 @@ TODO: OmegaTurns and UpsilonTurns should inherit from LocomotionTurns or somethi
 
 """
 
-
-
+import operator
+import re
+from . import EventFinder
+from . import feature_helpers
+from . import config
+import numpy as np
+import collections
 
 
 class LocomotionTurns(object):
@@ -64,7 +69,7 @@ class LocomotionTurns(object):
 
   """
 
-  def __init__(self, bend_angles, is_stage_movement, midbody_distance, sx, sy):
+  def __init__(self, nw, bend_angles, is_stage_movement, midbody_distance, sx, sy):
     """
     Constructor for the LocomotionTurns class
 
@@ -77,106 +82,129 @@ class LocomotionTurns(object):
     - omegaUpsilonDetectCurvature.m
     
     """
-    pass
-  
-    self.omegas = None #OmegaTurns(...)
-    self.upsilons = None #UpsilonTurns(...)
-
-    """
-    %IMPORTANT: My events use 1 based indexing, the old code used 0 based
-    %indexing
     
     MAX_INTERPOLATION_GAP_ALLOWED = 9;
-    INTER_DATA_SUM_NAME = 'interDistance';
-    DATA_SUM_NAME       = '';
+
+    n_frames = bend_angles.shape[1]
     
-    n_frames = size(bend_angles,2);
+    a = collections.namedtuple('angles',['head_angles','body_angles','tail_angles','is_stage_movement'])
     
-    SI = seg_worm.skeleton_indices;
+    first_third  = nw.get_subset_partition_mask('first_third')
+    second_third = nw.get_subset_partition_mask('second_third')
+    last_third   = nw.get_subset_partition_mask('last_third')
     
-    %NOTE: For some reason the first and last few angles are NaN, so we use
-    %nanmean instead of mean, could probably avoid this for the body ...
-    a.head_angles = nanmean(bend_angles(SI.FIRST_THIRD,:));
-    a.body_angles = nanmean(bend_angles(SI.SECOND_THIRD,:));
-    a.tail_angles = nanmean(bend_angles(SI.LAST_THIRD,:));
+    #NOTE: For some reason the first and last few angles are NaN, so we use
+    #nanmean instead of mean, could probably avoid this for the body ...
+    a.head_angles = np.nanmean(bend_angles[first_third,:],axis=0)
+    a.body_angles = np.nanmean(bend_angles[second_third,:],axis=0)
+    a.tail_angles = np.nanmean(bend_angles[last_third,:],axis=0)
+    a.is_stage_movement = is_stage_movement
+
+    #Does this do a deep copy??? I want a deep copy
+    body_angles_for_ht_change = np.array(a.body_angles)
+
+    n_head = np.sum(~np.isnan(a.head_angles))
+    n_body = np.sum(~np.isnan(a.body_angles))
+    n_tail = np.sum(~np.isnan(a.tail_angles))
+
     
-    body_angles_for_ht_change = a.body_angles;
-    
-    a.is_stage_movement = is_stage_movement;
-    
-    n_head = sum(~isnan(a.head_angles));
-    n_body = sum(~isnan(a.body_angles));
-    n_tail = sum(~isnan(a.tail_angles));
-    
-    %only proceed if there are at least two non-NaN value in each angle vector
-    if n_head < 2 || n_body < 2 || n_tail < 2
-       obj.turns.omegas   = seg_worm.feature.event.getNullStruct(FPS,DATA_SUM_NAME,INTER_DATA_SUM_NAME);
-       obj.turns.upsilons = omegas;
+
+    #only proceed if there are at least two non-NaN value in each angle vector
+    if n_head < 2 or n_body < 2 or n_tail < 2:
+       self.omegas   = EventFinder.EventListForOutput([],[],make_null=True)
+       self.upsilons = EventFinder.EventListForOutput([],[],make_null=True)
        return 
-    end
+
     
-    %Interpolation
-    %--------------------------------------------------------------------------
-    a = h__interpolateAngles(a,MAX_INTERPOLATION_GAP_ALLOWED);
     
-    %Get frames for each turn type
-    %--------------------------------------------------------------------------
-    %This doesn't match was is written in the supplemental material ...
-    %Am I working off of old code??????
+    #Interpolation
+    #--------------------------------------------------------------------------
+    self.h__interpolateAngles(a,MAX_INTERPOLATION_GAP_ALLOWED)    
+    
+    #Get frames for each turn type
+    #--------------------------------------------------------------------------
+    #This doesn't match was is written in the supplemental material ...
+    #Am I working off of old code??????
+
+    c = collections.namedtuple('consts',['head_angle_start_const',\
+      'tail_angle_start_const','head_angle_end_const',\
+      'tail_angle_end_const','body_angle_const'])
+      
+            
+    yuck = [[20,-20,15,-15],
+            [30,  30, 30,  30],
+            [40,  40, 30,  30],
+            [20, -20, 15, -15],
+            [20, -20, 15, -15]]
+    """
     c = struct(...
         'head_angle_start_const',{20 -20 15 -15}, ...
         'tail_angle_start_const',{30  30 30  30}, ...
         'head_angle_end_const',  {40  40 30  30}, ...
         'tail_angle_end_const',  {20 -20 15 -15}, ...
         'body_angle_const'   ,   {20 -20 15 -15});
+    """
+        
+    #NOTE: We need to run omegas first (false values) since upsilons are more
+    #inclusive, but can not occur if an omega event occurs
+    is_upsilon  = [False, False, True, True]
     
-    %NOTE: We need to run omegas first (false values) since upsilons are more
-    %inclusive, but can not occur if an omega event occurs
-    is_upsilon  = [false false true true];
+    #NOTE: We assign different values based on the sign of the angles
+    values_to_assign = [1, -1,  1, -1];
     
-    %NOTE: We assign different values based on the sign of the angles
-    values_to_assign = [1    -1     1    -1];
+    f = collections.namedtuple('frames',['omega_frames','upsilon_frames'])    
     
-    f.omegaFrames   = zeros(n_frames, 1);
-    f.upsilonFrames = zeros(n_frames, 1);
+    f.omega_frames   = np.zeros(n_frames);
+    f.upsilon_frames = np.zeros(n_frames);  
     
-    for iEntry = 1:4
-        s = h__getConditionIndices(a,c(iEntry));
-        f = h__populateFrames(a,s,f,is_upsilon(iEntry),values_to_assign(iEntry));
-    end
+    for i in range(4):
+        c.head_angle_start_const = yuck[0][i]
+        c.tail_angle_start_const = yuck[1][i]
+        c.head_angle_end_const   = yuck[2][i]
+        c.tail_angle_end_const   = yuck[3][i]
+        c.body_angle_const       = yuck[4][i]
+        s = self.h__getConditionIndices(a,c)
+        self.h__populateFrames(a,s,f,is_upsilon[i],values_to_assign[i])
     
-    %Calculate the events from the frame values
-    %--------------------------------------------------------------------------
-    obj.getOmegaEvents(f.omegaFrames,sx,sy,body_angles_for_ht_change,midbody_distance,FPS);
-    obj.getUpsilonEvents(f.upsilonFrames,midbody_distance,FPS);
+    #Something is wrong from frames
+    #Should only have 1 upsilon sections and 2 omega sections
+    #Instead it looks like we have closer to 20 for each
+    
+    import pdb
+    pdb.set_trace()    
+    
+    #Calculate the events from the frame values
+    #--------------------------------------------------------------------------
+    #self, nw, bend_angles, is_stage_movement, midbody_distance, sx, sy):
+    #self.omegas   = OmegaTurns(f.omega_frames,sx,sy,body_angles_for_ht_change,midbody_distance,config.FPS)    
+    self.upsilons = UpsilonTurns(f.upsilon_frames,midbody_distance,config.FPS)    
+    
+    #obj.getOmegaEvents(f.omegaFrames,sx,sy,body_angles_for_ht_change,midbody_distance,FPS);
+    #obj.getUpsilonEvents(f.upsilonFrames,midbody_distance,FPS);
+    
+    import pdb
+    pdb.set_trace()    
+    
+    a = 1
+
+    """
+    %IMPORTANT: My events use 1 based indexing, the old code used 0 based
+    %indexing
+
+    
+
+    
+
+    
+
+    
+
     
     """
     
-  def h__interp_NaN(self, x):
-    """
-      %
-      Formerly fixed_x = h__interp_NaN(x)      
-      
-      %   @JimHokanson TODO: Incorporate into 
-      %   seg_worm.feature_helpers.interpolateNanData
-      %
-      @MichaelCurrie: can probably be replaced with the interpolation function
-      in feature_helpers.py
-    """
-    pass
-    """
-    fixed_x  = x;
-    nan_mask = isnan(x);
-    
-    fixed_x(nan_mask) = interp1(find(~nan_mask),x(~nan_mask), find(nan_mask),'linear', 'extrap');
-    
-    """
-    
-  
   def h__interpolateAngles(self, a, MAX_INTERPOLATION_GAP_ALLOWED):
     """
-    %
-    
+  
     Formerly a = h__interpolateAngles(a,MAX_INTERPOLATION_GAP_ALLOWED)
     %
     %   Inputs
@@ -191,33 +219,38 @@ class LocomotionTurns(object):
     %   TODO: Incorporate into 
     %   seg_worm.feature_helpers.interpolateNanData
     """
-    pass
-    """
-    %Get long NaN stretches ...
-    n = isnan(a.body_angles);
-    %This little bit finds runs of NaN values that are 10 samples or more
-    %0 -> A
-    %1 -> B
     
-    str = sprintf('B{%d,}',MAX_INTERPOLATION_GAP_ALLOWED+1);
-    
-    [long_nan_start_I, long_nan_end_I] = regexp( char(n+'A'), str, 'start', 'end' );
-    
-    % interpolate arrays over NaN values (where there were stage
-    % movements, touching, or some other segmentation problem)
-    % ***This is of course only an approximate solution to the problem of
-    % not segmenting coiled shapes***
-    a.head_angles = h__interp_NaN(a.head_angles);
-    a.body_angles = h__interp_NaN(a.body_angles);
-    a.tail_angles = h__interp_NaN(a.tail_angles);
-    
-    % return long NaN stretches back to NaN- only for the body angles ...
-    for kk = 1:length(long_nan_start_I)
-        a.bodyAngle(long_nan_start_I(kk):long_nan_end_I(kk)) = NaN;
-    end
+    feature_helpers.interpolate_with_threshold(a.head_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
+    feature_helpers.interpolate_with_threshold(a.body_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
+    feature_helpers.interpolate_with_threshold(a.tail_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
     
     """
+    
+    #This code works, but the interpolation wasn't implemented.
+    #Then I discovered Michael's code ...
+    
+    n = np.isnan(a.body_angles)
 
+    regex_str = 'B{%d,}' %  (MAX_INTERPOLATION_GAP_ALLOWED + 1)    
+    
+    str_to_search = "".join(['A' if x else 'B' for x in n])
+    
+    temp = re.finditer(regex_str,str_to_search)
+    
+    starts_ends = [(x.start(),x.end()) for x in temp]    
+    
+    # interpolate arrays over NaN values (where there were stage
+    # movements, touching, or some other segmentation problem)
+    # ***This is of course only an approximate solution to the problem of
+    # not segmenting coiled shapes***
+    self.h__interp_NaN(a.head_angles)
+    self.h__interp_NaN(a.body_angles)
+    self.h__interp_NaN(a.tail_angles)
+    
+    # return long NaN stretches back to NaN- only for the body angles ...
+    for start_I,end_I in starts_ends:
+      a.body_angles[start_I:end_I+1] = np.NaN
+    """
   
   def h__getConditionIndices(self, a, c):
   
@@ -232,10 +265,54 @@ class LocomotionTurns(object):
     %   that one condition occurs before another. This is done in a later
     %   function, h__populateFrames.
     """
-    pass
+    
+    #Determine comparison function
+    #----------------------------------------------------------
+    is_positive = c.head_angle_start_const > 0    
+    if is_positive:
+      fh = operator.gt
+    else:
+      fh = operator.lt
+      
+    #start: when the head exceeds its angle but the tail does not
+    #end  : when the tail exceeds its angle but the head does not
+    
+    #TODO: Rename to convention ...
+    s = collections.namedtuple('stuffs',['startCond','startInds','midCond','midStarts','midEnds','endCond','endInds'])
+    
+    def find_diff(array,value):
+      #diff on logical array doesn't work the same as it does in Matlab
+      return np.flatnonzero(np.diff(array.astype(int)) == value)
+
+    
+    with np.errstate(invalid='ignore'):
+      s.startCond = np.logical_and(fh(a.head_angles, c.head_angle_start_const),np.abs(a.tail_angles) < c.tail_angle_start_const)
+        
+    s.startInds = find_diff(s.startCond,1) + 1 #add 1 for shift due to diff
+    
+       
+    
+    #NOTE: This is NaN check is a bit suspicious, as it implies that the
+    #head and tail are parsed, but the body is not. The original code puts
+    #NaN back in for long gaps in the body angle, so it is possible that
+    #the body angle is NaN but the others are not.
+    with np.errstate(invalid='ignore'):
+      s.midCond   = np.logical_or(fh(a.body_angles, c.body_angle_const), np.isnan(a.body_angles))
+      
+    s.midStarts = find_diff(s.midCond,1) + 1 #add 1 for shift due to diff
+    #import pdb
+    #pdb.set_trace()
+    s.midEnds   = find_diff(s.midCond,-1)
+    
+    with np.errstate(invalid='ignore'):
+      s.endCond   = np.logical_and(fh(a.tail_angles, c.tail_angle_end_const),np.abs(a.head_angles) < c.head_angle_end_const)
+      
+    s.endInds   = find_diff(s.endCond,-1)  
+    
+    
+    return s
     """
-    %Determine comparison function
-    %----------------------------------------------------------
+    
     is_positive = c.head_angle_start_const > 0;
   
     if is_positive
@@ -304,7 +381,41 @@ class LocomotionTurns(object):
     %- Find start indices and end indices that bound this range
     %- For upsilons, exclude if they overlap with an omega bend ...
     """
-    pass
+    
+    #import pdb
+    #pdb.set_trace()    
+    
+    for cur_mid_start_I in s.midStarts:
+      
+      #JAH NOTE: This type of searching is inefficient in Matlab since 
+      #the data is already sorted. It could be improved ...
+      temp = np.flatnonzero(s.midEnds > cur_mid_start_I)
+         
+      #cur_mid_end_I   = s.midEnds[find(s.midEnds > cur_mid_start_I, 1))
+    
+      if temp.size != 0:
+        cur_mid_end_I = s.midEnds[temp[0]]
+        
+        if ~np.all(a.is_stage_movement[cur_mid_start_I:cur_mid_end_I+1]) and \
+          s.startCond[cur_mid_start_I - 1] and \
+          s.endCond[cur_mid_end_I + 1]:
+          
+          temp2 = np.flatnonzero(s.startInds < cur_mid_start_I)
+          temp3 = np.flatnonzero(s.endInds     > cur_mid_end_I)
+          
+          if temp2.size != 0 and temp3.size != 0:
+                
+            cur_start_I = s.startInds[temp2[-1]]
+            cur_end_I   = s.endInds[temp3[0]]     
+            
+            if get_upsilon_flag:
+                  #Don't populate upsilon if the data spans an omega
+                  if ~np.any(np.abs(f.omega_frames[cur_start_I:cur_end_I+1])):
+                      f.upsilon_frames[cur_start_I:cur_end_I+1] = value_to_assign
+            else:
+              f.omega_frames[cur_start_I:cur_end_I+1] = value_to_assign
+
+    return None
     """
     
     for iMid = 1:length(s.midStarts)
@@ -352,7 +463,12 @@ class UpsilonTurns(object):
   Formerly this was not implemented as a class.
   
   """
-  def __init__(self):
+  def __init__(self,upsilon_frames,midbody_distance,FPS):
+    
+    #How to reference??????
+    self.value = getTurnEventsFromSignedFrames(upsilon_frames, midbody_distance, FPS)  
+    
+    
     """
     
     Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
@@ -388,7 +504,7 @@ class OmegaTurns(object):
   
   """
   
-  def __init__(self):
+  def __init__(self,omega_frames_from_angles,sx,sy,body_angles,midbody_distance,FPS):
     """
     
     Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
@@ -650,7 +766,41 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   %   seg_worm.features.locomotion.getOmegaEvents  
   %
   """
-  pass
+  
+  ef = EventFinder.EventFinder()
+  
+  
+  #import pdb
+  #pdb.set_trace()
+  
+  ef.include_at_frames_threshold = True
+  
+  #get_events(self, speed_data, distance_data=None):  
+  
+  #JAH: This interface doesn't make as much sense anymore ...  
+  
+  #seg_worm.feature.event_finder.getEvents
+  ef.min_speed_threshold = 1
+  
+  frames_dorsal  = ef.get_events(signed_frames)
+  
+  ef.min_speed_threshold =  None
+  ef.max_speed_threshold = -1
+  frames_ventral = ef.get_events(signed_frames)
+  
+  #import pdb
+  #pdb.set_trace() 
+  
+  # Unify the ventral and dorsal turns.
+  #--------------------------------------------------------------------------
+  [frames_merged,is_ventral] = EventFinder.EventList.merge(frames_ventral,frames_dorsal)
+    
+  temp = EventFinder.EventListForOutput(frames_merged,midbody_distance) 
+  
+  temp.is_ventral = is_ventral  
+  
+  return temp
+
   """
   INTER_DATA_SUM_NAME = 'interDistance';
   DATA_SUM_NAME       = '';

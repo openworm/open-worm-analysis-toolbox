@@ -145,7 +145,7 @@ class NormalizedWorm():
                             'nose': (3, -1),    
                             # DEBUG: for get_locomotion_bends: 
                             # DEBUG: Jim might remove
-                            'neck': (7, -1),
+                            #'neck': (7, -1),
                             'all': (0, 49),
                             # neck, midbody, and hips
                             'body': (8, 41)}
@@ -153,9 +153,9 @@ class NormalizedWorm():
     self.worm_partition_subsets = {'normal': ('head', 'neck', 
                                               'midbody', 'hips', 'tail'),
                                    'first_third': ('head', 'neck'),
-                                   'second_third': ('midbody'),
+                                   'second_third': ('midbody',),
                                    'last_third': ('hips', 'tail'),
-                                   'all': ('all')}
+                                   'all': ('all',)}
 
     # If we want to mimic the old Schafer Lab decisions,
     # change the partition definitions.
@@ -211,6 +211,14 @@ class NormalizedWorm():
     # return only the subset of partitions contained in the particular 
     # subset of interest, p.
     return {k: self.worm_partitions[k] for k in p}
+
+  def get_subset_partition_mask(self,name):
+    keys = self.worm_partition_subsets[name]
+    mask = np.zeros(49, dtype=bool)
+    for key in keys:
+      mask = mask | self.partition_mask(key)
+
+    return mask
 
   def partition_mask(self, partition_key):
     """
