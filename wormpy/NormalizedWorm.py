@@ -131,7 +131,8 @@ class NormalizedWorm():
 
     self.worm_partitions = {'head': (0, 8), 
                             'neck': (8, 16),
-                            'midbody':  (16, 33),
+                            'midbody':  (16, 33), #This may be changed ...
+                            'midbody_for_turns': (16,33),
                             'hips':  (33, 41),
                             'tail': (41, 49),
                             # refinements of ['head']
@@ -153,12 +154,13 @@ class NormalizedWorm():
     self.worm_partition_subsets = {'normal': ('head', 'neck', 
                                               'midbody', 'hips', 'tail'),
                                    'first_third': ('head', 'neck'),
-                                   'second_third': ('midbody',),
+                                   'second_third': ('midbody_for_turns',),
                                    'last_third': ('hips', 'tail'),
                                    'all': ('all',)}
 
     # If we want to mimic the old Schafer Lab decisions,
     # change the partition definitions.
+    #JAH: This is only for a certain feature
     if(config.MIMIC_OLD_BEHAVIOUR):
       self.worm_partitions['midbody'] = (20, 29)
       
@@ -226,8 +228,8 @@ class NormalizedWorm():
     
     """
     mask = np.zeros(49, dtype=bool)
-    mask[self.worm_partitions[partition_key][0]:
-         self.worm_partitions[partition_key][1]] = True
+    slice_val = self.worm_partitions[partition_key]
+    mask[slice(*slice_val)] = True
     return mask
 
   def get_partition(self, partition_key, data_key = 'skeletons', 
