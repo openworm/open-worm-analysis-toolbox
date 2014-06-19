@@ -40,6 +40,7 @@ TODO: OmegaTurns and UpsilonTurns should inherit from LocomotionTurns or somethi
 
 """
 
+import utils
 import operator
 import re
 from . import EventFinder
@@ -87,8 +88,9 @@ class LocomotionTurns(object):
 
     n_frames = bend_angles.shape[1]
     
-    a = collections.namedtuple('angles',['head_angles','body_angles','tail_angles','is_stage_movement'])
-    
+    a = collections.namedtuple('angles',['head_angles','body_angles',\
+      'tail_angles','body_angles_with_long_nans','is_stage_movement'])
+
     first_third  = nw.get_subset_partition_mask('first_third')
     second_third = nw.get_subset_partition_mask('second_third')
     last_third   = nw.get_subset_partition_mask('last_third')
@@ -101,7 +103,7 @@ class LocomotionTurns(object):
     a.is_stage_movement = is_stage_movement
 
     #Does this do a deep copy??? I want a deep copy
-    body_angles_for_ht_change = np.array(a.body_angles)
+    body_angles_for_ht_change = np.copy(a.body_angles)
 
     n_head = np.sum(~np.isnan(a.head_angles))
     n_body = np.sum(~np.isnan(a.body_angles))
@@ -165,18 +167,11 @@ class LocomotionTurns(object):
         c.body_angle_const       = yuck[4][i]
         s = self.h__getConditionIndices(a,c)
         self.h__populateFrames(a,s,f,is_upsilon[i],values_to_assign[i])
-    
-    #Something is wrong from frames
-    #Should only have 1 upsilon sections and 2 omega sections
-    #Instead it looks like we have closer to 20 for each
-    
-    import pdb
-    pdb.set_trace()    
-    
+        
     #Calculate the events from the frame values
     #--------------------------------------------------------------------------
     #self, nw, bend_angles, is_stage_movement, midbody_distance, sx, sy):
-    #self.omegas   = OmegaTurns(f.omega_frames,sx,sy,body_angles_for_ht_change,midbody_distance,config.FPS)    
+    self.omegas   = OmegaTurns(f.omega_frames,sx,sy,body_angles_for_ht_change,midbody_distance,config.FPS)    
     self.upsilons = UpsilonTurns(f.upsilon_frames,midbody_distance,config.FPS)    
     
     #obj.getOmegaEvents(f.omegaFrames,sx,sy,body_angles_for_ht_change,midbody_distance,FPS);
@@ -220,10 +215,14 @@ class LocomotionTurns(object):
     %   seg_worm.feature_helpers.interpolateNanData
     """
     
-    feature_helpers.interpolate_with_threshold(a.head_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
-    feature_helpers.interpolate_with_threshold(a.body_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
-    feature_helpers.interpolate_with_threshold(a.tail_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
-    
+    feature_helpers.interpolate_with_threshold(a.head_angles,make_copy=False)
+    #This might not actually have been applied - SEGWORM_MC used BodyAngles
+    #feature_helpers.interpolate_with_threshold(a.body_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
+    a.body_angles_with_long_nans = feature_helpers.interpolate_with_threshold(
+        a.body_angles,MAX_INTERPOLATION_GAP_ALLOWED+1)
+    feature_helpers.interpolate_with_threshold(a.body_angles,make_copy=False)
+    feature_helpers.interpolate_with_threshold(a.tail_angles,make_copy=False)
+      
     """
     
     #This code works, but the interpolation wasn't implemented.
@@ -283,32 +282,27 @@ class LocomotionTurns(object):
     def find_diff(array,value):
       #diff on logical array doesn't work the same as it does in Matlab
       return np.flatnonzero(np.diff(array.astype(int)) == value)
-
-    
+ 
     with np.errstate(invalid='ignore'):
-      s.startCond = np.logical_and(fh(a.head_angles, c.head_angle_start_const),np.abs(a.tail_angles) < c.tail_angle_start_const)
-        
+       s.startCond = fh(a.head_angles, c.head_angle_start_const) & (np.abs(a.tail_angles) < c.tail_angle_start_const)
+    
     s.startInds = find_diff(s.startCond,1) + 1 #add 1 for shift due to diff
-    
-       
-    
+
     #NOTE: This is NaN check is a bit suspicious, as it implies that the
     #head and tail are parsed, but the body is not. The original code puts
     #NaN back in for long gaps in the body angle, so it is possible that
     #the body angle is NaN but the others are not.
     with np.errstate(invalid='ignore'):
-      s.midCond   = np.logical_or(fh(a.body_angles, c.body_angle_const), np.isnan(a.body_angles))
+      s.midCond   = fh(a.body_angles, c.body_angle_const) | \
+        np.isnan(a.body_angles_with_long_nans)
       
     s.midStarts = find_diff(s.midCond,1) + 1 #add 1 for shift due to diff
-    #import pdb
-    #pdb.set_trace()
     s.midEnds   = find_diff(s.midCond,-1)
     
     with np.errstate(invalid='ignore'):
       s.endCond   = np.logical_and(fh(a.tail_angles, c.tail_angle_end_const),np.abs(a.head_angles) < c.head_angle_end_const)
       
     s.endInds   = find_diff(s.endCond,-1)  
-    
     
     return s
     """
@@ -535,7 +529,39 @@ class OmegaTurns(object):
 
     
     """
-    pass
+    
+    import pdb
+    pdb.set_trace()
+    
+    MIN_OMEGA_EVENT_LENGTH = round(FPS/4)
+    
+    body_angles_i = feature_helpers.interpolate_with_threshold(body_angles, \
+      extrapolate=True) #_i - interpolated
+      
+    #body_angles_i = h__interp_NaN(body_angles,true) 
+    
+        
+    
+    omega_frames_from_th_change = h_getHeadTailDirectionChange(fps,sx,sy);
+    
+    #Filter:
+    #This is to be consistent with the old code. We filter then merge, then
+    #filter again :/
+    omega_frames_from_th_change = h__filterAndSignFrames(...
+        body_angles_i,omega_frames_from_th_change,MIN_OMEGA_EVENT_LENGTH);
+    
+    is_omega_frame = omega_frames_from_angles | omega_frames_from_th_change;
+    
+    #Refilter and sign
+    signed_omega_frames = h__filterAndSignFrames(body_angles_i,is_omega_frame,MIN_OMEGA_EVENT_LENGTH);
+    
+    #Convert frames to events ...
+    self.values = getTurnEventsFromSignedFrames(signed_omega_frames, midbody_distance, FPS)    
+    
+    #obj.turns.omegas = obj.getTurnEventsFromSignedFrames(signed_omega_frames,midbody_distance,fps);
+
+     
+    
     """
     
     MIN_OMEGA_EVENT_LENGTH = round(fps/4);

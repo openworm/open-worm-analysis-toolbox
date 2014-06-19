@@ -106,7 +106,7 @@ def write_to_CSV(data_dict, filename):
   
 """
 
-def interpolate_with_threshold(array, threshold=None):
+def interpolate_with_threshold(array, threshold=None, make_copy=True, extrapolate=False):
   """
   Linearly interpolate a numpy array along one dimension but only 
   for missing data n frames from a valid data point.  That is, 
@@ -127,6 +127,10 @@ def interpolate_with_threshold(array, threshold=None):
   numpy array with the values interpolated
   
   """
+
+  #EXTRAPOLATION:
+  #http://stackoverflow.com/questions/2745329/how-to-make-scipy-interpolate-give-an-extrapolated-result-beyond-the-input-range
+  #
 
   """
   # (SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
@@ -184,8 +188,14 @@ def interpolate_with_threshold(array, threshold=None):
   # The y-coordinates of the data points, same length as xp
   yp = array[~np.isnan(array)]
 
-  # Use a new array so we don't modify the original array passed to us
-  new_array = np.copy(array)
+  if make_copy:
+    # Use a new array so we don't modify the original array passed to us
+    new_array = np.copy(array)
+  else:
+    new_array = array
+  
+  if extrapolate:
+    pass # :/  Might need to use scipy
   
   # Place the interpolated values into the array
   new_array[x] = np.interp(x, xp, yp)  
