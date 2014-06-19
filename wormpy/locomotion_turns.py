@@ -40,7 +40,7 @@ TODO: OmegaTurns and UpsilonTurns should inherit from LocomotionTurns or somethi
 
 """
 
-import utils
+from . import utils
 import operator
 import re
 from . import EventFinder
@@ -177,8 +177,8 @@ class LocomotionTurns(object):
     #obj.getOmegaEvents(f.omegaFrames,sx,sy,body_angles_for_ht_change,midbody_distance,FPS);
     #obj.getUpsilonEvents(f.upsilonFrames,midbody_distance,FPS);
     
-    import pdb
-    pdb.set_trace()    
+    #import pdb
+    #pdb.set_trace()    
     
     a = 1
 
@@ -529,9 +529,10 @@ class OmegaTurns(object):
 
     
     """
-    
-    import pdb
-    pdb.set_trace()
+    pass
+    """
+    #import pdb
+    #pdb.set_trace()
     
     MIN_OMEGA_EVENT_LENGTH = round(FPS/4)
     
@@ -542,18 +543,18 @@ class OmegaTurns(object):
     
         
     
-    omega_frames_from_th_change = h_getHeadTailDirectionChange(fps,sx,sy);
+    omega_frames_from_th_change = self.h_getHeadTailDirectionChange(config.FPS, sx, sy)
     
     #Filter:
     #This is to be consistent with the old code. We filter then merge, then
     #filter again :/
-    omega_frames_from_th_change = h__filterAndSignFrames(...
-        body_angles_i,omega_frames_from_th_change,MIN_OMEGA_EVENT_LENGTH);
+    omega_frames_from_th_change = self.h__filterAndSignFrames( \
+        body_angles_i, omega_frames_from_th_change, MIN_OMEGA_EVENT_LENGTH)
     
-    is_omega_frame = omega_frames_from_angles | omega_frames_from_th_change;
+    is_omega_frame = omega_frames_from_angles | omega_frames_from_th_change
     
     #Refilter and sign
-    signed_omega_frames = h__filterAndSignFrames(body_angles_i,is_omega_frame,MIN_OMEGA_EVENT_LENGTH);
+    signed_omega_frames = self.h__filterAndSignFrames(body_angles_i, is_omega_frame, MIN_OMEGA_EVENT_LENGTH)
     
     #Convert frames to events ...
     self.values = getTurnEventsFromSignedFrames(signed_omega_frames, midbody_distance, FPS)    
@@ -562,6 +563,8 @@ class OmegaTurns(object):
 
      
     
+
+    """
     """
     
     MIN_OMEGA_EVENT_LENGTH = round(fps/4);
@@ -583,6 +586,7 @@ class OmegaTurns(object):
     
     %Convert frames to events ...
     obj.turns.omegas = obj.getTurnEventsFromSignedFrames(signed_omega_frames,midbody_distance,fps);
+    
     
     """
   
