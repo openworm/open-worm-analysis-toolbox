@@ -199,20 +199,25 @@ class LocomotionTurns(object):
     
   def h__interpolateAngles(self, a, MAX_INTERPOLATION_GAP_ALLOWED):
     """
-  
-    Formerly a = h__interpolateAngles(a,MAX_INTERPOLATION_GAP_ALLOWED)
-    #
-    Inputs
-    =======================================================================
+
+    Parameters
+    ---------------------------------------    
     a.head_angles
     a.body_angles
     a.tail_angles
-    #
-    Outputs
-    =======================================================================
-    
-    TODO: Incorporate into 
+
+
+    Returns
+    ---------------------------------------    
+
+
+    Notes
+    ---------------------------------------    
+    Formerly a = h__interpolateAngles(a,MAX_INTERPOLATION_GAP_ALLOWED)
+
+    TODO: Incorporate into the former
     seg_worm.feature_helpers.interpolateNanData
+    
     """
     
     feature_helpers.interpolate_with_threshold(a.head_angles,make_copy=False)
@@ -252,17 +257,19 @@ class LocomotionTurns(object):
     """
   
   def h__getConditionIndices(self, a, c):
-  
     """
-    #
-    Formerly s = h__getConditionIndices(a, c)
-    #
     This function implements a filter on the frames for the different
     conditions that we are looking for in order to get a particular turn.
     
     It does not however provide any logic on their relative order, i.e.
     that one condition occurs before another. This is done in a later
     function, h__populateFrames.
+
+
+    Notes
+    ---------------------------------------    
+    Formerly s = h__getConditionIndices(a, c)
+
     """
     
     #Determine comparison function
@@ -310,9 +317,9 @@ class LocomotionTurns(object):
     is_positive = c.head_angle_start_const > 0
   
     if is_positive:
-      fh = @gt
+      fh = operator.gt
     else:
-        fh = @lt
+      fh = operator.lt
     
     #start: when the head exceeds its angle but the tail does not
     #end  : when the tail exceeds its angle but the head does not
@@ -337,11 +344,17 @@ class LocomotionTurns(object):
   
   def h__populateFrames(self, a, s, f, get_upsilon_flag, value_to_assign):
     """
-    #
-    Formerly f = h__populateFrames(a,s,f,get_upsilon_flag,value_to_assign)
-    #
-    Inputs
-    =======================================================================
+
+    Algorithm
+    ---------------------------------------    
+    - For the middle angle range, ensure one frame is valid and that
+      the frame proceeding the start and following the end are valid
+    - Find start indices and end indices that bound this range
+    - For upsilons, exclude if they overlap with an omega bend ...
+
+
+    Parameters
+    ---------------------------------------    
     a: (structure)
            head_angles: [1x4642 double]
            body_angles: [1x4642 double]
@@ -362,21 +375,18 @@ class LocomotionTurns(object):
     get_upsilon_flag : toggled based on whether or not we are getting
                upsilon events or omega events
     sign_value : 
-    #
-    Outputs
-    =======================================================================
-    #
+
+
+    Returns
+    ---------------------------------------    
+
     
-    #Algorithm:
-    #-----------------------------------------------------------
-    #- For the middle angle range, ensure one frame is valid and that
-    #  the frame proceeding the start and following the end are valid
-    #- Find start indices and end indices that bound this range
-    #- For upsilons, exclude if they overlap with an omega bend ...
+
+    Notes
+    ---------------------------------------    
+    Formerly f = h__populateFrames(a,s,f,get_upsilon_flag,value_to_assign)
+
     """
-    
-    #import pdb
-    #pdb.set_trace()    
     
     for cur_mid_start_I in s.midStarts:
       
@@ -397,7 +407,6 @@ class LocomotionTurns(object):
           temp3 = np.flatnonzero(s.endInds     > cur_mid_end_I)
           
           if temp2.size != 0 and temp3.size != 0:
-                
             cur_start_I = s.startInds[temp2[-1]]
             cur_end_I   = s.endInds[temp3[0]]     
             
@@ -452,10 +461,11 @@ class UpsilonTurns(object):
   Formerly this was not implemented as a class.
   
   """
-  def __init__(self,upsilon_frames,midbody_distance,FPS):
+  def __init__(self, upsilon_frames, midbody_distance, FPS):
     
     #How to reference??????
-    self.value = getTurnEventsFromSignedFrames(upsilon_frames, midbody_distance, FPS)  
+    self.value = getTurnEventsFromSignedFrames(upsilon_frames, 
+                                               midbody_distance, FPS)  
     
     
     """
@@ -466,7 +476,9 @@ class UpsilonTurns(object):
     """
     pass
     """    
-    self.upsilons = getTurnEventsFromSignedFrames(upsilon_frames,midbody_distance,FPS)
+    self.upsilons = getTurnEventsFromSignedFrames(upsilon_frames,
+                                                  midbody_distance,
+                                                  FPS)
     """
 
 
@@ -493,68 +505,79 @@ class OmegaTurns(object):
   
   """
   
-  def __init__(self,omega_frames_from_angles,sx,sy,body_angles,midbody_distance,FPS):
+  def __init__(self, omega_frames_from_angles, sx, sy, body_angles, 
+               midbody_distance, FPS):
     """
+
+
+    Parameters
+    ---------------------------------------    
+    sx :
+
+    sy :
+
+    fps
+
+    body_angles
+      average bend angle of the middle third of the worm
+
+    midbody_distance :
+
+    omega_frames_from_angles: [1 x n_frames]
+      Each frame has the value 0, 1, or -1, 
+
+
+    Returns
+    ---------------------------------------    
+    omega_events : event structure 
     
+    
+    Notes
+    ---------------------------------------    
     Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
     of a class, but a locomotion method of called 
     getOmegaEvents(obj,omega_frames_from_angles,sx,sy,
                    body_angles,midbody_distance,fps)
 
-    Inputs
-    =======================================================================
-    sx :
-    sy :
-    fps
-    body_angles : average bend angle of the middle third of the worm
-    midbody_distance :
-    omega_frames_from_angles : [1 x n_frames], each frame has the value 0,
-       1, or -1, 
-    #
-    Outputs
-    =======================================================================
-    omega_events : event structure 
-    #
-    Called By:
-    
-    #
-    See Also:
+    See also:
     seg_worm.features.locomotion.getOmegaAndUpsilonTurns
     seg_worm.features.locomotion.getTurnEventsFromSignedFrames
 
-    
     """
     pass
     """
-    #import pdb
-    #pdb.set_trace()
-    
-    MIN_OMEGA_EVENT_LENGTH = round(FPS/4)
+    MIN_OMEGA_EVENT_LENGTH = round(FPS / 4)
     
     body_angles_i = feature_helpers.interpolate_with_threshold(body_angles, \
       extrapolate=True) #_i - interpolated
       
-    #body_angles_i = h__interp_NaN(body_angles,True) 
+    #body_angles_i = self.h__interp_NaN(body_angles,True) 
     
         
     
-    omega_frames_from_th_change = self.h_getHeadTailDirectionChange(config.FPS, sx, sy)
+    omega_frames_from_th_change = \
+        self.h_getHeadTailDirectionChange(config.FPS, sx, sy)
     
-    #Filter:
-    #This is to be consistent with the old code. We filter then merge, then
-    #filter again :/
+    # Filter:
+    # This is to be consistent with the old code. We filter then merge, then
+    # filter again :/
     omega_frames_from_th_change = self.h__filterAndSignFrames( \
         body_angles_i, omega_frames_from_th_change, MIN_OMEGA_EVENT_LENGTH)
     
     is_omega_frame = omega_frames_from_angles | omega_frames_from_th_change
     
-    #Refilter and sign
-    signed_omega_frames = self.h__filterAndSignFrames(body_angles_i, is_omega_frame, MIN_OMEGA_EVENT_LENGTH)
+    # Refilter and sign
+    signed_omega_frames = self.h__filterAndSignFrames(body_angles_i, 
+                                                      is_omega_frame, 
+                                                      MIN_OMEGA_EVENT_LENGTH)
     
-    #Convert frames to events ...
-    self.values = getTurnEventsFromSignedFrames(signed_omega_frames, midbody_distance, FPS)    
+    # Convert frames to events ...
+    self.values = getTurnEventsFromSignedFrames(signed_omega_frames, 
+                                                midbody_distance, 
+                                                FPS)    
     
-    #obj.turns.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,midbody_distance,fps)
+    #obj.turns.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
+    #                                                 midbody_distance,fps)
 
      
     
@@ -564,7 +587,7 @@ class OmegaTurns(object):
     
     MIN_OMEGA_EVENT_LENGTH = round(fps/4)
     
-    body_angles_i = h__interp_NaN(body_angles,True) #_i - interpolated
+    body_angles_i = self.h__interp_NaN(body_angles, True) #_i - interpolated
     
     omega_frames_from_th_change = h_getHeadTailDirectionChange(fps,sx,sy)
     
@@ -590,14 +613,16 @@ class OmegaTurns(object):
 
   def h_getHeadTailDirectionChange(self, FPS, sx, sy):
     """
-    #
-    Formerly is_omega_angle_change = h_getHeadTailDirectionChange(FPS,sx,sy)
-    #
     NOTE: This change in direction of the head and tail indicates that
     either a turn occurred OR that an error in the parsing occurred.
     Basically we look for the angle from the head to the tail to all of a
     sudden change by 180 degrees. 
-    #
+
+
+    Notes
+    ---------------------------------------    
+    Formerly is_omega_angle_change = h_getHeadTailDirectionChange(FPS,sx,sy)
+
     """
     pass
   
@@ -720,7 +745,14 @@ class OmegaTurns(object):
   
   def h__filterAndSignFrames(self, body_angles_i, is_omega_frame, MIN_OMEGA_EVENT_LENGTH):
     """
-    Formerly signed_omega_frames = h__filterAndSignFrames(body_angles_i,is_omega_frame,MIN_OMEGA_EVENT_LENGTH)
+
+
+    Notes
+    ---------------------------------------    
+    Formerly signed_omega_frames = 
+      h__filterAndSignFrames(body_angles_i, is_omega_frame, 
+                             MIN_OMEGA_EVENT_LENGTH)
+
     """
     pass
     """
@@ -741,7 +773,12 @@ class OmegaTurns(object):
   
   def h__interp_NaN(self, x, use_extrap):
     """
+
+
+    Notes
+    ---------------------------------------    
     Formerly fixed_x = h__interp_NaN(x,use_extrap)
+
     """
     pass
     """
@@ -764,29 +801,30 @@ class OmegaTurns(object):
 
 def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   """
-  Formerly function turn_events = getTurnEventsFromSignedFrames(obj,signed_frames,midbody_distance,FPS)
-  #
-  seg_worm.features.locomotion.getTurnEventsFromSignedFrames
-  #
-  Inputs
-  =======================================================================
-  obj : Class: seg_worm.features.locomotion
-  signed_frames : ??? - I believe the values are -1 or 1, based on
-  whether something is dorsal or ventral ....
-  #
+
+
+  Parameters
+  ---------------------------------------    
+  signed_frames: 
+    ??? - I believe the values are -1 or 1, based on
+    whether something is dorsal or ventral ....
+
+
+  Notes
+  ---------------------------------------    
   This code is common to omega and upsilon turns.
-  #
+
+  Formerly function turn_events = \
+    seg_worm.features.locomotion.getTurnEventsFromSignedFrames(
+                          obj,signed_frames,midbody_distance,FPS)
+
   Called by:
   seg_worm.features.locomotion.getUpsilonEvents
   seg_worm.features.locomotion.getOmegaEvents  
-  #
+  
   """
   
   ef = EventFinder.EventFinder()
-  
-  
-  #import pdb
-  #pdb.set_trace()
   
   ef.include_at_frames_threshold = True
   
@@ -803,12 +841,9 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   ef.max_speed_threshold = -1
   frames_ventral = ef.get_events(signed_frames)
   
-  #import pdb
-  #pdb.set_trace() 
-  
   # Unify the ventral and dorsal turns.
-  #--------------------------------------------------------------------------
-  [frames_merged,is_ventral] = EventFinder.EventList.merge(frames_ventral,frames_dorsal)
+  [frames_merged,is_ventral] = EventFinder.EventList.merge(frames_ventral,
+                                                           frames_dorsal)
     
   temp = EventFinder.EventListForOutput(frames_merged,midbody_distance) 
   
@@ -828,7 +863,6 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   frames_ventral = ef.getEvents(signed_frames,[],-1)
   
   # Unify the ventral and dorsal turns.
-  #--------------------------------------------------------------------------
   [frames_merged,is_ventral] = frames_ventral.merge(frames_dorsal)
   
   temp = seg_worm.feature.event(frames_merged,FPS,midbody_distance,DATA_SUM_NAME,INTER_DATA_SUM_NAME) 
@@ -836,14 +870,9 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   #seg_worm.feature.event.getFeatureStruct
   turn_events = temp.getFeatureStruct
   
-  #Add extra field, isVentral ...
-  #---------------------------------------------------------------
+  # Add extra field, isVentral ...
   n_events = length(turn_events.frames)
   for iEvent = 1:n_events:
     turn_events.frames(iEvent).isVentral = is_ventral(iEvent) 
   
   """
-  
-  
-  
-  

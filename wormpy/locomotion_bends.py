@@ -24,7 +24,7 @@ Contains two classes:
 import numpy as np
 from . import feature_helpers
 from . import config
-
+from . import utils
 
 class LocomotionCrawlingBends(object):
   """
@@ -540,7 +540,8 @@ class LocomotionCrawlingBends(object):
   
   
   
-  def h__getBandwidth(self, data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH):
+  def h__getBandwidth(self, data_win_length, fft_data, 
+                      max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
     """
     The goal is to find minimum 'peaks' that border the maximal frequency
     response.
@@ -548,30 +549,42 @@ class LocomotionCrawlingBends(object):
     Since this is a time intensive process, we try and start with a small
     range of frequencies, as execution time is proportional to the length
     of the input data. If this fails we use the full data set.
+
     
     Parameters
     ---------------------------------------    
-    data_win_length : length of real data (ignoring zero padding) that 
-                      went into computing the FFT
-    fft_data        : output of the fft function
-    max_peak_I      : location (index) of the maximum of fft_data
-    INIT_MAX_I_FOR_BANDWIDTH : see code
+    data_win_length
+      Length of real data (ignoring zero padding) that 
+      went into computing the FFT
+
+    fft_data
+      Output of the fft function
+
+    max_peak_I
+      Location (index) of the maximum of fft_data
+
+    INIT_MAX_I_FOR_BANDWIDTH
+      See code
+
 
     Returns
     ---------------------------------------    
-    peak_start_I : (scalar)
-    peak_end_I   : (scalar)
+    peak_start_I: scalar
+
+    peak_end_I: scalar
+
 
     Notes
-    -----------------
-    Formerly [peak_start_I,peak_end_I] = h__getBandwidth(data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
+    ---------------------------------------    
+    Formerly [peak_start_I,peak_end_I] = \
+           h__getBandwidth(data_win_length, fft_data, 
+                           max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
 
     See also, formerly: seg_worm.util.maxPeaksDist
+
     """
-    pass
 
     peakWinSize = round(sqrt(data_win_length))
-    """
   
     # Find the peak bandwidth.
     if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
@@ -579,11 +592,13 @@ class LocomotionCrawlingBends(object):
       #allow matching a peak that will later be judged invalid. If we
       #filter here we may find another smaller peak which will not be
       #judged invalid later on.
-      [~, min_peaks_I] = seg_worm.util.maxPeaksDist(
-                                  fft_data[1:INIT_MAX_I_FOR_BANDWIDTH], 
-                                  peakWinSize, 
-                                  False, 
-                                  Inf)
+      [min_peaks, min_peaks_I] = utils.separated_peaks(
+                                  fft_data[:INIT_MAX_I_FOR_BANDWIDTH], 
+                                  peakWinSize,
+                                  use_max=False,
+                                  value_cutoff=np.inf)
+
+      del min_peaks   # this part of max_peaks_dist's return is unused
 
       peak_start_I = min_peaks_I[np.flatnonzero(min_peaks_I < max_peak_I)]
       peak_end_I   = min_peaks_I[np.flatnonzero(min_peaks_I > max_peak_I)]
@@ -596,28 +611,25 @@ class LocomotionCrawlingBends(object):
     #could invalidate the result we have.
     if isempty(peak_end_I) or \
            peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH:
-      [~, min_peaks_I] = seg_worm.util.maxPeaksDist(fft_data, 
-                                                    peakWinSize,
-                                                    False, 
-                                                    Inf)
+      [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data, 
+                                                       peakWinSize,
+                                                       use_max=False, 
+                                                       value_cutoff=np.inf)
+
+      del min_peaks   # this part of max_peaks_dist's return is unused
   
       peak_start_I = min_peaks_I(np.flatnonzero(min_peaks_I < max_peak_I))
       peak_end_I   = min_peaks_I(np.flatnonzero(min_peaks_I > max_peak_I))      
 
     return [peak_start_I, peak_end_I]
-    """
-  
-  
-  
-  
-  
-  
   
   
 
 
-
-
+"""
+===============================================================================
+===============================================================================
+"""
 
 
 class LocomotionForagingBends(object):
@@ -1014,16 +1026,16 @@ class LocomotionForagingBends(object):
 
     pass
     """
-    n_frames = length(nose_bend_angle_d)
+    n_frames = len(nose_bend_angle_d)
     
-    dataSign      = sign(nose_bend_angle_d)
-    sign_change_I = np.flatnonzero(dataSign(2:end) ~= dataSign(1:end-1))
+    data_sign      = sign(nose_bend_angle_d)
+    sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
     
     end_I   = [sign_change_I; n_frames]
     start_I = [1; sign_change_I+1]
     
     # All Nan values are considered sign changes, remove these ...
-    mask = isnan(nose_bend_angle_d(start_I))
+    mask = np.isnan(nose_bend_angle_d[start_I])
     start_I[mask] = []
     end_I[mask]   = []
     
@@ -1031,14 +1043,14 @@ class LocomotionForagingBends(object):
     
     # For each chunk, get max or min, depending on whether the data is positive
     # or negative ...
-    for iChunk = 1:length(start_I):
-      cur_start = start_I(iChunk)
-      cur_end   = end_I(iChunk)
+    for iChunk = range(len(start_I)):
+      cur_start = start_I[iChunk]
+      cur_end   = end_I[iChunk]
      
       if nose_bend_angle_d(cur_start) > 0:
-        amps(cur_start:cur_end) = max(nose_bend_angle_d(cur_start:cur_end))
+        amps[cur_start:cur_end] = max(nose_bend_angle_d[cur_start:cur_end])
       else:
-        amps(cur_start:cur_end) = min(nose_bend_angle_d(cur_start:cur_end))
+        amps[cur_start:cur_end] = min(nose_bend_angle_d[cur_start:cur_end])
     """
 
 

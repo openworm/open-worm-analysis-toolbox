@@ -348,7 +348,7 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
       iY = np.abs(temp[0:HALF_N_FFT])
       
     #Find peaks that are greater than the cutoff  
-    peaks, indx = utils.max_peaks_dist(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
+    peaks, indx = utils.separated_peaks(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
 
     #pdb.set_trace() # DEBUG
