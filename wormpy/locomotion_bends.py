@@ -533,8 +533,8 @@ class LocomotionCrawlingBends(object):
           front_zero_I = right_values[cur_right_index]
         
         if use_values:
-          back_zeros_I(iFrame)  = back_zero_I
-          front_zeros_I(iFrame) = front_zero_I
+          back_zeros_I[iFrame]  = back_zero_I
+          front_zeros_I[iFrame] = front_zero_I
     
     return [back_zeros_I, front_zeros_I]
   
