@@ -429,31 +429,33 @@ class LocomotionCrawlingBends(object):
     We've gone too far, nothing at index 0, set to invalid
     """
 
-    """    
     n_frames = len(avg_bend_angles)
     
     # For each element in the array, these values indicate which 
     # sign change index to use ...
-    left_sign_change_I  = zeros(1,n_frames)
-    left_sign_change_I(sign_change_I + 1) = 1 
+    left_sign_change_I  = np.zeros(n_frames)
+    left_sign_change_I[sign_change_I + 1] = 1
     # We increment at values to the right of the sign changes
-    left_sign_change_I = cumsum(left_sign_change_I) 
-    # This is a little Matlab trick in which something like:
+    left_sign_change_I = left_sign_change_I.cumsum()
+    # The previous line is a little Matlab trick in which 
+    # something like:
     # 1 0 0 1 0 0 1 0 0 
     # becomes:
     # 1 1 1 2 2 2 3 3 3 
-    # so now at each frame, we get the index of the value
-    # that is to the left.
-    
+    # so now at each frame, we get the index of the value that
+    # is to the left.
     right_sign_change_I    = np.zeros(n_frames)
-    right_sign_change_I[sign_change_I[1:end-1] + 1] = 1
-    right_sign_change_I[1] = 1
-    right_sign_change_I    = cumsum(right_sign_change_I)
+    right_sign_change_I[sign_change_I[:-1] + 1] = 1
+    right_sign_change_I[0] = 1
+    right_sign_change_I    = right_sign_change_I.cumsum()
     # We must have nothing to the right of the last change:
-    right_sign_change_I[sign_change_I[end] + 1:end] = 0 
+    # DEBUG: did I get this next line right?  -@MichaelCurrie
+    right_sign_change_I[sign_change_I[-1]:] = 0    
     
     # These are the actual indices that each sign crossing index points to
-    #
+    # DEBUG: missing text??  (after "to..." in previous line)
+    #     - note from @MichaelCurrie
+    
     # We keep these separate as it makes it easier to go the next value, by
     # incrementing the pointer index, rather than doing a search
     left_values  = sign_change_I
@@ -467,8 +469,8 @@ class LocomotionCrawlingBends(object):
       cur_left_index  = left_sign_change_I[iFrame]
       cur_right_index = right_sign_change_I[iFrame]
 
-      if left_sign_change_I(iFrame) == 0 or \
-           right_sign_change_I(iFrame) == 0:
+      if left_sign_change_I[iFrame] == 0 or \
+           right_sign_change_I[iFrame] == 0:
         continue
       
       back_zero_I  = left_values[cur_left_index]
@@ -477,63 +479,64 @@ class LocomotionCrawlingBends(object):
       use_values = True
       
       # Expand the zero-crossing window.
-      #----------------------------------------------------------------------
-      # Note from @JimHokanson: We center on the sample by using the larger of the two gaps.
-      #This means the gap size is 2*larger_window, where the half window size
-      #is:
-      #left_window_size  = iFrame - back_zero_I
-      #right_window_size = front_zero_I - iFrame
+      #----------------------------------
+      # Note from @JimHokanson: We center on the sample by using the 
+      # larger of the two gaps.
+      # This means the gap size is 2*larger_window, where the 
+      # half-window size is:
+      # left_window_size  = iFrame - back_zero_I
+      # right_window_size = front_zero_I - iFrame
       #
-      #so in reality we should use:
+      # so in reality we should use:
       #
-      #front_zero_I - iFrame < min_win_size/2 && iFrame - back_zero_I < min_win_size/2
+      # front_zero_I - iFrame < min_win_size/2 and 
+      # iFrame - back_zero_I < min_win_size/2
       #
-      #By not doing this, we overshoot the minimum window size that we need
-      #to use. Consider window sizes that are in terms of the minimum window
-      #size.
+      # By not doing this, we overshoot the minimum window size that 
+      # we need to use. Consider window sizes that are in terms of 
+      # the minimum window size.
       #
-      #i.e. 0.5w means the left or right window is half min_win_size
+      # i.e. 0.5w means the left or right window is half min_win_size
       #
-      #Consider we have:
-      #0.5w left 
-      #0.3w right
+      # Consider we have:
+      # 0.5w left 
+      # 0.3w right
       #
-      #If we stopped now, we would get a windows size of 2*0.5w or w, which
-      #is what we want.
+      # If we stopped now, we would get a windows size of 2*0.5w or w,
+      # which is what we want.
       #
-      #Since we keep going, the right window will expand, let's say:
-      #0.5w left
-      #0.7w right
+      # Since we keep going, the right window will expand, let's say:
+      # 0.5w left
+      # 0.7w right
       #
-      #Now in the calling function we will center on the frame and the total 
-      #window distance will be 2*0.7w or 1.4w, which is larger than we
-      #needed.
+      # Now in the calling function we will center on the frame and the 
+      # total window distance will be 2*0.7w or 1.4w, which is larger 
+      # than we needed.
       
       while (front_zero_I - back_zero_I + 1) < min_win_size:
-        #Expand the smaller of the two windows
-        #----------------------------------------------------
+        # Expand the smaller of the two windows
+        # -------------------------------------
         #  left_window_size       right_window_size
         if (iFrame - back_zero_I) < (front_zero_I - iFrame):
-          #Then expand to the left
+          # Expand to the left:
           cur_left_index = cur_left_index - 1
           if cur_left_index == 0:
             use_values = False
             break
-          back_zero_I  = left_values(cur_left_index)
+          back_zero_I  = left_values[cur_left_index]
         else:
-          #Expand to the right 
+          # Expand to the right:
           cur_right_index = cur_right_index + 1
           if cur_right_index > n_sign_changes:
             use_values = False
             break
-          front_zero_I = right_values(cur_right_index)
+          front_zero_I = right_values[cur_right_index]
         
         if use_values:
           back_zeros_I(iFrame)  = back_zero_I
           front_zeros_I(iFrame) = front_zero_I
     
     return [back_zeros_I, front_zeros_I]
-    """
   
   
   
@@ -566,8 +569,9 @@ class LocomotionCrawlingBends(object):
     See also, formerly: seg_worm.util.maxPeaksDist
     """
     pass
-    """
+
     peakWinSize = round(sqrt(data_win_length))
+    """
   
     # Find the peak bandwidth.
     if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
