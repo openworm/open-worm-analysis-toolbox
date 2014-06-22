@@ -133,7 +133,7 @@ class LocomotionTurns(object):
       'tail_angle_end_const','body_angle_const'])
       
             
-    yuck = [[20,-20,15,-15],
+    yuck = [[20, -20, 15, -15],
             [30,  30, 30,  30],
             [40,  40, 30,  30],
             [20, -20, 15, -15],
@@ -312,33 +312,6 @@ class LocomotionTurns(object):
     s.endInds   = find_diff(s.endCond,-1)  
     
     return s
-    """
-    
-    is_positive = c.head_angle_start_const > 0
-  
-    if is_positive:
-      fh = operator.gt
-    else:
-      fh = operator.lt
-    
-    #start: when the head exceeds its angle but the tail does not
-    #end  : when the tail exceeds its angle but the head does not
-    
-    s.startCond = fh(a.head_angles, c.head_angle_start_const) & abs(a.tail_angles) < c.tail_angle_start_const
-    s.startInds = find(diff(s.startCond) == 1) + 1 #add 1 for shift due to diff
-    
-    #NOTE: This is NaN check is a bit suspicious, as it implies that the
-    #head and tail are parsed, but the body is not. The original code puts
-    #NaN back in for long gaps in the body angle, so it is possible that
-    #the body angle is NaN but the others are not.
-    s.midCond   = fh(a.body_angles, c.body_angle_const) | np.isnan(a.bodyAngle)
-    s.midStarts = find(diff(s.midCond) == 1) + 1 #add 1 for shift due to diff
-    s.midEnds   = find(diff(s.midCond) == -1)
-    
-    s.endCond   = fh(a.tail_angles, c.tail_angle_end_const) & abs(a.head_angles) < c.head_angle_end_const
-    s.endInds   = find(diff(s.endCond) == -1)
-  
-    """
   
   
   
@@ -418,31 +391,6 @@ class LocomotionTurns(object):
               f.omega_frames[cur_start_I:cur_end_I+1] = value_to_assign
 
     return None
-    """
-    
-    for iMid = 1:length(s.midStarts):
-      cur_mid_start_I = s.midStarts(iMid)
-      
-      #JAH NOTE: This type of searching is inefficient in Matlab since 
-      #the data is already sorted. It could be improved ...
-      cur_mid_end_I   = s.midEnds(find(s.midEnds > cur_mid_start_I, 1))
-      
-      if ~isempty(cur_mid_end_I) and \
-          ~all(a.is_stage_movement(cur_mid_start_I:cur_mid_end_I)) and \
-          s.startCond(cur_mid_start_I - 1) and \
-          s.endCond(cur_mid_end_I + 1):
- 
-        cur_start_I = s.startInds(find(s.startInds < cur_mid_start_I,   1, 'last'))
-        cur_end_I   = s.endInds(find(s.endInds     > cur_mid_end_I,     1))
-
-        if get_upsilon_flag:
-          #Don't populate upsilon if the data spans an omega
-          if ~any(abs(f.omegaFrames(cur_start_I:cur_end_I))):
-            f.upsilonFrames(cur_start_I:cur_end_I) = value_to_assign
-        else:
-          f.omegaFrames(cur_start_I:cur_end_I) = value_to_assign
-    """
-    pass
 
 
 """
@@ -462,23 +410,26 @@ class UpsilonTurns(object):
   
   """
   def __init__(self, upsilon_frames, midbody_distance, FPS):
-    
-    #How to reference??????
-    self.value = getTurnEventsFromSignedFrames(upsilon_frames, 
-                                               midbody_distance, FPS)  
-    
-    
     """
-    
+
+    Notes
+    ---------------------------------------    
     Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
     of a class, but a locomotion method of called 
     getUpsilonEvents(obj,upsilon_frames,midbody_distance,FPS)
+
     """
-    pass
+
+    
+    # How to reference?????? - @JimHokanson
+    # I'm not sure what you mean. - @MichaelCurrie
+    self.value = getTurnEventsFromSignedFrames(upsilon_frames, 
+                                               midbody_distance, FPS)  
+    
     """    
     self.upsilons = getTurnEventsFromSignedFrames(upsilon_frames,
                                                   midbody_distance,
-                                                  FPS)
+                                                  config.FPS)
     """
 
 
@@ -544,8 +495,7 @@ class OmegaTurns(object):
     seg_worm.features.locomotion.getTurnEventsFromSignedFrames
 
     """
-    pass
-    """
+
     MIN_OMEGA_EVENT_LENGTH = round(FPS / 4)
     
     body_angles_i = feature_helpers.interpolate_with_threshold(body_angles, \
@@ -579,35 +529,7 @@ class OmegaTurns(object):
     #obj.turns.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
     #                                                 midbody_distance,fps)
 
-     
-    
 
-    """
-    """
-    
-    MIN_OMEGA_EVENT_LENGTH = round(fps/4)
-    
-    body_angles_i = self.h__interp_NaN(body_angles, True) #_i - interpolated
-    
-    omega_frames_from_th_change = h_getHeadTailDirectionChange(fps,sx,sy)
-    
-    #Filter:
-    #This is to be consistent with the old code. We filter then merge, then
-    #filter again :/
-    omega_frames_from_th_change = h__filterAndSignFrames(...
-        body_angles_i,omega_frames_from_th_change,MIN_OMEGA_EVENT_LENGTH)
-    
-    is_omega_frame = omega_frames_from_angles | omega_frames_from_th_change
-    
-    #Refilter and sign
-    signed_omega_frames = h__filterAndSignFrames(body_angles_i,is_omega_frame,MIN_OMEGA_EVENT_LENGTH)
-    
-    #Convert frames to events ...
-    obj.turns.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,midbody_distance,fps)
-    
-    
-    """
-  
   
 
 
@@ -624,14 +546,11 @@ class OmegaTurns(object):
     Formerly is_omega_angle_change = h_getHeadTailDirectionChange(FPS,sx,sy)
 
     """
-    pass
-  
-    """
-    MAX_FRAME_JUMP_FOR_ANGLE_DIFF = round(FPS/2)
+    MAX_FRAME_JUMP_FOR_ANGLE_DIFF = round(FPS / 2)
     
     #We compute a smoothed estimate of the angle change by using angles at
     #indices that are +/- this value ...
-    HALF_WINDOW_SIZE = round(FPS/4)
+    HALF_WINDOW_SIZE = round(FPS / 4)
     
     #NOTE: It would be better to have this be based on time, not samples
     MAX_INTERP_GAP_SIZE = 119
@@ -640,7 +559,8 @@ class OmegaTurns(object):
     #velocity ????
     PER_FRAME_DEGREE_CHANGE_CUTOFF = 3
     
-    
+
+    """    
     # Compute tail direction
     #----------------------------------------------------
     SI = seg_worm.skeleton_indices
@@ -650,9 +570,9 @@ class OmegaTurns(object):
     tail_x = mean(sx(SI.TAIL_INDICES,:),1)
     tail_y = mean(sy(SI.TAIL_INDICES,:),1)
     
-    th_angle  = atan2(head_y - tail_y, head_x - tail_x)*(180/pi)
+    th_angle  = atan2(head_y - tail_y, head_x - tail_x) * (180 / pi)
     
-    n_frames = length(th_angle)
+    n_frames = len(th_angle)
     
     #Changed angles to being relative to the previous frame
     #--------------------------------------------------------------------------
@@ -662,7 +582,7 @@ class OmegaTurns(object):
     
     is_good_th_direction_value = ~np.isnan(th_angle)
     
-    lastAngle  = th_angle(1)
+    lastAngle  = th_angle[0]
     gapCounter = 0
     
     th_angle_diff_temp = np.empty(th_angle.size) * np.NAN
@@ -672,10 +592,10 @@ class OmegaTurns(object):
         gapCounter = 0
         lastAngle  = th_angle[iFrame]
       else:
-        gapCounter = gapCounter + 1
+        gapCounter += 1
 
       if gapCounter > MAX_FRAME_JUMP_FOR_ANGLE_DIFF:
-        lastAngle = NaN
+        lastAngle = np.NaN
     
     #???? - what does this really mean ??????
     #I think this basically says, instead of looking for gaps in the original
@@ -700,11 +620,11 @@ class OmegaTurns(object):
     #the original angle vector
     # subtract 2pi from remainging data after positive jumps
     for j in range(len(positiveJumps)):
-      th_angle(positiveJumps(j):end) = th_angle(positiveJumps(j):end) - 2*180
+      th_angle[positiveJumps[j]:] = th_angle[positiveJumps[j]:] - 2*180
     
     # add 2pi to remaining data after negative jumps
     for j in range(len(negativeJumps)):
-      th_angle(negativeJumps(j):end) = th_angle(negativeJumps(j):end) + 2*180
+      th_angle[negativeJumps[j]:] = th_angle[negativeJumps[j]:] + 2*180
     
     
     
@@ -714,7 +634,8 @@ class OmegaTurns(object):
     n = np.isnan(th_angle)
     # save start and end indices for the stretches
     
-    gap_str = sprintf('B{%d,}',MAX_INTERP_GAP_SIZE+1) #Add 1 so that we allow the max gap
+    # Add 1 so that we allow the max gap
+    gap_str = sprintf('B{%d,}',MAX_INTERP_GAP_SIZE+1) 
     #but not anything greater
     [start1, end1] = regexp( char(n+'A'), gap_str, 'start', 'end' )
     
@@ -731,15 +652,18 @@ class OmegaTurns(object):
     # Compute angle difference
     th_angle_diff = np.empty(len(th_angle)) * np.NaN
     
-    left_indices = (1:n_frames) - HALF_WINDOW_SIZE
-    right_indics = (1:n_frames) + HALF_WINDOW_SIZE
+    left_indices = np.array(list(range(n_frames) - HALF_WINDOW_SIZE)
+    right_indices = np.array(list(range(n_frames)) + HALF_WINDOW_SIZE)
     
-    mask = left_indices > 1 & right_indics < n_frames
+    mask = (left_indices > 1) & (right_indices < n_frames)
     
-    th_angle_diff(mask) = th_angle(right_indics(mask)) - th_angle(left_indices(mask))
+    th_angle_diff(mask) = th_angle(right_indices(mask)) - \
+                          th_angle(left_indices(mask))
     
     avg_angle_change_per_frame = abs(th_angle_diff/(HALF_WINDOW_SIZE*2))
-    is_omega_angle_change      = avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
+    
+    # Now return whether or not it's an omega angle change
+    return avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
     
     """
   
@@ -845,13 +769,19 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   [frames_merged,is_ventral] = EventFinder.EventList.merge(frames_ventral,
                                                            frames_dorsal)
     
-  temp = EventFinder.EventListForOutput(frames_merged,midbody_distance) 
+  temp = EventFinder.EventListForOutput(frames_merged, midbody_distance) 
   
   temp.is_ventral = is_ventral  
   
   return temp
 
   """
+  FORMER CODE FOR THIS FUNCTION:
+  NOTE THE DIFFERENCE AT THE END, ADDING isVentral to each frame  
+  - @MichaelCurrie
+
+
+  
   INTER_DATA_SUM_NAME = 'interDistance'
   DATA_SUM_NAME       = ''
   
