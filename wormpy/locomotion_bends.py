@@ -549,9 +549,9 @@ class LocomotionCrawlingBends(object):
     The goal is to find minimum 'peaks' that border the maximal frequency
     response.
       
-    Since this is a time intensive process, we try and start with a small
+    Since this is a time-intensive process, we try and start with a small
     range of frequencies, as execution time is proportional to the length
-    of the input data. If this fails we use the full data set.
+    of the input data.  If this fails we use the full data set.
 
     
     Parameters
@@ -859,6 +859,9 @@ class LocomotionForagingBends(object):
 
   def h__interpData(self, x_old, good_data_I, fix_data_I):
     """
+    Interpolate two-dimensional data along the second axis.  Each "row"
+    is treated as a separate interpolation.  So if the first axis has 4 
+    rows of n frames in the second axis, we are interpolating 4 times.
     
     Parameters
     ---------------------------------------    
@@ -878,8 +881,8 @@ class LocomotionForagingBends(object):
     
     # NOTE: This version is a bit weird because the size of y is not 1d
     for i1 = range(np.shape(x_old)[0]):
-       x_new(i1, fix_data_I) = interp1(good_data_I,
-                                       x_old(i1,good_data_I),
+       x_new[i1, fix_data_I] = interp1(good_data_I,
+                                       x_old[i1, good_data_I],
                                        fix_data_I,
                                        'linear',
                                        np.NaN) 
