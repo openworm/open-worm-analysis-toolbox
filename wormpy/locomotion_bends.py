@@ -211,6 +211,7 @@ class LocomotionCrawlingBends(object):
     self.midbody = bends['midbody']
     self.tail = bends['tail']
   
+  
   def h__getBendData(self, avg_bend_angles, options, is_paused):
     """
     Compute the bend amplitude and frequency.
@@ -242,7 +243,7 @@ class LocomotionCrawlingBends(object):
     
     return [None, None]  # DEBUG
 
-    """
+
     #Options extraction
     min_window = options.minWin
     max_window = options.maxWin
@@ -288,7 +289,10 @@ class LocomotionCrawlingBends(object):
     
     
     # Compute the short-time Fourier transforms (STFT).
-    fft_max_I   = fft_n_samples / 2 #Maximum index to keep for frequency analysis
+    
+    # Maximum index to keep for frequency analysis:
+    fft_max_I   = fft_n_samples / 2 
+
     freq_scalar = (config.FPS / 2) * 1/(fft_max_I - 1)
     
     amps  = np.empty(n_frames) * np.NaN
@@ -343,7 +347,6 @@ class LocomotionCrawlingBends(object):
         freqs[iFrame] = unsigned_freq * dataSign
 
     return [amps, freqs]
-    """
     
   
 
@@ -584,7 +587,7 @@ class LocomotionCrawlingBends(object):
 
     """
 
-    peakWinSize = round(sqrt(data_win_length))
+    peakWinSize = round(np.sqrt(data_win_length))
   
     # Find the peak bandwidth.
     if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
@@ -603,13 +606,13 @@ class LocomotionCrawlingBends(object):
       peak_start_I = min_peaks_I[np.flatnonzero(min_peaks_I < max_peak_I)]
       peak_end_I   = min_peaks_I[np.flatnonzero(min_peaks_I > max_peak_I)]
     else:
-      peak_start_I = []
-      peak_end_I   = []
+      peak_start_I = np.array([])
+      peak_end_I   = np.array([])
     
     #NOTE: Besides checking for an empty value, we also need to ensure that
     #the minimum didn't come too close to the data border, as more data
     #could invalidate the result we have.
-    if isempty(peak_end_I) or \
+    if (peak_end_I.size == 0) or \
            peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH:
       [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data, 
                                                        peakWinSize,
@@ -846,11 +849,10 @@ class LocomotionForagingBends(object):
     Simple helper for h__computeNoseBends
     
     """
-    pass
     avg_diff_x = np.mean(np.diff(x,1,1))
     avg_diff_y = np.mean(np.diff(y,1,1))
     
-    angles = np.atan2(avg_diff_y,avg_diff_x)
+    angles = np.atan2(avg_diff_y, avg_diff_x)
 
     return angles
 
@@ -1019,39 +1021,40 @@ class LocomotionForagingBends(object):
     Notes
     ---------------------------------------    
     Formerly amps = h__getAmps(nose_bend_angle_d):
-
+  
     NOTE: This code is very similar to wormKinks
     
     """
-
-    pass
-    """
     n_frames = len(nose_bend_angle_d)
     
-    data_sign      = sign(nose_bend_angle_d)
+    data_sign     = np.sign(nose_bend_angle_d)
     sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
     
-    end_I   = [sign_change_I; n_frames]
-    start_I = [1; sign_change_I+1]
+    start_I = np.concatenate([np.array([0]), sign_change_I + 1])
+    stop_I = np.concatenate([sign_change_I, [n_frames-1]])
     
-    # All Nan values are considered sign changes, remove these ...
+    # All Nan values are considered sign changes, 
+    # but we don't want them considered that way.  
+    # So create a mask of items to be removed:
     mask = np.isnan(nose_bend_angle_d[start_I])
-    start_I[mask] = []
-    end_I[mask]   = []
+    # Keep only those items NOT in the mask:
+    start_I = start_I[np.flatnonzero(~mask)]
+    stop_I = stop_I[np.flatnonzero(~mask)]
+  
+    # Python's array index notation requires that we specify one PAST the 
+    # index of the last entry in the "run"
+    end_I = stop_I + 1
     
     amps = np.empty(n_frames) * np.NaN
-    
     # For each chunk, get max or min, depending on whether the data is positive
     # or negative ...
-    for iChunk = range(len(start_I)):
+    for iChunk in range(len(start_I)):
       cur_start = start_I[iChunk]
       cur_end   = end_I[iChunk]
      
-      if nose_bend_angle_d(cur_start) > 0:
+      if nose_bend_angle_d[cur_start] > 0:
         amps[cur_start:cur_end] = max(nose_bend_angle_d[cur_start:cur_end])
       else:
         amps[cur_start:cur_end] = min(nose_bend_angle_d[cur_start:cur_end])
-    """
-
-
-
+  
+    return amps
