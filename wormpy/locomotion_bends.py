@@ -1030,7 +1030,7 @@ class LocomotionForagingBends(object):
     data_sign     = np.sign(nose_bend_angle_d)
     sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
     
-    start_I = np.concatenate([np.array([0]), sign_change_I + 1])
+    start_I = np.concatenate([[0], sign_change_I + 1])
     stop_I = np.concatenate([sign_change_I, [n_frames-1]])
     
     # All Nan values are considered sign changes, 
@@ -1048,9 +1048,9 @@ class LocomotionForagingBends(object):
     amps = np.empty(n_frames) * np.NaN
     # For each chunk, get max or min, depending on whether the data is positive
     # or negative ...
-    for iChunk in range(len(start_I)):
-      cur_start = start_I[iChunk]
-      cur_end   = end_I[iChunk]
+    for i_chunk in range(len(start_I)):
+      cur_start = start_I[i_chunk]
+      cur_end   = end_I[i_chunk]
      
       if nose_bend_angle_d[cur_start] > 0:
         amps[cur_start:cur_end] = max(nose_bend_angle_d[cur_start:cur_end])
