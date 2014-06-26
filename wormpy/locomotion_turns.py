@@ -480,15 +480,18 @@ class OmegaTurns(object):
 
     Returns
     ---------------------------------------    
-    omega_events : event structure 
+    None 
     
     
     Notes
     ---------------------------------------    
     Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
     of a class, but a locomotion method of called 
-    getOmegaEvents(obj,omega_frames_from_angles,sx,sy,
+    omega_events = getOmegaEvents(obj,omega_frames_from_angles,sx,sy,
                    body_angles,midbody_distance,fps)
+
+    omega_events was an event structure.  now self.omegas just contains 
+    the omega turns.
 
     See also:
     seg_worm.features.locomotion.getOmegaAndUpsilonTurns
@@ -498,13 +501,14 @@ class OmegaTurns(object):
 
     MIN_OMEGA_EVENT_LENGTH = round(FPS / 4)
     
-    body_angles_i = feature_helpers.interpolate_with_threshold(body_angles, \
-      extrapolate=True) #_i - interpolated
+    body_angles_i = feature_helpers.\
+            interpolate_with_threshold(body_angles, extrapolate=True)
       
     #body_angles_i = self.h__interp_NaN(body_angles,True) 
     
-        
     
+    self.omegas = None  #DEBUG: remove once the below code is ready
+    """
     omega_frames_from_th_change = \
         self.h_getHeadTailDirectionChange(config.FPS, sx, sy)
     
@@ -522,15 +526,11 @@ class OmegaTurns(object):
                                                       MIN_OMEGA_EVENT_LENGTH)
     
     # Convert frames to events ...
-    self.values = getTurnEventsFromSignedFrames(signed_omega_frames, 
+    self.omegas = getTurnEventsFromSignedFrames(signed_omega_frames, 
                                                 midbody_distance, 
                                                 FPS)    
-    
-    #obj.turns.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
-    #                                                 midbody_distance,fps)
 
-
-  
+    """
 
 
   def h_getHeadTailDirectionChange(self, FPS, sx, sy):
@@ -667,7 +667,8 @@ class OmegaTurns(object):
     
     """
   
-  def h__filterAndSignFrames(self, body_angles_i, is_omega_frame, MIN_OMEGA_EVENT_LENGTH):
+  def h__filterAndSignFrames(self, body_angles_i, is_omega_frame, 
+                             MIN_OMEGA_EVENT_LENGTH):
     """
 
 
@@ -678,21 +679,26 @@ class OmegaTurns(object):
                              MIN_OMEGA_EVENT_LENGTH)
 
     """
-    pass
-    """
-    gap_str = sprintf('B{%d,}',MIN_OMEGA_EVENT_LENGTH)
-    [start1, end1] = regexp( char(is_omega_frame+'A')', gap_str, 'start', 'end')
+    # Let's take a boolean numpy array and change it to a string where
+    # A is false and B is true: e.g.
+    # [True, True, False] turns into 'BBA'
+    is_omega_frame_as_ascii_codes = is_omega_frame.astype(int) + ord('A')
+    is_omega_frame_as_list = [chr(x) for x in is_omega_frame_as_ascii_codes]
+    is_omega_frame_as_string = ''.join(is_omega_frame_as_list)
+    gap_str = 'B{%d,}' % MIN_OMEGA_EVENT_LENGTH
+    [start1, end1] = regexp(is_omega_frame_as_string, gap_str, 'start', 'end')
     
     signed_omega_frames = np.zeros(is_omega_frame.size)
     
     # Note: Here we keep the long gaps instead of removing them
     for iEvent in range(len(start1)):
-      if mean(body_angles_i(start1(iEvent):end1(iEvent))) > 0:
-        signed_omega_frames(start1(iEvent):end1(iEvent)) = 1
+      if np.mean(body_angles_i[start1[iEvent]:end1[iEvent]]) > 0:
+        signed_omega_frames[start1[iEvent]:end1[iEvent]] = 1
       else:
-          signed_omega_frames(start1(iEvent):end1(iEvent)) = -1
+        signed_omega_frames[start1[iEvent]:end1[iEvent]] = -1
     
-    """
+    
+    return signed_omega_frames
   
   
   def h__interp_NaN(self, x, use_extrap):

@@ -1036,7 +1036,7 @@ class LocomotionForagingBends(object):
     start_I = np.concatenate([[0], sign_change_I + 1])
     stop_I = np.concatenate([sign_change_I, [n_frames-1]])
     
-    # All Nan values are considered sign changes, 
+    # All NaN values are considered sign changes, 
     # but we don't want them considered that way.  
     # So create a mask of items to be removed:
     mask = np.isnan(nose_bend_angle_d[start_I])
