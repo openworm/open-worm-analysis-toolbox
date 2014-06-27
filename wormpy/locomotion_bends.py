@@ -733,53 +733,62 @@ class LocomotionForagingBends(object):
 
   """
 
-  def __init__(self, sx, sy, is_segmented_mask, ventral_mode):
+  def __init__(self, nw, is_segmented_mask, ventral_mode):
     """
     Initialize an instance of LocomotionForagingBends
 
     
     Parameters
     ---------------------------------------    
-    sx                 : [1 x n_frames]
-    sy                 : [1 x n_frames]
-    is_segmented_mask  : [1 x n_frames]
-    ventral_mode       : [1 x n_frames]
+    nw: NormalizedWorm instance
     
-    """
-    pass
-    self.amplitude  = None
-    self.angleSpeed = None
+    is_segmented_mask: boolean numpy array [1 x n_frames]
 
-    """
-    SI = seg_worm.skeleton_indices
-    # Flip to maintain orientation for angles and consistency with old code:
-    NOSE_I = SI.HEAD_TIP_INDICES(end:-1:1) 
-    NECK_I = SI.HEAD_BASE_INDICES(end:-1:1)
+    ventral_mode: boolean numpy array [1 x n_frames]
     
+    """
+    # self.amplitude  = None  # DEBUG
+    # self.angleSpeed = None # DEBUG
+
     MIN_NOSE_WINDOW = round(0.1 * config.FPS)
     MAX_NOSE_INTERP = 2 * MIN_NOSE_WINDOW - 1
+
+    nose_x, nose_y = nw.get_partition('head_tip', data_key='skeletons', 
+                                      split_spatial_dimensions=True)
+
+    neck_x, neck_y = nw.get_partition('head_base', data_key='skeletons', 
+                                      split_spatial_dimensions=True)
     
-    nose_x = sx[NOSE_I,:]
-    nose_y = sy[NOSE_I,:]
-    neck_x = sx[NECK_I,:]
-    neck_y = sy[NECK_I,:]
+    # We need to flip the orientation (i.e. reverse the entries along the
+    # first, or skeleton index, axis) for angles and consistency with old 
+    # code:
+    nose_x = nose_x[::-1,:]
+    nose_y = nose_y[::-1,:]
+    neck_x = neck_x[::-1,:]
+    neck_y = neck_y[::-1,:]
+
 
     # Step 1: Interpolation of skeleton indices
     #---------------------------------------    
-    interp_nose_mask = self.h__getNoseInterpolationIndices(is_segmented_mask,
-                                                           MAX_NOSE_INTERP)
+    # TODO: ensure that we are excluding the points at the beginning
+    # and ending of the second dimension (the frames list) of nose_x, etc.
+    # from being interpolated.  (this was a step in 
+    # h__getNoseInterpolationIndices, that we no longer have since I've
+    # put the interpolation code into 
+    # feature_helpers.interpolate_with_threshold_2D instead.  But we 
+    # might be okay, since the beginning and end are going to be left alone
+    # since I've set left=np.NaN and right=np.NaN in the underlying
+    # feature_helpers.interpolate_with_threshold code.
+    interp = feature_helpers.interpolate_with_threshold_2D
     
-    dataI       = np.flatnonzero(is_segmented_mask)
-    noseInterpI = np.flatnonzero(interp_nose_mask)
-    
-    nose_xi = self.h__interpData(nose_x, dataI, noseInterpI)
-    nose_yi = self.h__interpData(nose_y, dataI, noseInterpI)
-    neck_xi = self.h__interpData(neck_x, dataI, noseInterpI)
-    neck_yi = self.h__interpData(neck_y, dataI, noseInterpI)
-    
+    nose_xi = interp(nose_x, threshold=MAX_NOSE_INTERP)
+    nose_yi = interp(nose_y, threshold=MAX_NOSE_INTERP)
+    neck_xi = interp(neck_x, threshold=MAX_NOSE_INTERP)
+    neck_yi = interp(neck_y, threshold=MAX_NOSE_INTERP)
+
     # Step 2: Calculation of the bend angles
     #---------------------------------------    
-    nose_bends = self.h__computeNoseBends(nose_xi,nose_yi,neck_xi,neck_yi)
+    nose_bends = self.h__computeNoseBends(nose_xi, nose_yi, neck_xi, neck_yi)
     
     # Step 3: 
     #---------------------------------------    
@@ -792,7 +801,6 @@ class LocomotionForagingBends(object):
     
     self.amplitude  = nose_amps
     self.angleSpeed = nose_freqs
-    """
 
 
   def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
@@ -817,8 +825,8 @@ class LocomotionForagingBends(object):
 
     """
 
-    noseAngles = self.h__computeAvgAngles(nose_x,nose_y)
-    neckAngles = self.h__computeAvgAngles(neck_x,neck_y)
+    noseAngles = self.h__computeAvgAngles(nose_x, nose_y)
+    neckAngles = self.h__computeAvgAngles(neck_x, neck_y)
     
     # TODO: These three should be a method, calculating the difference
     # in angles and ensuring all results are within +/- 180
@@ -849,108 +857,12 @@ class LocomotionForagingBends(object):
     Simple helper for h__computeNoseBends
     
     """
-    avg_diff_x = np.mean(np.diff(x,1,1))
-    avg_diff_y = np.mean(np.diff(y,1,1))
+    avg_diff_x = np.mean(np.diff(x, 1, 1))
+    avg_diff_y = np.mean(np.diff(y, 1, 1))
     
-    angles = np.atan2(avg_diff_y, avg_diff_x)
+    angles = np.arctan2(avg_diff_y, avg_diff_x)
 
     return angles
-
-
-  def h__interpData(self, x_old, good_data_I, fix_data_I):
-    """
-    Interpolate two-dimensional data along the second axis.  Each "row"
-    is treated as a separate interpolation.  So if the first axis has 4 
-    rows of n frames in the second axis, we are interpolating 4 times.
-    
-    Parameters
-    ---------------------------------------    
-    x_old       : [4 x n_frames]
-    good_data_I : [1 x m]
-    fix_data_I  : [1 x n]
-
-    Notes
-    ---------------------------------------    
-    Formerly x_new = h__interpData(x_old,good_data_I,fix_data_I)
-    
-    TODO: move to: seg_worm.feature_helpers.interpolateNanData
-    """
-    pass
-    """
-    x_new = x_old
-    
-    # NOTE: This version is a bit weird because the size of y is not 1d
-    for i1 = range(np.shape(x_old)[0]):
-       x_new[i1, fix_data_I] = interp1(good_data_I,
-                                       x_old[i1, good_data_I],
-                                       fix_data_I,
-                                       'linear',
-                                       np.NaN) 
-    
-    """
-
-
-  def h__getNoseInterpolationIndices(self, is_segmented_mask,max_nose_interp_sample_width):
-    """
-    Interpolate data:
-    - but don't extrapolate
-    - don't interpolate if the gap is too large
-
-    
-    Parameters
-    ---------------------------------------    
-    is_segmented_mask :
-    max_nose_interp_sample_width : Maximum # of frames that 
-
-    
-    Returns
-    ---------------------------------------    
-    interp_data_mask : [1 x n_frames} whether or not to interpolate a data point
-
-
-    Notes
-    ---------------------------------------    
-    Formerly interp_data_mask = h__getNoseInterpolationIndices(is_segmented_mask,max_nose_interp_sample_width)
-    
-    Note from @JimHokason: 
-    I'm considering replacing this and other interpolation code
-    with a specific function for all feature processing.
-  
-    Note from @MichaelCurrie:
-    I made this function, it's called feature_helpers.interpolate_with_threshold
-    TODO: use it here, replacing this function.
-  
-    """
-    pass
-    
-    """
-    % Find the start and end indices for missing data chunks.
-    isNotData        = ~is_segmented_mask
-    interp_data_mask = isNotData
-    diffIsNotData    = np.diff(isNotData)
-    
-    startNotDataI    = np.flatnonzero(diffIsNotData == 1)
-    endNotDataI      = np.flatnonzero(diffIsNotData == -1) - 1
-    
-    % Don't interpolate missing data at the very start and end.
-    %--------------------------------------------------------------------------
-    if startNotDataI.size > 0 and \
-              (endNotDataI.size == 0 or startNotDataI[end] > endNotDataI[end]):
-      interp_data_mask[startNotDataI[end]:end] = false
-      startNotDataI[end] = []
-    
-    if endNotDataI.size > 0 and \
-              (startNotDataI.size == 0 or startNotDataI[1] > endNotDataI[1]):
-      interp_data_mask[1:endNotDataI[1]] = False
-      endNotDataI[1] = []
-    
-    # Don't interpolate large missing chunks of data.
-    for i = 1:length(startNotDataI):
-      if (endNotDataI[i] - startNotDataI[i]) > max_nose_interp_sample_width:
-        interp_data_mask[startNotDataI[i]:endNotDataI[i]] = False
-    
-    """
-
 
 
   def h__foragingData(self, nose_bend_angle_d, min_win_size):
@@ -976,40 +888,40 @@ class LocomotionForagingBends(object):
                                              min_win_size, fps)
 
     """
-    pass
-    
-    """
     # Clean up the signal with a gaussian filter.
     if min_win_size > 0:
-      gaussFilter       = gausswin(2 * min_win_size + 1) / min_win_size
-      nose_bend_angle_d = conv(nose_bend_angle_d, gaussFilter, 'same')
+      # TODO      
+      #gaussFilter       = np.gausswin(2 * min_win_size + 1) / min_win_size
+      #nose_bend_angle_d = np.conv(nose_bend_angle_d, gaussFilter, 'same')
+      nose_bend_angle_d = np.ones()      
       
       # Remove partial data frames ...
-      nose_bend_angle_d[1:min_win_size] = np.NaN
-      nose_bend_angle_d[(end - min_win_size + 1):end] = np.NaN
+      nose_bend_angle_d[:min_win_size] = np.NaN
+      nose_bend_angle_d[-min_win_size:] = np.NaN
     
     # Calculate amplitudes
-    amps = h__getAmps(nose_bend_angle_d)
+    amps = self.h__getAmps(nose_bend_angle_d)
     
     
     # Calculate angular speed
     # Compute the speed centered between the back and front foraging movements.
     #
+    # TODO: fix the below comments to conform to 0-based indexing
+    # I believe I've fixed the code already.  - @MichaelCurrie
     #  1     2    3
     # d1    d2     d1 = 2 - 1,   d2 = 3 - 2
     #     x        assign to x, avg of d1 and d2
     
     #???? - why multiply and not divide by fps????
     
-    d_data = diff(nose_bend_angle_d) * config.FPS
+    d_data = np.diff(nose_bend_angle_d) * config.FPS
     speeds = np.empty(amps.size) * np.NaN
-    speeds[2:end-1] = (d_data[1:(end - 1)] + d_data[2:end]) / 2
+    speeds[1:] = (d_data[0:-1] + d_data[1:]) / 2
     
     
     # Propagate NaN for speeds to amps
     amps[np.isnan(speeds)] = np.NaN
-    
-    """
+
 
   def h__getAmps(self, nose_bend_angle_d):
     """

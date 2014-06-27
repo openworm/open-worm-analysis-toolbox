@@ -248,20 +248,18 @@ class WormLocomotion(object):
     
     self.is_paused = self.motion_mode == 0
 
-    """
     self.bends = locomotion_bends.LocomotionCrawlingBends(
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
                                                   nw.is_segmented)
-
+                                                  
+    """
     self.foraging = locomotion_bends.LocomotionForagingBends(
-                                                  nw.skeleton_x,
-                                                  nw.skeleton_y,
+                                                  nw,
                                                   nw.is_segmented,
                                                   nw.ventral_mode)
-    """                                             
-
-
+    """
+    
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
     
