@@ -173,8 +173,10 @@ class EventFinder:
 
     return EventList(event_candidates)
 
+
   def __repr__(self):
     return utils.print_object(self)  
+  
   
   def get_speed_threshold_mask(self, event_data):
     """
@@ -203,20 +205,20 @@ class EventFinder:
     event_mask = np.ones((len(event_data)), dtype=bool)
 
     # If min_speed_threshold has been initialized to something...
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
       if self.min_speed_threshold != None:  
-          if self.include_at_speed_threshold:
-              event_mask = event_data >= self.min_speed_threshold
-          else:
-              event_mask = event_data > self.min_speed_threshold
+        if self.include_at_speed_threshold:
+          event_mask = event_data >= self.min_speed_threshold
+      else:
+        event_mask = event_data > self.min_speed_threshold
     
     # If max_speed_threshold has been initialized to something...
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
       if self.max_speed_threshold != None:
-          if self.include_at_speed_threshold:
-              event_mask = event_mask & (event_data <= self.max_speed_threshold)
-          else:
-              event_mask = event_mask & (event_data < self.max_speed_threshold)
+        if self.include_at_speed_threshold:
+          event_mask = event_mask & (event_data <= self.max_speed_threshold)
+        else:
+          event_mask = event_mask & (event_data < self.max_speed_threshold)
 
     return event_mask  
 
@@ -341,16 +343,16 @@ class EventFinder:
     while(i < num_groups):
       # Now advance through groups to the right, 
       # continuing as long as they satisfy our comparison operator
-      j = i 
-      while(j+1 < num_groups and comparison_operator(
-             event_candidates[j+1][0] - event_candidates[j][1] - 1,
+      ii = i 
+      while(ii+1 < num_groups and comparison_operator(
+             event_candidates[ii+1][0] - event_candidates[ii][1] - 1,
              threshold)):
-        j += 1
+        ii += 1
 
       # Add this largest possible start/stop duple to our NEW revised list        
       new_event_candidates.append((event_candidates[i][0], 
-                                   event_candidates[j][1]))
-      i = j + 1
+                                   event_candidates[ii][1]))
+      i = ii + 1
     
     return np.array(new_event_candidates)
   
@@ -700,7 +702,13 @@ class EventListForOutput(object):
   TODO: This is going to change.
 
   Jim came through and starting throwing junk all over the place. Michael will
-  probably need to come through and clean things up.  
+  probably need to come through and clean things up. 
+  
+  TODO:
+  @MichaelCurrie should in particular make EventListForOutput once again
+  inherit from EventList, and also change the name to avoid the term "output"
+  as that term makes an assumption about what processing stage the object
+  is being used for.
   
   Notes
   ---------------------------------------
@@ -787,7 +795,6 @@ class EventListForOutput(object):
     self.is_null = n_events == 0    
     
     if self.is_null:
-      
       return
       
       
@@ -954,9 +961,6 @@ class EventListForOutput(object):
         self.distance_during_events = []
     else:
       raise Exception('Other formats not yet supported :/')
-
-    #import pdb
-    #pdb.set_trace()
 
     #num_video_frames - CRAP: :/
     #Look away ...

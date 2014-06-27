@@ -106,31 +106,47 @@ def write_to_CSV(data_dict, filename):
   
 """
 
-def interpolate_with_threshold(array, threshold=None, make_copy=True, extrapolate=False):
+def interpolate_with_threshold(array, 
+                               threshold=None, 
+                               make_copy=True, 
+                               extrapolate=False):
   """
   Linearly interpolate a numpy array along one dimension but only 
   for missing data n frames from a valid data point.  That is, 
   if there are too many contiguous missing data points, none of 
   those points get interpolated.
 
+
   Parameters
   ---------------------------------------
   array: 1-dimensional numpy array
     The array to be interpolated
+
   threshold: int
     The maximum size of a contiguous set of missing data points
     that gets interpolated.  Sets larger than this are left as NaNs.
     If threshold is set to NaN then all points are interpolated.
+
+  make_copy: bool
+    If True, do not modify the array parameter
+    If False, interpolate the array parameter "in place"
+    Either way, return a reference to the interpolated array
+    
+  extrapolate: bool
+    If True, extrapolate linearly to the beginning and end of the array
+    if there are NaNs on either end.
   
   Returns
   ---------------------------------------
   numpy array with the values interpolated
+
+  
+  Notes
+  ---------------------------------------
+  TODO: Extrapolation currently not implemented.  Perhaps try
+  http://stackoverflow.com/questions/2745329/
   
   """
-
-  #EXTRAPOLATION:
-  #http://stackoverflow.com/questions/2745329/how-to-make-scipy-interpolate-give-an-extrapolated-result-beyond-the-input-range
-  #
 
   """
   # (SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
@@ -195,15 +211,14 @@ def interpolate_with_threshold(array, threshold=None, make_copy=True, extrapolat
     new_array = array
   
   if extrapolate:
-    pass # :/  Might need to use scipy
+    # TODO
+    # :/  Might need to use scipy
+    pass 
   
   # Place the interpolated values into the array
-  new_array[x] = np.interp(x, xp, yp)  
+  new_array[x] = np.interp(x, xp, yp)
   
   return new_array
-
-
-
 
 
 
