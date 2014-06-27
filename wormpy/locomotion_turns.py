@@ -4,7 +4,7 @@ locomotion_turns.py
 
 Calculate the "Turns" locomotion feature
 
-There are two kinds of turn, an omega and an upsilon.
+There are two kinds of turn: an omega and an upsilon.
 
 The only external-facing item is LocomotionTurns.  The rest are internal 
 to this module.
@@ -24,7 +24,6 @@ getTurnEventsFromSignedFrames
 
 Notes
 ---------------------------------------    
-
 For the Nature Methods description see 
 /documentation/Yemini Supplemental Data/Locomotion.md#5-turns
 

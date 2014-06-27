@@ -147,21 +147,25 @@ class EventFinder:
     # in event_data, just exit early.
     if not event_candidates.size:
       return EventList()
-      
-    # In this function we remove time gaps between events if the gaps 
-    # are too small (max_inter_frames_threshold)
-    if self.include_at_inter_frames_threshold:
-      event_candidates = self.remove_gaps(event_candidates, 
-                                          self.max_inter_frames_threshold, 
-                                          operator.le)
-    else: # the threshold is exclusive
-      event_candidates = self.remove_gaps(event_candidates, 
-                                          self.max_inter_frames_threshold, 
-                                          operator.lt)
 
-    # Remove events that aren't at least
-    # self.min_frames_threshold in length
-    event_candidates = self.remove_too_small_events(event_candidates)
+    if self.max_inter_frames_threshold:
+      # Decide if we are removing gaps AT the threshold or 
+      # just strictly smaller than the threshold.      
+      if self.include_at_inter_frames_threshold:
+        inter_frames_comparison_operator = operator.le
+      else:
+        inter_frames_comparison_operator = operator.lt      
+  
+      # In this function we remove time gaps between events if the gaps 
+      # are too small (max_inter_frames_threshold)
+      event_candidates = self.remove_gaps(event_candidates, 
+                                          self.max_inter_frames_threshold, 
+                                          inter_frames_comparison_operator)
+
+    if self.min_frames_threshold:
+      # Remove events that aren't at least
+      # self.min_frames_threshold in length
+      event_candidates = self.remove_too_small_events(event_candidates)
       
   
     # For each candidate event, sum the instantaneous speed at all 
@@ -209,8 +213,8 @@ class EventFinder:
       if self.min_speed_threshold != None:  
         if self.include_at_speed_threshold:
           event_mask = event_data >= self.min_speed_threshold
-      else:
-        event_mask = event_data > self.min_speed_threshold
+        else:
+          event_mask = event_data > self.min_speed_threshold
     
     # If max_speed_threshold has been initialized to something...
     with warnings.catch_warnings(record=True):
