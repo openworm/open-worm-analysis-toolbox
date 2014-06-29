@@ -263,12 +263,13 @@ class WormLocomotion(object):
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
     
+    """
     self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
                                                   is_stage_movement,
                                                   midbody_distance,
                                                   nw.skeleton_x,
                                                   nw.skeleton_y)
-
+    """
     
   def __repr__(self):
     return utils.print_object(self)  
@@ -433,7 +434,7 @@ class WormPosture(object):
 
   """    
 
-  def __init__(self, normalized_worm):
+  def __init__(self, normalized_worm,midbody_distance):
     """
     Initialization method for WormPosture
 
@@ -475,7 +476,8 @@ class WormPosture(object):
     self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
         
     # *** 5. Coils ***
-    self.coils = posture_features.get_worm_coils()
+    frame_codes = nw.data_dict['frame_codes']
+    self.coils = posture_features.get_worm_coils(frame_codes,midbody_distance)
 
     # *** 6. Directions *** DONE
     self.directions = posture_features.Directions(nw.skeleton_x,
@@ -660,8 +662,10 @@ class WormFeatures(object):
 
     self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
-    self.posture    = WormPosture(nw)
-    self.path       = WormPath(nw)
+    
+    midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']/config.FPS)
+    self.posture     = WormPosture(nw,midbody_distance)
+    self.path        = WormPath(nw)
     
   @classmethod  
   def from_disk(cls, file_path):

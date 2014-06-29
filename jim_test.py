@@ -12,13 +12,14 @@ nw = we.example_nw()
 # #Temporary for directly accessing features  
 #temp = wp(nw)
 
+from wormpy.WormFeatures import WormFeatures as wf
 from wormpy.WormFeatures import WormPath as wpath
 from wormpy.WormFeatures import WormPosture as wposture
 from wormpy.WormFeatures import WormMorphology as wmorph
 from wormpy.WormFeatures import WormLocomotion as wmotion
 
 
-temp = wmotion(nw)
+temp = wf(nw)
 
 #import pdb
 #pdb.set_trace()
@@ -28,7 +29,6 @@ temp = wmotion(nw)
 
 #This file was created from the Matlab GUI
 file_path = r'C:\Users\RNEL\Dropbox\worm_data\video\testing_with_GUI\results\mec-4 (u253) off food x_2010_04_21__17_19_20__1_features.mat'
-from wormpy.WormFeatures import WormFeatures as wf
 
 worm = wf.from_disk(file_path)
 

@@ -3,7 +3,9 @@
 Posture features  ...
 """
 
+
 from __future__ import division
+from . import EventFinder
 from . import utils
 from . import config
 import numpy as np
@@ -513,22 +515,72 @@ def get_worm_kinks(bend_angles):
     
   return n_kinks_all
 
-def get_worm_coils():
+def get_worm_coils(frame_codes,midbody_distance):
   
   #This function is very reliant on the MRC processor  
   
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
   
-  INTER_DATA_NAME = 'interDistance';
-  DATA_NAME = [];
+  
+  COIL_FRAME_THRESHOLD = np.round(1/5 * config.FPS)  
+  COIL_START_CODES = [105, 106];
+  FRAME_SEGMENTED  = 1 #Go back 1 frame, this is the end of the coil ...  
+  
+  #Algorithm: Whenever a new start is found, find the first segmented frame, 
+  #that's the end.
+
+  #Add on a frame to allow closing a coil at the end ...
+  coil_start_mask = (frame_codes == COIL_START_CODES[0]) | (frame_codes == COIL_START_CODES[1])
+  np_false = np.zeros((1,),dtype=bool)
+  coil_start_mask = np.concatenate((coil_start_mask,np_false))
+  
+  
+  #NOTE: These are not guaranteed ends, just possible ends ...
+  end_coil_mask = frame_codes == FRAME_SEGMENTED
+  np_true = ~np_false
+  end_coil_mask = np.concatenate((end_coil_mask,np_true)) 
+  
+  in_coil = False
+  coil_frame_start = -1
+  n_coils = 0
+  n_frames_plus1 = len(frame_codes) + 1
+  
+  starts = []
+  ends   = []  
+  
+  for iFrame in range(n_frames_plus1):
+    if in_coil:
+      if end_coil_mask[iFrame]:
+        n_coil_frames = iFrame - coil_frame_start
+        if n_coil_frames >= COIL_FRAME_THRESHOLD:
+          n_coils += 1
+          
+          starts.append(coil_frame_start)
+          ends.append(iFrame-1)
+        
+        in_coil = False
+    elif coil_start_mask[iFrame]:
+      in_coil = True
+      coil_frame_start = iFrame
+  
+  
+  if config.MIMIC_OLD_BEHAVIOUR:
+    if (len(starts) > 0) & (ends[-1] == len(frame_codes)-1):
+      ends[-1]   += -1
+      starts[-1] += -1
+       
+        
+  temp = EventFinder.EventList(np.transpose(np.vstack((starts,ends))))
+  
+  return EventFinder.EventListForOutput(temp,midbody_distance)
   
   """
   coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
 
   COIL_FRAME_THRESHOLD = np.round(1/5 * config.FPS);
   """
-  COIL_START_CODES = [105, 106];
-  FRAME_SEGMENTED  = 1 #Go back 1 frame, this is the end of the coil ...
+  
+  
   
   #Algorithm: Whenever a new start is found, find the first segmented frame, 
   #that's the end.
