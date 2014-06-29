@@ -1,14 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-  WormFeatures.py:
-  
-  @authors: @JimHokanson, @MichaelCurrie
-  
-  A translation of Matlab code written by Jim Hokanson,
-  in the SegwormMatlabClasses GitHub repo.  Original code path:
-  SegwormMatlabClasses / 
-  +seg_worm / @feature_calculator / get_features_rewritten.m
-  
+WormFeatures.py:
+
+@authors: @JimHokanson, @MichaelCurrie
+
+Classes
+---------------------------------------    
+WormMorphology
+WormLocomotion
+WormPosture
+WormPath
+
+WormFeatures
+
+Functions
+---------------------------------------    
+_extract_time_from_disk
+
+
+A translation of Matlab code written by Jim Hokanson,
+in the SegwormMatlabClasses GitHub repo.  Original code path:
+SegwormMatlabClasses / 
++seg_worm / @feature_calculator / get_features_rewritten.m
+
 """
 
 import csv
@@ -25,7 +39,11 @@ from . import utils
 from . import locomotion_bends
 from . import locomotion_turns
 
-#import pdb
+
+"""
+===============================================================================
+===============================================================================
+"""
 
 class WormMorphology(object):
   """
@@ -135,6 +153,12 @@ class WormMorphology(object):
 
 
 
+"""
+===============================================================================
+===============================================================================
+"""
+
+
 class WormLocomotion(object):
   """
   The worm's locomotion features class.
@@ -191,7 +215,7 @@ class WormLocomotion(object):
 
   def __init__(self, normalized_worm):
     """
-    Initialization function for WormLocomotion
+    Initialization method for WormLocomotion
 
     Parameters
     ---------------------------------------    
@@ -224,28 +248,26 @@ class WormLocomotion(object):
     
     self.is_paused = self.motion_mode == 0
 
-    """
     self.bends = locomotion_bends.LocomotionCrawlingBends(
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
                                                   nw.is_segmented)
-
+                                                  
+    """
     self.foraging = locomotion_bends.LocomotionForagingBends(
-                                                  nw.skeleton_x,
-                                                  nw.skeleton_y,
+                                                  nw,
                                                   nw.is_segmented,
                                                   nw.ventral_mode)
-    """                                             
-
-
+    """
+    
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
+    
     self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
                                                   is_stage_movement,
                                                   midbody_distance,
                                                   nw.skeleton_x,
                                                   nw.skeleton_y)
-
 
     
   def __repr__(self):
@@ -375,6 +397,12 @@ class WormLocomotion(object):
     
     return self
 
+
+
+"""
+===============================================================================
+===============================================================================
+"""
     
 
 class WormPosture(object):
@@ -407,7 +435,7 @@ class WormPosture(object):
 
   def __init__(self, normalized_worm):
     """
-    Initialization function for WormPosture
+    Initialization method for WormPosture
 
     Parameters
     ---------------------------------------    
@@ -507,6 +535,14 @@ class WormPosture(object):
   def __repr__(self):
     return utils.print_object(self)  
 
+
+
+"""
+===============================================================================
+===============================================================================
+"""
+
+
 class WormPath(object):
   """
   Worm posture feature class.
@@ -527,7 +563,7 @@ class WormPath(object):
   
   def __init__(self, normalized_worm):
     """
-    Initialization function for WormPosture
+    Initialization method for WormPosture
 
     Parameters
     ---------------------------------------    
@@ -601,6 +637,13 @@ class WormPath(object):
       #NOTE: Unfortunately the curvature is slightly different. It looks the same
       #but I'm guessing there are a few off by 1 errors in it.
 
+
+
+"""
+===============================================================================
+===============================================================================
+"""
+
     
 class WormFeatures(object):
   """ 
@@ -648,6 +691,13 @@ class WormFeatures(object):
       self.morphology == other.morphology and \
       self.posture    == other.posture    and \
       self.locomotion == other.locomotion
+
+
+"""
+===============================================================================
+===============================================================================
+"""
+
         
 def _extract_time_from_disk(parent_ref,name):
         

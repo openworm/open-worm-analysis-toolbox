@@ -141,12 +141,6 @@ class NormalizedWorm():
                             # refinements of ['tail']
                             'tail_base': (40, 45),  
                             'tail_tip': (45, 49),   # ""
-                            # DEBUG: for get_locomotion_bends: 
-                            # DEBUG: Jim might remove
-                            'nose': (3, -1),    
-                            # DEBUG: for get_locomotion_bends: 
-                            # DEBUG: Jim might remove
-                            #'neck': (7, -1),
                             'all': (0, 49),
                             # neck, midbody, and hips
                             'body': (8, 41)}
@@ -232,8 +226,8 @@ class NormalizedWorm():
     mask[slice(*slice_val)] = True
     return mask
 
-  def get_partition(self, partition_key, data_key = 'skeletons', 
-                    split_spatial_dimensions = False):
+  def get_partition(self, partition_key, data_key='skeletons', 
+                    split_spatial_dimensions=False):
     """    
     Retrieve partition of a measurement of the worm, that is, across all
     available frames but across only a subset of the 49 points.

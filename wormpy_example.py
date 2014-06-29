@@ -134,7 +134,8 @@ def dontRunMeAutomagically():
   import wormpy_example as we
   nw = we.example_nw()   
 
-  from wormpy.WormFeatures import WormPath as wp #Temporary for directly accessing features  
+  # Temporary for directly accessing features  
+  from wormpy.WormFeatures import WormPath as wp 
   
   temp = wp(nw)
   
@@ -176,5 +177,5 @@ with warnings.catch_warnings():
 #wp.save('test_sub.mp4')
 
 
-feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
+#feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 

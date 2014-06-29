@@ -95,6 +95,46 @@ def write_to_CSV(data_dict, filename):
 """
 
 """  
+  
+"""
+
+def interpolate_with_threshold(array, 
+                               threshold=None, 
+                               make_copy=True, 
+                               extrapolate=False):
+  """
+  Linearly interpolate a numpy array along one dimension but only 
+  for missing data n frames from a valid data point.  That is, 
+  if there are too many contiguous missing data points, none of 
+  those points get interpolated.
+
+
+  Parameters
+  ---------------------------------------
+  array: 1-dimensional numpy array
+    The array to be interpolated
+
+  threshold: int
+    The maximum size of a contiguous set of missing data points
+    that gets interpolated.  Sets larger than this are left as NaNs.
+    If threshold is set to NaN then all points are interpolated.
+
+  make_copy: bool
+    If True, do not modify the array parameter
+    If False, interpolate the array parameter "in place"
+    Either way, return a reference to the interpolated array
+    
+  extrapolate: bool
+    If True, extrapolate linearly to the beginning and end of the array
+    if there are NaNs on either end.
+  
+  Returns
+  ---------------------------------------
+  numpy array with the values interpolated
+
+
+  Usage Example
+  ---------------------------------------
   # example array  
   a = np.array([10, 12, 15, np.NaN, 17, \
                 np.NaN, np.NaN, np.NaN, -5], dtype='float')
@@ -103,34 +143,14 @@ def write_to_CSV(data_dict, filename):
   
   print(a)
   print(a2)
-  
-"""
 
-def interpolate_with_threshold(array, threshold=None, make_copy=True, extrapolate=False):
-  """
-  Linearly interpolate a numpy array along one dimension but only 
-  for missing data n frames from a valid data point.  That is, 
-  if there are too many contiguous missing data points, none of 
-  those points get interpolated.
-
-  Parameters
-  ---------------------------------------
-  array: 1-dimensional numpy array
-    The array to be interpolated
-  threshold: int
-    The maximum size of a contiguous set of missing data points
-    that gets interpolated.  Sets larger than this are left as NaNs.
-    If threshold is set to NaN then all points are interpolated.
   
-  Returns
+  Notes
   ---------------------------------------
-  numpy array with the values interpolated
+  TODO: Extrapolation currently not implemented.  Perhaps try
+  http://stackoverflow.com/questions/2745329/
   
   """
-
-  #EXTRAPOLATION:
-  #http://stackoverflow.com/questions/2745329/how-to-make-scipy-interpolate-give-an-extrapolated-result-beyond-the-input-range
-  #
 
   """
   # (SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
@@ -195,16 +215,56 @@ def interpolate_with_threshold(array, threshold=None, make_copy=True, extrapolat
     new_array = array
   
   if extrapolate:
-    pass # :/  Might need to use scipy
+    # TODO
+    # :/  Might need to use scipy
+    # also, careful of the "left" and "right" settings below
+    pass 
   
   # Place the interpolated values into the array
-  new_array[x] = np.interp(x, xp, yp)  
+  # the "left" and "right" here mean that we want to leave NaNs in place
+  # if the array begins and/or ends with a sequence of NaNs (i.e. don't
+  # try to extrapolate)
+  new_array[x] = np.interp(x, xp, yp, left=np.NaN, right=np.NaN)
   
   return new_array
 
 
+def interpolate_with_threshold_2D(array, threshold=None, extrapolate=False):
+    """
+    Interpolate two-dimensional data along the second axis.  Each "row"
+    is treated as a separate interpolation.  So if the first axis has 4 
+    rows of n frames in the second axis, we are interpolating 4 times.
+    
+    Parameters
+    ---------------------------------------    
+    x_old       : [m x n_frames]
+      The array to be interpolated along the second axis
 
+    threshold: int (Optional)
+      Number of contiguous frames above which no interpolation is done
+      If none specified, all NaN frames are interpolated
+    
+    extrapolate: bool (Optional)
+      If yes, values are extrapolated to the start and end, along the second
+      axis (the axis being interpolated)
 
+    Notes
+    ---------------------------------------    
+    This could be optimized with a specialized function for the case
+    when all the NaN entries line up along the first dimension.  We'd 
+    only need to calculate the mask once rather than m times.
+    
+    """
+    new_array = array.copy()
+    
+    # NOTE: This version is a bit weird because the size of y is not 1d
+    for i1 in range(np.shape(array)[0]):
+       new_array[i1, :] = interpolate_with_threshold(array[i1,:],
+                                                     threshold,
+                                                     make_copy=True,
+                                                     extrapolate=extrapolate)
+
+    return new_array
 
 
 def get_motion_codes(midbody_speed, skeleton_lengths):
