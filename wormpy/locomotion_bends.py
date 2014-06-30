@@ -758,7 +758,10 @@ class LocomotionForagingBends(object):
 
     neck_x, neck_y = nw.get_partition('head_base', data_key='skeletons', 
                                       split_spatial_dimensions=True)
-    
+ 
+    # TODO: Add "reversed" and "interpolated" options to the get_partition
+    # function, to replace the below blocks of code!
+   
     # We need to flip the orientation (i.e. reverse the entries along the
     # first, or skeleton index, axis) for angles and consistency with old 
     # code:
@@ -840,25 +843,29 @@ class LocomotionForagingBends(object):
     
   def h__computeAvgAngles(self, x, y):
     """
-    Take average difference between successive x and y skeleton points, the
-    compute the arc tangent from those averages.
+    Take average difference between successive x and y skeleton points, 
+    then compute the arc tangent from those averages.
 
     Parameters
     ---------------------------------------    
-    x
-    y
+    x : m x n float numpy array
+      m is the number of skeleton points
+      n is the number of frames
+    y : m x n float numpy array
+      (Same as x)
 
     Returns
     ---------------------------------------    
-    angles
+    1-d float numpy array of length n
+      The angles
     
     Notes
     ---------------------------------------    
     Simple helper for h__computeNoseBends
     
     """
-    avg_diff_x = np.mean(np.diff(x, 1, 1))
-    avg_diff_y = np.mean(np.diff(y, 1, 1))
+    avg_diff_x = np.nanmean(np.diff(x, n=1, axis=1), axis=0)
+    avg_diff_y = np.nanmean(np.diff(y, n=1, axis=1), axis=0)
     
     angles = np.arctan2(avg_diff_y, avg_diff_x)
 
@@ -869,18 +876,15 @@ class LocomotionForagingBends(object):
     """
     Compute the foraging amplitude and angular speed.
     
-    
     Parameters
     ---------------------------------------    
     nose_bend_angle_d : [n_frames x 1]
     min_win_size : (scalar)
 
-    
     Returns
     ---------------------------------------    
-    amps   : [1 x n_frames]
+    amplitudes : [1 x n_frames]
     speeds : [1 x n_frames]
-
 
     Notes
     ---------------------------------------    
@@ -888,20 +892,19 @@ class LocomotionForagingBends(object):
                                              min_win_size, fps)
 
     """
-    # Clean up the signal with a gaussian filter.
     if min_win_size > 0:
       # TODO      
+      # Clean up the signal with a gaussian filter.
       #gaussFilter       = np.gausswin(2 * min_win_size + 1) / min_win_size
       #nose_bend_angle_d = np.conv(nose_bend_angle_d, gaussFilter, 'same')
-      nose_bend_angle_d = np.ones()      
       
       # Remove partial data frames ...
       nose_bend_angle_d[:min_win_size] = np.NaN
       nose_bend_angle_d[-min_win_size:] = np.NaN
     
     # Calculate amplitudes
-    amps = self.h__getAmps(nose_bend_angle_d)
-    
+    amplitudes = self.h__getAmplitudes(nose_bend_angle_d)
+    assert(np.shape(nose_bend_angle_d) == np.shape(amplitudes))
     
     # Calculate angular speed
     # Compute the speed centered between the back and front foraging movements.
@@ -915,29 +918,40 @@ class LocomotionForagingBends(object):
     #???? - why multiply and not divide by fps????
     
     d_data = np.diff(nose_bend_angle_d) * config.FPS
-    speeds = np.empty(amps.size) * np.NaN
-    speeds[1:] = (d_data[0:-1] + d_data[1:]) / 2
+    speeds = np.empty(amplitudes.size) * np.NaN
+    # This will leave the first and last frame's speed as NaN:
+    speeds[1:-1] = (d_data[:-1] + d_data[1:]) / 2
     
+    # Propagate NaN for speeds to amplitudes
+    amplitudes[np.isnan(speeds)] = np.NaN
     
-    # Propagate NaN for speeds to amps
-    amps[np.isnan(speeds)] = np.NaN
+    return amplitudes, speeds
 
 
-  def h__getAmps(self, nose_bend_angle_d):
+  def h__getAmplitudes(self, nose_bend_angle_d):
     """
     In between all sign changes, get the maximum or minimum value and
     apply to all indices that have the same sign within the stretch
     
-    i.e. 
-    
-    1 2 3 2 1 -1 -2 -1 1 2 2 5 becomes
-    3 3 3 3 3 -2 -2 -2 5 5 5 5
+    Parameters
+    ---------------------------------------    
+    nose_bend_angle_d : 1-d numpy array of length n_frames
+
+    Returns
+    ---------------------------------------    
+    1-d numpy array of length n_frames
     
     Notes
     ---------------------------------------    
     Formerly amps = h__getAmps(nose_bend_angle_d):
   
     NOTE: This code is very similar to wormKinks
+
+    Example
+    ---------------------------------------    
+    >>> h__getAmps(np.array[1, 2, 3, 2, 1, -1, -2, -1, 1, 2, 2, 5])
+                      array[3, 3, 3, 3, 3, -2, -2, -2, 5, 5, 5, 5]
+    (indentation is used here to line up the returned array for clarity)
     
     """
     n_frames = len(nose_bend_angle_d)
