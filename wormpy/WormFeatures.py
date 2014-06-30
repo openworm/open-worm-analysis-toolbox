@@ -252,7 +252,7 @@ class WormLocomotion(object):
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
                                                   nw.is_segmented)
-                                                  
+
     self.foraging = locomotion_bends.LocomotionForagingBends(
                                                   nw,
                                                   nw.is_segmented,
@@ -260,13 +260,13 @@ class WormLocomotion(object):
     
     midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
     is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
+
     
     self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
                                                   is_stage_movement,
                                                   midbody_distance,
                                                   nw.skeleton_x,
                                                   nw.skeleton_y)
-
     
   def __repr__(self):
     return utils.print_object(self)  
@@ -282,8 +282,6 @@ class WormLocomotion(object):
     #self_velocity  = self.velocity
     #other_velocity = other.velocity
 
-
-  
     #velocities_same = [self_velocity[x] == other_velocity[x] for x in self_velocity]
     for key in self.velocity:
       self_speed      = self.velocity[key]['speed']
@@ -304,8 +302,6 @@ class WormLocomotion(object):
       if not same_direction:
         return False
         
-    #---------------------------------
-     
     #Test motion events 
     #---------------------------------    
     motion_events_same = [self.motion_events[x].test_equality(\

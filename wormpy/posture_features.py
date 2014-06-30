@@ -7,12 +7,11 @@ from __future__ import division
 from . import utils
 from . import config
 import numpy as np
-import pdb
 import warnings
 import time
 import scipy.ndimage.filters as filters
 import collections
-
+from . import feature_helpers
 
 #http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
@@ -33,15 +32,15 @@ class Bends(object):
       #TODO: Should probably merge all three below ...
 
       # shape = (n):
-      with warnings.catch_warnings(record=True) as w: #mean empty slice
+      with warnings.catch_warnings(record=True): #mean empty slice
         temp_mean = np.nanmean(a=bend_angles, axis = 0)       
         
-      with warnings.catch_warnings(record=True) as w: #degrees of freedom <= 0 for slice
+      with warnings.catch_warnings(record=True): #degrees of freedom <= 0 for slice
         temp_std  = np.nanstd(a=bend_angles, axis = 0)
       
       #Sign the standard deviation (to provide the bend's dorsal/ventral orientation):
       #-------------------------------
-      with warnings.catch_warnings(record=True) as w:
+      with warnings.catch_warnings(record=True):
         temp_std[temp_mean < 0] *= -1   
       
       setattr(self,partition_key,BendSection(temp_mean,temp_std))      
@@ -445,8 +444,9 @@ def get_worm_kinks(bend_angles):
   #unlike the other code with so many if statements ...
   #- see window code which tries to get an odd value ...
   #- I'd like to go back and fix that code ...
-  half_length_thr = np.round(length_threshold / 2);
-  gauss_filter    = gausswin(half_length_thr * 2 + 1) / half_length_thr;
+  half_length_thr = np.round(length_threshold / 2)
+  gauss_filter    = feature_helpers.gausswin(half_length_thr * 2 + 1) \
+                    / half_length_thr
   
   # Compute the kinks for the worms.
   n_frames       = bend_angles.shape[1]
@@ -692,19 +692,3 @@ def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
   # DEBUG: hiding this error for now - @MichaelCurrie
   return None # np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
   
-def gausswin(L,a = 2.5):
-   
-  #TODO: I am ignoring some corner cases ...   
-  
-  #L - negative, error  
-  
-  #L = 0
-  #w => empty
-  #L = 1
-  #w = 1      
-   
-  N = L - 1
-  n = np.arange(0,N+1) - N/2  
-  w = np.exp(-(1/2)*(a*n/(N/2))**2)
-  
-  return w

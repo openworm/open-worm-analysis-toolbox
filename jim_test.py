@@ -41,7 +41,7 @@ def main():
   nw = NormalizedWorm(data_file_path, eigen_worm_file_path)
 
   # Generate the OpenWorm movement validation repo version of the features
-  openworm_features = WormFeatures(nw)    
+  openworm_features = WormFeatures(nw)
 
   
   # SCHAFER LAB
@@ -54,13 +54,20 @@ def main():
   # COMPARISON
   #----------------------
   # Show the results of the comparison
-
+  print("Locomotion: ", end="", flush=True)
   print(matlab_worm_features.locomotion == openworm_features.locomotion)
-  #print(matlab_worm_features.posture == openworm_features.posture)
-  #print(matlab_worm_features.morphology == openworm_features.morphology)
-  #print(matlab_worm_features.path == openworm_features.path)
+
+  print("Posture: ", end="", flush=True)
+  print(matlab_worm_features.posture == openworm_features.posture)
+
+  print("Morphology: ", end="", flush=True)
+  print(matlab_worm_features.morphology == openworm_features.morphology)
+
+  print("Path: ", end="", flush=True)
+  print(matlab_worm_features.path == openworm_features.path)
   
-  
-  
+
+
 if __name__ == '__main__':
   main()
+

@@ -21,7 +21,9 @@ Contains two classes:
     .angleSpeed
 
 """
+import warnings
 import numpy as np
+import scipy.ndimage.filters as filters
 from . import feature_helpers
 from . import config
 from . import utils
@@ -829,15 +831,19 @@ class LocomotionForagingBends(object):
 
     """
 
-    noseAngles = self.h__computeAvgAngles(nose_x, nose_y)
-    neckAngles = self.h__computeAvgAngles(neck_x, neck_y)
+    nose_angles = self.h__computeAvgAngles(nose_x, nose_y)
+    neck_angles = self.h__computeAvgAngles(neck_x, neck_y)
     
     # TODO: These three should be a method, calculating the difference
     # in angles and ensuring all results are within +/- 180
-    nose_bends_d  = (noseAngles - neckAngles) * (180/np.pi)
-    
-    nose_bends_d[nose_bends_d > 180]  = nose_bends_d[nose_bends_d > 180] - 360
-    nose_bends_d[nose_bends_d < -180] = nose_bends_d[nose_bends_d < -180] + 360
+    nose_bends_d  = (nose_angles - neck_angles) * (180/np.pi)
+
+    # Suppress warnings so we can compare a numpy array that may contain NaNs
+    # without triggering a Runtime Warning
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')
+      nose_bends_d[nose_bends_d > 180]  -= 360
+      nose_bends_d[nose_bends_d < -180] += 360
     
     return nose_bends_d
 
@@ -894,8 +900,13 @@ class LocomotionForagingBends(object):
 
     """
     if min_win_size > 0:
-      # TODO      
       # Clean up the signal with a gaussian filter.
+      gauss_filter    = feature_helpers.gausswin(2 * min_win_size + 1) \
+                        / min_win_size
+      nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
+                                             gauss_filter,
+                                             cval=0,
+                                             mode='constant')
       #gaussFilter       = np.gausswin(2 * min_win_size + 1) / min_win_size
       #nose_bend_angle_d = np.conv(nose_bend_angle_d, gaussFilter, 'same')
       
@@ -956,8 +967,12 @@ class LocomotionForagingBends(object):
     
     """
     n_frames = len(nose_bend_angle_d)
-    
-    data_sign     = np.sign(nose_bend_angle_d)
+
+    # Suppress warnings related to finding the sign of a numpy array that 
+    # may contain NaN values.
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')  
+      data_sign     = np.sign(nose_bend_angle_d)
     sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
     
     start_I = np.concatenate([[0], sign_change_I + 1])
