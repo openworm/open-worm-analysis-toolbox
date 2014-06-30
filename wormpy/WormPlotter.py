@@ -76,8 +76,8 @@ class WormPlotter(animation.TimedAnimation):
     self.non_vulva_contours = self.normalized_worm.data_dict['non_vulva_contours']
     self.skeletons = self.normalized_worm.data_dict['skeletons']  
     self.skeletons_centred = self.normalized_worm.translate_to_centre()
-    self.skeleton_centres = self.normalized_worm.centre()    
-    self.orientation = self.normalized_worm.angle()    
+    self.skeleton_centres = self.normalized_worm.centre
+    self.orientation = self.normalized_worm.angle
     self.skeletons_rotated = self.normalized_worm.rotate_and_translate()
         
       

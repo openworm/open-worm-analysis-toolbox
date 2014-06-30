@@ -509,7 +509,7 @@ class NormalizedWorm():
     """
     
     skeletons_centred = self.translate_to_centre()
-    orientation = self.angle()
+    orientation = self.angle
   
     a = -orientation * (np.pi/180)
     

@@ -48,7 +48,8 @@ class LocomotionCrawlingBends(object):
   calls...
     h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size)
     and 
-    h__getBandwidth(self, data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
+    h__getBandwidth(self, data_win_length,fft_data,max_peak_I,
+                    INIT_MAX_I_FOR_BANDWIDTH)
     
     , which calls seg_worm.util.maxPeaksDis
 
@@ -267,8 +268,8 @@ class LocomotionCrawlingBends(object):
     left_bounds  = np.array(range(n_frames)) - half_distances
     right_bounds = np.array(range(n_frames)) + half_distances
     
-    #Compute conditions by which we will ignore frames:
-    #--------------------------------------------------------------------------
+    # Compute conditions by which we will ignore frames:
+    # -------------------------------------------------
     #- frame is not bounded on both sides by a sign change
     #- avg_bend_angles is NaN, this will only happen on the edges because we
     #    interpolate over the other frames ... (we just don't extrapolate)
@@ -377,14 +378,14 @@ class LocomotionCrawlingBends(object):
       
     """
 
-    #Getting sign change indices ...
-    #---------------------------------------
-    #The old code found sign changes for every frame, even though 
-    #the sign changes never changed. Instead we find all sign changes, 
-    #and then for each frame know which frame to the left and right 
-    #have sign changes. We do this in such a way so that if we need to 
-    #look further to the left or right, it is really easy to get the 
-    #next answer.
+    # Getting sign change indices ...
+    # ---------------------------------------
+    # The old code found sign changes for every frame, even though 
+    # the sign changes never changed. Instead we find all sign changes, 
+    # and then for each frame know which frame to the left and right 
+    # have sign changes. We do this in such a way so that if we need to 
+    # look further to the left or right, it is really easy to get the 
+    # next answer.
     sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
                        np.sign(avg_bend_angles[1:])
     sign_change_I  = np.flatnonzero(sign_change_mask)
