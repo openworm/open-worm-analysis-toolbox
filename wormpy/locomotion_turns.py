@@ -42,7 +42,7 @@ IMPORTANT: My events use 1 based indexing, the old code used 0 based
 indexing - @JimHokanson
 
 """
-
+import warnings
 from . import utils
 import operator
 import re
@@ -633,8 +633,15 @@ class OmegaTurns(object):
     #
     #i.e. instead of doing a difference in angles between all valid frames, we
     #only do a difference if the gap is short enough
-    positiveJumps = np.flatnonzero(th_angle_diff_temp > 180)
-    negativeJumps = np.flatnonzero(th_angle_diff_temp < -180)
+    
+    # We go through some heroics to avoid the "RuntimeWarning: invalid 
+    # value encountered" warning
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')  
+
+      positiveJumps = np.flatnonzero(th_angle_diff_temp > 180)
+      negativeJumps = np.flatnonzero(th_angle_diff_temp < -180)
+    
     
     #For example data, these are the indices I get ...
     #P - 4625
@@ -679,10 +686,14 @@ class OmegaTurns(object):
                           th_angle[left_indices[mask]]
     
     avg_angle_change_per_frame = abs(th_angle_diff/(HALF_WINDOW_SIZE*2))
-    
+
     # Now return whether or not it's an omega angle change
-    return avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
-    
+    # Again we go through some heroics to avoid the "RuntimeWarning: invalid 
+    # value encountered" warning
+
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')  
+      return avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
   
   def h__filterAndSignFrames(self, body_angles_i, is_omega_frame, 
                              MIN_OMEGA_EVENT_LENGTH):

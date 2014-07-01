@@ -32,7 +32,8 @@ __ALL__ = ['get_motion_codes',                  # for locomotion
            'get_worm_velocity',                 # for locomotion
            'get_bends',                         # for posture
            'get_amplitude_and_wavelength',      # for posture
-           'get_eccentricity_and_orientation']  # for posture
+           'get_eccentricity_and_orientation',  # for posture
+           'gausswin']
 
 def write_to_CSV(data_dict, filename):
   """
@@ -913,9 +914,6 @@ def get_worm_velocity(nw, ventral_mode=0):
   for partition_key in partition_keys:
     x, y = nw.get_partition(partition_key, 'skeletons', True)
     
-   #import pdb
-    #pdb.set_trace()      
-    
     speed, direction = compute_velocity(x, y, 
                                         avg_body_angle, 
                                         sample_time_values[partition_key], 
@@ -926,3 +924,39 @@ def get_worm_velocity(nw, ventral_mode=0):
 
   
 
+def gausswin(L, alpha = 2.5):
+  """
+  An N-point Gaussian window with alpha proportional to the 
+  reciprocal of the standard deviation.  The width of the window
+  is inversely related to the value of alpha.  A larger value of
+  alpha produces a more narrow window.
+
+
+  Parameters
+  ----------------------------
+  L : int
+  alpha : float
+    Defaults to 2.5
+
+  Returns
+  ----------------------------
+
+
+  Notes
+  ----------------------------
+  TODO: I am ignoring some corner cases, for example:
+    #L - negative, error  
+    #L = 0
+    #w => empty
+    #L = 1
+    #w = 1      
+
+  Equivalent of Matlab's gausswin function.
+
+  """
+   
+  N = L - 1
+  n = np.arange(0,N+1) - N/2  
+  w = np.exp(-(1/2)*(alpha*n/(N/2))**2)
+  
+  return w

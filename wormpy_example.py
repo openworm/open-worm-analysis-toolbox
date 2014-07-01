@@ -39,7 +39,7 @@ def example_nw():
     
   """
 
-  # let's hardcode one example worm
+  # Let's take one example worm from our user_config.py file
   norm_folder = os.path.join(user_config.DROPBOX_PATH, 
                              user_config.NORMALIZED_WORM_PATH)
   
@@ -49,7 +49,7 @@ def example_nw():
   eigen_worm_file_path = os.path.join(os.path.abspath(norm_folder),
                                       "masterEigenWorms_N2.mat")
   
-  # create our example instantiation by passing the two file locations
+  # Create our example instance by passing the two file locations
   normalized_worm = wormpy.NormalizedWorm(data_file_path,
                                           eigen_worm_file_path)
   
@@ -140,42 +140,36 @@ def dontRunMeAutomagically():
   temp = wp(nw)
   
 
-
-# NOTE: I originally had this code wrapped in a main function, but
-# for some reason the lines in the plot would not appear if they were
-# called in this manner.  Outside a main() function, things work fine.
+def main():
+  # Create a normalized worm from a hardcoded example location
   
-# Create a normalized worm from a hardcoded example location
-
-#-------------------------------------------------------------------
-nw = example_nw() #wormpy.NormalizedWorm
-
-
-# NOTE: The warning that appears comes from nanfunctions.py, because 
-# we are sometimes taking the mean and std dev of all-NaN angle arrays.
-# The mean and std_dev in these cases is set to NaN, which seems like 
-# correct behaviour to me.  So we can safely ignore this warning.  
-with warnings.catch_warnings():
-  warnings.simplefilter("ignore")
+  #-------------------------------------------------------------------
+  nw = example_nw() #wormpy.NormalizedWorm
+  
+  
   # From the basic information in normalized_worm,
   # create an instance of WormFeatures, which contains all our features data.
   wf = wormpy.WormFeatures(nw)
+  
+  
+  # Plotting demonstration
+  #wormpy.plot_frame_codes(nw)
+  #plt.tight_layout()
+  
+  # I just saved a plaintext file with the motioncodes extracted from
+  # the features result file, by viewing the results file using HDFView
+  #motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
+  #wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
+  wp = wormpy.WormPlotter(nw, interactive=False)
+  wp.show()
+  
+  
+  # At this point we could save the plot to a file:
+  #wp.save('test_sub.mp4')
+  
+  
+  #feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
+  
 
-
-# Plotting demonstration
-#wormpy.plot_frame_codes(nw)
-#plt.tight_layout()
-
-# I just saved a plaintext file with the motioncodes extracted from
-# the features result file, by viewing the results file using HDFView
-#motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
-#wp = wormpy.WormPlotter(nw, motion_codes, interactive=False)
-#wp.show()
-
-
-# At this point we could save the plot to a file:
-#wp.save('test_sub.mp4')
-
-
-#feature_helpers.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
-
+if __name__ == '__main__':
+  main()

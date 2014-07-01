@@ -1,43 +1,73 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 19 13:38:39 2014
+Test harness for OpenWorm's movement validation tool
 
-@author: RNEL
+@authors: @JimHokanson, @MichaelCurrie
+
 """
-
-import wormpy_example as we
- 
-nw = we.example_nw()   
-
-# #Temporary for directly accessing features  
-#temp = wp(nw)
-
-from wormpy.WormFeatures import WormFeatures as wf
-from wormpy.WormFeatures import WormPath as wpath
-from wormpy.WormFeatures import WormPosture as wposture
-from wormpy.WormFeatures import WormMorphology as wmorph
-from wormpy.WormFeatures import WormLocomotion as wmotion
+import os
+from wormpy import user_config
+from wormpy import NormalizedWorm
+from wormpy import WormFeatures
 
 
-temp = wf(nw)
+def main():
+  """
+  Compare Schafer-generated features with our new code's generated features
 
-#import pdb
-#pdb.set_trace()
+  """
+  # Set up the necessary file paths for file loading
+  #----------------------
 
-#temp = wpath(nw)
-#temp = wposture(nw)
+  # Take one example worm folder from our user_config.py file
+  norm_folder = os.path.join(user_config.DROPBOX_PATH, 
+                             user_config.NORMALIZED_WORM_PATH)
 
-#This file was created from the Matlab GUI
-file_path = r'C:\Users\RNEL\Dropbox\worm_data\video\testing_with_GUI\results\mec-4 (u253) off food x_2010_04_21__17_19_20__1_features.mat'
+  matlab_generated_file_path = os.path.join(
+    os.path.abspath(norm_folder),
+    '..', '..', '..', 'results',
+    'mec-4 (u253) off food x_2010_04_21__17_19_20__1_features.mat')
+  
+  data_file_path = os.path.join(os.path.abspath(norm_folder),
+                                "norm_obj.mat")
+  
+  eigen_worm_file_path = os.path.join(os.path.abspath(norm_folder),
+                                      "masterEigenWorms_N2.mat")
 
-worm = wf.from_disk(file_path)
 
-print worm.locomotion == temp
+  # OPENWORM
+  #----------------------
+  # Load the normalized worm from file
+  nw = NormalizedWorm(data_file_path, eigen_worm_file_path)
+
+  # Generate the OpenWorm movement validation repo version of the features
+  openworm_features = WormFeatures(nw)
+
+  
+  # SCHAFER LAB
+  #----------------------
+  # Load the Matlab codes generated features from disk
+  matlab_worm_features = \
+      WormFeatures.from_disk(matlab_generated_file_path)
+  
+
+  # COMPARISON
+  #----------------------
+  # Show the results of the comparison
+  print("Locomotion: ", end="", flush=True)
+  print(matlab_worm_features.locomotion == openworm_features.locomotion)
+
+  print("Posture: ", end="", flush=True)
+  print(matlab_worm_features.posture == openworm_features.posture)
+
+  print("Morphology: ", end="", flush=True)
+  print(matlab_worm_features.morphology == openworm_features.morphology)
+
+  print("Path: ", end="", flush=True)
+  print(matlab_worm_features.path == openworm_features.path)
+  
 
 
-#print worm.posture
-
-#print worm.morphology
-
-#print worm.path == temp
+if __name__ == '__main__':
+  main()
 

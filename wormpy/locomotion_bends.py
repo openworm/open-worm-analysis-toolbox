@@ -21,7 +21,9 @@ Contains two classes:
     .angleSpeed
 
 """
+import warnings
 import numpy as np
+import scipy.ndimage.filters as filters
 from . import feature_helpers
 from . import config
 from . import utils
@@ -48,7 +50,8 @@ class LocomotionCrawlingBends(object):
   calls...
     h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size)
     and 
-    h__getBandwidth(self, data_win_length,fft_data,max_peak_I,INIT_MAX_I_FOR_BANDWIDTH)
+    h__getBandwidth(self, data_win_length,fft_data,max_peak_I,
+                    INIT_MAX_I_FOR_BANDWIDTH)
     
     , which calls seg_worm.util.maxPeaksDis
 
@@ -267,8 +270,8 @@ class LocomotionCrawlingBends(object):
     left_bounds  = np.array(range(n_frames)) - half_distances
     right_bounds = np.array(range(n_frames)) + half_distances
     
-    #Compute conditions by which we will ignore frames:
-    #--------------------------------------------------------------------------
+    # Compute conditions by which we will ignore frames:
+    # -------------------------------------------------
     #- frame is not bounded on both sides by a sign change
     #- avg_bend_angles is NaN, this will only happen on the edges because we
     #    interpolate over the other frames ... (we just don't extrapolate)
@@ -377,14 +380,14 @@ class LocomotionCrawlingBends(object):
       
     """
 
-    #Getting sign change indices ...
-    #---------------------------------------
-    #The old code found sign changes for every frame, even though 
-    #the sign changes never changed. Instead we find all sign changes, 
-    #and then for each frame know which frame to the left and right 
-    #have sign changes. We do this in such a way so that if we need to 
-    #look further to the left or right, it is really easy to get the 
-    #next answer.
+    # Getting sign change indices ...
+    # ---------------------------------------
+    # The old code found sign changes for every frame, even though 
+    # the sign changes never changed. Instead we find all sign changes, 
+    # and then for each frame know which frame to the left and right 
+    # have sign changes. We do this in such a way so that if we need to 
+    # look further to the left or right, it is really easy to get the 
+    # next answer.
     sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
                        np.sign(avg_bend_angles[1:])
     sign_change_I  = np.flatnonzero(sign_change_mask)
@@ -758,7 +761,10 @@ class LocomotionForagingBends(object):
 
     neck_x, neck_y = nw.get_partition('head_base', data_key='skeletons', 
                                       split_spatial_dimensions=True)
-    
+ 
+    # TODO: Add "reversed" and "interpolated" options to the get_partition
+    # function, to replace the below blocks of code!
+   
     # We need to flip the orientation (i.e. reverse the entries along the
     # first, or skeleton index, axis) for angles and consistency with old 
     # code:
@@ -825,40 +831,48 @@ class LocomotionForagingBends(object):
 
     """
 
-    noseAngles = self.h__computeAvgAngles(nose_x, nose_y)
-    neckAngles = self.h__computeAvgAngles(neck_x, neck_y)
+    nose_angles = self.h__computeAvgAngles(nose_x, nose_y)
+    neck_angles = self.h__computeAvgAngles(neck_x, neck_y)
     
     # TODO: These three should be a method, calculating the difference
     # in angles and ensuring all results are within +/- 180
-    nose_bends_d  = (noseAngles - neckAngles) * (180/np.pi)
-    
-    nose_bends_d[nose_bends_d > 180]  = nose_bends_d[nose_bends_d > 180] - 360
-    nose_bends_d[nose_bends_d < -180] = nose_bends_d[nose_bends_d < -180] + 360
+    nose_bends_d  = (nose_angles - neck_angles) * (180/np.pi)
+
+    # Suppress warnings so we can compare a numpy array that may contain NaNs
+    # without triggering a Runtime Warning
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')
+      nose_bends_d[nose_bends_d > 180]  -= 360
+      nose_bends_d[nose_bends_d < -180] += 360
     
     return nose_bends_d
 
     
   def h__computeAvgAngles(self, x, y):
     """
-    Take average difference between successive x and y skeleton points, the
-    compute the arc tangent from those averages.
+    Take average difference between successive x and y skeleton points, 
+    then compute the arc tangent from those averages.
 
     Parameters
     ---------------------------------------    
-    x
-    y
+    x : m x n float numpy array
+      m is the number of skeleton points
+      n is the number of frames
+    y : m x n float numpy array
+      (Same as x)
 
     Returns
     ---------------------------------------    
-    angles
+    1-d float numpy array of length n
+      The angles
     
     Notes
     ---------------------------------------    
     Simple helper for h__computeNoseBends
     
     """
-    avg_diff_x = np.mean(np.diff(x, 1, 1))
-    avg_diff_y = np.mean(np.diff(y, 1, 1))
+    avg_diff_x = np.nanmean(np.diff(x, n=1, axis=1), axis=0)
+    avg_diff_y = np.nanmean(np.diff(y, n=1, axis=1), axis=0)
     
     angles = np.arctan2(avg_diff_y, avg_diff_x)
 
@@ -869,18 +883,15 @@ class LocomotionForagingBends(object):
     """
     Compute the foraging amplitude and angular speed.
     
-    
     Parameters
     ---------------------------------------    
     nose_bend_angle_d : [n_frames x 1]
     min_win_size : (scalar)
 
-    
     Returns
     ---------------------------------------    
-    amps   : [1 x n_frames]
+    amplitudes : [1 x n_frames]
     speeds : [1 x n_frames]
-
 
     Notes
     ---------------------------------------    
@@ -888,20 +899,24 @@ class LocomotionForagingBends(object):
                                              min_win_size, fps)
 
     """
-    # Clean up the signal with a gaussian filter.
     if min_win_size > 0:
-      # TODO      
+      # Clean up the signal with a gaussian filter.
+      gauss_filter    = feature_helpers.gausswin(2 * min_win_size + 1) \
+                        / min_win_size
+      nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
+                                             gauss_filter,
+                                             cval=0,
+                                             mode='constant')
       #gaussFilter       = np.gausswin(2 * min_win_size + 1) / min_win_size
       #nose_bend_angle_d = np.conv(nose_bend_angle_d, gaussFilter, 'same')
-      nose_bend_angle_d = np.ones()      
       
       # Remove partial data frames ...
       nose_bend_angle_d[:min_win_size] = np.NaN
       nose_bend_angle_d[-min_win_size:] = np.NaN
     
     # Calculate amplitudes
-    amps = self.h__getAmps(nose_bend_angle_d)
-    
+    amplitudes = self.h__getAmplitudes(nose_bend_angle_d)
+    assert(np.shape(nose_bend_angle_d) == np.shape(amplitudes))
     
     # Calculate angular speed
     # Compute the speed centered between the back and front foraging movements.
@@ -915,34 +930,49 @@ class LocomotionForagingBends(object):
     #???? - why multiply and not divide by fps????
     
     d_data = np.diff(nose_bend_angle_d) * config.FPS
-    speeds = np.empty(amps.size) * np.NaN
-    speeds[1:] = (d_data[0:-1] + d_data[1:]) / 2
+    speeds = np.empty(amplitudes.size) * np.NaN
+    # This will leave the first and last frame's speed as NaN:
+    speeds[1:-1] = (d_data[:-1] + d_data[1:]) / 2
     
+    # Propagate NaN for speeds to amplitudes
+    amplitudes[np.isnan(speeds)] = np.NaN
     
-    # Propagate NaN for speeds to amps
-    amps[np.isnan(speeds)] = np.NaN
+    return amplitudes, speeds
 
 
-  def h__getAmps(self, nose_bend_angle_d):
+  def h__getAmplitudes(self, nose_bend_angle_d):
     """
     In between all sign changes, get the maximum or minimum value and
     apply to all indices that have the same sign within the stretch
     
-    i.e. 
-    
-    1 2 3 2 1 -1 -2 -1 1 2 2 5 becomes
-    3 3 3 3 3 -2 -2 -2 5 5 5 5
+    Parameters
+    ---------------------------------------    
+    nose_bend_angle_d : 1-d numpy array of length n_frames
+
+    Returns
+    ---------------------------------------    
+    1-d numpy array of length n_frames
     
     Notes
     ---------------------------------------    
     Formerly amps = h__getAmps(nose_bend_angle_d):
   
     NOTE: This code is very similar to wormKinks
+
+    Example
+    ---------------------------------------    
+    >>> h__getAmps(np.array[1, 2, 3, 2, 1, -1, -2, -1, 1, 2, 2, 5])
+                      array[3, 3, 3, 3, 3, -2, -2, -2, 5, 5, 5, 5]
+    (indentation is used here to line up the returned array for clarity)
     
     """
     n_frames = len(nose_bend_angle_d)
-    
-    data_sign     = np.sign(nose_bend_angle_d)
+
+    # Suppress warnings related to finding the sign of a numpy array that 
+    # may contain NaN values.
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')  
+      data_sign     = np.sign(nose_bend_angle_d)
     sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
     
     start_I = np.concatenate([[0], sign_change_I + 1])
