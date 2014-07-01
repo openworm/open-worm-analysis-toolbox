@@ -497,7 +497,7 @@ class WormPosture(object):
         np.transpose(eigen_worms),
         config.N_EIGENWORMS_USE)
 
-    #TODO: Add contours
+
 
   @classmethod 
   def from_disk(cls, p_var):
@@ -519,13 +519,12 @@ class WormPosture(object):
     self.eccentricity = p_var['eccentricity'].value
     self.kinks        = p_var['kinks'].value
     
-    #TODO: 
-    #self.coils        =    
+    EventFinder.EventListForOutput.from_disk(p_var['coils'],'MRC')
     
     self.directions   = posture_features.Directions.from_disk(
                                                       p_var['directions'])    
       
-      
+    #TODO: Add contours     
     skeleton = p_var['skeleton']
     nt = collections.namedtuple('skeleton',['x','y'])
     self.skeleton = nt(skeleton['x'].value,skeleton['y'].value)
