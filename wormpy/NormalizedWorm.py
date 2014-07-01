@@ -129,10 +129,13 @@ class NormalizedWorm():
     # head_tip, head_base, body, tail_base, tail_tip
     # head_tip, head_base, neck, midbody, hips, tail_base, tail_tip
 
+    #TODO: Who uses midbody - why is this being change
+
+    #These are RANGE values, so the last value is not inclusive ...
     self.worm_partitions = {'head': (0, 8), 
                             'neck': (8, 16),
-                            'midbody':  (16, 33), #This may be changed ...
-                            'midbody_for_turns': (16,33),
+                            'midbody':  (16, 33),
+                            'old_midbody_velocity': (20,29),
                             'hips':  (33, 41),
                             'tail': (41, 49),
                             # refinements of ['head']
@@ -148,15 +151,17 @@ class NormalizedWorm():
     self.worm_partition_subsets = {'normal': ('head', 'neck', 
                                               'midbody', 'hips', 'tail'),
                                    'first_third': ('head', 'neck'),
-                                   'second_third': ('midbody_for_turns',),
+                                   'second_third': ('midbody',),
                                    'last_third': ('hips', 'tail'),
                                    'all': ('all',)}
 
     # If we want to mimic the old Schafer Lab decisions,
     # change the partition definitions.
-    #JAH: This is only for a certain feature
-    if(config.MIMIC_OLD_BEHAVIOUR):
-      self.worm_partitions['midbody'] = (20, 29)
+    #TODO: Who needs this particular value, doesn't match for:
+    # - morphoplogy.length OR turns
+    #if(config.MIMIC_OLD_BEHAVIOUR):
+    #  self.worm_partitions['midbody'] = (20, 29)
+    
       
     # DEBUG: (Note from @MichaelCurrie:)
     # This should be set by the normalized worm file, since each

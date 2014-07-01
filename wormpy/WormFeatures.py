@@ -547,6 +547,10 @@ class WormPosture(object):
   def __repr__(self):
     return utils.print_object(self)  
 
+  def __eq__(self,other):
+    return False
+    
+    #TODO: Make comparison
 
 
 """
