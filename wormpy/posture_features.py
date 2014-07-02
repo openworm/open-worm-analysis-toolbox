@@ -457,7 +457,9 @@ def get_worm_kinks(bend_angles):
 
   #(np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
 
-  for iFrame in (np.any(bend_angles,axis=0)).nonzero()[0]:
+  nan_mask = np.isnan(bend_angles)
+
+  for iFrame in (~np.all(nan_mask,axis=0)).nonzero()[0]:
     smoothed_bend_angles = filters.convolve1d(bend_angles[:,iFrame],gauss_filter,cval=0,mode='constant')
   
     #This code is nearly identical in getForaging
