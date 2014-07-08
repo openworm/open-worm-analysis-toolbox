@@ -893,7 +893,15 @@ def get_worm_velocity(nw, ventral_mode=0):
   # Let's use some partitions.  
   # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
   #       this set of partitions does not cover the neck and hips
+ 
+  #TODO: Rename partition and data keys to have better names
   partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
+  
+  data_keys = list(partition_keys)  
+  
+  if(config.MIMIC_OLD_BEHAVIOUR):
+    data_keys[2] = 'old_midbody_velocity'
+
   
   avg_body_angle = get_partition_angles(nw, partition_key='body',
                                         data_key='skeletons', 
@@ -911,8 +919,8 @@ def get_worm_velocity(nw, ventral_mode=0):
   # Set up a dictionary to store the velocity for each partition
   velocity = {}
   
-  for partition_key in partition_keys:
-    x, y = nw.get_partition(partition_key, 'skeletons', True)
+  for partition_key,data_key in zip(partition_keys,data_keys):
+    x, y = nw.get_partition(data_key, 'skeletons', True)
     
     speed, direction = compute_velocity(x, y, 
                                         avg_body_angle, 

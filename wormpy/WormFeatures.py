@@ -252,7 +252,7 @@ class WormLocomotion(object):
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
                                                   nw.is_segmented)
-
+                                                  
     self.foraging = locomotion_bends.LocomotionForagingBends(
                                                   nw,
                                                   nw.is_segmented,
@@ -267,6 +267,24 @@ class WormLocomotion(object):
                                                   midbody_distance,
                                                   nw.skeleton_x,
                                                   nw.skeleton_y)
+    
+    """
+    self.foraging = locomotion_bends.LocomotionForagingBends(
+                                                  nw,
+                                                  nw.is_segmented,
+                                                  nw.ventral_mode)
+    """
+    
+    midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
+    is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
+    
+    """
+    self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
+                                                  is_stage_movement,
+                                                  midbody_distance,
+                                                  nw.skeleton_x,
+                                                  nw.skeleton_y)
+    """
     
   def __repr__(self):
     return utils.print_object(self)  
@@ -427,7 +445,7 @@ class WormPosture(object):
 
   """    
 
-  def __init__(self, normalized_worm):
+  def __init__(self, normalized_worm,midbody_distance):
     """
     Initialization method for WormPosture
 
@@ -442,16 +460,19 @@ class WormPosture(object):
     # *** 1. Bends *** DONE
     self.bends = posture_features.Bends(nw)
       
+    
     # *** 2. Eccentricity & Orientation *** DONE, SLOW
     #This has not been optimized, that Matlab version has
     #NOTE: This is VERY slow, leaving commented for now
-    #self.eccentricity,self.orientation = \
-    #   posture_features.get_eccentricity_and_orientation(nw.contour_x,
-    #                                                     nw.contour_y)
-
+    print('Starting slow eccentricity calculation\n')
+    self.eccentricity,self.orientation = \
+       posture_features.get_eccentricity_and_orientation(nw.contour_x,
+                                                        nw.contour_y)
+    print('Finished slow eccentricity calculation\n')
     
-    #Temp input for next function ...
-    self.orientation = np.zeros(nw.skeleton_x.shape[1])
+    
+    #self.orientation = np.zeros(nw.skeleton_x.shape[1])    
+    
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio *** NOT DONE
     amp_wave_track = posture_features.get_amplitude_and_wavelength(
                           self.orientation,
@@ -461,15 +482,16 @@ class WormPosture(object):
 
     self.amplitude_max        = amp_wave_track.amplitude_max
     self.amplitude_ratio      = amp_wave_track.amplitude_ratio 
-    #self.primary_wavelength   = amp_wave_track.p_wavelength
-    #self.secondary_wavelength = amp_wave_track.s_wavelength  
+    self.primary_wavelength   = amp_wave_track.primary_wavelength
+    self.secondary_wavelength = amp_wave_track.secondary_wavelength  
     self.track_length         = amp_wave_track.track_length
 
     # *** 4. Kinks *** DONE
     self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
         
     # *** 5. Coils ***
-    self.coils = posture_features.get_worm_coils()
+    frame_codes = nw.data_dict['frame_codes']
+    self.coils = posture_features.get_worm_coils(frame_codes,midbody_distance)
 
     # *** 6. Directions *** DONE
     self.directions = posture_features.Directions(nw.skeleton_x,
@@ -489,7 +511,7 @@ class WormPosture(object):
         np.transpose(eigen_worms),
         config.N_EIGENWORMS_USE)
 
-    #TODO: Add contours
+
 
   @classmethod 
   def from_disk(cls, p_var):
@@ -500,24 +522,24 @@ class WormPosture(object):
     #NOTE: This will be considerably different for old vs new format. Currently
     #only the old is implemented
     temp_amp = p_var['amplitude']
-    self.amplitude_max   = temp_amp['max'].value
-    self.amplitude_ratio = temp_amp['ratio'].value
+
+    self.amplitude_max   = _extract_time_from_disk(temp_amp,'max')    
+    self.amplitude_ratio = _extract_time_from_disk(temp_amp,'ratio')    
     
     temp_wave = p_var['wavelength']
-    self.primary_wavelength   = temp_wave['primary']
-    self.secondary_wavelength = temp_wave['secondary']
+    self.primary_wavelength   = _extract_time_from_disk(temp_wave,'primary')
+    self.secondary_wavelength = _extract_time_from_disk(temp_wave,'secondary') 
 
-    self.track_length = p_var['tracklength'].value
-    self.eccentricity = p_var['eccentricity'].value
-    self.kinks        = p_var['kinks'].value
+    self.track_length = _extract_time_from_disk(p_var,'tracklength')
+    self.eccentricity = _extract_time_from_disk(p_var,'eccentricity')
+    self.kinks        = _extract_time_from_disk(p_var,'kinks')
     
-    #TODO: 
-    #self.coils        =    
+    EventFinder.EventListForOutput.from_disk(p_var['coils'],'MRC')
     
     self.directions   = posture_features.Directions.from_disk(
                                                       p_var['directions'])    
       
-      
+    #TODO: Add contours     
     skeleton = p_var['skeleton']
     nt = collections.namedtuple('skeleton',['x','y'])
     self.skeleton = nt(skeleton['x'].value,skeleton['y'].value)
@@ -529,6 +551,37 @@ class WormPosture(object):
   def __repr__(self):
     return utils.print_object(self)  
 
+  def __eq__(self,other):
+
+    #Comparisons to make
+    """
+     amplitude_ratio: Type::ndarray, Len: 4642
+        track_length: Type::ndarray, Len: 4642
+            skeleton: Type::skeleton, Len: 2
+    eigen_projection: Type::ndarray, Len: 4642
+               kinks: Type::ndarray, Len: 4642
+  primary_wavelength: Type::Dataset, Len: 4642
+          directions: Type::Directions, Len: 1
+                bend: Type::Bends, Len: 1
+        eccentricity: Type::ndarray, Len: 4642
+secondary_wavelength: Type::Dataset, Len: 4642
+       amplitude_max: Type::ndarray, Len: 4642
+    """    
+    return \
+      fc.corr_value_high(self.eccentricity,other.eccentricity,'posture.eccentricity') and \
+      fc.corr_value_high(self.amplitude_ratio,other.amplitude_ratio,'posture.amplitude_ratio') and \
+      fc.corr_value_high(self.track_length,other.track_length,'posture.track_length') and \
+      fc.corr_value_high(self.kinks,other.kinks,'posture.kinks') and \
+      fc.corr_value_high(self.secondary_wavelength,other.secondary_wavelength,'posture.secondary_wavelength') and \
+      fc.corr_value_high(self.amplitude_max,other.amplitude_max,'posture.amplitude_max') and \
+      fc.corr_value_high(np.flatten(self.skeleton.x),np.flatten(other.skeleton.x),'posture.skeleton.x') and \
+      fc.corr_value_high(np.flatten(self.skeleton.y),np.flatten(other.skeleton.y),'posture.skeleton.y') and \
+      fc.corr_value_high(np.flatten(self.eigen_projection),np.flatten(other.eigen_projection),'posture.eigen_projection')
+    
+    #Missing:
+    #primary_wavelength
+    #directions
+    #bend
 
 
 """
@@ -654,8 +707,10 @@ class WormFeatures(object):
 
     self.morphology = WormMorphology(nw)
     self.locomotion = WormLocomotion(nw)
-    self.posture    = WormPosture(nw)
-    self.path       = WormPath(nw)
+    
+    midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']/config.FPS)
+    self.posture     = WormPosture(nw,midbody_distance)
+    self.path        = WormPath(nw)
     
   @classmethod  
   def from_disk(cls, file_path):

@@ -682,8 +682,8 @@ class OmegaTurns(object):
     
     mask = (left_indices > 1) & (right_indices < n_frames)
     
-    th_angle_diff[mask] = th_angle[right_indices[mask]] - \
-                          th_angle[left_indices[mask]]
+    th_angle_diff[mask] = th_angle[right_indices[mask].astype(int)] - \
+                          th_angle[left_indices[mask].astype(int)]
     
     avg_angle_change_per_frame = abs(th_angle_diff/(HALF_WINDOW_SIZE*2))
 
