@@ -141,7 +141,7 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   
   t_obj = time.time()
   
-  N_GRID_POINTS = 50 #TODO: Get from config ...
+  N_GRID_POINTS = config.N_ECCENTRICITY #TODO: Get from config ...
   
   x_range_all       = np.ptp(contour_x,axis=0)
   y_range_all       = np.ptp(contour_y,axis=0)
@@ -249,6 +249,12 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
   print('Elapsed time in seconds for eccentricity: %d' % elapsed_time)
   
   return (eccentricity,orientation)
+
+def h__centerAndRotateOutlines(x_outline,y_outline):
+  """
+  #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getEccentricity.m#L391
+  """
+  pass
 
 def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
@@ -395,17 +401,14 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     if s_temp > worm_wavelength_max:
         s_temp = worm_wavelength_max
 
-    #TODO: Not yet translated    
-    """
-    if d_opts.mimic_old_behavior
-        mask = s_wavelength > p_wavelength;
-        [p_wavelength(mask),s_wavelength(mask)] = deal(s_wavelength(mask),p_wavelength(mask));
-    end
-    """    
-    
-    
     p_wavelength[cur_frame] = p_temp
     s_wavelength[cur_frame] = s_temp
+
+  if config.MIMIC_OLD_BEHAVIOUR:
+    mask = s_wavelength > p_wavelength
+    temp = s_wavelength[mask]
+    s_wavelength[mask] = p_wavelength[mask]
+    p_wavelength[mask] = temp
             
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
@@ -699,7 +702,7 @@ def get_eigenworms(sx,sy,eigen_worms,N_EIGENWORMS_USE):
   """
   
   Parameters:
-  ---------------------------------
+  -----------
   eigen_worms: [7,48]  
 
   """  

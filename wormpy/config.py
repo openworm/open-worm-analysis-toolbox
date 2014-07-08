@@ -38,7 +38,11 @@ DEFAULT_VENTRAL_MODE = 0
 
 
 
-""" Posture Features """
+""" 
+---------------------------------------------
+----------    Posture Features     ----------
+---------------------------------------------
+"""
 #posture_features.get_worm_kinks
 KINK_LENGTH_THRESHOLD_PCT = 1/12 #This the fraction of the worm length
 #that a bend must be in order to be counted. The # of worm points 
