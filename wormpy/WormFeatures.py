@@ -25,13 +25,13 @@ SegwormMatlabClasses /
 
 """
 
-import csv
 from . import feature_comparisons as fc
-from . import EventFinder
+from . import Events
 import h5py #For loading from disk 
 import numpy as np
 import collections #For namedtuple
 from wormpy import config
+from wormpy import user_config
 from wormpy import feature_helpers
 from . import path_features
 from . import posture_features
@@ -252,7 +252,7 @@ class WormLocomotion(object):
                                                   nw.data_dict['angles'],
                                                   self.is_paused,
                                                   nw.is_segmented)
-                                                  
+
     self.foraging = locomotion_bends.LocomotionForagingBends(
                                                   nw,
                                                   nw.is_segmented,
@@ -267,24 +267,6 @@ class WormLocomotion(object):
                                                   midbody_distance,
                                                   nw.skeleton_x,
                                                   nw.skeleton_y)
-    
-    """
-    self.foraging = locomotion_bends.LocomotionForagingBends(
-                                                  nw,
-                                                  nw.is_segmented,
-                                                  nw.ventral_mode)
-    """
-    
-    midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
-    is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
-    
-    """
-    self.turns = locomotion_turns.LocomotionTurns(nw,nw.data_dict['angles'],
-                                                  is_stage_movement,
-                                                  midbody_distance,
-                                                  nw.skeleton_x,
-                                                  nw.skeleton_y)
-    """
     
   def __repr__(self):
     return utils.print_object(self)  
@@ -387,9 +369,9 @@ class WormLocomotion(object):
       #Old MRC Format:
       # - forward, backward, paused, mode
       motion_ref = m_var['motion']
-      for key in ['forward','backward','paused']:
+      for key in ['forward', 'backward', 'paused']:
         self.motion_events[key] = \
-          EventFinder.EventListForOutput.from_disk(motion_ref[key],'MRC')
+          Events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
        
       self.motion_mode = _extract_time_from_disk(motion_ref,'mode')      
     else:
@@ -445,7 +427,7 @@ class WormPosture(object):
 
   """    
 
-  def __init__(self, normalized_worm,midbody_distance):
+  def __init__(self, normalized_worm, midbody_distance):
     """
     Initialization method for WormPosture
 
@@ -460,18 +442,24 @@ class WormPosture(object):
     # *** 1. Bends *** DONE
     self.bends = posture_features.Bends(nw)
       
-    
     # *** 2. Eccentricity & Orientation *** DONE, SLOW
-    #This has not been optimized, that Matlab version has
-    #NOTE: This is VERY slow, leaving commented for now
-    print('Starting slow eccentricity calculation\n')
-    self.eccentricity,self.orientation = \
-       posture_features.get_eccentricity_and_orientation(nw.contour_x,
-                                                        nw.contour_y)
-    print('Finished slow eccentricity calculation\n')
-    
-    
-    #self.orientation = np.zeros(nw.skeleton_x.shape[1])    
+    # This has not been optimized, that Matlab version has
+    # NOTE: This is VERY slow, so we leave the user the option
+    #       to disable it in their user_config.py.
+    if user_config.PERFORM_SLOW_ECCENTRICITY_CALC:
+      print('Starting slow eccentricity calculation\n')
+      self.eccentricity,self.orientation = \
+         posture_features.get_eccentricity_and_orientation(nw.contour_x,
+                                                           nw.contour_y)
+      print('Finished slow eccentricity calculation\n')
+    else:
+      print('Skipping slow eccentricity calculation.  To enable it, ' + \
+            'change the PERFORM_SLOW_ECCENTRICITY_CALC variable in your ' + \
+            'user_config.py to be True\n')
+      # Since we didn't run the calculation, let's insert placeholder values
+      # so none of the remaining code breaks:
+      self.eccentricity = np.zeros(nw.skeleton_x.shape[1])    
+      self.orientation = np.zeros(nw.skeleton_x.shape[1])    
     
     # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio *** NOT DONE
     amp_wave_track = posture_features.get_amplitude_and_wavelength(
@@ -491,7 +479,7 @@ class WormPosture(object):
         
     # *** 5. Coils ***
     frame_codes = nw.data_dict['frame_codes']
-    self.coils = posture_features.get_worm_coils(frame_codes,midbody_distance)
+    self.coils = posture_features.get_worm_coils(frame_codes, midbody_distance)
 
     # *** 6. Directions *** DONE
     self.directions = posture_features.Directions(nw.skeleton_x,
@@ -510,7 +498,6 @@ class WormPosture(object):
         nw.skeleton_x, nw.skeleton_y,
         np.transpose(eigen_worms),
         config.N_EIGENWORMS_USE)
-
 
 
   @classmethod 
@@ -534,12 +521,12 @@ class WormPosture(object):
     self.eccentricity = _extract_time_from_disk(p_var,'eccentricity')
     self.kinks        = _extract_time_from_disk(p_var,'kinks')
     
-    EventFinder.EventListForOutput.from_disk(p_var['coils'],'MRC')
+    Events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
     
     self.directions   = posture_features.Directions.from_disk(
                                                       p_var['directions'])    
       
-    #TODO: Add contours     
+    # TODO: Add contours
     skeleton = p_var['skeleton']
     nt = collections.namedtuple('skeleton',['x','y'])
     self.skeleton = nt(skeleton['x'].value,skeleton['y'].value)
@@ -705,11 +692,11 @@ class WormFeatures(object):
   """
   def __init__(self, nw):
 
-    self.morphology = WormMorphology(nw)
-    self.locomotion = WormLocomotion(nw)
-    
-    midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']/config.FPS)
-    self.posture     = WormPosture(nw,midbody_distance)
+    self.morphology  = WormMorphology(nw)
+    self.locomotion  = WormLocomotion(nw)
+    midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']
+                              / config.FPS)
+    self.posture     = WormPosture(nw, midbody_distance)
     self.path        = WormPath(nw)
     
   @classmethod  
@@ -726,10 +713,12 @@ class WormFeatures(object):
     self.path       = WormPath.from_disk(worm['path'])
     
     return self
+
     
   def __repr__(self):
     return utils.print_object(self)
     
+
   def __eq__(self,other):
     """
       Compare two WormFeatures instances by value

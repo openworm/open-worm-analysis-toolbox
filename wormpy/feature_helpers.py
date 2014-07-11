@@ -21,8 +21,7 @@ import csv
 from . import utils
 import collections
 from wormpy import config
-from .EventFinder import EventFinder
-from .EventFinder import EventListForOutput
+from . import Events
 
 import matplotlib.pyplot as plt
 
@@ -372,7 +371,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
   for motion_type in frame_values:
     # We will use EventFinder to determine when the 
     # event type "motion_type" occurred
-    ef = EventFinder()
+    ef = Events.EventFinder()
 
     # "Space and time" constraints
     ef.min_distance_threshold        = min_distance[motion_type]
@@ -394,7 +393,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
     # Take the start and stop indices and convert them to the structure
     # used in the feature files
-    m_event = EventListForOutput(event_list, distance_per_frame, True)
+    m_event = Events.EventListWithFeatures(event_list,
+                                           distance_per_frame,
+                                           compute_distance_during_event=True)
 
     # Record this motion_type to our all_events_dict!
     # Assign event type to relevant frames of all_events_dict['mode']
@@ -407,7 +408,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
 
 """----------------------------------------------------
-    velocity:
+    Velocity:
 """
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
@@ -893,7 +894,6 @@ def get_worm_velocity(nw, ventral_mode=0):
   # Let's use some partitions.  
   # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
   #       this set of partitions does not cover the neck and hips
- 
   #TODO: Rename partition and data keys to have better names
   partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
   
@@ -902,7 +902,6 @@ def get_worm_velocity(nw, ventral_mode=0):
   if(config.MIMIC_OLD_BEHAVIOUR):
     data_keys[2] = 'old_midbody_velocity'
 
-  
   avg_body_angle = get_partition_angles(nw, partition_key='body',
                                         data_key='skeletons', 
                                         head_to_tail=False)  # reverse

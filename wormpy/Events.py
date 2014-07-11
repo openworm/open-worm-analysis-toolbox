@@ -19,9 +19,10 @@
       get_event_mask
       merge
 
-    EventOutputStructure
+    EventListWithFeatures
       __init__
-      get_feature_dict
+      from_disk
+      test_equality
       
 
   Usage
@@ -501,27 +502,25 @@ class EventList(object):
   
   Properties
   ---------------------------------------
-  start_Is: 1-d numpy array
-  end_Is: 1-d numpy array
+  start_frames: 1-d numpy array
+  end_frames: 1-d numpy array
   starts_and_stops: 2-d numpy array
   num_events: int
   num_events_for_stats: int
   last_frame: int
   
-
   Methods
   ---------------------------------------
   get_event_mask: returns 1-d boolean numpy array
   merge: returns an EventList instance
 
   Notes
-  ---------------------------------------
-  
+  ---------------------------------------  
   Previous name:
   seg_worm.feature.event_ss ("ss" stands for "simple structure")
 
   @MichaelCurrie: in @JimHokanson's original code there were lines
-  to change start_Is and end_Is from column to row vectors, if
+  to change start_frames and end_frames from column to row vectors, if
   necessary.  Because here we use numpy arrays, they are not 
   treated as matrices so we don't need to care.
 
@@ -535,21 +534,21 @@ class EventList(object):
   
   """
   def __init__(self, event_starts_and_stops=None):
-    # self.start_Is and self.end_Is will be the internal representation
+    # self.start_frames and self.end_frames will be the internal representation
     # of the events within this class.
-    self.start_Is = None
-    self.end_Is = None
+    self.start_frames = None
+    self.end_frames = None
     
     # Check if our events array exists and there is at least one event
     if event_starts_and_stops != None and event_starts_and_stops.size != 0:
-      self.start_Is = event_starts_and_stops[:,0]
-      self.end_Is   = event_starts_and_stops[:,1]
+      self.start_frames = event_starts_and_stops[:,0]
+      self.end_frames   = event_starts_and_stops[:,1]
     
-    if(self.start_Is == None):
-      self.start_Is = np.array([], dtype=int)
+    if(self.start_frames == None):
+      self.start_frames = np.array([], dtype=int)
 
-    if(self.end_Is == None):
-      self.end_Is = np.array([], dtype=int)
+    if(self.end_frames == None):
+      self.end_frames = np.array([], dtype=int)
   
   def __repr__(self):
     return utils.print_object(self)  
@@ -557,9 +556,9 @@ class EventList(object):
   @property
   def starts_and_stops(self):
     """
-    Returns the start_Is and end_Is as a single numpy array
+    Returns the start_frames and end_frames as a single numpy array
     """
-    s_and_s = np.array([self.start_Is, self.end_Is])
+    s_and_s = np.array([self.start_frames, self.end_frames])
 
     # check that we didn't have s_and_s = [None, None] or something
     if len(np.shape(s_and_s)) == 2:
@@ -581,7 +580,7 @@ class EventList(object):
     Formerly n_events
     
     """
-    return len(self.start_Is)
+    return len(self.start_frames)
 
   @property
   def last_event_frame(self):
@@ -595,9 +594,9 @@ class EventList(object):
     frames.
 
     """
-    # Check if the end_Is have any entries at all
-    if self.end_Is != None and self.end_Is.size != 0:
-      return self.end_Is[-1]
+    # Check if the end_frames have any entries at all
+    if self.end_frames != None and self.end_frames.size != 0:
+      return self.end_frames[-1]
     else:
       return 0
 
@@ -608,12 +607,13 @@ class EventList(object):
     """
     value = self.__len__
     if value > 1:
-      if self.start_Is[0] == 0:
+      if self.start_frames[0] == 0:
         value = value - 1
-      if self.end_Is[-1] == self.num_video_frames-1:
+      if self.end_frames[-1] == self.num_video_frames-1:
         value = value - 1
 
     return value
+
 
   def get_event_mask(self, num_frames=None):
     """
@@ -623,8 +623,8 @@ class EventList(object):
     TODO: Clarify documentation, why are we using this??????    
     
     Returns an array with True entries only between 
-    start_Is[i] and end_Is[i], for all i such that 
-    0 <= end_Is[i] < num_frames    
+    start_frames[i] and end_frames[i], for all i such that 
+    0 <= end_frames[i] < num_frames    
     
     Parameters
     ---------------------------------------
@@ -650,7 +650,7 @@ class EventList(object):
     mask = np.zeros(max(self.last_event_frame + 1, num_frames), dtype='bool')
 
     for i_event in range(self.__len__):
-      mask[self.start_Is[i_event]:self.end_Is[i_event]+1] = True
+      mask[self.start_frames[i_event]:self.end_frames[i_event]+1] = True
     
     return mask[0:num_frames]
 
@@ -674,46 +674,59 @@ class EventList(object):
     
     Returns
     ---------------------------------------
-    Tuple (EventList,is_from_first_object)
-    EventList: A new EventList instance
+    Tuple (EventList, is_from_first_object)
+      EventList: A new EventList instance
+      is_from_first_object: A mask in case you care which indices are
+                            from the first object.
     
     """
+    all_starts = np.concatenate((obj1.start_frames, obj2.start_frames))
+    all_ends   = np.concatenate((obj1.end_frames,   obj2.end_frames))
     
-    #self = cls.__new__(cls)    
-        
-    all_starts = np.concatenate((obj1.start_Is, obj2.start_Is))
-    all_ends   = np.concatenate((obj1.end_Is,   obj2.end_Is))
-    
-    # @JimHokanson TODO: Would be good to check that events don't overlap ...
+    # TODO: It would be good to check that events don't overlap
     
     new_starts = np.sort(all_starts)
     order_I    = np.argsort(all_starts)
         
     new_ends   = all_ends[order_I]
             
-    is_from_first_object = order_I < obj1.start_Is.size    
+    is_from_first_object = order_I < obj1.start_frames.size    
     
     starts_stops = np.transpose(np.vstack((new_starts,new_ends)))   
-    
-    return (EventList(starts_stops),is_from_first_object)
+        
+    return (EventList(starts_stops), is_from_first_object)
 
 
 
 
-class EventListForOutput(object):
+class EventListWithFeatures(EventList):
   """
+  An list of events, but also with a set of features calculated for those 
+  events.  e.g. time_between_events, etc.
   
-  TODO: This is going to change.
+  The list of events can also be embued with another dimension of data,
+  called "distance" (i.e. the distance the worm has travelled during the
+  given frame) but which can be generalized to anything that can happen
+  over time to the worm.
+  
+  With this extra dimension other features can be calculated, such as 
+  distance_during_events.  
+  
+  Properties
+  ---------------------------------------
+  num_video_frames
+  start_frames
+  end_frames
+  event_durations
+  time_between_events
+  distance_during_events
+  distance_between_events
+  total_time
+  frequency
+  time_ratio
+  data_ratio
+  num_events_for_stats    
 
-  Jim came through and starting throwing junk all over the place. Michael will
-  probably need to come through and clean things up. 
-  
-  TODO:
-  @MichaelCurrie should in particular make EventListForOutput once again
-  inherit from EventList, and also change the name to avoid the term "output"
-  as that term makes an assumption about what processing stage the object
-  is being used for.
-  
   Notes
   ---------------------------------------
   Formerly seg_worm.feature.event
@@ -740,8 +753,10 @@ class EventListForOutput(object):
         
         %INPUTS
         %------------------------------------------------------------------
-        start_Is %[1 n_events]
-        end_Is   %[1 n_events]
+    #Old Names: start and end
+    #NOTE: These are the exact frames, the end is NOT setup for slicing
+        start_frames %[1 n_events]
+        end_frames   %[1 n_events]
         data_sum_name %[1 n_events]
         inter_data_sum_name %[1 n_events], last value is NaN
         
@@ -751,57 +766,55 @@ class EventListForOutput(object):
     
   """
  
-  def __init__(self, event_list, distance_per_frame, 
-               compute_distance_during_event = False,make_null=False):
+  def __init__(self, event_list=None, distance_per_frame=None, 
+               compute_distance_during_event=False, make_null=False):
     """
-    Initialize an instance of EventListForOutput
+    Initialize an instance of EventListWithFeatures
     
     Parameters:
     -----------
-    event_list : EventList instance
+    event_list: EventList instance (default None)
       A list of all events
+    distance_per_frame: 1-d numpy array, dtype=float (default None)
+      Distance moved per frame.  In fact, as discussed in the class 
+      definition for EventListWithFeatures, this parameter can be used for
+      any quantifiable behaviour the worm is engaged in over time, not just
+      distance travelled.  Perhaps therefore could be renamed to something
+      more general.
+    compute_distance_during_event: boolean (default False)
+      Whether or not to compute the distance during the event
+    make_null: boolean (default False)
+      Whether or not the caller wants simply a blank instance to be returned
 
-    distance_per_frame : 1-d numpy array, dtype=float
-      Distance moved per frame. JAH: I think the interpretation is dependent
-      on the feature that is calling this function (i.e. isn't the same input
-      for all features calling this class)
-      
-    compute_distance_during_event : logical (default False)       
-      
-    Original Code:
-    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeature/%40event/event.m
+    Parameters:
+    -----------
+    Original Code: https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeature/%40event/event.m
+    
+    Used by:
+    get_motion_codes  - computes data and interdata
+    get_coils         - computes only interdata
+    omega and upsilon - computes only interdata  
+    
     """    
+    if event_list == None:
+      # If no event_list instance is supplied, instantiate 
+      EventList.__init__(self, None)
+    else:
+      EventList.__init__(self, event_list.starts_and_stops)
 
-    #Used by:
-    #get_motion_codes  - computes data and interdata
-    #get_coils         - computes only interdata
-    #omega and upsilon - computes only interdata  
-    
-    #EventList.__init__(self, event_list.starts_and_stops)
+    self.distance_per_frame  = distance_per_frame
 
-    #self.distance_per_frame  = distance_per_frame    
-    #self.data_sum_name       = data_sum_name
-    #self.inter_data_sum_name = inter_data_sum_name
+    # If a blank instance has been requested, or if a blank event_list
+    # has been provided, flag the self.is_null variable as such
+    self.is_null = make_null or (self.__len__ == 0)
 
-    # Calculate the features
-    #self.calculate_features(config.FPS)
-
-    if make_null:
-      self.is_null = True
-      return
-
-    #Some local variables
-    FPS      = config.FPS    
-    start_I  = event_list.start_Is
-    end_I    = event_list.end_Is  
-    n_events = len(start_I)
-    
-    self.is_null = n_events == 0    
-    
-    if self.is_null:
-      return
+    # Only calculate the extra features is this is not a "null" instance
+    if not self.is_null:
+      # Calculate the features
+      self.calculate_features(compute_distance_during_event)
       
-      
+
+  def calculate_features(self, compute_distance_during_event):      
     """
     num_video_frames
     start_frames
@@ -816,36 +829,36 @@ class EventListForOutput(object):
     data_ratio
     num_events_for_stats
     """      
-      
-    self.num_video_frames = len(distance_per_frame)
-
-    #Old Names: start and end
-    #NOTE: These are the exact frames, the end is NOT setup for slicing
-    self.start_frames = start_I
-    self.end_frames   = end_I
+    FPS = config.FPS
+    
+    
+    self.num_video_frames = len(self.distance_per_frame)
     
     #Old Name: time
-    self.event_durations = (end_I - start_I + 1) / FPS
+    self.event_durations = (self.end_frames - self.start_frames + 1) / FPS
     
     #Old Name: interTime
-    self.time_between_events = (start_I[1:] - end_I[:-1] - 1) / FPS
+    self.time_between_events = (self.start_frames[1:] - self.end_frames[:-1] - 1) / FPS
     
     #Old Name: interDistance
     #Distance moved during events
     if compute_distance_during_event:
-      self.distance_during_events = np.zeros(n_events)
-      for i in range(n_events):
+      self.distance_during_events = np.zeros(self.__len__)
+      for i in range(self.__len__):
         self.distance_during_events[i] = \
-          np.nansum(distance_per_frame[start_I[i]:end_I[i]+1])    
+          np.nansum(self.distance_per_frame[self.start_frames[i]:self.end_frames[i]+1])    
+      self.data_ratio = np.nansum(self.distance_during_events) \
+                        / np.nansum(self.distance_per_frame)
     else:
-      self.distance_during_events = []
+      self.distance_during_events = np.array([])
+      self.data_ratio = np.array([])
       
     #Old Name: distance
     #Distance moved between events
-    self.distance_between_events = np.zeros(n_events-1)
-    for i in range(n_events-1):
+    self.distance_between_events = np.zeros(self.__len__-1)
+    for i in range(self.__len__-1):
       self.distance_between_events[i] = \
-        np.nansum(distance_per_frame[end_I[i]+1:start_I[i+1]])
+        np.nansum(self.distance_per_frame[self.end_frames[i]+1:self.start_frames[i+1]])
     #self.distance_between_events[-1] = np.NaN
     
     self.total_time = self.num_video_frames / FPS
@@ -853,28 +866,8 @@ class EventListForOutput(object):
     #How frequently an event occurs - add to documentation
     self.frequency  = self.num_events_for_stats / self.total_time
     
-
     self.time_ratio = np.nansum(self.event_durations) / self.total_time
-    
-    if compute_distance_during_event:
-      self.data_ratio = np.nansum(self.distance_during_events) \
-                        / np.nansum(distance_per_frame)
-    else:
-      self.data_ratio = []
 
-  @property
-  def num_events_for_stats(self):
-    """
-    Compute the number of events, excluding the partially recorded ones.
-    """
-    value = len(self.start_frames)
-    if value > 1:
-      if self.start_frames[0] == 0:
-        value = value - 1      
-      if self.end_frames[-1] == self.num_video_frames-1:
-        value = value - 1
-
-    return value
 
   def get_event_mask(self):
     """
@@ -887,7 +880,7 @@ class EventListForOutput(object):
     Notes
     ---------------------------------------
 
-    EventListForOutput has overridden its superclass, EventList's,
+    EventListWithFeatures has overridden its superclass, EventList's,
     get_event_mask with its own here, since self.distance_per_frame 
     gives it the precise number of frames so it no longer needs to 
     accept it as a parameter.
@@ -896,14 +889,21 @@ class EventListForOutput(object):
     EventList.get_event_mask(self.num_video_frames)
 
   @classmethod
-  def from_disk(cls,event_ref,ref_format):
-
+  def from_disk(cls, event_ref, ref_format):
     """
+    Class factory method to return an instance of the class, loaded from
+    disk.
+
+    Returns
+    ---------------------------------------
     ref_format : {'MRC'}
-    """
-
-    self = cls.__new__(cls)
+      The format used.  Currently 'MRC' is the only option.
     
+    """
+    # Construct the class
+    self = cls.__new__(cls)
+    # Initialize the superclass
+    EventList.__init__(self, None)
 
     """
     num_video_frames
@@ -921,14 +921,10 @@ class EventListForOutput(object):
     """
     
     if ref_format is 'MRC':
-      
-      
       frames    = event_ref['frames']
       
       #???? How to tell if bad
       #h5py._hl.dataset.Dataset      
-      
-
       
       if type(frames) == h5py._hl.dataset.Dataset:
         self.is_null = True
@@ -966,12 +962,12 @@ class EventListForOutput(object):
     else:
       raise Exception('Other formats not yet supported :/')
 
-    #num_video_frames - CRAP: :/
-    #Look away ...
+    # Num_video_frames - CRAP: :/   - @JimHokanson
+    # Look away ...
     temp_length = file_ref['worm/morphology/length']
     self.num_video_frames = len(temp_length)
     
-    #total_time - CRAP :/
+    # Total_time - CRAP :/   - @JimHokanson
     self.total_time = self.num_events_for_stats / self.frequency
     
     return self
@@ -986,6 +982,11 @@ class EventListForOutput(object):
     elif self.is_null != other.is_null:
       return False         
         
+    """
+    THINGS COMPARED BELOW (in the return statement):
+    ---------------------
+    """
+
     #TODO: Add an integer equality comparison with name printing
     return \
       fc.fp_isequal(self.num_video_frames,other.num_video_frames,event_name + '.num_video_frames') and \
@@ -999,32 +1000,6 @@ class EventListForOutput(object):
       fc.fp_isequal(self.data_ratio,other.data_ratio,event_name + '.data_ratio',0.01) and \
       fc.fp_isequal(self.num_events_for_stats,other.num_events_for_stats,event_name + '.total_time')
 
-    """
-    THINGS TO COMPARE:
-    ---------------------
-    num_video_frames
-    start_frames
-    end_frames
-    event_durations
-    time_between_events
-    distance_during_events
-    distance_between_events
-    total_time
-    frequency
-    time_ratio
-    data_ratio
-    num_events_for_stats    
-    """
-    
-    """
-        return \
-      fc.fp_isequal(self.height,other.height,'Arena.height',1) and \
-      fc.fp_isequal(self.width,other.width,'Arena.width',1)   and \
-      fc.fp_isequal(self.min_x,other.min_x,'Arena.min_x')   and \
-      fc.fp_isequal(self.min_y,other.min_y,'Arena.min_y')   and \
-      fc.fp_isequal(self.max_x,other.max_x,'Arena.max_x')   and \
-      fc.fp_isequal(self.max_y,other.max_y,'Arena.max_y')
-    """
 
   # TODO: find out if anyone actually uses this method.
   #@staticmethod

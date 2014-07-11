@@ -43,11 +43,9 @@ indexing - @JimHokanson
 
 """
 import warnings
-from . import utils
 import operator
 import re
-from . import NormalizedWorm
-from . import EventFinder
+from . import Events
 from . import feature_helpers
 from . import config
 import numpy as np
@@ -124,9 +122,10 @@ class LocomotionTurns(object):
     # Only proceed if there are at least two non-NaN 
     # value in each angle vector
     if n_head < 2 or n_body < 2 or n_tail < 2:
-       self.omegas   = EventFinder.EventListForOutput([],[],make_null=True)
-       self.upsilons = EventFinder.EventListForOutput([],[],make_null=True)
-       return 
+      # Make omegas and upsilons into blank events lists and return
+      self.omegas   = Events.EventListWithFeatures(make_null=True)
+      self.upsilons = Events.EventListWithFeatures(make_null=True)
+      return 
 
     
     
@@ -176,24 +175,24 @@ class LocomotionTurns(object):
     frames.upsilon_frames = np.zeros(n_frames)  
     
     for i in range(4):
-        consts.head_angle_start_const = yuck[0][i]
-        consts.tail_angle_start_const = yuck[1][i]
-        consts.head_angle_end_const   = yuck[2][i]
-        consts.tail_angle_end_const   = yuck[3][i]
-        consts.body_angle_const       = yuck[4][i]
-        condition_indices = self.h__getConditionIndices(angles, consts)
-        self.h__populateFrames(angles, 
-                               condition_indices,
-                               frames,
-                               is_upsilon[i],
-                               values_to_assign[i])
+      consts.head_angle_start_const = yuck[0][i]
+      consts.tail_angle_start_const = yuck[1][i]
+      consts.head_angle_end_const   = yuck[2][i]
+      consts.tail_angle_end_const   = yuck[3][i]
+      consts.body_angle_const       = yuck[4][i]
+      condition_indices = self.h__getConditionIndices(angles, consts)
+      self.h__populateFrames(angles, 
+                             condition_indices,
+                             frames,
+                             is_upsilon[i],
+                             values_to_assign[i])
         
     # Calculate the events from the frame values
-    self.omegas   = OmegaTurns(frames.omega_frames,
-                               nw,
-                               body_angles_for_ht_change,
-                               midbody_distance,
-                               config.FPS)    
+    self.omegas = OmegaTurns(frames.omega_frames,
+                             nw,
+                             body_angles_for_ht_change,
+                             midbody_distance,
+                             config.FPS)    
 
     self.upsilons = UpsilonTurns(frames.upsilon_frames,
                                  midbody_distance,
@@ -767,7 +766,7 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   
   """
   
-  ef = EventFinder.EventFinder()
+  ef = Events.EventFinder()
   
   ef.include_at_frames_threshold = True
   
@@ -785,11 +784,11 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
   frames_ventral = ef.get_events(signed_frames)
   
   # Unify the ventral and dorsal turns.
-  [frames_merged,is_ventral] = EventFinder.EventList.merge(frames_ventral,
-                                                           frames_dorsal)
+  [frames_merged, is_ventral] = Events.EventList.merge(frames_ventral,
+                                                       frames_dorsal)
     
-  turn_event_output = EventFinder.EventListForOutput(frames_merged, 
-                                                     midbody_distance) 
+  turn_event_output = Events.EventListWithFeatures(frames_merged, 
+                                                   midbody_distance) 
   
   turn_event_output.is_ventral = is_ventral  
   

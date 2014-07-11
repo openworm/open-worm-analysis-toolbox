@@ -5,7 +5,7 @@ Posture features  ...
 
 
 from __future__ import division
-from . import EventFinder
+from . import Events
 from . import utils
 from . import config
 import numpy as np
@@ -575,9 +575,9 @@ def get_worm_coils(frame_codes,midbody_distance):
       starts[-1] += -1
        
         
-  temp = EventFinder.EventList(np.transpose(np.vstack((starts,ends))))
+  temp = Events.EventList(np.transpose(np.vstack((starts, ends))))
   
-  return EventFinder.EventListForOutput(temp,midbody_distance)
+  return Events.EventListWithFeatures(temp, midbody_distance)
   
   """
   coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
