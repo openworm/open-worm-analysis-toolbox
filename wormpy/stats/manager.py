@@ -275,38 +275,43 @@ class Stats(object):
     # Measurements exclusively found in the experimental group have a zScore of
     # infinity and those found exclusively found in the control are -infinity.
     
-    if isnan(exp_hist.mean):
-      if (USE_OLD_CODE && is_exclusive) || (~USE_OLD_CODE && ctl_hist.n_valid_measurements > 1):
+    if np.isnan(exp_hist.mean):
+      if (USE_OLD_CODE && is_exclusive) || 
+        (~USE_OLD_CODE && ctl_hist.n_valid_measurements > 1):
         self.z_score_experiment = -np.Inf
       else:
         self.z_score_experiment = np.NaN
         
     elif np.isnan(ctl_hist.mean):
-      if (USE_OLD_CODE && is_exclusive) || (~USE_OLD_CODE && exp_hist.n_valid_measurements > 1):
+      if (USE_OLD_CODE && is_exclusive) || 
+        (~USE_OLD_CODE && exp_hist.n_valid_measurements > 1):
         self.z_score_experiment = np.Inf
       else:
         self.z_score_experiment = np.NaN
         
     else:
-      #This might need to be means_per_video, not the mean ...
+      # This might need to be means_per_video, not the mean ...
+      # - @JimHokanson
       self.z_score_experiment = (exp_hist.mean - ctl_hist.mean) / ctl_hist.std
 
     
-    # TODO: Move this to the histogram, not here ... These are properties of how
+    # TODO: Move this to the histogram, not here!  These are properties of how
     # normal the distributions of the histograms are, and have nothing to do
     # with the comparative statistics between the two groups
+    # - @JimHokanson
     #------------------------------------------------------------------------
-    p_fields  = {'p_normal_experiment' 'p_normal_control'}
-    hist_objs = {exp_hist ctl_hist}
-    
-    for iObj = 1:2:
-      cur_field    = p_fields{iObj}
-      cur_hist_obj = hist_objs{iObj}
-      if cur_hist_obj.n_valid_measurements < 3:
-        self.(cur_field) = np.NaN
-      else:
-        self.(cur_field) = seg_worm.stats.helpers.swtest(cur_hist_obj.mean_per_video,ALPHA,TAIL)
+    hist_objs = {'p_normal_experiment': exp_hist,
+                 'p_normal_control': ctl_hist}    
         
+    for cur_p_field, cur_hist_obj in hist_objs:
+      if cur_hist_obj.n_valid_measurements < 3:
+        self.(cur_p_field) = np.NaN
+      else:
+        self.(cur_p_field) = seg_worm.stats.helpers.swtest(
+                                              cur_hist_obj.mean_per_video,
+                                              ALPHA,
+                                              TAIL)
+
     # Rules are:
     # --------------------------------------
     # p_t
@@ -324,11 +329,11 @@ class Stats(object):
       # I'm a bit confused by it ...  - @JimHokanson
       n_expt  = exp_hist.n_videos
       n_total = n_expt + ctl_hist.n_videos
-      self.p_w = seg_worm.stats.helpers.fexact(n_expt,n_total,n_expt,n_expt)
+      self.p_w = seg_worm.stats.helpers.fexact(n_expt, n_total, n_expt, n_expt)
       self.p_t = self.p_w
     elif ~(exp_hist.none_valid || ctl_hist.none_valid):
       # We need a few valid values from both ...
-      self.p_w = ranksum(exp_hist.valid_means,ctl_hist.valid_means)
+      self.p_w = ranksum(exp_hist.valid_means, ctl_hist.valid_means)
     
     # NOTE: This code is for an individual object, the corrections 
     #       are done in the manager which is aware of all objects ...
