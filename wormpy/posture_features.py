@@ -318,10 +318,10 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   n_frames = bad_worm_orientation.size
 
-  p_wavelength    = np.zeros(n_frames)
-  p_wavelength[:] = np.NaN  
-  s_wavelength    = np.zeros(n_frames)
-  s_wavelength[:] = np.NaN
+  primary_wavelength    = np.zeros(n_frames)
+  primary_wavelength[:] = np.NaN  
+  secondary_wavelength    = np.zeros(n_frames)
+  secondary_wavelength[:] = np.NaN
 
 
   #NOTE: Right now this varies from worm to worm which means the spectral
@@ -401,14 +401,19 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     if s_temp > worm_wavelength_max:
         s_temp = worm_wavelength_max
 
-    p_wavelength[cur_frame] = p_temp
-    s_wavelength[cur_frame] = s_temp
+    primary_wavelength[cur_frame] = p_temp
+    secondary_wavelength[cur_frame] = s_temp
 
   if config.MIMIC_OLD_BEHAVIOUR:
-    mask = s_wavelength > p_wavelength
-    temp = s_wavelength[mask]
-    s_wavelength[mask] = p_wavelength[mask]
-    p_wavelength[mask] = temp
+    # Suppress warnings so we can compare a numpy array that may contain NaNs
+    # without triggering a Runtime Warning
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')
+      mask = secondary_wavelength > primary_wavelength
+
+    temp = secondary_wavelength[mask]
+    secondary_wavelength[mask] = primary_wavelength[mask]
+    primary_wavelength[mask] = temp
             
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
@@ -417,8 +422,8 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
                             
   amp_wave_track.amplitude_max   = amplitude_max
   amp_wave_track.amplitude_ratio = amplitude_ratio 
-  amp_wave_track.primary_wavelength   = p_wavelength
-  amp_wave_track.secondary_wavelength = s_wavelength  
+  amp_wave_track.primary_wavelength   = primary_wavelength
+  amp_wave_track.secondary_wavelength = secondary_wavelength  
   amp_wave_track.track_length = track_length
   
   return amp_wave_track
