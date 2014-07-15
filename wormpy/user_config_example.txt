@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
   user_config.py: a module to specify installation-specific settings for
-                the wormpy module
+                  the movement_validation repository
   
-  This file should be synced once, then included in your .gitignore file, 
-  and then overridden with your custom settings (if necessary)
+  This file is in the .gitignore file for the movement_validation repo, so
+  you can put configuration settings here that apply to just your computer.
   
   @authors: @JimHokanson, @MichaelCurrie
   
@@ -24,4 +24,7 @@ NORMALIZED_WORM_PATH = "worm_data\\video\\testing_with_GUI\\.data\\" + \
 
 EIGENWORM_PATH = "worm_data"
 
-
+# There is a step that is very slow that can be disabled
+# if you are just debugging other parts of the code.
+# For production, this should be True.
+PERFORM_SLOW_ECCENTRICITY_CALC = True

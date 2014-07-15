@@ -5,7 +5,7 @@ Posture features  ...
 
 
 from __future__ import division
-from . import EventFinder
+from . import Events
 from . import utils
 from . import config
 import numpy as np
@@ -200,7 +200,6 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 #        except ValueError:
 #          import pdb
 #          pdb.set_trace()
-        
       
         x = m_lin[in_worm]
         y = n_lin[in_worm]
@@ -259,8 +258,6 @@ def h__centerAndRotateOutlines(x_outline,y_outline):
 def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
-  
-  
   N_POINTS_FFT   = 512
   HALF_N_FFT     = N_POINTS_FFT/2
   MIN_DIST_PEAKS = 5  
@@ -318,10 +315,10 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
   n_frames = bad_worm_orientation.size
 
-  p_wavelength    = np.zeros(n_frames)
-  p_wavelength[:] = np.NaN  
-  s_wavelength    = np.zeros(n_frames)
-  s_wavelength[:] = np.NaN
+  primary_wavelength    = np.zeros(n_frames)
+  primary_wavelength[:] = np.NaN  
+  secondary_wavelength    = np.zeros(n_frames)
+  secondary_wavelength[:] = np.NaN
 
 
   #NOTE: Right now this varies from worm to worm which means the spectral
@@ -357,23 +354,21 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     #Find peaks that are greater than the cutoff  
     peaks, indx = utils.separated_peaks(iY, MIN_DIST_PEAKS,True,WAVELENGTH_PCT_MAX_CUTOFF*np.amax(iY))  
       
-
-    #pdb.set_trace() # DEBUG
-    #This is what the supplemental says, not what was done in the previous
-    #code. I'm not sure what was done for the actual paper, but I would
-    #guess they used power.
+    # This is what the supplemental says, not what was done in the previous
+    # code. I'm not sure what was done for the actual paper, but I would
+    # guess they used power.
     #
-    #This gets used when determining the secondary wavelength, as it must
-    #be greater than half the maximum to be considered a secondary
-    #wavelength.
+    # This gets used when determining the secondary wavelength, as it must
+    # be greater than half the maximum to be considered a secondary
+    # wavelength.
     
-    #NOTE: True Amplitude = 2*abs(fft)/(length_real_data i.e. 48 or 49, not 512)
+    # NOTE: True Amplitude = 2*abs(fft)/(length_real_data i.e. 48 or 49, not 512)
     #
-    #i.e. for a sinusoid of a given amplitude, the above formula would give
-    #you the amplitude of the sinusoid
+    # i.e. for a sinusoid of a given amplitude, the above formula would give
+    # you the amplitude of the sinusoid
   
-    #We sort the peaks so that the largest is at the first index and will
-    #be primary, this was not done in the previous version of the code
+    # We sort the peaks so that the largest is at the first index and will
+    # be primary, this was not done in the previous version of the code
     I = np.argsort(-1*peaks)
     indx = indx[I]
 
@@ -390,25 +385,30 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
       
     worm_wavelength_max = WAVELENGTH_PCT_CUTOFF*worm_lengths[cur_frame]
     
-    #Cap wavelengths ...
+    # Cap wavelengths ...
     if p_temp > worm_wavelength_max:
       p_temp = worm_wavelength_max
       
     
-    #??? Do we really want to keep this as well if p_temp == worm_2x?
-    #i.e., should the secondary wavelength be valid if the primary is also
-    #limited in this way ?????
+    # ??? Do we really want to keep this as well if p_temp == worm_2x?
+    # i.e., should the secondary wavelength be valid if the primary is also
+    # limited in this way ?????
     if s_temp > worm_wavelength_max:
         s_temp = worm_wavelength_max
 
-    p_wavelength[cur_frame] = p_temp
-    s_wavelength[cur_frame] = s_temp
+    primary_wavelength[cur_frame] = p_temp
+    secondary_wavelength[cur_frame] = s_temp
 
   if config.MIMIC_OLD_BEHAVIOUR:
-    mask = s_wavelength > p_wavelength
-    temp = s_wavelength[mask]
-    s_wavelength[mask] = p_wavelength[mask]
-    p_wavelength[mask] = temp
+    # Suppress warnings so we can compare a numpy array that may contain NaNs
+    # without triggering a Runtime Warning
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore')
+      mask = secondary_wavelength > primary_wavelength
+
+    temp = secondary_wavelength[mask]
+    secondary_wavelength[mask] = primary_wavelength[mask]
+    primary_wavelength[mask] = temp
             
   amp_wave_track = \
     collections.namedtuple('amp_wave_track', 
@@ -417,8 +417,8 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
                             
   amp_wave_track.amplitude_max   = amplitude_max
   amp_wave_track.amplitude_ratio = amplitude_ratio 
-  amp_wave_track.primary_wavelength   = p_wavelength
-  amp_wave_track.secondary_wavelength = s_wavelength  
+  amp_wave_track.primary_wavelength   = primary_wavelength
+  amp_wave_track.secondary_wavelength = secondary_wavelength  
   amp_wave_track.track_length = track_length
   
   return amp_wave_track
@@ -436,8 +436,6 @@ Old Vs New Code:
 
 def get_worm_kinks(bend_angles):
   #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
-
-
 
   # Determine the bend segment length threshold.
   n_angles = bend_angles.shape[0]
@@ -575,9 +573,9 @@ def get_worm_coils(frame_codes,midbody_distance):
       starts[-1] += -1
        
         
-  temp = EventFinder.EventList(np.transpose(np.vstack((starts,ends))))
+  temp = Events.EventList(np.transpose(np.vstack((starts, ends))))
   
-  return EventFinder.EventListForOutput(temp,midbody_distance)
+  return Events.EventListWithFeatures(temp, midbody_distance)
   
   """
   coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
