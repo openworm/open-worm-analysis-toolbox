@@ -11,8 +11,8 @@ from wormpy.NormalizedWorm import NormalizedWorm
 from wormpy.WormPlotter import WormPlotter
 from wormpy.WormPlotter import plot_frame_codes
 
-__all__ = ['SchaferExperimentFile', 
-           'WormFeatures', 
+__all__ = ['SchaferExperimentFile',
+           'WormFeatures',
            'fp_isequal', 'corr_value_high',
            'NormalizedWorm',
            'WormPlotter',
