@@ -3,8 +3,9 @@
 
 """
 
-from . import utils
 import numpy as np
+
+from . import utils
 from . import feature_helpers
 from . import config
 from . import feature_comparisons as fc

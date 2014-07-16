@@ -5,13 +5,17 @@ Posture features  ...
 
 
 from __future__ import division
+
+import scipy.ndimage.filters as filters
+import numpy as np
+
 from . import Events
 from . import utils
 from . import config
-import numpy as np
+
 import warnings
 import time
-import scipy.ndimage.filters as filters
+
 import collections
 from . import feature_helpers
 

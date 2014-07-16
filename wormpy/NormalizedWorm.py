@@ -11,14 +11,15 @@
 
 """
 
-import warnings
 import numpy as np
 import scipy.io
+
+import warnings
 import os
-from wormpy import config
+from . import config
+from . import utils
 
-
-class NormalizedWorm():
+class NormalizedWorm(object):
 
     """ 
     NormalizedWorm encapsulates the normalized measures data, loaded
@@ -36,8 +37,6 @@ class NormalizedWorm():
 
     properties / dynamic methods:
       eigen_worms      
-
-      IN data_dict:
 
       EIGENWORM_PATH
       segmentation_status   
@@ -118,22 +117,15 @@ class NormalizedWorm():
           if None is specified, no eigen worm data is loaded
 
         """
+        #TODO: Michael, why are these optional????
         if data_file_path:
             self.load_normalized_data(data_file_path)
 
         if eigen_worm_file_path:
             self.load_eigen_worms(eigen_worm_file_path)
 
-        # all are valid partitions of the worm's 49 skeleton points:
-        # all
-        # head, body, tail
-        # head, neck, midbody, hips, tail
-        # head_tip, head_base, body, tail_base, tail_tip
-        # head_tip, head_base, neck, midbody, hips, tail_base, tail_tip
 
-        # TODO: Who uses midbody - why is this being change
-
-        # These are RANGE values, so the last value is not inclusive ...
+        # These are RANGE values, so the last value is not inclusive
         self.worm_partitions = {'head': (0, 8),
                                 'neck': (8, 16),
                                 'midbody':  (16, 33),
@@ -150,19 +142,11 @@ class NormalizedWorm():
                                 # neck, midbody, and hips
                                 'body': (8, 41)}
 
-        self.worm_partition_subsets = {'normal': ('head', 'neck',
-                                                  'midbody', 'hips', 'tail'),
+        self.worm_partition_subsets = {'normal': ('head', 'neck', 'midbody', 'hips', 'tail'),
                                        'first_third': ('head', 'neck'),
                                        'second_third': ('midbody',),
                                        'last_third': ('hips', 'tail'),
                                        'all': ('all',)}
-
-        # If we want to mimic the old Schafer Lab decisions,
-        # change the partition definitions.
-        # TODO: Who needs this particular value, doesn't match for:
-        # - morphoplogy.length OR turns
-        # if(config.MIMIC_OLD_BEHAVIOUR):
-        #  self.worm_partitions['midbody'] = (20, 29)
 
         # DEBUG: (Note from @MichaelCurrie:)
         # This should be set by the normalized worm file, since each
@@ -170,119 +154,6 @@ class NormalizedWorm():
         # vulva so the ventral mode can be determined.  Here we just set
         # the ventral mode to a default value as a stopgap measure
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
-
-    def get_partition_subset(self, partition_type):
-        """ 
-        There are various ways of partitioning the worm's 49 points.
-        this method returns a subset of the worm partition dictionary
-
-        Parameters
-        ---------------------------------------
-        partition_type: string
-          e.g. 'head'
-
-        Usage
-        ---------------------------------------
-        For example, to see the mean of the head and the mean of the neck, 
-        use the partition subset, 'first_third', like this:
-
-        nw = NormalizedWorm(....)
-
-        width_dict = {k: np.mean(nw.get_partition(k), 0) \
-                  for k in ('head', 'neck')}
-
-        OR, using self.worm_partition_subsets,
-
-        s = nw.get_paritition_subset('first_third')
-        # i.e. s = {'head':(0,8), 'neck':(8,16)}
-
-        width_dict = {k: np.mean(nw.get_partition(k), 0) \
-                  for k in s.keys()}
-
-        Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
-        +seg_worm / @skeleton_indices / skeleton_indices.m
-
-        """
-
-        # parition_type is assumed to be a key for the dictionary
-        # worm_partition_subsets
-        p = self.worm_partition_subsets[partition_type]
-
-        # return only the subset of partitions contained in the particular
-        # subset of interest, p.
-        return {k: self.worm_partitions[k] for k in p}
-
-    def get_subset_partition_mask(self, name):
-        keys = self.worm_partition_subsets[name]
-        mask = np.zeros(49, dtype=bool)
-        for key in keys:
-            mask = mask | self.partition_mask(key)
-
-        return mask
-
-    def partition_mask(self, partition_key):
-        """
-        Returns a boolean numpy array corresponding to the partition requested.
-
-        """
-        mask = np.zeros(49, dtype=bool)
-        slice_val = self.worm_partitions[partition_key]
-        mask[slice(*slice_val)] = True
-        return mask
-
-    def get_partition(self, partition_key, data_key='skeletons',
-                      split_spatial_dimensions=False):
-        """    
-        Retrieve partition of a measurement of the worm, that is, across all
-        available frames but across only a subset of the 49 points.
-
-        Parameters
-        ---------------------------------------    
-        partition_key: string
-          The desired partition.  e.g. 'head', 'tail', etc.
-
-          #TODO: This should be documented better 
-
-          INPUT: a partition key, and an optional data key.
-            If split_spatial_dimensions is True, the partition is returned 
-            separated into x and y
-          OUTPUT: a numpy array containing the data requested, cropped to just
-                  the partition requested.
-                  (so the shape might be, say, 4xn if data is 'angles')
-
-        data_key: string  (optional)
-          The desired measurement (default is 'skeletons')
-
-        split_spatial_dimensions: bool    (optional)
-          If True, the partition is returned separated into x and y
-
-        Returns
-        ---------------------------------------    
-        A numpy array containing the data requested, cropped to just
-        the partition requested.
-        (so the shape might be, say, 4xn if data is 'angles')
-
-        Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
-        +seg_worm / @skeleton_indices / skeleton_indices.m
-
-        """
-        # We use numpy.split to split a data_dict element into three, cleaved
-        # first by the first entry in the duple worm_partitions[partition_key],
-        # and second by the second entry in that duple.
-
-        # Taking the second element of the resulting list of arrays, i.e. [1],
-        # gives the partitioned component we were looking for.
-        partition = np.split(self.data_dict[data_key],
-                             self.worm_partitions[partition_key])[1]
-
-        if(split_spatial_dimensions):
-            return partition[:, 0, :], partition[:, 1,:]
-        else:
-            return partition
 
     def load_normalized_data(self, data_file_path):
         """ 
@@ -352,18 +223,16 @@ class NormalizedWorm():
             # that is, getattr(s, x)  works syntactically just like s.x,
             # only x is a variable, so we can do a list comprehension with it!
             # this is to build up a nice dictionary containing the data in s
-            self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
+            
+            for key in data_keys:
+                setattr(self,key,getattr(staging_data, key))
+            
+            #self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
 
             # Let's change the string of length n to a numpy array of single
             # characters of length n, to be consistent with the other data
             # structures
-            self.data_dict['segmentation_status'] = \
-                np.array(list(self.data_dict['segmentation_status']))
-
-            # TODO: @MichaelCurrie: do this.  but I'm not sure how the file
-            # knows where the eigenworm file is
-            # So I have to think about this step.
-            # self.load_eigen_worms(self.data_dict['EIGENWORM_PATH'])
+            self.segmentation_status = np.array(list(self.segmentation_status))
 
             self.load_frame_code_descriptions()
 
@@ -389,20 +258,124 @@ class NormalizedWorm():
 
         f.close()
 
-    def load_normalized_blocks(self, blocks_path):
+
+    def get_partition_subset(self, partition_type):
         """ 
-        Processes all the MatLab data "blocks" created from the raw 
-        video into one coherent set of data.  This is a translation 
-        of createObjectFromFiles from Jim's original code.
+        There are various ways of partitioning the worm's 49 points.
+        this method returns a subset of the worm partition dictionary
+
+        TODO: This method still is not obvious to me. Also, we should move
+        these things to a separate class.
+
+        Parameters
+        ---------------------------------------
+        partition_type: string
+          e.g. 'head'
+
+        Usage
+        ---------------------------------------
+        For example, to see the mean of the head and the mean of the neck, 
+        use the partition subset, 'first_third', like this:
+
+        nw = NormalizedWorm(....)
+
+        width_dict = {k: np.mean(nw.get_partition(k), 0) for k in ('head', 'neck')}
+
+        OR, using self.worm_partition_subsets,
+
+        s = nw.get_paritition_subset('first_third')
+        # i.e. s = {'head':(0,8), 'neck':(8,16)}
+
+        width_dict = {k: np.mean(nw.get_partition(k), 0) for k in s.keys()}
 
         Notes
         ---------------------------------------    
-        From @MichaelCurrie: This appears to be the old way of doing this.
-        I'll hold off translating this "block" processor.  
-        I think norm_obj.mat actually maps directly to the structure I need.
+        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+        +seg_worm / @skeleton_indices / skeleton_indices.m
 
         """
-        pass
+
+        # parition_type is assumed to be a key for the dictionary
+        # worm_partition_subsets
+        p = self.worm_partition_subsets[partition_type]
+
+        # return only the subset of partitions contained in the particular
+        # subset of interest, p.
+        return {k: self.worm_partitions[k] for k in p}
+
+    def get_subset_partition_mask(self, name):
+        """
+        Returns a boolean mask - for working with arrays given a partition.
+        """
+        keys = self.worm_partition_subsets[name]
+        mask = np.zeros(49, dtype=bool)
+        for key in keys:
+            mask = mask | self.partition_mask(key)
+
+        return mask
+
+    def partition_mask(self, partition_key):
+        """
+        Returns a boolean numpy array corresponding to the partition requested.
+
+        """
+        mask = np.zeros(49, dtype=bool)
+        slice_val = self.worm_partitions[partition_key]
+        mask[slice(*slice_val)] = True
+        return mask
+
+    def get_partition(self, partition_key, data_key='skeletons',
+                      split_spatial_dimensions=False):
+        """    
+        Retrieve partition of a measurement of the worm, that is, across all
+        available frames but across only a subset of the 49 points.
+
+        Parameters
+        ---------------------------------------    
+        partition_key: string
+          The desired partition.  e.g. 'head', 'tail', etc.
+
+          #TODO: This should be documented better 
+
+          INPUT: a partition key, and an optional data key.
+            If split_spatial_dimensions is True, the partition is returned 
+            separated into x and y
+          OUTPUT: a numpy array containing the data requested, cropped to just
+                  the partition requested.
+                  (so the shape might be, say, 4xn if data is 'angles')
+
+        data_key: string  (optional)
+          The desired measurement (default is 'skeletons')
+
+        split_spatial_dimensions: bool    (optional)
+          If True, the partition is returned separated into x and y
+
+        Returns
+        ---------------------------------------    
+        A numpy array containing the data requested, cropped to just
+        the partition requested.
+        (so the shape might be, say, 4xn if data is 'angles')
+
+        Notes
+        ---------------------------------------    
+        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+        +seg_worm / @skeleton_indices / skeleton_indices.m
+
+        """
+        # We use numpy.split to split a data_dict element into three, cleaved
+        # first by the first entry in the duple worm_partitions[partition_key],
+        # and second by the second entry in that duple.
+
+        # Taking the second element of the resulting list of arrays, i.e. [1],
+        # gives the partitioned component we were looking for.
+        partition = np.split(getattr(self,data_key),
+                             self.worm_partitions[partition_key])[1]
+
+        if(split_spatial_dimensions):
+            return partition[:, 0, :], partition[:, 1,:]
+        else:
+            return partition
+
 
     def rotate(self, theta_d):
         """   
@@ -444,7 +417,7 @@ class NormalizedWorm():
         frames, giving for each frame the mean of the skeleton points.
 
         """
-        s = self.data_dict['skeletons']
+        s = self.skeletons
         with warnings.catch_warnings():
             temp = np.nanmean(s, 0, keepdims=False)
 
@@ -461,7 +434,7 @@ class NormalizedWorm():
         the angle formed by the first and last skeleton point.
 
         """
-        s = self.data_dict['skeletons']
+        s = self.skeletons
         # obtain vector between first and last skeleton point
         v = s[48, :,:]-s[0,:,:]  
         # find the angle of this vector
@@ -477,7 +450,7 @@ class NormalizedWorm():
         A NormalizedWorm instance with the above properties.
 
         """
-        s = self.data_dict['skeletons']
+        s = self.skeletons
         s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
 
         #nw2 = NormalizedWorm()
@@ -595,7 +568,7 @@ class NormalizedWorm():
 
         # ndarray.shape returns a tuple of array dimensions.
         # the frames are along the first dimension i.e. [0].
-        return self.data_dict['skeletons'].shape[2]
+        return self.skeletons.shape[2]
 
     @property
     def is_segmented(self):
@@ -604,7 +577,7 @@ class NormalizedWorm():
         or not, frame-by-frame, the given frame was segmented
 
         """
-        return self.data_dict['segmentation_status'] == 's'
+        return self.segmentation_status == 's'
 
     def position_limits(self, dimension, measurement='skeletons'):
         """ 
@@ -620,7 +593,7 @@ class NormalizedWorm():
         nanmin returns the min ignoring such NaNs.
 
         """
-        d = self.data_dict[measurement]
+        d = getattr(self,measurement)
         if(len(np.shape(d)) < 3):
             raise Exception("Position Limits Is Only Implemented for 2D data")
         return (np.nanmin(d[dimension, 0, :]), 
@@ -634,20 +607,28 @@ class NormalizedWorm():
                 those on the second set. We also reverse the contour so that
                 it encompasses an "out and back" contour
         """
-        vc = self.data_dict['vulva_contours']
-        nvc = self.data_dict['non_vulva_contours']
+        vc = self.vulva_contours
+        nvc = self.non_vulva_contours
         return np.concatenate((vc[:, 0, :], nvc[-2:0:-1, 0,:]))    
 
     @property
     def contour_y(self):
-        vc = self.data_dict['vulva_contours']
-        nvc = self.data_dict['non_vulva_contours']
+        vc = self.vulva_contours
+        nvc = self.non_vulva_contours
         return np.concatenate((vc[:, 1, :], nvc[-2:0:-1, 1,:]))    
 
     @property
     def skeleton_x(self):
-        return self.data_dict['skeletons'][:, 0, :]
+        return self.skeletons[:, 0, :]
 
     @property
     def skeleton_y(self):
-        return self.data_dict['skeletons'][:, 1, :]
+        return self.skeletons[:, 1, :]
+
+    def __repr__(self):
+        #TODO: This omits the properties above ...
+        return utils.print_object(self)
+
+class SkeletonPartitions(object):
+    #TODO: This needs to be implemented
+    pass

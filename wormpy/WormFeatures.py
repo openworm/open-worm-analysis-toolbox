@@ -35,6 +35,7 @@ from wormpy import user_config
 from wormpy import feature_helpers
 from . import path_features
 from . import posture_features
+from . import locomotion_features
 from . import utils
 from . import locomotion_bends
 from . import locomotion_turns
@@ -82,7 +83,7 @@ class WormMorphology(object):
 
     def __init__(self, nw):
 
-        self.length = nw.data_dict['lengths']
+        self.length = nw.lengths
         # each item in this sub-dictionary is the per-frame mean across some
         # part of the worm the head, midbody and tail.
         #
@@ -95,11 +96,10 @@ class WormMorphology(object):
         nt = collections.namedtuple('Widths', width_dict.keys())
         self.width = nt(**width_dict)
 
-        # TODO: The access from nw should be cleaned up, e.g. nw.head_areas
-        self.area = nw.data_dict['tail_areas']      + \
-            nw.data_dict['head_areas']      + \
-            nw.data_dict['vulva_areas']     + \
-            nw.data_dict['non_vulva_areas']
+        self.area = nw.tail_areas + \
+            nw.head_areas + \
+            nw.vulva_areas + \
+            nw.non_vulva_areas
 
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
@@ -228,7 +228,7 @@ class WormLocomotion(object):
         #      {
         #        'Midbody Speed': self.velocity['midbody']['speed'],
         #        'config.FPS': np.array([config.FPS],dtype='float'),
-        #        'lengths': nw.data_dict['lengths']
+        #        'lengths': nw.lengths
         #      },
         #      'motion_codes_input'
         #      )
@@ -236,13 +236,14 @@ class WormLocomotion(object):
         # let's use a shorthand
         nw = normalized_worm
 
-        self.velocity = feature_helpers.get_worm_velocity(nw)
+        self.velocity = locomotion_features.get_worm_velocity(nw)
 
-        self.motion_events = \
-            feature_helpers.get_motion_codes(self.velocity['midbody']['speed'],
-                                             nw.data_dict['lengths'])
+        self.motion_events = locomotion_features.get_motion_codes(\
+                                    self.velocity['midbody']['speed'],
+                                             nw.lengths)
 
         # TODO: I'm not a big fan of how this is done ...
+        # I'd prefer a tuple output from above ...
         self.motion_mode = self.motion_events['mode']
 
         del self.motion_events['mode']
@@ -250,19 +251,17 @@ class WormLocomotion(object):
         self.is_paused = self.motion_mode == 0
 
         self.bends = locomotion_bends.LocomotionCrawlingBends(
-            nw.data_dict['angles'],
+            nw.angles,
             self.is_paused,
             nw.is_segmented)
 
         self.foraging = locomotion_bends.LocomotionForagingBends(
-            nw,
-            nw.is_segmented,
-            nw.ventral_mode)
+            nw,nw.is_segmented,nw.ventral_mode)
 
         midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
-        is_stage_movement = nw.data_dict['segmentation_status'] == 'm'
+        is_stage_movement = nw.segmentation_status == 'm'
 
-        self.turns = locomotion_turns.LocomotionTurns(nw, nw.data_dict['angles'],
+        self.turns = locomotion_turns.LocomotionTurns(nw, nw.angles,
                                                       is_stage_movement,
                                                       midbody_distance,
                                                       nw.skeleton_x,
@@ -314,6 +313,9 @@ class WormLocomotion(object):
         # Test motion codes
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
             return False
+
+        import pdb
+        pdb.set_trace()
 
         # TODO: bends - Not Yet Implemented
         #--------------------
@@ -374,6 +376,8 @@ class WormLocomotion(object):
         else:
             raise Exception('Not yet implemented')
 
+        import pdb
+        pdb.set_trace()
         # TODO: bends - Not Yet Implemented
         #--------------------
         #    foraging: [1x1 struct]
@@ -463,7 +467,7 @@ class WormPosture(object):
             self.orientation,
             nw.skeleton_x,
             nw.skeleton_y,
-            nw.data_dict['lengths'])
+            nw.lengths)
 
         self.amplitude_max = amp_wave_track.amplitude_max
         self.amplitude_ratio = amp_wave_track.amplitude_ratio
@@ -472,10 +476,10 @@ class WormPosture(object):
         self.track_length = amp_wave_track.track_length
 
         # *** 4. Kinks *** DONE
-        self.kinks = posture_features.get_worm_kinks(nw.data_dict['angles'])
+        self.kinks = posture_features.get_worm_kinks(nw.angles)
 
         # *** 5. Coils ***
-        frame_codes = nw.data_dict['frame_codes']
+        frame_codes = nw.frame_codes
         self.coils = posture_features.get_worm_coils(
             frame_codes, midbody_distance)
 
@@ -614,7 +618,7 @@ class WormPath(object):
         #---------------------------------------------------
         sx = nw.skeleton_x
         sy = nw.skeleton_y
-        widths = nw.data_dict['widths']
+        widths = nw.widths
         self.duration = path_features.Duration(nw, sx, sy, widths, config.FPS)
 
         #Coordinates (Done)
