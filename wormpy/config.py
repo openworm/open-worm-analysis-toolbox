@@ -30,12 +30,11 @@ MIMIC_OLD_BEHAVIOUR = True
 # Frames Per Second
 # (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
 # JAH to MC; Why?
-#This is the frame rate of the test video. 
+# This is the frame rate of the test video.
 # TODO: This needs to be moved elsewhere, in fact made into a parameter
-FPS = 25.8398 
+FPS = 25.8398
 # DEBUG: might not need to be here but used in Path code and Locomotion code
-DEFAULT_VENTRAL_MODE = 0   
-
+DEFAULT_VENTRAL_MODE = 0
 
 
 """ 
@@ -43,35 +42,35 @@ DEFAULT_VENTRAL_MODE = 0
 ----------    Posture Features     ----------
 ---------------------------------------------
 """
-#posture_features.get_worm_kinks
-KINK_LENGTH_THRESHOLD_PCT = 1/12 #This the fraction of the worm length
-#that a bend must be in order to be counted. The # of worm points 
-#(this_value*worm_length_in_samples) is rounded to an integer value. 
-#The threshold value is inclusive.
+# posture_features.get_worm_kinks
+KINK_LENGTH_THRESHOLD_PCT = 1 / 12  # This the fraction of the worm length
+# that a bend must be in order to be counted. The # of worm points
+#(this_value*worm_length_in_samples) is rounded to an integer value.
+# The threshold value is inclusive.
 
-#posture_features.get_eccentricity_and_orientation    
-N_ECCENTRICITY = 50 # Grid size for estimating eccentricity, this is the
+# posture_features.get_eccentricity_and_orientation
+N_ECCENTRICITY = 50  # Grid size for estimating eccentricity, this is the
 # max # of points that will fill the wide dimension.
 # (scalar) The # of points to place in the long dimension. More points
 # gives a more accurate estimate of the ellipse but increases
 # the calculation time.
- 
 
-POSTURE_AMPLITURE_AND_WAVELENGTH = { \
-  'N_POINTS_FFT': 512, 
-  # NOTE: Unfortunately the distance is in normalized
-  # frequency units (indices really), not in real frequency units
-  'MIN_DIST_PEAKS': 5, 
-  'WAVELENGTH_PCT_MAX_CUTOFF': 0.5,  # TODO: describe
-  'WAVELENGTH_PCT_CUTOFF': 2}        # TODO: describe
-  
+
+POSTURE_AMPLITURE_AND_WAVELENGTH = {
+    'N_POINTS_FFT': 512,
+    # NOTE: Unfortunately the distance is in normalized
+    # frequency units (indices really), not in real frequency units
+    'MIN_DIST_PEAKS': 5,
+    'WAVELENGTH_PCT_MAX_CUTOFF': 0.5,  # TODO: describe
+    'WAVELENGTH_PCT_CUTOFF': 2}        # TODO: describe
+
 POSTURE_AMPLITURE_AND_WAVELENGTH['HALF_N_FFT'] = \
-  POSTURE_AMPLITURE_AND_WAVELENGTH['N_POINTS_FFT']/2
+    POSTURE_AMPLITURE_AND_WAVELENGTH['N_POINTS_FFT'] / 2
 
 
 """ Locomotion Features """
 # used in get_velocity:
-TIP_DIFF  = 0.25
+TIP_DIFF = 0.25
 BODY_DIFF = 0.5
 
 
@@ -82,9 +81,9 @@ BODY_DIFF = 0.5
 # If set to "None", interpolate all lengths (i.e. infinity)
 MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE = None
 # These are a percentage of the length
-SPEED_THRESHOLD_PCT   = 0.05
+SPEED_THRESHOLD_PCT = 0.05
 DISTANCE_THRSHOLD_PCT = 0.05
-PAUSE_THRESHOLD_PCT   = 0.025
+PAUSE_THRESHOLD_PCT = 0.025
 #   These are times (s)
 EVENT_MIN_FRAMES_THRESHOLD = 0.5    # Half a second
 EVENT_MAX_INTER_FRAMES_THRESHOLD = 0.25
@@ -93,17 +92,16 @@ EVENT_MAX_INTER_FRAMES_THRESHOLD = 0.25
 # When retrieving the final structure
 # this is the name given to the field that contains the
 # sum of the input data during the event
-DATA_SUM_NAME       = 'distance'
+DATA_SUM_NAME = 'distance'
 # same as above but for BETWEEN events
 INTER_DATA_SUM_NAME = 'interDistance'
 
 # Whether to use >= or > as the comparison:
-INCLUDE_AT_SPEED_THRESHOLD = True  
+INCLUDE_AT_SPEED_THRESHOLD = True
 INCLUDE_AT_DISTANCE_THRESHOLD = True
 INCLUDE_AT_FRAMES_THRESHOLD = False
 INCLUDE_AT_INTER_FRAMES_THRESHOLD = False
 
 
-
 # used in WormPosture
-N_EIGENWORMS_USE = 6 
+N_EIGENWORMS_USE = 6
