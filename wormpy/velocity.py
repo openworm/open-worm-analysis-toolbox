@@ -1,278 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-  feature_helpers.py
-  
-  @authors: @MichaelCurrie, @JimHokanson
-  
-  Some helper functions that assist in the calculation of the attributes of
-  WormFeatures
-  
+Velocity calculation methods: used in locomotion and in path features
+
 """
-
-from __future__ import division  # distance/time compute_velocity
-
-import numpy as np
+from __future__ import division
 
 import warnings
-from itertools import groupby
+import numpy as np
 
-import csv
-from wormpy import config
+from . import config
 
-#Debugging stuffs ...
-# np.seterr(all='raise')           # DEBUG
-from . import utils
-import matplotlib.pyplot as plt
-import pdb
-
-__ALL__ = ['get_motion_codes',                  # for locomotion
-           'get_worm_velocity',                 # for locomotion
-           'get_bends',                         # for posture
-           'get_amplitude_and_wavelength',      # for posture
-           'get_eccentricity_and_orientation',  # for posture
-           'gausswin']
-
-
-def write_to_CSV(data_dict, filename):
-    """
-    Writes data to a CSV file, by saving it to the directory os.getcwd()
-
-    Parameters
-    ---------------------------------------
-    data_dict: a dictionary of 1-dim ndarrays of dtype=float
-      What is to be written to the file.  data.keys() provide the headers,
-      and each column in turn is provided by the value for that key
-    filename: string
-      Name of file to be saved (not including the '.csv' part of the name)
-
-    """
-    csv_file = open(filename + '.csv', 'w')
-    writer = csv.writer(csv_file, lineterminator='\n')
-
-    # The first row of the file is the keys
-    writer.writerow(list(data_dict.keys()))
-
-    # Find the maximum number of rows across all our columns:
-    max_rows = max([len(x) for x in list(data_dict.values())])
-
-    # Combine all the dictionary entries so we can write them
-    # row-by-row.
-    columns_to_write = []
-    for column_key in data_dict.keys():
-        column = list(data_dict[column_key])
-        # Create a mask that shows True for any unused "rows"
-        m = np.concatenate([np.zeros(len(column), dtype=bool),
-                            np.ones(max_rows - len(column), dtype=bool)])
-        # Create a masked array of size max_rows with unused entries masked
-        column_masked = np.ma.array(np.resize(column, max_rows), mask=m)
-        # Convert the masked array to an ndarray with the masked values
-        # changed to NaNs
-        column_masked = column_masked.filled(np.NaN)
-        # Append this ndarray to our list
-        columns_to_write.append(column_masked)
-
-    # Combine each column's entries into an ndarray
-    data_ndarray = np.vstack(columns_to_write)
-
-    # We need the transpose so the individual data lists become transposed
-    # to columns
-    data_ndarray = data_ndarray.transpose()
-
-    # We need in the form of nested sequences to satisfy csv.writer
-    rows_to_write = data_ndarray.tolist()
-
-    for row in rows_to_write:
-        writer.writerow(list(row))
-
-    csv_file.close()
-
-
-"""----------------------------------------------------
-    motion codes:
-    
-    
-"""
-
-"""  
-  
-"""
-
-
-def interpolate_with_threshold(array,
-                               threshold=None,
-                               make_copy=True,
-                               extrapolate=False):
-    """
-    Linearly interpolate a numpy array along one dimension but only 
-    for missing data n frames from a valid data point.  That is, 
-    if there are too many contiguous missing data points, none of 
-    those points get interpolated.
-
-
-    Parameters
-    ---------------------------------------
-    array: 1-dimensional numpy array
-      The array to be interpolated
-
-    threshold: int
-      The maximum size of a contiguous set of missing data points
-      that gets interpolated.  Sets larger than this are left as NaNs.
-      If threshold is set to NaN then all points are interpolated.
-
-    make_copy: bool
-      If True, do not modify the array parameter
-      If False, interpolate the array parameter "in place"
-      Either way, return a reference to the interpolated array
-
-    extrapolate: bool
-      If True, extrapolate linearly to the beginning and end of the array
-      if there are NaNs on either end.
-
-    Returns
-    ---------------------------------------
-    numpy array with the values interpolated
-
-
-    Usage Example
-    ---------------------------------------
-    # example array  
-    a = np.array([10, 12, 15, np.NaN, 17, \
-                  np.NaN, np.NaN, np.NaN, -5], dtype='float')
-
-    a2 = interpolate_with_threshold(a, 5)
-
-    print(a)
-    print(a2)
-
-
-    Notes
-    ---------------------------------------
-    TODO: Extrapolation currently not implemented.  Perhaps try
-    http://stackoverflow.com/questions/2745329/
-
-    """
-
-    """
-  # (SKIP THIS, THIS IS FOR THE N-DIMENSIONAL CASE WHICH WE
-  # HAVE NOT IMPLEMENTED YET)
-    # Check that any frames with NaN in at least one dimension must
-    # have it in all:
-    frames_with_at_least_one_NaN = np.all(np.isnan(array), frame_dimension)
-    frames_with_no_NaNs          = np.all(~np.isnan(array), frame_dimension)
-    # check that each frame is either True for one of these arrays or 
-    # the other but not both.
-    assert(np.logical_xor(frames_with_at_least_one_NaN, frames_with_no_NaNs))
-    frame_dropped = frames_with_at_least_one_NaN
-
-  """
-
-    assert(threshold == None or threshold >= 0)
-
-    if(threshold == 0):  # everything gets left as NaN
-        return array
-
-    # Say array = [10, 12, 15, nan, 17, nan, nan, nan, -5]
-    # Then np.isnan(array) =
-    # [False, False, False, True, False True, True, True, False]
-    # Let's obtain the "x-coordinates" of the NaN entries.
-    # e.g. [3, 5, 6, 7]
-    x = np.flatnonzero(np.isnan(array))
-
-    # (If we weren't using a threshold and just interpolating all NaNs,
-    # we could skip the next four lines.)
-    if(threshold != None):
-        # Group these together using a fancy trick from
-        # http://stackoverflow.com/questions/2154249/, since
-        # the lambda function x:x[0]-x[1] on an enumerated list will
-        # group consecutive integers together
-        # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
-        x_grouped = [list(group) for key, group in groupby(enumerate(x),
-                                                           lambda i:i[0] - i[1])]
-
-        # We want to know the first element from each "run", and the run's length
-        # e.g. [(3, 1), (5, 3)]
-        x_runs = [(i[0][1], len(i)) for i in x_grouped]
-
-        # We need only interpolate on runs of length <= threshold
-        # e.g. if threshold = 2, then we have only [(3, 1)]
-        x_runs = [i for i in x_runs if i[1] <= threshold]
-
-        # now expand the remaining runs
-        # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
-        #      x would be [3, 5, 6, 7]
-        # this give us the x-coordinates of the values to be interpolated:
-        x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
-
-    # The x-coordinates of the data points, must be increasing.
-    xp = np.flatnonzero(~np.isnan(array))
-    # The y-coordinates of the data points, same length as xp
-    yp = array[~np.isnan(array)]
-
-    if make_copy:
-        # Use a new array so we don't modify the original array passed to us
-        new_array = np.copy(array)
-    else:
-        new_array = array
-
-    if extrapolate:
-        # TODO
-        # :/  Might need to use scipy
-        # also, careful of the "left" and "right" settings below
-        pass
-
-    # Place the interpolated values into the array
-    # the "left" and "right" here mean that we want to leave NaNs in place
-    # if the array begins and/or ends with a sequence of NaNs (i.e. don't
-    # try to extrapolate)
-    new_array[x] = np.interp(x, xp, yp, left=np.NaN, right=np.NaN)
-
-    return new_array
-
-
-def interpolate_with_threshold_2D(array, threshold=None, extrapolate=False):
-    """
-    Interpolate two-dimensional data along the second axis.  Each "row"
-    is treated as a separate interpolation.  So if the first axis has 4 
-    rows of n frames in the second axis, we are interpolating 4 times.
-
-    Parameters
-    ---------------------------------------    
-    x_old       : [m x n_frames]
-      The array to be interpolated along the second axis
-
-    threshold: int (Optional)
-      Number of contiguous frames above which no interpolation is done
-      If none specified, all NaN frames are interpolated
-
-    extrapolate: bool (Optional)
-      If yes, values are extrapolated to the start and end, along the second
-      axis (the axis being interpolated)
-
-    Notes
-    ---------------------------------------    
-    This could be optimized with a specialized function for the case
-    when all the NaN entries line up along the first dimension.  We'd 
-    only need to calculate the mask once rather than m times.
-
-    """
-    new_array = array.copy()
-
-    # NOTE: This version is a bit weird because the size of y is not 1d
-    for i1 in range(np.shape(array)[0]):
-        new_array[i1,:] = interpolate_with_threshold(array[i1,:],
-                                                     threshold,
-                                                     make_copy=True,
-                                                     extrapolate=extrapolate)
-
-    return new_array
-
-
-
-
-
-"""----------------------------------------------------
-    Velocity:
-"""
+__ALL__ = ['get_angles',
+           'get_partition_angles',
+           'h__computeAngularSpeed',
+           'compute_velocity',
+           'get_frames_per_sample']
 
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
@@ -551,49 +293,6 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
     return keep_mask, left_I, right_I
 
 
-def get_frames_per_sample(sample_time):
-    """
-
-    Matlab code: getWindowWidthAsInteger
-
-
-      get_window_width:
-        We require sampling_scale to be an odd integer
-        We calculate the scale as a scalar multiple of FPS.  We require the 
-        scalar multiple of FPS to be an ODD INTEGER.
-
-        INPUT: sample_time: number of seconds to sample.
-    """
-
-    ostensive_sampling_scale = sample_time * config.FPS
-
-    # Code would be better as: (Matlab code shown)
-    #------------------------------------------------
-    #half_scale = round(window_width_as_samples/2);
-    #window_width_integer = 2*half_scale + 1;
-
-    # We need sampling_scale to be an odd integer, so
-    # first we check if we already have an integer.
-    if((ostensive_sampling_scale).is_integer()):
-        # In this case ostensive_sampling_scale is an integer.
-        # But is it odd or even?
-        if(ostensive_sampling_scale % 2 == 0):  # EVEN so add one
-            sampling_scale = ostensive_sampling_scale + 1
-        else:                                  # ODD
-            sampling_scale = ostensive_sampling_scale
-    else:
-        # Otherwise, ostensive_sampling_scale is not an integer,
-        # so take the nearest odd integerw
-        sampling_scale_low = np.floor(ostensive_sampling_scale)
-        sampling_scale_high = np.ceil(ostensive_sampling_scale)
-        if(sampling_scale_high % 2 == 0):
-            sampling_scale = sampling_scale_low
-        else:
-            sampling_scale = sampling_scale_high
-
-    assert(sampling_scale.is_integer())
-    return int(sampling_scale)
-
 
 def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     """
@@ -720,42 +419,45 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     #            'body_direction': body_direction,
 
 
-
-
-
-def gausswin(L, alpha=2.5):
-    """
-    An N-point Gaussian window with alpha proportional to the 
-    reciprocal of the standard deviation.  The width of the window
-    is inversely related to the value of alpha.  A larger value of
-    alpha produces a more narrow window.
-
-
-    Parameters
-    ----------------------------
-    L : int
-    alpha : float
-      Defaults to 2.5
-
-    Returns
-    ----------------------------
-
-
-    Notes
-    ----------------------------
-    TODO: I am ignoring some corner cases, for example:
-      #L - negative, error  
-      #L = 0
-      #w => empty
-      #L = 1
-      #w = 1      
-
-    Equivalent of Matlab's gausswin function.
-
+def get_frames_per_sample(sample_time):
     """
 
-    N = L - 1
-    n = np.arange(0, N + 1) - N / 2
-    w = np.exp(-(1 / 2) * (alpha * n / (N / 2)) ** 2)
+    Matlab code: getWindowWidthAsInteger
 
-    return w
+
+      get_window_width:
+        We require sampling_scale to be an odd integer
+        We calculate the scale as a scalar multiple of FPS.  We require the 
+        scalar multiple of FPS to be an ODD INTEGER.
+
+        INPUT: sample_time: number of seconds to sample.
+    """
+
+    ostensive_sampling_scale = sample_time * config.FPS
+
+    # Code would be better as: (Matlab code shown)
+    #------------------------------------------------
+    #half_scale = round(window_width_as_samples/2);
+    #window_width_integer = 2*half_scale + 1;
+
+    # We need sampling_scale to be an odd integer, so
+    # first we check if we already have an integer.
+    if((ostensive_sampling_scale).is_integer()):
+        # In this case ostensive_sampling_scale is an integer.
+        # But is it odd or even?
+        if(ostensive_sampling_scale % 2 == 0):  # EVEN so add one
+            sampling_scale = ostensive_sampling_scale + 1
+        else:                                  # ODD
+            sampling_scale = ostensive_sampling_scale
+    else:
+        # Otherwise, ostensive_sampling_scale is not an integer,
+        # so take the nearest odd integerw
+        sampling_scale_low = np.floor(ostensive_sampling_scale)
+        sampling_scale_high = np.ceil(ostensive_sampling_scale)
+        if(sampling_scale_high % 2 == 0):
+            sampling_scale = sampling_scale_low
+        else:
+            sampling_scale = sampling_scale_high
+
+    assert(sampling_scale.is_integer())
+    return int(sampling_scale)

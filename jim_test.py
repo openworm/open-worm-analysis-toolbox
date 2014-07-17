@@ -5,6 +5,7 @@ Test harness for OpenWorm's movement validation tool
 @authors: @JimHokanson, @MichaelCurrie
 
 """
+
 import os
 from wormpy import user_config
 from wormpy import NormalizedWorm

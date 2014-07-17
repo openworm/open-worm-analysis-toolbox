@@ -5,9 +5,12 @@ Insert description here
 
 import numpy as np
 
-from . import Events
-from . import feature_helpers as fh
+from . import events
+from . import utils
 from . import config
+# To avoid conflicting with variables named 'velocity', we 
+# import this as 'velocity_module':
+from . import velocity as velocity_module 
 
 def get_worm_velocity(nw, ventral_mode=0):
     """
@@ -52,7 +55,8 @@ def get_worm_velocity(nw, ventral_mode=0):
     if(config.MIMIC_OLD_BEHAVIOUR):
         data_keys[2] = 'old_midbody_velocity'
 
-    avg_body_angle = fh.get_partition_angles(nw, partition_key='body',
+    avg_body_angle = velocity_module.get_partition_angles(nw, 
+                                          partition_key='body',
                                           data_key='skeletons',
                                           head_to_tail=False)  # reverse
 
@@ -71,7 +75,7 @@ def get_worm_velocity(nw, ventral_mode=0):
     for partition_key, data_key in zip(partition_keys, data_keys):
         x, y = nw.get_partition(data_key, 'skeletons', True)
 
-        speed, direction = fh.compute_velocity(x, y,
+        speed, direction = velocity_module.compute_velocity(x, y,
                                             avg_body_angle,
                                             sample_time_values[partition_key],
                                             ventral_mode)[0:2]
@@ -119,8 +123,9 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     distance_per_frame = abs(midbody_speed / config.FPS)
 
     #  Interpolate the missing lengths.
-    skeleton_lengths = fh.interpolate_with_threshold(skeleton_lengths,
-                                                     config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
+    skeleton_lengths = utils.interpolate_with_threshold(
+                           skeleton_lengths,
+                           config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
 
     #===================================
     # SPACE CONSTRAINTS
@@ -180,7 +185,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
     for motion_type in frame_values:
         # We will use EventFinder to determine when the
         # event type "motion_type" occurred
-        ef = Events.EventFinder()
+        ef = events.EventFinder()
 
         # "Space and time" constraints
         ef.min_distance_threshold = min_distance[motion_type]
@@ -202,7 +207,7 @@ def get_motion_codes(midbody_speed, skeleton_lengths):
 
         # Take the start and stop indices and convert them to the structure
         # used in the feature files
-        m_event = Events.EventListWithFeatures(event_list,
+        m_event = events.EventListWithFeatures(event_list,
                                                distance_per_frame,
                                                compute_distance_during_event=True)
 

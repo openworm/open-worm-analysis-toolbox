@@ -25,13 +25,14 @@ SegwormMatlabClasses /
 
 """
 
-from . import feature_comparisons as fc
-from . import Events
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
-from wormpy import config
-from wormpy import user_config
+
+from . import feature_comparisons as fc
+from . import events
+from . import config
+from . import user_config
 from . import path_features
 from . import posture_features
 from . import locomotion_features
@@ -365,7 +366,7 @@ class WormLocomotion(object):
             motion_ref = m_var['motion']
             for key in ['forward', 'backward', 'paused']:
                 self.motion_events[key] = \
-                    Events.EventListWithFeatures.from_disk(
+                    events.EventListWithFeatures.from_disk(
                         motion_ref[key], 'MRC')
 
             self.motion_mode = _extract_time_from_disk(motion_ref, 'mode')
@@ -517,7 +518,7 @@ class WormPosture(object):
         self.eccentricity = _extract_time_from_disk(p_var, 'eccentricity')
         self.kinks = _extract_time_from_disk(p_var, 'kinks')
 
-        Events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
+        events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
 
         self.directions = posture_features.Directions.from_disk(
             p_var['directions'])

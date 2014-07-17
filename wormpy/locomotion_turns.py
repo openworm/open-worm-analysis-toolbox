@@ -45,11 +45,12 @@ indexing - @JimHokanson
 import warnings
 import operator
 import re
-from . import Events
-from . import feature_helpers
-from . import config
 import numpy as np
 import collections
+
+from . import events
+from . import config
+from . import utils
 
 
 class LocomotionTurns(object):
@@ -122,8 +123,8 @@ class LocomotionTurns(object):
         # value in each angle vector
         if n_head < 2 or n_body < 2 or n_tail < 2:
             # Make omegas and upsilons into blank events lists and return
-            self.omegas = Events.EventListWithFeatures(make_null=True)
-            self.upsilons = Events.EventListWithFeatures(make_null=True)
+            self.omegas = events.EventListWithFeatures(make_null=True)
+            self.upsilons = events.EventListWithFeatures(make_null=True)
             return
 
         # Interpolate the angles.  angles is modified.
@@ -220,11 +221,11 @@ class LocomotionTurns(object):
         Formerly a = h__interpolateAngles(a, MAX_INTERPOLATION_GAP_ALLOWED)
 
         TODO: Incorporate into the former
-        seg_worm.feature_helpers.interpolateNanData
+        seg_worm.utils.interpolateNanData
 
         """
         # Let's use a shorter expression for clarity
-        interp = feature_helpers.interpolate_with_threshold
+        interp = utils.interpolate_with_threshold
 
         # This might not actually have been applied - SEGWORM_MC used BodyAngles
         # - @JimHokanson
@@ -504,7 +505,7 @@ class OmegaTurns(object):
 
         MIN_OMEGA_EVENT_LENGTH = round(FPS / 4)
 
-        body_angles_i = feature_helpers.\
+        body_angles_i = utils.\
             interpolate_with_threshold(body_angles, extrapolate=True)
 
         self.omegas = None  # DEBUG: remove once the below code is ready
@@ -656,7 +657,7 @@ class OmegaTurns(object):
         # Fix the th_angles through interpolation
         #----------------------------------------------------
         th_angle = \
-            feature_helpers.interpolate_with_threshold(th_angle,
+            utils.interpolate_with_threshold(th_angle,
                                                        MAX_INTERP_GAP_SIZE + 1,
                                                        make_copy=False,
                                                        extrapolate=False)
@@ -757,7 +758,7 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
 
     """
 
-    ef = Events.EventFinder()
+    ef = events.EventFinder()
 
     ef.include_at_frames_threshold = True
 
@@ -775,10 +776,10 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     frames_ventral = ef.get_events(signed_frames)
 
     # Unify the ventral and dorsal turns.
-    [frames_merged, is_ventral] = Events.EventList.merge(frames_ventral,
+    [frames_merged, is_ventral] = events.EventList.merge(frames_ventral,
                                                          frames_dorsal)
 
-    turn_event_output = Events.EventListWithFeatures(frames_merged,
+    turn_event_output = events.EventListWithFeatures(frames_merged,
                                                      midbody_distance)
 
     turn_event_output.is_ventral = is_ventral
