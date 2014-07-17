@@ -32,7 +32,6 @@ import numpy as np
 import collections  # For namedtuple
 from wormpy import config
 from wormpy import user_config
-from wormpy import feature_helpers
 from . import path_features
 from . import posture_features
 from . import locomotion_features
@@ -314,9 +313,6 @@ class WormLocomotion(object):
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
             return False
 
-        import pdb
-        pdb.set_trace()
-
         # TODO: bends - Not Yet Implemented
         #--------------------
         #    foraging: [1x1 struct]
@@ -376,8 +372,6 @@ class WormLocomotion(object):
         else:
             raise Exception('Not yet implemented')
 
-        import pdb
-        pdb.set_trace()
         # TODO: bends - Not Yet Implemented
         #--------------------
         #    foraging: [1x1 struct]
