@@ -565,7 +565,12 @@ class EventList(object):
         Formerly n_events
 
         """
-        return len(self.start_frames)
+        #TODO: I think we are mixing lists and numpy arrays - let's remove the lists
+        #TypeError: object of type 'numpy.float64' has no len()
+        try:
+            return len(self.start_frames)
+        except TypeError:
+            return self.start_frames.size
 
     @property
     def last_event_frame(self):
@@ -906,8 +911,12 @@ class EventListWithFeatures(EventList):
     """
 
         if ref_format is 'MRC':
-            frames = event_ref['frames']
-
+            try:
+                frames = event_ref['frames']
+            except:
+                import pdb
+                pdb.set_trace()
+                
             #???? How to tell if bad
             # h5py._hl.dataset.Dataset
 
@@ -917,21 +926,37 @@ class EventListWithFeatures(EventList):
             else:
                 self.is_null = False
 
+            #In Matlab this is a structure array
+            #Our goal is to go from an array of structures to a 
+            #single "structure" with arrays of values
+            #
+            #If only a single element is present, the data are saved
+            #differently. In this case the values are saved directly without
+            #a reference to dereference.
             frame_values = {}
             file_ref = frames.file
             for key in frames:
                 ref_array = frames[key]
-                # Yikes, getting the indexing right here was a PITA
-                frame_values[key] = np.array(
-                    [file_ref[x[0]][0][0] for x in ref_array])
-
+                try:
+                    # Yikes, getting the indexing right here was a PITA
+                    frame_values[key] = np.array([file_ref[x[0]][0][0] for x in ref_array])                    
+                except AttributeError:
+                #AttributeError: 'numpy.float64' object has no attribute 'encode'
+                    ref_element = ref_array
+                    frame_values[key] = ref_element[0][0]
+                    
             self.start_frames = frame_values['start']
             self.end_frames = frame_values['end']
             self.event_durations = frame_values['time']
 
             # Remove NaN value at end
-            self.time_between_events = frame_values['interTime'][:-1]
-            self.distance_between_events = frame_values['interDistance'][:-1]
+            n_events = self.start_frames.size
+            if n_events < 2:
+                self.time_between_events = np.zeros(0)
+                self.distance_between_events = np.zeros(0)
+            else:
+                self.time_between_events = frame_values['interTime'][:-1]                
+                self.distance_between_events = frame_values['interDistance'][:-1]
 
             self.frequency = event_ref['frequency'].value[0][0]
 
@@ -962,10 +987,14 @@ class EventListWithFeatures(EventList):
 
     def test_equality(self, other, event_name):
 
-        if self.is_null and other.is_null:
-            return True
-        elif self.is_null != other.is_null:
-            return False
+        try:
+            if self.is_null and other.is_null:
+                return True
+            elif self.is_null != other.is_null:
+                return False
+        except:
+            import pdb
+            pdb.set_trace()
 
         """
     THINGS COMPARED BELOW (in the return statement):

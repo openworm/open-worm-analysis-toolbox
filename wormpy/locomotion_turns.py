@@ -42,14 +42,19 @@ IMPORTANT: My events use 1 based indexing, the old code used 0 based
 indexing - @JimHokanson
 
 """
+
+import numpy as np
+
+import collections
 import warnings
 import operator
 import re
+
 from . import Events
 from . import feature_helpers
 from . import config
-import numpy as np
-import collections
+
+
 
 
 class LocomotionTurns(object):
@@ -193,6 +198,19 @@ class LocomotionTurns(object):
         self.upsilons = UpsilonTurns(frames.upsilon_frames,
                                      midbody_distance,
                                      config.FPS)
+
+    @classmethod
+    def from_disk(cls, turns_ref):
+
+        self = cls.__new__(cls)
+
+        self.omegas   = OmegaTurns.from_disk(turns_ref)  
+        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
+        
+        return self
+
+    def __eq__(self, other):
+        return self.omegas == other.omegas and self.upsilons == other.upsilons
 
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
@@ -435,7 +453,16 @@ class UpsilonTurns(object):
                                                       midbody_distance,
                                                       FPS)
 
+    @classmethod
+    def from_disk(cls, turns_ref):
 
+        self = cls.__new__(cls)
+        self.upsilons = Events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')  
+        return self
+        
+    def __eq__(self, other):
+        return self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons')
+        
 """
 ===============================================================================
 ===============================================================================
@@ -536,6 +563,16 @@ class OmegaTurns(object):
         self.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
                                                     midbody_distance,
                                                     FPS)
+
+    @classmethod
+    def from_disk(cls, turns_ref):
+
+        self = cls.__new__(cls)
+        self.omegas = Events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
+        return self
+        
+    def __eq__(self, other):
+        return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """

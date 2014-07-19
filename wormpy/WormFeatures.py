@@ -314,15 +314,19 @@ class WormLocomotion(object):
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
             return False
 
+        #TODO: Define ne for all functions
+        if ~(self.foraging == other.foraging):
+            return False
+            
+        if ~(self.bends == other.bends):
+            return False
+
+        #TODO: Make eq in events be an error - use test_equality instead
+        if ~(self.turns == other.turns):
+            return False
+
         import pdb
         pdb.set_trace()
-
-        # TODO: bends - Not Yet Implemented
-        #--------------------
-        #    foraging: [1x1 struct]
-        #        head: [1x1 struct]
-        #     midbody: [1x1 struct]
-        #        tail: [1x1 struct]
 
         # TODO: turns - Not Yet Implemented
         #--------------------
@@ -369,26 +373,37 @@ class WormLocomotion(object):
             motion_ref = m_var['motion']
             for key in ['forward', 'backward', 'paused']:
                 self.motion_events[key] = \
-                    Events.EventListWithFeatures.from_disk(
-                        motion_ref[key], 'MRC')
+                    Events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
 
             self.motion_mode = _extract_time_from_disk(motion_ref, 'mode')
         else:
             raise Exception('Not yet implemented')
 
-        import pdb
-        pdb.set_trace()
-        # TODO: bends - Not Yet Implemented
-        #--------------------
-        #    foraging: [1x1 struct]
-        #        head: [1x1 struct]
-        #     midbody: [1x1 struct]
-        #        tail: [1x1 struct]
 
-        # TODO: turns - Not Yet Implemented
-        #--------------------
-        #    omegas: [1x1 struct]
-        #    upsilons: [1x1 struct]
+
+#CODE FROM ABOVE FOR REFERENCE
+#        self.bends = locomotion_bends.LocomotionCrawlingBends(
+#            nw.angles,
+#            self.is_paused,
+#            nw.is_segmented)
+#
+#        self.foraging = locomotion_bends.LocomotionForagingBends(
+#            nw,nw.is_segmented,nw.ventral_mode)
+#
+#        midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
+#        is_stage_movement = nw.segmentation_status == 'm'
+#
+#        self.turns = locomotion_turns.LocomotionTurns(nw, nw.angles,
+#                                                      is_stage_movement,
+#                                                      midbody_distance,
+#                                                      nw.skeleton_x,
+#                                                      nw.skeleton_y)
+
+        bend_ref = m_var['bends']
+        self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        self.bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
+
+        self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
         return self
 
