@@ -26,8 +26,8 @@ import warnings
 import numpy as np
 import scipy.ndimage.filters as filters
 
-from . import utils
-from . import config
+from .. import utils
+from .. import config
 
 
 class LocomotionCrawlingBends(object):

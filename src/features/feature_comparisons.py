@@ -4,7 +4,6 @@ Insert description here
 """
 
 import numpy as np
-from . import utils
 
 
 def fp_isequal(x, y, feature_name, tol=1e-6):
@@ -48,6 +47,6 @@ def corr_value_high(x, y, feature_name, high_corr_value=0.999, merge_nans=False)
                 print('Corr value too low for %s: %0.3f' %
                       (feature_name, c[1, 0]))
             return is_good
-#  except:
+#  except:               # DEBUG
 #    import pdb
 #    pdb.set_trace()

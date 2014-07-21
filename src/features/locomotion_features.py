@@ -5,9 +5,10 @@ Insert description here
 
 import numpy as np
 
+from .. import utils
+from .. import config
+
 from . import events
-from . import utils
-from . import config
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 

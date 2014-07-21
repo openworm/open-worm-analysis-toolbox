@@ -17,9 +17,10 @@ import collections
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 
+from .. import utils
+from .. import config
+
 from . import events
-from . import utils
-from . import config
 
 
 class Bends(object):

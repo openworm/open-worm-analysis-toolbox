@@ -7,9 +7,9 @@ Test harness for OpenWorm's movement validation tool
 """
 
 import os
-from wormpy import user_config
-from wormpy import NormalizedWorm
-from wormpy import WormFeatures
+from src import user_config
+from src import NormalizedWorm
+from src import WormFeatures
 
 
 def main():

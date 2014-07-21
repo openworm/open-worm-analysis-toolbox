@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-  EventFinder.py
+  events.py
   
-  A module for finding the motion state of each frame of a worm video.
+  A module for finding and describing frames-spanning "events" given a 
+  worm video.
 
   Contents
   ---------------------------------------
@@ -27,23 +28,24 @@
 
   Usage
   ---------------------------------------
+  One usage is in locomotion features.
+  
   LocomotionFeatures.get_motion_codes() calculates the motion codes for the
   worm, and to do so, for each of the possible motion states (forward, 
   backward, paused) it creates an instance of the EventFinder class,
   sets up appropriate parameters, and then calls EventFinder.get_events()
   to obtain an instance of EventList, the "result" class.
   
-  Then to format the result appropriately, the EventOutputStructure class is 
+  Then to format the result appropriately, the EventListWithFeatures class is 
   instantiated with our "result" and then get_feature_dict is called.
   
   So the flow from within LocomotionFeatures.get_motion_codes() is:
     # (approximately):
     ef = EventFinder()
     event_list = ef.get_events()
-    me = EventOutputStructure(event_list)
-    return me.get_feature_dict
+    me = EventListWithFeatures(event_list, features_per_frame)
 
-  EventOutputStructure is used by not just get_motion_codes but also ...
+  EventListWithFeatures is used by not just get_motion_codes but also ...
   DEBUG (add the other uses (e.g. upsilons))
   
   Notes
@@ -65,9 +67,10 @@ import h5py
 import warnings
 
 from itertools import groupby
-from wormpy import config
+from .. import config
+from .. import utils
+
 from . import feature_comparisons as fc
-from . import utils
 
 
 class EventFinder:

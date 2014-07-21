@@ -29,14 +29,15 @@ import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
 
+from .. import config
+from .. import user_config
+from .. import utils
+
 from . import feature_comparisons as fc
 from . import events
-from . import config
-from . import user_config
 from . import path_features
 from . import posture_features
 from . import locomotion_features
-from . import utils
 from . import locomotion_bends
 from . import locomotion_turns
 

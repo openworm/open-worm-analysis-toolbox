@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
 import matplotlib.animation as animation
-from wormpy import config
+
+from . import config
 
 
 class WormPlotter(animation.TimedAnimation):
@@ -70,10 +71,9 @@ class WormPlotter(animation.TimedAnimation):
 
         self.normalized_worm = normalized_worm
         # TODO: eventually we'll put this in a nicer place
-        self.vulva_contours = self.normalized_worm.data_dict['vulva_contours']
-        self.non_vulva_contours = self.normalized_worm.data_dict[
-            'non_vulva_contours']
-        self.skeletons = self.normalized_worm.data_dict['skeletons']
+        self.vulva_contours = self.normalized_worm.vulva_contours
+        self.non_vulva_contours = self.normalized_worm.non_vulva_contours
+        self.skeletons = self.normalized_worm.skeletons
         self.skeletons_centred = self.normalized_worm.translate_to_centre()
         self.skeleton_centres = self.normalized_worm.centre
         self.orientation = self.normalized_worm.angle
@@ -381,7 +381,7 @@ def plot_frame_codes(normalized_worm):
     # http://nxn.se/post/46440196846/
 
     nw = normalized_worm
-    fc = nw.data_dict['frame_codes']
+    fc = nw.frame_codes
 
     # Create a dictionary of    frame code : frame code title   pairs
     fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}

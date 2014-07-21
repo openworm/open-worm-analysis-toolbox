@@ -48,9 +48,10 @@ import re
 import numpy as np
 import collections
 
+from .. import config
+from .. import utils
+
 from . import events
-from . import config
-from . import utils
 
 
 class LocomotionTurns(object):

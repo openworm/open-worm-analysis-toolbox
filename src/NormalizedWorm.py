@@ -242,7 +242,7 @@ class NormalizedWorm(object):
 
         """
         file_path = os.path.join(os.path.abspath(os.getcwd()),
-                                 'wormpy',
+                                 'src',
                                  'frame_codes.csv')
         f = open(file_path, 'r')
 

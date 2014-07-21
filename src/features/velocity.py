@@ -8,7 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 
-from . import config
+from .. import config
 
 __ALL__ = ['get_angles',
            'get_partition_angles',

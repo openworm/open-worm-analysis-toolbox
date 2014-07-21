@@ -6,26 +6,35 @@ manager.py
 
 Classes
 ---------------------------------------    
-Manager
-Stats
+Manager  (from +stats/@manager)
+Stats    (from @stats)
 
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code paths:
 
+DONE:
                                                               # of lines
 SegwormMatlabClasses / +seg_worm / @stats                        231 
 SegwormMatlabClasses / +seg_worm / +stats / @manager              61
 
-SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
-SegwormMatlabClasses / +seg_worm / +stats / @hist                339
+IN PROGRESS:
+
 SegwormMatlabClasses / +seg_worm / +stats / +helpers / fexact.m  405
 SegwormMatlabClasses / +seg_worm / +stats / +helpers / swtest.m  260
+
+NOT DONE:
+
+SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
+SegwormMatlabClasses / +seg_worm / +stats / @hist                339
 SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
 SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
 SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
 SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
 SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
 SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
+
+SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots of lines of code... is this necessary?
+
 
                                                           TOTAL 2095 lines + several CSV files
                                                                unclear so far if the CSV files
@@ -138,7 +147,7 @@ class Stats(object):
     ================================================================
     1)
 
-    Procesing Steps:
+    Processing Steps:
     ================================================================
     1) Create histogram files for "experiment" and "control" files
         - seg_worm.stats.hist
