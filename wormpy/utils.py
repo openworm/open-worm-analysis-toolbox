@@ -9,8 +9,6 @@ import numpy as np
 #import pdb
 
 # Training wheels for Jim :/
-
-
 def scatter(x, y):
     plt.scatter(x, y)
     plt.show()
@@ -32,6 +30,21 @@ def imagesc(data):
     plt.imshow(data, aspect='auto')
     plt.show()
 
+
+def find(data,n=None):
+    
+    """
+    Similar to Matlab's find() function
+    TODO: Finish documentation
+    """
+    temp = np.flatnonzero(data)
+    if n is not None:
+        if n >= temp.size:
+            return temp
+        else:
+            return temp[0:n]
+    else:
+        return temp
 
 def separated_peaks(x, dist, use_max, value_cutoff):
     """
@@ -102,27 +115,43 @@ def separated_peaks(x, dist, use_max, value_cutoff):
     # NOTE: I added left/right neighbor comparisions which really helped with
     # the fft ..., a point can't be a peak if it is smaller than either of its
     # neighbors
+
+    np_true = np.ones(1, dtype=np.bool)
     if use_max:
         #                                           %> left                     > right
         # Matlab version:
         # could_be_a_peak = x > value_cutoff & [true x(2:end) > x(1:end-1)] & [x(1:end-1) > x(2:end) true];
-        #
-        # TODO: Simplify how this code looks
-        could_be_a_peak = np.logical_and(
-            x > value_cutoff, np.concatenate((np.ones(1, dtype=np.bool), x[1:] > x[0:-1])))
-        could_be_a_peak = np.logical_and(
-            could_be_a_peak, np.concatenate((x[0:-1] > x[1:], np.ones(1, dtype=np.bool))))
+        
+        
+        #                                        greater than values to the left
+        could_be_a_peak = (x > value_cutoff) & np.concatenate((np_true, x[1:] > x[0:-1]))
+        #could_be_a_peak = np.logical_and(
+        #    x > value_cutoff, np.concatenate((np.ones(1, dtype=np.bool), x[1:] > x[0:-1])))
+        
+        #                                        greater than values to the right
+        could_be_a_peak = could_be_a_peak & np.concatenate((x[0:-1] > x[1:], np_true))        
+        
+        #could_be_a_peak = np.logical_and(
+        #    could_be_a_peak, np.concatenate((x[0:-1] > x[1:], np.ones(1, dtype=np.bool))))
 
         I1 = could_be_a_peak.nonzero()[0]
         I2 = np.argsort(-1 * x[I1])  # -1 => we want largest first
         I = I1[I2]
     else:
-        raise Exception("Not yet implemented")
+        #raise Exception("Not yet implemented")
         # pdb.set_trace()
         # could_be_a_peak = x < value_cutoff & [true x(2:end) < x(1:end-1)] & [x(1:end-1) < x(2:end) true];
         #I1     = find(could_be_a_peak);
         #[~,I2] = sort(x(I1));
         #I = I1(I2);
+
+        could_be_a_peak = (x < value_cutoff) & np.concatenate((np_true, x[1:] < x[0:-1]))
+        could_be_a_peak = could_be_a_peak & np.concatenate((x[0:-1] < x[1:], np_true))
+        
+        I1 = could_be_a_peak.nonzero()[0]
+        I2 = np.argsort(x[I1])
+        I = I1[I2]
+        
 
     n_points = x.size
 

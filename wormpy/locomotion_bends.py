@@ -58,8 +58,18 @@ class LocomotionBend(object):
         return utils.print_object(self)
         
     def __eq__(self, other):
-        return fc.corr_value_high(self.amplitude, other.amplitude, 'locomotion.bends.' + self.name + '.amplitude') and \
-             fc.corr_value_high(self.frequency, other.frequency, 'locomotion.bends.' + self.name + '.frequency')   
+
+        #merge_nans=True - utils.separated_peaks works slightly differently
+        #so merge_nans is true here, for now. The utils function works correctly
+        #and the old version works incorrectly but was convoluted enough that
+        #it was hard to replicate        
+        
+        return fc.corr_value_high(self.amplitude, other.amplitude,
+                                  'locomotion.bends.' + self.name + '.amplitude',
+                                  merge_nans=True) and \
+             fc.corr_value_high(self.frequency, other.frequency, 
+                                'locomotion.bends.' + self.name + '.frequency',
+                                merge_nans=True)   
 
 class LocomotionCrawlingBends(object):
 
@@ -224,8 +234,8 @@ class LocomotionCrawlingBends(object):
         #------------------------------------
         #    section     = {'head'           'midbody'       'tail'}
         bends_partitions = {'head':     (5, 10),
-                            'midbody': (22, 27),
-                            'tail': (39, 44)}
+                            'midbody':  (22, 27),
+                            'tail':     (39, 44)}
 
         ordered_bend_names = ['head', 'midbody', 'tail'] #For helping debug
         #vs Matlab in which these things are ordered
@@ -245,9 +255,12 @@ class LocomotionCrawlingBends(object):
             if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
                 avg_bend_angles = feature_helpers.interpolate_with_threshold(avg_bend_angles)
 
+            #We don't have these NaN values: [236 237 238 239 240]
+            #They don't have: [232 233]            
+            
             [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                          options,
-                                                         is_paused)
+                                                         is_paused,cur_partition)
 
             bends[cur_partition] = {}
             bends[cur_partition]['amplitude'] = amplitude
@@ -258,7 +271,7 @@ class LocomotionCrawlingBends(object):
         self.midbody = LocomotionBend(bends['midbody'],'midbody')
         self.tail = LocomotionBend(bends['tail'],'tail')
 
-    def h__getBendData(self, avg_bend_angles, options, is_paused):
+    def h__getBendData(self, avg_bend_angles, options, is_paused,cur_partition):
         """
         Compute the bend amplitude and frequency.
 
@@ -310,7 +323,9 @@ class LocomotionCrawlingBends(object):
         half_distances = np.maximum(left_distances, right_distances)
 
         left_bounds = np.array(range(n_frames)) - half_distances
-        right_bounds = np.array(range(n_frames)) + half_distances
+        
+        #+1 for slicing
+        right_bounds = np.array(range(n_frames)) + half_distances + 1
 
         
 
@@ -326,12 +341,13 @@ class LocomotionCrawlingBends(object):
         #
         #??? - what about large NaN regions, are those paused regions???
 
-        is_bad_mask  = (back_zeros_I == 0) | \
-            (front_zeros_I == 0) | \
+        #Why not 2*half_distances > max_window ???
+        is_bad_mask  = (back_zeros_I == -1) | \
+            (front_zeros_I == -1) | \
             np.isnan(avg_bend_angles) | \
-            half_distances > max_window | \
-            left_bounds < 1 | \
-            right_bounds > n_frames | \
+            (half_distances > max_window) | \
+            (left_bounds < 0) | \
+            (right_bounds > n_frames) | \
             is_paused
 
         # Compute the short-time Fourier transforms (STFT).
@@ -354,17 +370,20 @@ class LocomotionCrawlingBends(object):
             # Compute the real part of the STFT.
             # These two steps take a lot of time ...
             fft_data = np.fft.fft(windowed_data, fft_n_samples)
-            fft_data = abs(fft_data[1:fft_max_I])
+            fft_data = abs(fft_data[:fft_max_I])
 
             # Find the peak frequency.
-            [maxPeak, maxPeakI] = max(fft_data)
+            maxPeakI = np.argmax(fft_data)
+            maxPeak  = fft_data[maxPeakI]
+
+
 
             # NOTE: If this is true, we'll never bound the peak on the left ...
-            if maxPeakI == 1:
+            if maxPeakI == 0:
                 continue
 
             # TODO: Not sure if this value is correct ...
-            unsigned_freq = freq_scalar * (maxPeakI - 1)
+            unsigned_freq = freq_scalar * maxPeakI
 
             if not (min_freq <= unsigned_freq <= max_freq):
                 continue
@@ -374,14 +393,18 @@ class LocomotionCrawlingBends(object):
                                      fft_data,
                                      maxPeakI,
                                      INIT_MAX_I_FOR_BANDWIDTH)
-
+            
+            #if cur_partition is 'midbody' and iFrame in np.array([232,233,236,237,238,239,240]):
+            #   import pdb
+            #   pdb.set_trace()            
+            
             # Store data
             #------------------------------------------------------------------
             if not (peakStartI.size == 0 or
                     peakEndI.size == 0 or
                     # The minimums can't be too big:
-                    fft_data(peakStartI) > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data(peakEndI) > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
                     # Needs to have enough energy:
                     (sum(fft_data[peakStartI:peakEndI] ** 2) <
                      (peakEnergyThr * sum(fft_data ** 2)))
@@ -389,8 +412,7 @@ class LocomotionCrawlingBends(object):
 
                 # Convert the peak to a time frequency.
                 dataSign = np.sign(np.nanmean(windowed_data))  # sign the data
-                amps[iFrame] = (
-                    2 * fft_data[:maxPeakI] / data_win_length) * dataSign
+                amps[iFrame] = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
                 freqs[iFrame] = unsigned_freq * dataSign
 
         return [amps, freqs]
@@ -433,8 +455,11 @@ class LocomotionCrawlingBends(object):
         # 3rd sign change doesn't work, we can go to the 2nd sign change index,
         # not by searching the data array, but by getting the 2nd element of
         # the sign change index array.
-        sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
-            np.sign(avg_bend_angles[1:])
+        
+        with np.errstate(invalid='ignore'):        
+            sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
+                np.sign(avg_bend_angles[1:])
+        
         sign_change_I = np.flatnonzero(sign_change_mask)
         n_sign_changes = len(sign_change_I)
 
@@ -528,8 +553,10 @@ class LocomotionCrawlingBends(object):
         right_values = sign_change_I + 1 #By definition
         #----------------------------------------------------------------
 
-        back_zeros_I = np.zeros(n_frames)
+        back_zeros_I  = np.zeros(n_frames)
+        back_zeros_I[:] = BAD_INDEX_VALUE
         front_zeros_I = np.zeros(n_frames)
+        back_zeros_I[:] = BAD_INDEX_VALUE
 
         for iFrame in range(n_frames):
             cur_left_index = left_sign_change_I[iFrame]
@@ -671,22 +698,21 @@ class LocomotionCrawlingBends(object):
 
             del min_peaks   # this part of max_peaks_dist's return is unused
 
-            peak_start_I = min_peaks_I[
-                np.flatnonzero(min_peaks_I < max_peak_I)]
-            peak_end_I = min_peaks_I[np.flatnonzero(min_peaks_I > max_peak_I)]
+            #TODO: This is wrong, replace add find to utils ...
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
         else:
             peak_start_I = np.array([])
             peak_end_I = np.array([])
 
-
-        import pdb
-        pdb.set_trace()
-
         # NOTE: Besides checking for an empty value, we also need to ensure that
         # the minimum didn't come too close to the data border, as more data
         # could invalidate the result we have.
-        if (peak_end_I.size == 0) or \
-                peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH:
+        #
+        # NOTE: In order to save time we only look at a subset of the FFT data.
+        if (peak_end_I.size == 0) | \
+                (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
+            #If true, then rerun on the full set of data
             [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data,
                                                              peakWinSize,
                                                              use_max=False,
@@ -694,9 +720,8 @@ class LocomotionCrawlingBends(object):
 
             del min_peaks   # this part of max_peaks_dist's return is unused
 
-            peak_start_I = min_peaks_I(
-                np.flatnonzero(min_peaks_I < max_peak_I))
-            peak_end_I = min_peaks_I(np.flatnonzero(min_peaks_I > max_peak_I))
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
 
         return [peak_start_I, peak_end_I]
 

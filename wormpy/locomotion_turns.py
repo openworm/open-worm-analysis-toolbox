@@ -536,14 +536,17 @@ class OmegaTurns(object):
 
         self.omegas = None  # DEBUG: remove once the below code is ready
 
-        omega_frames_from_th_change = \
-            self.h_getHeadTailDirectionChange(nw, config.FPS)
+        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, config.FPS)
+            
 
         # Filter:
         # This is to be consistent with the old code. We filter then merge, then
         # filter again :/
         omega_frames_from_th_change = self.h__filterAndSignFrames(
             body_angles_i, omega_frames_from_th_change, MIN_OMEGA_EVENT_LENGTH)
+
+        #import pdb
+        #pdb.set_trace()
 
         # DEBUG
         # I'm not sure what this is supposed to do; these two arrays have
@@ -572,6 +575,8 @@ class OmegaTurns(object):
         return self
         
     def __eq__(self, other):
+        import pdb
+        pdb.set_trace()
         return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
