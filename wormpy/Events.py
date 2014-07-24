@@ -939,12 +939,23 @@ class EventListWithFeatures(EventList):
                 ref_array = frames[key]
                 try:
                     # Yikes, getting the indexing right here was a PITA
-                    frame_values[key] = np.array([file_ref[x[0]][0][0] for x in ref_array])                    
+                
+                    # (1,5) -> second option - <HDF5 dataset "start": shape (1, 5), type "|O8">
+                    #Seriously Matlab :/
+                    if ref_array.shape[0] > 1:
+                        frame_values[key] = np.array([file_ref[x[0]][0][0] for x in ref_array])
+                    else:
+                        #This is correct for omegas ...
+                        frame_values[key] = np.array([file_ref[x][0][0] for x in ref_array[0]])   
+                    
                 except AttributeError:
                 #AttributeError: 'numpy.float64' object has no attribute 'encode'
                     ref_element = ref_array
                     frame_values[key] = ref_element[0][0]
-                    
+            
+            #import pdb
+            #pdb.set_trace()            
+            
             self.start_frames = frame_values['start']
             self.end_frames = frame_values['end']
             self.event_durations = frame_values['time']

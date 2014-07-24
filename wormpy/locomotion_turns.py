@@ -575,8 +575,6 @@ class OmegaTurns(object):
         return self
         
     def __eq__(self, other):
-        import pdb
-        pdb.set_trace()
         return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
