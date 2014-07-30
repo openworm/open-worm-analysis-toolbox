@@ -1,4 +1,4 @@
 /.idea
 *.pyc
 __pycache__\*
-/wormpy/user_config.py
+/src/user_config.py

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Posture features  ...
+Posture features
+
 """
 
 
@@ -8,20 +9,18 @@ from __future__ import division
 
 import scipy.ndimage.filters as filters
 import numpy as np
-
-from . import Events
-from . import utils
-from . import config
-
 import warnings
 import time
-
 import collections
-from . import feature_helpers
 
 # http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
+
+from .. import utils
+from .. import config
+
+from . import events
 
 
 class Bends(object):
@@ -92,7 +91,7 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     """
       get_eccentricity   
 
-        [eccentricity, orientation] = seg_worm.feature_helpers.posture.getEccentricity(xOutline, yOutline, gridSize)
+        [eccentricity, orientation] = seg_worm.utils.posture.getEccentricity(xOutline, yOutline, gridSize)
 
         Given x and y coordinates of the outline of a region of interest, fill
         the outline with a grid of evenly spaced points and use these points in
@@ -145,7 +144,7 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
         functions. I also need to submit a bug report for the inpoly FEX code.
 
     Translation of: SegwormMatlabClasses / 
-    +seg_worm / +feature_helpers / +posture / getEccentricity.m
+    +seg_worm / +utils / +posture / getEccentricity.m
     """
 
     t_obj = time.time()
@@ -461,7 +460,7 @@ def get_worm_kinks(bend_angles):
     #- see window code which tries to get an odd value ...
     #- I'd like to go back and fix that code ...
     half_length_thr = np.round(length_threshold / 2)
-    gauss_filter    = feature_helpers.gausswin(half_length_thr * 2 + 1) \
+    gauss_filter    = utils.gausswin(half_length_thr * 2 + 1) \
         / half_length_thr
 
     # Compute the kinks for the worms.
@@ -587,9 +586,9 @@ def get_worm_coils(frame_codes, midbody_distance):
             ends[-1] += -1
             starts[-1] += -1
 
-    temp = Events.EventList(np.transpose(np.vstack((starts, ends))))
+    temp = events.EventList(np.transpose(np.vstack((starts, ends))))
 
-    return Events.EventListWithFeatures(temp, midbody_distance)
+    return events.EventListWithFeatures(temp, midbody_distance)
 
     """
   coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
