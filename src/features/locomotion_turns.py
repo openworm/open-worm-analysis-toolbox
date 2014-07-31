@@ -42,16 +42,21 @@ IMPORTANT: My events use 1 based indexing, the old code used 0 based
 indexing - @JimHokanson
 
 """
+
+import numpy as np
+
+import collections
 import warnings
 import operator
 import re
-import numpy as np
-import collections
 
-from .. import config
 from .. import utils
+from .. import config
 
 from . import events
+
+
+
 
 
 class LocomotionTurns(object):
@@ -196,6 +201,19 @@ class LocomotionTurns(object):
                                      midbody_distance,
                                      config.FPS)
 
+    @classmethod
+    def from_disk(cls, turns_ref):
+
+        self = cls.__new__(cls)
+
+        self.omegas   = OmegaTurns.from_disk(turns_ref)  
+        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
+        
+        return self
+
+    def __eq__(self, other):
+        return self.omegas == other.omegas and self.upsilons == other.upsilons
+
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
         Interpolate the angles in the head, body, and tail.
@@ -222,7 +240,7 @@ class LocomotionTurns(object):
         Formerly a = h__interpolateAngles(a, MAX_INTERPOLATION_GAP_ALLOWED)
 
         TODO: Incorporate into the former
-        seg_worm.utils.interpolateNanData
+        seg_worm.feature_helpers.interpolateNanData
 
         """
         # Let's use a shorter expression for clarity
@@ -437,7 +455,16 @@ class UpsilonTurns(object):
                                                       midbody_distance,
                                                       FPS)
 
+    @classmethod
+    def from_disk(cls, turns_ref):
 
+        self = cls.__new__(cls)
+        self.upsilons = events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')  
+        return self
+        
+    def __eq__(self, other):
+        return self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons')
+        
 """
 ===============================================================================
 ===============================================================================
@@ -511,14 +538,17 @@ class OmegaTurns(object):
 
         self.omegas = None  # DEBUG: remove once the below code is ready
 
-        omega_frames_from_th_change = \
-            self.h_getHeadTailDirectionChange(nw, config.FPS)
+        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, config.FPS)
+            
 
         # Filter:
         # This is to be consistent with the old code. We filter then merge, then
         # filter again :/
         omega_frames_from_th_change = self.h__filterAndSignFrames(
             body_angles_i, omega_frames_from_th_change, MIN_OMEGA_EVENT_LENGTH)
+
+        #import pdb
+        #pdb.set_trace()
 
         # DEBUG
         # I'm not sure what this is supposed to do; these two arrays have
@@ -538,6 +568,16 @@ class OmegaTurns(object):
         self.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
                                                     midbody_distance,
                                                     FPS)
+
+    @classmethod
+    def from_disk(cls, turns_ref):
+
+        self = cls.__new__(cls)
+        self.omegas = events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
+        return self
+        
+    def __eq__(self, other):
+        return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """

@@ -315,17 +315,21 @@ class WormLocomotion(object):
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
             return False
 
-        # TODO: bends - Not Yet Implemented
-        #--------------------
-        #    foraging: [1x1 struct]
-        #        head: [1x1 struct]
-        #     midbody: [1x1 struct]
-        #        tail: [1x1 struct]
+        #TODO: Define ne for all functions
+        if not (self.foraging == other.foraging):
+            print('Mismatch in locomotion.foraging events')
+            return False
+            
+        if not (self.bends == other.bends):
+            print('Mismatch in locomotion.bends events')
+            return False
 
-        # TODO: turns - Not Yet Implemented
-        #--------------------
-        #    omegas: [1x1 struct]
-        #    upsilons: [1x1 struct]
+        #TODO: Make eq in events be an error - use test_equality instead        
+        if not (self.turns == other.turns):
+            import pdb
+            pdb.set_trace()
+            print('Mismatch in locomotion.turns events')
+            return False
 
         return True
 
@@ -367,24 +371,18 @@ class WormLocomotion(object):
             motion_ref = m_var['motion']
             for key in ['forward', 'backward', 'paused']:
                 self.motion_events[key] = \
-                    events.EventListWithFeatures.from_disk(
-                        motion_ref[key], 'MRC')
+                    events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
 
             self.motion_mode = _extract_time_from_disk(motion_ref, 'mode')
         else:
+			#This would indicate loading a new version
             raise Exception('Not yet implemented')
 
-        # TODO: bends - Not Yet Implemented
-        #--------------------
-        #    foraging: [1x1 struct]
-        #        head: [1x1 struct]
-        #     midbody: [1x1 struct]
-        #        tail: [1x1 struct]
+        bend_ref = m_var['bends']
+        self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        self.bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
 
-        # TODO: turns - Not Yet Implemented
-        #--------------------
-        #    omegas: [1x1 struct]
-        #    upsilons: [1x1 struct]
+        self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
         return self
 
