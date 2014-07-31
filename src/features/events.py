@@ -844,7 +844,7 @@ class EventListWithFeatures(EventList):
                 / np.nansum(self.distance_per_frame)
         else:
             self.distance_during_events = np.array([])
-            self.data_ratio = np.array([])
+            self.data_ratio = np.NaN
 
         # Old Name: distance
         # Distance moved between events
@@ -954,14 +954,14 @@ class EventListWithFeatures(EventList):
                 except AttributeError:
                 #AttributeError: 'numpy.float64' object has no attribute 'encode'
                     ref_element = ref_array
-                    frame_values[key] = ref_element[0][0]
+                    frame_values[key] = [ref_element[0][0]]
             
             #import pdb
             #pdb.set_trace()            
             
-            self.start_frames = frame_values['start']
-            self.end_frames = frame_values['end']
-            self.event_durations = frame_values['time']
+            self.start_frames = np.array(frame_values['start'], dtype=int)
+            self.end_frames = np.array(frame_values['end'], dtype=int)
+            self.event_durations = np.array(frame_values['time'])
 
             # Remove NaN value at end
             n_events = self.start_frames.size
@@ -981,8 +981,8 @@ class EventListWithFeatures(EventList):
                 self.data_ratio = ratio['distance'][0][0]
             else:
                 self.time_ratio = event_ref['timeRatio'].value[0][0]
-                self.data_ratio = []
-                self.distance_during_events = []
+                self.data_ratio = np.NaN
+                self.distance_during_events = np.zeros(0)
         else:
             raise Exception('Other formats not yet supported :/')
 
@@ -1005,6 +1005,7 @@ class EventListWithFeatures(EventList):
             if self.is_null and other.is_null:
                 return True
             elif self.is_null != other.is_null:
+                print('Event mismatch %s' % event_name)
                 return False
         except:
             import pdb
@@ -1021,13 +1022,20 @@ class EventListWithFeatures(EventList):
             fc.corr_value_high(self.start_frames, other.start_frames, event_name + '.start_frames') and \
             fc.corr_value_high(self.end_frames, other.end_frames, event_name + '.end_frames')   and \
             fc.corr_value_high(self.event_durations, other.event_durations, event_name + '.event_durations')   and \
-            fc.corr_value_high(self.distance_during_events, other.distance_during_events, 'Arena.min_y')   and \
+            fc.corr_value_high(self.distance_during_events, other.distance_during_events, event_name + '.distance_during_events')   and \
             fc.fp_isequal(self.total_time, other.total_time, event_name + '.total_time', 0.01) and \
             fc.fp_isequal(self.frequency, other.frequency, event_name + '.frequency', 0.01) and \
             fc.fp_isequal(self.time_ratio, other.time_ratio, event_name + '.time_ratio', 0.01) and \
             fc.fp_isequal(self.data_ratio, other.data_ratio, event_name + '.data_ratio', 0.01) and \
             fc.fp_isequal(
                 self.num_events_for_stats, other.num_events_for_stats, event_name + '.total_time')
+           
+#        if not return_value:
+#            print('Event mismatch %s' % event_name)
+#            #import pdb
+#            #pdb.set_trace()
+#        
+#        return return_value
 
     # TODO: find out if anyone actually uses this method.
     #@staticmethod

@@ -27,9 +27,9 @@ import scipy.ndimage.filters as filters
 
 import warnings
 
-from . import feature_helpers
-from . import config
-from . import utils
+from .. import utils
+from .. import config
+
 from . import feature_comparisons as fc
 
 #?? - why is this needed
@@ -253,7 +253,7 @@ class LocomotionCrawlingBends(object):
             # - that not everything is segmented (missing) - i.e. data
             # - that something is segmented - i.e. gaps
             if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
-                avg_bend_angles = feature_helpers.interpolate_with_threshold(avg_bend_angles)
+                avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
 
             #We don't have these NaN values: [236 237 238 239 240]
             #They don't have: [232 233]            
@@ -893,11 +893,11 @@ class LocomotionForagingBends(object):
         # from being interpolated.  (this was a step in
         # h__getNoseInterpolationIndices, that we no longer have since I've
         # put the interpolation code into
-        # feature_helpers.interpolate_with_threshold_2D instead.  But we
+        # utils.interpolate_with_threshold_2D instead.  But we
         # might be okay, since the beginning and end are going to be left alone
         # since I've set left=np.NaN and right=np.NaN in the underlying
-        # feature_helpers.interpolate_with_threshold code.
-        interp = feature_helpers.interpolate_with_threshold_2D
+        # utils.interpolate_with_threshold code.
+        interp = utils.interpolate_with_threshold_2D
 
         nose_xi = interp(nose_x, threshold=MAX_NOSE_INTERP)
         nose_yi = interp(nose_y, threshold=MAX_NOSE_INTERP)
@@ -1010,7 +1010,7 @@ class LocomotionForagingBends(object):
         """
         if min_win_size > 0:
             # Clean up the signal with a gaussian filter.
-            gauss_filter    = feature_helpers.gausswin(2 * min_win_size + 1) \
+            gauss_filter    = utils.gausswin(2 * min_win_size + 1) \
                 / min_win_size
             nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
                                                    gauss_filter,

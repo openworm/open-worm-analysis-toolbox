@@ -11,7 +11,7 @@
 """
 
 
-DROPBOX_PATH = r"C:\Users\Michael\Dropbox"
+DROPBOX_PATH = r"C:\Users\RNEL\Dropbox"
 
 # An unc-8 (strong coiler) mutant worm
 WORM_FILE_PATH = "worm_data\\example_feature_files\\" + \
