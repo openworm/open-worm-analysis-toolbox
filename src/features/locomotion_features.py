@@ -13,8 +13,19 @@ from . import events
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
 
-def get_worm_velocity(nw, ventral_mode=0):
+
+
+
+class LocomotionVelocity(object):
+    pass
+
+
+#TODO: Transition this to a class
+
+def get_worm_velocity(features_ref, ventral_mode=0):
     """
+
+    
 
     This is for the 'velocity' locomotion feature. The helper function,
     'compute_velocity' is used elsewhere  
@@ -23,8 +34,8 @@ def get_worm_velocity(nw, ventral_mode=0):
     head-tip/head/midbody/tail/tail-tip
 
     Parameters
-    ----------------------------
-    nw: a NormalizedWorm instance
+    ----------
+    nw : a NormalizedWorm instance
 
     ventral_mode: int
       The ventral side mode:
@@ -33,54 +44,62 @@ def get_worm_velocity(nw, ventral_mode=0):
         2 = anticlockwise
 
     Returns
-    ----------------------------
-    A two-tiered dictionary containing the partitions 
-    in the first tier:
-      headTip = the tip of the head (1/12 the worm at 0.25s)
-      head    = the head (1/6 the worm at 0.5s)
-      midbody = the midbody (2/6 the worm at 0.5s)
-      tail    = the tail (1/6 the worm at 0.5s)
-      tailTip = the tip of the tail (1/12 the worm at 0.25s)
+    -------
+    dict
+    A two-tiered dictionary:
+        1st Tier:
+            headTip = the tip of the head (1/12 the worm at 0.25s)
+            head    = the head (1/6 the worm at 0.5s)
+            midbody = the midbody (2/6 the worm at 0.5s)
+            tail    = the tail (1/6 the worm at 0.5s)
+            tailTip = the tip of the tail (1/12 the worm at 0.25s)
                 and 'speed' and 'direction' in the second tier.
+        2nd Tier:
+            speed =
+            direction = 
 
     """
 
-    # Let's use some partitions.
+    nw = features_ref.nw
+
+    all_options = features_ref.options
+    
+    locomotion_options = all_options.locomotion
+
     # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
     #       this set of partitions does not cover the neck and hips
-    # TODO: Rename partition and data keys to have better names
-    partition_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
+    attribute_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
 
-    data_keys = list(partition_keys)
+    data_keys = list(attribute_keys) #Make a copy
 
-    if(config.MIMIC_OLD_BEHAVIOUR):
+    if(all_options.mimic_old_behaviour):
         data_keys[2] = 'old_midbody_velocity'
+
 
     avg_body_angle = velocity_module.get_partition_angles(nw, 
                                           partition_key='body',
                                           data_key='skeletons',
-                                          head_to_tail=False)  # reverse
+                                          head_to_tail=False)
 
-    sample_time_values = \
-        {
-            'head_tip': config.TIP_DIFF,
-            'head':     config.BODY_DIFF,
-            'midbody':  config.BODY_DIFF,
-            'tail':     config.BODY_DIFF,
-            'tail_tip': config.TIP_DIFF
+    sample_time_values = {
+            'head_tip': locomotion_options.velocity_tip_diff,
+            'head':     locomotion_options.velocity_body_diff,
+            'midbody':  locomotion_options.velocity_body_diff,
+            'tail':     locomotion_options.velocity_body_diff,
+            'tail_tip': locomotion_options.velocity_tip_diff
         }
 
     # Set up a dictionary to store the velocity for each partition
     velocity = {}
 
-    for partition_key, data_key in zip(partition_keys, data_keys):
+    for attribute_key, data_key in zip(attribute_keys, data_keys):
         x, y = nw.get_partition(data_key, 'skeletons', True)
 
         speed, direction = velocity_module.compute_velocity(x, y,
                                             avg_body_angle,
-                                            sample_time_values[partition_key],
+                                            sample_time_values[attribute_key],
                                             ventral_mode)[0:2]
-        velocity[partition_key] = {'speed': speed, 'direction': direction}
+        velocity[attribute_key] = {'speed': speed, 'direction': direction}
 
     return velocity
     

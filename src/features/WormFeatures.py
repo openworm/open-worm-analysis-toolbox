@@ -18,10 +18,11 @@ Functions
 _extract_time_from_disk
 
 
-A translation of Matlab code written by Jim Hokanson,
-in the SegwormMatlabClasses GitHub repo.  Original code path:
-SegwormMatlabClasses / 
-+seg_worm / @feature_calculator / get_features_rewritten.m
+A translation of Matlab code written by Jim Hokanson, in the 
+SegwormMatlabClasses GitHub repo.  
+
+Original code path:
+SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
 """
 
@@ -33,6 +34,7 @@ from .. import config
 from .. import user_config
 from .. import utils
 
+from . import feature_processing_options as fpo
 from . import feature_comparisons as fc
 from . import events
 from . import path_features
@@ -40,6 +42,7 @@ from . import posture_features
 from . import locomotion_features
 from . import locomotion_bends
 from . import locomotion_turns
+from . import morphology_features
 
 
 """
@@ -82,20 +85,13 @@ class WormMorphology(object):
 
     """
 
-    def __init__(self, nw):
+    def __init__(self, features_ref):
+
+        nw = features_ref.nw
 
         self.length = nw.lengths
-        # each item in this sub-dictionary is the per-frame mean across some
-        # part of the worm the head, midbody and tail.
-        #
-        # shape of resulting arrays are (2, n)
-
-        width_dict = {k: np.mean(nw.get_partition(k, 'widths'), 0)
-                      for k in ('head', 'midbody', 'tail')}
-
-        # Make named tuple instead of dict
-        nt = collections.namedtuple('Widths', width_dict.keys())
-        self.width = nt(**width_dict)
+        
+        self.width = morphology_features.Widths(features_ref)
 
         self.area = nw.tail_areas + \
             nw.head_areas + \
@@ -107,44 +103,29 @@ class WormMorphology(object):
 
     @classmethod
     def from_disk(cls, m_var):
-        """
-
-        Status: Done
-        """
+        
         self = cls.__new__(cls)
 
-        # TODO: More gracefully handle removal of the 2nd dimension ...
-        self.length = m_var['length'].value[:, 0]
-        temp1 = m_var['width']
+        self.length = _extract_time_from_disk(m_var, 'length')
+        
+        self.width = morphology_features.Widths.from_disk(m_var['width'])
 
-        temp2 = {k: temp1[k].value[:, 0] for k in ('head', 'midbody', 'tail')}
-
-        nt = collections.namedtuple('Widths', ['head', 'midbody', 'tail'])
-        self.width = nt(**temp2)
-
-        self.area = m_var['area'].value[:, 0]
-        self.area_per_length = m_var['areaPerLength'].value[:, 0]
-        self.width_per_length = m_var['widthPerLength'].value[:, 0]
+        self.area = _extract_time_from_disk(m_var, 'area')
+        self.area_per_length = _extract_time_from_disk(m_var, 'areaPerLength')
+        self.width_per_length = _extract_time_from_disk(m_var, 'widthPerLength')
 
         return self
 
     def __eq__(self, other):
-
-        # TODO: Allow for a global config that provides more info ...
-        # in case anything fails ...
-
+        
         # NOTE: Since all features are just attributes in this class we do
         # the evaluation here rather than calling __eq__ on the classes
 
-        return \
+        return self.width == other.width and \
             fc.corr_value_high(self.length, other.length, 'morph.length')  and \
             fc.corr_value_high(self.area, other.area, 'morph.area')      and \
             fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
-            fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length') and \
-            fc.corr_value_high(self.width.head, other.width.head, 'morph.width.head') and \
-            fc.corr_value_high(self.width.midbody, other.width.midbody, 'morph.width.midbody') and \
-            fc.corr_value_high(
-                self.width.tail, other.width.tail, 'morph.width.tail')
+            fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
 
     def __repr__(self):
         return utils.print_object(self)
@@ -215,29 +196,15 @@ class WormLocomotion(object):
 
     """
 
-    def __init__(self, normalized_worm):
+    def __init__(self, features_ref):
         """
         Initialization method for WormLocomotion
 
-        Parameters
-        ---------------------------------------    
-        normalized_worm: a NormalizedWorm instance
-
         """
-        # DEBUG
-        # feature_helpers.write_to_CSV(
-        #      {
-        #        'Midbody Speed': self.velocity['midbody']['speed'],
-        #        'config.FPS': np.array([config.FPS],dtype='float'),
-        #        'lengths': nw.lengths
-        #      },
-        #      'motion_codes_input'
-        #      )
 
-        # let's use a shorthand
-        nw = normalized_worm
+        nw = features_ref.nw
 
-        self.velocity = locomotion_features.get_worm_velocity(nw)
+        self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
         self.motion_events = locomotion_features.get_motion_codes(\
                                     self.velocity['midbody']['speed'],
@@ -689,10 +656,20 @@ class WormFeatures(object):
 
     """
 
-    def __init__(self, nw):
+    def __init__(self, nw, video_info, processing_options = None):
 
-        self.morphology = WormMorphology(nw)
-        self.locomotion = WormLocomotion(nw)
+        #TODO: Create the normalized worm in here ... 
+
+        if processing_options is None:
+            processing_options = fpo.FeatureProcessingOptions()
+
+        #These are saved locally for reference by others when processing
+        self.video_info = video_info
+        self.options = processing_options
+        self.nw = nw
+        
+        self.morphology = WormMorphology(self)
+        self.locomotion = WormLocomotion(self)
         midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']
                                   / config.FPS)
         self.posture = WormPosture(nw, midbody_distance)

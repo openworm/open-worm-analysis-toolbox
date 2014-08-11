@@ -149,14 +149,23 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
     t_obj = time.time()
 
-    N_GRID_POINTS = config.N_ECCENTRICITY  # TODO: Get from config ...
+    N_GRID_POINTS = config.N_ECCENTRICITY  # TODO: move to options
 
     x_range_all = np.ptp(contour_x, axis=0)
     y_range_all = np.ptp(contour_y, axis=0)
 
-    x_mc = contour_x - np.mean(contour_x, axis=0)  # mc - mean centered
-    y_mc = contour_y - np.mean(contour_y, axis=0)
+    """
+    xo,yo,rot_angle = h__centerAndRotateOutlines(contour_x, contour_y)
+    #[xo,yo,rot_angle] = h__centerAndRotateOutlines(x_outline,y_outline);
 
+    #In this function we detect "simple worms" and if they are detected
+    #get interpolated y-contour values at each x grid location.
+    y_interp_bottom,y_interp_top,x_interp,is_simple_worm = h__getSimpleWormInfo(xo,yo,N_GRID_POINTS)
+
+    import pdb
+    pdb.set_trace()
+    """
+    
     grid_aspect_ratio = x_range_all / y_range_all
 
     #run_mask = np.logical_not(np.isnan(grid_aspect_ratio))
@@ -256,12 +265,269 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
     return (eccentricity, orientation)
 
+def h__getSimpleWormInfo(xo,yo,n_grid_points):
+    """
+%
+%
+%   Inputs
+%   =======================================================================
+%   xo : x outline after being mean centered and rotated
+%   yo : y "   "
+%   n_grid_points : # of points to use for filling worm to determine
+%   center of mass
+%
+%   Outputs
+%   =======================================================================
+%   y_interp_bottom : [n_grid_points x n_simple_worms], interpolated y
+%                      values for the bottom contour of simple worms
+%   y_interp_top    : [n_grid_points x n_simple_worms]
+%   is_simple_worm  : [1 x n_frames]
+%
+%
+%Determine 'simple' worms
+%--------------------------------------------------------------------------
+%
+%   Simple worms have two sides in which x goes from - to + (or + to -), 
+%   with no bending backwards. Importantly, this means that an x grid point
+%   which is in the worm will only have two y-bounds. The values of the
+%   y-bounds are the values of y on the two sides of the worm at that
+%   x-location.
+%
+%
+%   x => a [x,y] value from the outline
+%
+%               x
+%             x  x 
+%            x   x x
+%             x       x
+%               x x   x         This is not a simple worm.
+%                 x   x
+%                x    x         NOTE: This wouldn't happen in
+%             x      x          this function because the worm isn't
+%        x x x     x            rotated
+%       x       x
+%        x x x 
+%
+%
+%
+%                   x    x
+%       x   x   x            x   x  x
+%     x                                x    This is a simple worm!
+%       x   x  x    x   x   x    x    x
+%
+%     |  |  |  |  |  |  |  |  |  |  |  |  <- grid locations where we 
+%   will interpolate the outline.
+%
+%
+%   For a simple worm this removes the need to sort the x
+%   values in the grid with respect to the x-values of the contour. 
+%
+%   Normally a point-in-polygon algorithm would first have to find which
+%   set of x side values the point is in between. A algorithm would also
+%   not know that a set of x grid locations all have the same value (i.e.
+%   there is repetition of the x-values for different y grid values), which
+%   would save time as well.
+%
+%   Once we have the interpolated y-values, we round the y-values to grid
+%   points to the nearest grid points. Doing this allows us to simply count
+%   the points off that are between the two y-values.
+%
+%   This is illustrated below:
+%
+%           33 - y value of higher contour
+%       
+%           13 - y value of lower contour
+%           11 - min
+%
+%
+%   If 11 is min, and 5 is our spacing, then our grid points to test will
+%   be 11,16,21,26,31,36,41, etc
+%
+%   If we round 13 up and 33 down to their appropriate locations (16 and
+%   31), then we know that at this x value, the grid points 16:5:31 will
+%   all be in the worm
+    """ 
+    
+    n_contour_points = xo.shape[0]
+    n_frames = xo.shape[1]
+    
+    y_interp_bottom = np.zeros((n_contour_points,n_frames))
+    y_interp_bottom[:] = np.NaN
+    y_interp_top = np.zeros((n_contour_points,n_frames))
+    y_interp_top[:] = np.NaN
+    x_interp = np.zeros((n_contour_points,n_frames))
+    x_interp[:] = np.NaN
+    
+    mx_x_I = np.argmax(xo,axis=0)
+    mn_x_I = np.argmin(xo,axis=0)
+    
+    """
+    %We don't know if the worm will be going from left to right or right to
+%left, we need slightly different code later on depending on which
+%
+%NOTE: we are testing the indices, not the values
 
+%JAH: The following code could be simplified a bit to remove the two loops
+%...
+    """
+
+    """
+    %--------------------------------------------------------------------------
+    %NOTE: The basic difference between these loops is in how x1 and x2 are
+    %defined. For interpolation we must always go from a lower value to a
+    %higher value (to use the quick method of interpolation in Matlab). Note, 
+    %the sign on the comparison is also different.
+    """   
+   
+    min_first_mask = mn_x_I < mx_x_I
+    min_last_mask  = mx_x_I < mn_x_I
+
+    d = np.vstack((np.diff(xo,axis=0),xo[0,:]-xo[-1,:]))
+
+    is_simple_worm = np.zeros(n_frames,dtype=bool)    
+    
+    for iFrame in np.nditer(utils.find(min_first_mask)):
+
+        x1 = utils.colon(mn_x_I[iFrame],1,mx_x_I[iFrame])
+        x1 = x1.astype(np.int32,copy=False)
+        
+        if np.all(d[x1[:-1],iFrame] > 0):
+            
+            x2 = np.hstack((utils.colon(mx_x_I[iFrame],1,n_contour_points-1),
+                            utils.colon(0,1,mn_x_I[iFrame])))
+            x2 = x2.astype(np.int32,copy=False)          
+                            
+            if np.all(d[x2[:-1],iFrame] < 0):
+                
+                is_simple_worm[iFrame] = True
+                    
+                #TODO: Implement this next line ...    
+                y_interp_bottom[:,iFrame],y_interp_top[:,iFrame],x_interp[:,iFrame] = \
+                    h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,n_grid_points,iFrame,mn_x_I,mx_x_I)    
+                import pdb
+                pdb.set_trace()
+            else:
+                import pdb
+                pdb.set_trace()
+        else:
+            import pdb
+            pdb.set_trace()
+
+def h__getInterpValuesForSimpleWorm(x1,x2,xOutline_mc,yOutline_mc,gridSize,iFrame,mn_x_I,mx_x_I):
+    pass
+    """
+    %
+    %
+    %   [y_interp_1,y_interp_2,x_out_all] = h__getInterpValues(x1,x2,xOutline_mc,yOutline_mc,gridSize,iFrame,mn_x_I,mx_x_I)
+    %
+    %
+    %   This function computes the interpolated y-values on the contour
+    %   for the x grid locations that we will be testing at. It also computes
+    %   the x grid (TODO: Might move this ...)
+    %   
+    %   Inputs
+    %   =======================================================================
+    %   x1          : [1 x m] contour indices with values going from low to high
+    %   x2          : [1 x n] contour indices with values going from high to low
+    %
+    %                   NOTE: x1 and x2 do not need to have the same length
+    %                   although m and n are usually around 48 - 50
+    %       
+    %   xOutline_mc : [96 x n_frames] x values of the contour
+    %   yOutline_mc : [96 x n_frames] y values of the contour
+    %   gridSize    : (scalar, normally 50) # of points to use between the minimum and maximum value
+    %   iFrame      : (scalar) current frame index
+    %   mn_x_I      : [1 x n_frames] array of minimum x values for all frames
+    %   mx_x_I      : [1 x n_frames] "       " maximum "           "
+    
+    X_in_1 = xOutline_mc(x1,iFrame);
+    X_in_2 = xOutline_mc(x2,iFrame);
+    Y_in_1 = yOutline_mc(x1,iFrame);
+    Y_in_2 = yOutline_mc(x2,iFrame);
+    
+    X_out  = linspace(...
+        xOutline_mc(mn_x_I(iFrame),iFrame),...
+        xOutline_mc(mx_x_I(iFrame),iFrame),...
+        gridSize);
+    
+    %NOTE: In Matlab the interp1 command has a lot of overhead, so we call the
+    %real function directly. This requires ordered x values
+    F = griddedInterpolant(X_in_1,Y_in_1,'linear');
+    y_interp_bottom = F(X_out);
+    
+    %The values from x2 are going from high to low, so the difference is
+    %negative. Unfortunately griddedInterpolant requires positve differences,
+    %so we flip the X and Y vectors
+    F = griddedInterpolant(X_in_2(end:-1:1),Y_in_2(end:-1:1),'linear');
+    y_interp_top = F(X_out);
+    
+    x_out_all = X_out;
+    """
 def h__centerAndRotateOutlines(x_outline, y_outline):
     """
     #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getEccentricity.m#L391
     """
-    pass
+    
+    x_mc = x_outline - np.mean(x_outline, axis=0)  # mc - mean centered
+    y_mc = y_outline - np.mean(y_outline, axis=0)    
+    
+    """
+%Rough rotation of the worm
+%--------------------------------------------------------------------------
+%
+%   We rotate the worm by the vector formed from going from the first point
+%   to the last point. This accomplishes two things.
+%
+%   1) For the brute force approach, this makes it so the worm is
+%   encompassed better by a rectangle instead of a square, which means that
+%   there are fewer grid points to test that are not in the worm (as
+%   opposed to a worm that is on a 45 degree angle that would have many
+%   points on the grid outside of the worm). In other words, the bounding
+%   box is a better approximation of the worm when the worm is rotated then
+%   when it is not. In the brute force case we place points in the bounding
+%   box, so the smaller the bounding box, the faster the code will run.
+%
+%   2) This allows us to hardcode only looking for "simple" worms 
+%   (see description below) that vary in the x-direction. Otherwise we
+%   might need to also look for simple worms in the y direction. Along
+%   similar lines this makes it more likely that we will get simple worms.
+
+%NOTE: Here we are assuming that the head or tail is located at this middle
+%index    
+    """
+    
+    n_outline_points = x_outline.shape[0]
+
+    """
+%        6  5   <= 
+%      1      4
+%  =>    2  3
+%
+%   NOTE: we want indices 1 and 4 in this example, 4 is half of 6, + 1
+%    
+   """
+   
+    head_or_tail_index = round(n_outline_points/2)   
+   
+
+    y = y_mc[head_or_tail_index,:] - y_mc[0,:] #_mc - mean centered
+    x = x_mc[head_or_tail_index,:] - x_mc[0,:]
+
+    rot_angle = np.arctan2(y,x);   
+
+    """
+    %I expanded the rotation matrix to allow processing all frames at once
+    %
+    %   i.e. rather than R*X (Matrix multiplication)
+    %
+    %   I have r(1)*X(1) + r(2)*X(2) etc, but where X(1), X(2), etc is really
+    %   a vector of values, not just a singular value like you would need for
+    %   R*X
+    """
+    xo = x_mc*np.cos(rot_angle)  + y_mc*np.sin(rot_angle)
+    yo = x_mc*-np.sin(rot_angle) + y_mc*np.cos(rot_angle)   
+   
+    return (xo,yo,rot_angle)
 
 
 def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
