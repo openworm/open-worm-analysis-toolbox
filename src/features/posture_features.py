@@ -154,17 +154,34 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     x_range_all = np.ptp(contour_x, axis=0)
     y_range_all = np.ptp(contour_y, axis=0)
 
-    """
     xo,yo,rot_angle = h__centerAndRotateOutlines(contour_x, contour_y)
-    #[xo,yo,rot_angle] = h__centerAndRotateOutlines(x_outline,y_outline);
 
     #In this function we detect "simple worms" and if they are detected
     #get interpolated y-contour values at each x grid location.
-    y_interp_bottom,y_interp_top,x_interp,is_simple_worm = h__getSimpleWormInfo(xo,yo,N_GRID_POINTS)
+    y_interp_bottom,y_interp_top,x_interp,is_simple_worm = \
+        h__getSimpleWormInfo(xo,yo,N_GRID_POINTS)
+    
+    grid_spacings = x_interp[1,:] - x_interp[0,:]
 
-    import pdb
-    pdb.set_trace()
-    """
+    y_bottom_bounds,y_top_bounds = \
+        h__computeYBoundsOfSimpleWorms(y_interp_bottom,y_interp_top,grid_spacings)    
+    
+    eccentricity[is_simple_worm],orientation[is_simple_worm] = \
+    h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings)    
+    
+    
+    n_frames = contour_x.shape[1]
+    eccentricity = np.zeros(n_frames)
+    eccentricity[:] = np.NaN
+    orientation = np.zeros(n_frames)    
+    orientation[:] = np.NaN
+    
+    #Use slow grid method for all unfinished worms
+    #--------------------------------------------------------------------------
+    #
+    #   This code is still a bit messy ...
+    #
+    
     
     grid_aspect_ratio = x_range_all / y_range_all
 
@@ -264,6 +281,102 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     print('Elapsed time in seconds for eccentricity: %d' % elapsed_time)
 
     return (eccentricity, orientation)
+    
+def h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings):
+
+    """
+    %
+    %
+    %
+    %   Parameters:
+    %   -------
+    %   x_interp        : 
+    %   y_bottom_bounds :
+    %   y_top_bounds    :
+    %
+    %   Outputs:
+    %   =======================================================================
+    %   eccentricity : [1 x n_simple_worms]
+    %   orientation  : [1 x n_simple_worms]
+    %
+    """
+
+    import pdb
+    pdb.set_trace()
+
+    n_simple_worms = x_interp.shape[1]
+    n_grid_points  = x_interp.shape[0]
+
+    #Initialize outputs of the loop
+    #--------------------------------------------------------------------------
+    
+    #JAH: AT THIS POINT
+    
+    eccentricity = NaN(1,n_simple_worms);
+    orientation  = NaN(1,n_simple_worms);
+
+#These are temporary arrays for holding the location of grid points that
+#fit inside the worm. They are a linerization of all points, so they don't
+#have a second dimension, we just pile new points from a worm frame onto
+#any old points from that frame.
+x_all = zeros(1,n_grid_points*n_grid_points);
+y_all = zeros(1,n_grid_points*n_grid_points);
+
+for iFrame = 1:n_simple_worms
+    count = 0
+    
+    cur_d_unit = grid_spacings(iFrame);
+    
+    #For each x position, we increment from the minimum y value at that x location
+    #to the maximum at that location, in the specified steps. We need
+    #to hold onto the values for doing the eccentricity and orientation
+    #calculations.
+    #
+    #NOTE: First and last grid points will not contain useful data
+    for iIndex = 2:(n_grid_points-1)
+        
+        %Generate appropriate y-values on grid
+        temp = y_bottom_bounds(iIndex,iFrame):cur_d_unit:y_top_bounds(iIndex,iFrame);
+        
+        %and store ...
+        y_all(count+1:count+length(temp)) = temp;
+        x_all(count+1:count+length(temp)) = x_interp(iIndex,iFrame);
+        count = count + length(temp);
+    
+
+    [eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x_all(1:count),y_all(1:count));    
+    
+    return (eccentricity,orientation)
+    
+def h__computeYBoundsOfSimpleWorms(y_interp_bottom,y_interp_top,grid_spacings):
+    """
+    %
+    %
+    %   Inputs
+    %   =======================================================================
+    %
+    %   Outputs
+    %   =======================================================================
+    %   y_bottom_bounds : [n_grid_points x n_simple_worms]
+    %   y_top_bounds    : [n_grid_points x n_simple_worms]
+    
+    %JAH: The bounds were being computed after aligning to the minimum (so that
+    %the minimum was always a point), but:
+    %- this seems biased
+    %- removing this step speeds up the calculation
+    %- "        " simplifies the code ...
+    """
+
+    #NOTE: The key point is that we round up on the lower value and down on the
+    #
+    
+    y_bottom_bounds = np.ceil(y_interp_bottom/grid_spacings)*grid_spacings
+    y_top_bounds    = np.floor(y_interp_top/grid_spacings)*grid_spacings
+    
+    #y_bottom_bounds = bsxfun(@times,ceil(bsxfun(@rdivide,y_interp_bottom,grid_spacings)),grid_spacings);
+    #y_top_bounds    = bsxfun(@times,floor(bsxfun(@rdivide,y_interp_top,grid_spacings)),grid_spacings); 
+
+    return (y_bottom_bounds,y_top_bounds)
 
 def h__getSimpleWormInfo(xo,yo,n_grid_points):
     """
@@ -351,11 +464,11 @@ def h__getSimpleWormInfo(xo,yo,n_grid_points):
     n_contour_points = xo.shape[0]
     n_frames = xo.shape[1]
     
-    y_interp_bottom = np.zeros((n_contour_points,n_frames))
+    y_interp_bottom = np.zeros((n_grid_points,n_frames))
     y_interp_bottom[:] = np.NaN
-    y_interp_top = np.zeros((n_contour_points,n_frames))
+    y_interp_top = np.zeros((n_grid_points,n_frames))
     y_interp_top[:] = np.NaN
-    x_interp = np.zeros((n_contour_points,n_frames))
+    x_interp = np.zeros((n_grid_points,n_frames))
     x_interp[:] = np.NaN
     
     mx_x_I = np.argmax(xo,axis=0)
@@ -401,20 +514,73 @@ def h__getSimpleWormInfo(xo,yo,n_grid_points):
                 
                 is_simple_worm[iFrame] = True
                     
-                #TODO: Implement this next line ...    
+                #import pdb
+                #pdb.set_trace()
                 y_interp_bottom[:,iFrame],y_interp_top[:,iFrame],x_interp[:,iFrame] = \
                     h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,n_grid_points,iFrame,mn_x_I,mx_x_I)    
-                import pdb
-                pdb.set_trace()
-            else:
-                import pdb
-                pdb.set_trace()
-        else:
-            import pdb
-            pdb.set_trace()
 
-def h__getInterpValuesForSimpleWorm(x1,x2,xOutline_mc,yOutline_mc,gridSize,iFrame,mn_x_I,mx_x_I):
-    pass
+    for iFrame in np.nditer(utils.find(min_last_mask)):
+
+        x2 = utils.colon(mx_x_I[iFrame],1,mn_x_I[iFrame])
+        x2 = x2.astype(np.int32,copy=False)
+        
+        if np.all(d[x2[:-1],iFrame] < 0):
+            
+            x1 = np.hstack((utils.colon(mn_x_I[iFrame],1,n_contour_points-1),
+                            utils.colon(0,1,mx_x_I[iFrame])))
+            x1 = x1.astype(np.int32,copy=False)          
+                            
+            if np.all(d[x1[:-1],iFrame] > 0):
+                
+                is_simple_worm[iFrame] = True
+                    
+                y_interp_bottom[:,iFrame],y_interp_top[:,iFrame],x_interp[:,iFrame] = \
+                    h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,n_grid_points,iFrame,mn_x_I,mx_x_I)  
+
+    y_interp_bottom = y_interp_bottom[:,is_simple_worm]
+    y_interp_top    = y_interp_top[:,is_simple_worm]
+    x_interp        = x_interp[:,is_simple_worm]
+
+    """
+    %Ensure that y1 < y2 for all frames (DONE), if not then flip (NYI)
+    %--------------------------------------------------------------------------
+    %NOTE: we skip the first and last point because they should be the same, although after rounding (floor, ceil)
+    %they actually will tend to be apart by the amount 'dy', with the opposite relationship that the rest of the data has
+    %I also filter this out in the loop below by skipping the
+    %first and last grid point
+    %
+    %We need to ensure y1 is less than y2, because below we create vectors
+    %going from low to high, and if these are reversed, then the vector will
+    %be empty and the result empty
+    %
+    %NOTE: We skip the first and last value as they should essentially be the
+    %same for the top and bottom contours
+    
+    
+    %NOTE: This can be fixed easily. Any violations just need to be swapped ...
+    """
+    is_bottom_correct = np.all(y_interp_bottom[1:-1,:] < y_interp_top[1:-1,:],axis=0)
+    
+    if not np.all(is_bottom_correct):
+        raise Exception('Assumption violated, need to fix code')
+
+
+    """
+    
+    %This code needs to be tested ...
+    
+    temp_top = y_interp_bottom(:,~is_bottom_correct);
+    
+    y_interp_bottom(:,~is_bottom_correct) = y_interp_top(:,~is_bottom_correct);
+    y_interp_top(:,~is_bottom_correct)    = temp_top;
+    
+    """
+    
+    return (y_interp_bottom,y_interp_top,x_interp,is_simple_worm)
+
+
+
+def h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,gridSize,iFrame,mn_x_I,mx_x_I):
     """
     %
     %
@@ -439,30 +605,25 @@ def h__getInterpValuesForSimpleWorm(x1,x2,xOutline_mc,yOutline_mc,gridSize,iFram
     %   iFrame      : (scalar) current frame index
     %   mn_x_I      : [1 x n_frames] array of minimum x values for all frames
     %   mx_x_I      : [1 x n_frames] "       " maximum "           "
-    
-    X_in_1 = xOutline_mc(x1,iFrame);
-    X_in_2 = xOutline_mc(x2,iFrame);
-    Y_in_1 = yOutline_mc(x1,iFrame);
-    Y_in_2 = yOutline_mc(x2,iFrame);
-    
-    X_out  = linspace(...
-        xOutline_mc(mn_x_I(iFrame),iFrame),...
-        xOutline_mc(mx_x_I(iFrame),iFrame),...
-        gridSize);
-    
-    %NOTE: In Matlab the interp1 command has a lot of overhead, so we call the
-    %real function directly. This requires ordered x values
-    F = griddedInterpolant(X_in_1,Y_in_1,'linear');
-    y_interp_bottom = F(X_out);
-    
-    %The values from x2 are going from high to low, so the difference is
-    %negative. Unfortunately griddedInterpolant requires positve differences,
-    %so we flip the X and Y vectors
-    F = griddedInterpolant(X_in_2(end:-1:1),Y_in_2(end:-1:1),'linear');
-    y_interp_top = F(X_out);
-    
-    x_out_all = X_out;
     """
+    
+    X_in_1 = xo[x1,iFrame];
+    X_in_2 = xo[x2,iFrame];
+    Y_in_1 = yo[x1,iFrame];
+    Y_in_2 = yo[x2,iFrame];
+    
+    X_out  = np.linspace(
+        xo[mn_x_I[iFrame],iFrame],
+        xo[mx_x_I[iFrame],iFrame],
+        num=gridSize)
+    
+
+    y_interp_bottom = np.interp(X_out,X_in_1,Y_in_1)
+    y_interp_top = np.interp(X_out,X_in_2[::-1],Y_in_2[::-1])    
+ 
+        
+    return (y_interp_bottom,y_interp_top,X_out)
+
 def h__centerAndRotateOutlines(x_outline, y_outline):
     """
     #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getEccentricity.m#L391
