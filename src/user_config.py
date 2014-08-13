@@ -27,4 +27,4 @@ EIGENWORM_PATH = "worm_data"
 # There is a step that is very slow that can be disabled
 # if you are just debugging other parts of the code.
 # For production, this should be True.
-PERFORM_SLOW_ECCENTRICITY_CALC = False
+PERFORM_SLOW_ECCENTRICITY_CALC = True

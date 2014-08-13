@@ -20,17 +20,19 @@ __ALL__ = ['get_angles',
 def get_angles(segment_x, segment_y, head_to_tail=False):
     """ Obtain the "angle" of a subset of the 49 points
         of a worm, for each frame.
+        
+        #TODO: Implement the explain function check here ...
 
     Parameters
-    ---------------------------------------
+    ----------
     segment_x, segment_y: numpy arrays of shape (p,n) where 
       p is the size of the partition of the 49 points
       n is the number of frames in the video
     head_to_tail: bool
-    True means the worm points are order head to tail.
+        True means the worm points are ordered head to tail.
 
     Returns
-    ---------------------------------------
+    -------
     A numpy array of shape (n) and stores the worm body's "angle" 
     (in degrees) for each frame of video
 
