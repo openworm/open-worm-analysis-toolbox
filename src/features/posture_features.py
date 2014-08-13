@@ -147,12 +147,11 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     +seg_worm / +utils / +posture / getEccentricity.m
     """
 
-    t_obj = time.time()
+    #t_obj = time.time()
 
     N_GRID_POINTS = config.N_ECCENTRICITY  # TODO: move to options
 
-    x_range_all = np.ptp(contour_x, axis=0)
-    y_range_all = np.ptp(contour_y, axis=0)
+
 
     xo,yo,rot_angle = h__centerAndRotateOutlines(contour_x, contour_y)
 
@@ -165,122 +164,143 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
 
     y_bottom_bounds,y_top_bounds = \
         h__computeYBoundsOfSimpleWorms(y_interp_bottom,y_interp_top,grid_spacings)    
-    
-    eccentricity[is_simple_worm],orientation[is_simple_worm] = \
-    h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings)    
-    
-    
+
     n_frames = contour_x.shape[1]
     eccentricity = np.zeros(n_frames)
     eccentricity[:] = np.NaN
     orientation = np.zeros(n_frames)    
     orientation[:] = np.NaN
     
+    eccentricity[is_simple_worm],orientation[is_simple_worm] = \
+    h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings)    
+
     #Use slow grid method for all unfinished worms
     #--------------------------------------------------------------------------
     #
     #   This code is still a bit messy ...
     #
     
+    x_range_all = np.ptp(contour_x, axis=0)
+    y_range_all = np.ptp(contour_y, axis=0)
     
     grid_aspect_ratio = x_range_all / y_range_all
 
-    #run_mask = np.logical_not(np.isnan(grid_aspect_ratio))
+    run_mask = ~np.isnan(grid_aspect_ratio) & ~is_simple_worm
 
-    n_frames = len(x_range_all)
+    eccentricity,orientation = h__getEccentricityAndOrientation(
+        xo,yo,x_range_all,y_range_all,grid_aspect_ratio,N_GRID_POINTS,
+        eccentricity,orientation,run_mask)
 
-    eccentricity = np.empty(n_frames)
-    eccentricity[:] = np.NAN
-    orientation = np.empty(n_frames)
-    orientation[:] = np.NAN
+    #elapsed_time = time.time() - t_obj
+    #print('Elapsed time in seconds for eccentricity: %d' % elapsed_time)
+    
 
+    #Fix the orientation - we undo the rotation that we originally did
+    #--------------------------------------------------------------------------
+    with np.errstate(invalid='ignore'):
+        orientation_fixed = orientation + rot_angle*180/np.pi
+        orientation_fixed[orientation_fixed > 90]  -= 180
+        orientation_fixed[orientation_fixed < -90] += 180
+    
+    orientation = orientation_fixed;
+
+
+
+  
+    return (eccentricity, orientation)
+
+def h__getEccentricityAndOrientation(x_mc,y_mc,xRange_all,yRange_all,gridAspectRatio_all,N_GRID_POINTS,eccentricity,orientation,run_mask):
+    
     # h__getEccentricityAndOrientation
-    for iFrame in range(n_frames):
-        cur_aspect_ratio = grid_aspect_ratio[iFrame]
+    for iFrame in np.nditer(utils.find(run_mask)):
+        cur_aspect_ratio = gridAspectRatio_all[iFrame]
+       # x_range = xRange_all[iFrame]
+        #y_range = yRange_all[iFrame]
+
 
         #------------------------------------------------------
-        if not np.isnan(cur_aspect_ratio):
 
-            cur_cx = x_mc[:, iFrame]
-            cur_cy = y_mc[:, iFrame]
-            poly = Polygon(zip(cur_cx, cur_cy))
 
-            if cur_aspect_ratio > 1:
-                # x size is larger so scale down the number of grid points in
-                # the y direction
-                n1 = N_GRID_POINTS
-                n2 = np.round(N_GRID_POINTS / cur_aspect_ratio)
-            else:
-                # y size is larger so scale down the number of grid points in
-                # the x direction
-                n1 = np.round(N_GRID_POINTS * cur_aspect_ratio)
-                n2 = N_GRID_POINTS
 
-            wtf1 = np.linspace(
-                np.min(x_mc[:, iFrame]), np.max(x_mc[:, iFrame]), num=n1)
-            wtf2 = np.linspace(
-                np.min(y_mc[:, iFrame]), np.max(y_mc[:, iFrame]), num=n2)
+        cur_cx = x_mc[:, iFrame]
+        cur_cy = y_mc[:, iFrame]
+        poly = Polygon(zip(cur_cx, cur_cy))
 
-            m, n = np.meshgrid(wtf1, wtf2)
+        if cur_aspect_ratio > 1:
+            # x size is larger so scale down the number of grid points in
+            # the y direction
+            n1 = N_GRID_POINTS
+            n2 = np.round(N_GRID_POINTS / cur_aspect_ratio)
+        else:
+            # y size is larger so scale down the number of grid points in
+            # the x direction
+            n1 = np.round(N_GRID_POINTS * cur_aspect_ratio)
+            n2 = N_GRID_POINTS
 
-            n_points = m.size
-            m_lin = m.reshape(n_points)
-            n_lin = n.reshape(n_points)
-            in_worm = np.zeros(n_points, dtype=np.bool)
-            for i in range(n_points):
-                p = Point(m_lin[i], n_lin[i])
+        wtf1 = np.linspace(np.min(x_mc[:, iFrame]), np.max(x_mc[:, iFrame]), num=n1)
+        wtf2 = np.linspace(np.min(y_mc[:, iFrame]), np.max(y_mc[:, iFrame]), num=n2)
+
+        m, n = np.meshgrid(wtf1, wtf2)
+
+        n_points = m.size
+        m_lin = m.reshape(n_points)
+        n_lin = n.reshape(n_points)
+        in_worm = np.zeros(n_points, dtype=np.bool)
+        for i in range(n_points):
+            p = Point(m_lin[i], n_lin[i])
 #        try:
-                in_worm[i] = poly.contains(p)
+            in_worm[i] = poly.contains(p)
 #        except ValueError:
 #          import pdb
 #          pdb.set_trace()
 
-                x = m_lin[in_worm]
-                y = n_lin[in_worm]
+        x = m_lin[in_worm]
+        y = n_lin[in_worm]
 
-            """
-        TODO: Finish this
-        plot(xOutline_mc(:,iFrame),yOutline_mc(:,iFrame),'g-o')
-        hold on
-        scatter(x,y,'r')
-        hold off
-        axis equal
-        title(sprintf('%d',iFrame))
-        pause
-      """
+        eccentricity[iFrame],orientation[iFrame] = h__calculateSingleValues(x,y)
 
-            # First eccentricity value should be: 0.9743
+# First eccentricity value should be: 0.9743
+        """
+    TODO: Finish this
+    plot(xOutline_mc(:,iFrame),yOutline_mc(:,iFrame),'g-o')
+    hold on
+    scatter(x,y,'r')
+    hold off
+    axis equal
+    title(sprintf('%d',iFrame))
+    pause
+  """
 
-            # h__calculateSingleValues
-            N = float(len(x))
-            # Calculate normalized second central moments for the region.
-            uxx = np.sum(x * x) / N
-            uyy = np.sum(y * y) / N
-            uxy = np.sum(x * y) / N
+    return (eccentricity,orientation)   
 
-            # Calculate major axis length, minor axis length, and eccentricity.
-            common = np.sqrt((uxx - uyy) ** 2 + 4 * (uxy ** 2))
-            majorAxisLength = 2 * np.sqrt(2) * np.sqrt(uxx + uyy + common)
-            minorAxisLength = 2 * np.sqrt(2) * np.sqrt(uxx + uyy - common)
-            eccentricity[
-                iFrame] = 2 * np.sqrt((majorAxisLength / 2) ** 2 - (minorAxisLength / 2) ** 2) / majorAxisLength
+    
 
-            # Calculate orientation.
-            if (uyy > uxx):
-                num = uyy - uxx + np.sqrt((uyy - uxx) ** 2 + 4 * uxy ** 2)
-                den = 2 * uxy
-            else:
-                num = 2 * uxy
-                den = uxx - uyy + np.sqrt((uxx - uyy) ** 2 + 4 * uxy ** 2)
 
-            orientation[iFrame] = (180 / np.pi) * np.arctan(num / den)
-
-        #[eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x,y);
-
-    elapsed_time = time.time() - t_obj
-    print('Elapsed time in seconds for eccentricity: %d' % elapsed_time)
-
-    return (eccentricity, orientation)
+def h__calculateSingleValues(x,y):
+    
+    N = float(len(x))
+    # Calculate normalized second central moments for the region.
+    uxx = np.sum(x * x) / N
+    uyy = np.sum(y * y) / N
+    uxy = np.sum(x * y) / N
+    
+    # Calculate major axis length, minor axis length, and eccentricity.
+    common = np.sqrt((uxx - uyy) ** 2 + 4 * (uxy ** 2))
+    majorAxisLength = 2 * np.sqrt(2) * np.sqrt(uxx + uyy + common)
+    minorAxisLength = 2 * np.sqrt(2) * np.sqrt(uxx + uyy - common)
+    eccentricity_s = 2 * np.sqrt((majorAxisLength / 2) ** 2 - (minorAxisLength / 2) ** 2) / majorAxisLength
+    
+    # Calculate orientation.
+    if (uyy > uxx):
+        num = uyy - uxx + np.sqrt((uyy - uxx) ** 2 + 4 * uxy ** 2)
+        den = 2 * uxy
+    else:
+        num = 2 * uxy
+        den = uxx - uyy + np.sqrt((uxx - uyy) ** 2 + 4 * uxy ** 2)
+    
+    orientation_s = (180 / np.pi) * np.arctan(num / den) 
+    
+    return (eccentricity_s,orientation_s)
     
 def h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings):
 
@@ -301,9 +321,6 @@ def h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_
     %
     """
 
-    import pdb
-    pdb.set_trace()
-
     n_simple_worms = x_interp.shape[1]
     n_grid_points  = x_interp.shape[0]
 
@@ -312,39 +329,46 @@ def h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_
     
     #JAH: AT THIS POINT
     
-    eccentricity = NaN(1,n_simple_worms);
-    orientation  = NaN(1,n_simple_worms);
+    eccentricity = np.zeros(n_simple_worms)
+    eccentricity[:] = np.NaN
+    orientation = np.zeros(n_simple_worms)
+    orientation[:] = np.NaN    
 
-#These are temporary arrays for holding the location of grid points that
-#fit inside the worm. They are a linerization of all points, so they don't
-#have a second dimension, we just pile new points from a worm frame onto
-#any old points from that frame.
-x_all = zeros(1,n_grid_points*n_grid_points);
-y_all = zeros(1,n_grid_points*n_grid_points);
 
-for iFrame = 1:n_simple_worms
-    count = 0
-    
-    cur_d_unit = grid_spacings(iFrame);
-    
-    #For each x position, we increment from the minimum y value at that x location
-    #to the maximum at that location, in the specified steps. We need
-    #to hold onto the values for doing the eccentricity and orientation
-    #calculations.
-    #
-    #NOTE: First and last grid points will not contain useful data
-    for iIndex = 2:(n_grid_points-1)
+    #These are temporary arrays for holding the location of grid points that
+    #fit inside the worm. They are a linerization of all points, so they don't
+    #have a second dimension, we just pile new points from a worm frame onto
+    #any old points from that frame.
+    x_all = np.zeros(n_grid_points*n_grid_points)
+    y_all = np.zeros(n_grid_points*n_grid_points)
+
+    for iFrame in range(n_simple_worms):
+        count = 0
         
-        %Generate appropriate y-values on grid
-        temp = y_bottom_bounds(iIndex,iFrame):cur_d_unit:y_top_bounds(iIndex,iFrame);
+        cur_d_unit = grid_spacings[iFrame]
         
-        %and store ...
-        y_all(count+1:count+length(temp)) = temp;
-        x_all(count+1:count+length(temp)) = x_interp(iIndex,iFrame);
-        count = count + length(temp);
+        #For each x position, we increment from the minimum y value at that x location
+        #to the maximum at that location, in the specified steps. We need
+        #to hold onto the values for doing the eccentricity and orientation
+        #calculations.
+        #
+        #NOTE: First and last grid points will not contain useful data
+        #for iIndex = 2:(n_grid_points-1):
+        for iIndex in range(1,n_grid_points-1):
+            
+            #Generate appropriate y-values on grid
+            temp = utils.colon(
+                y_bottom_bounds[iIndex,iFrame],
+                cur_d_unit,
+                y_top_bounds[iIndex,iFrame])
+            
+            #and store ...
+            y_all[count:(count+len(temp))] = temp;
+            #y_all[count:count+length(temp)] = temp;
+            x_all[count:(count+len(temp))] = x_interp[iIndex,iFrame];
+            count = count + len(temp)
     
-
-    [eccentricity(iFrame),orientation(iFrame)] = h__calculateSingleValues(x_all(1:count),y_all(1:count));    
+        eccentricity[iFrame],orientation[iFrame] = h__calculateSingleValues(x_all[0:count],y_all[0:count]);    
     
     return (eccentricity,orientation)
     
@@ -724,8 +748,7 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     amplitude_max = amp1 - amp2
     amp2 = np.abs(amp2)
     with np.errstate(invalid='ignore'):
-        amplitude_ratio = np.divide(
-            np.minimum(amp1, amp2), np.maximum(amp1, amp2))
+        amplitude_ratio = np.divide(np.minimum(amp1, amp2), np.maximum(amp1, amp2))
 
     # Calculate track length
     #--------------------------------------------------------------------------

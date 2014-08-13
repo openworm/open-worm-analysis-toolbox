@@ -518,7 +518,7 @@ class WormPosture(object):
            amplitude_max: Type::ndarray, Len: 4642
         """
         return \
-            fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity') and \
+            fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99) and \
             fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio') and \
             fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length') and \
             fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks') and \
