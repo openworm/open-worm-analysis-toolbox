@@ -83,7 +83,7 @@ The structure of the files is described at a high level starting on page 183 of 
 Contact @MichaelCurrie for troubleshooting these steps.
 
 
-###License and Documentation###
+###License###
 
 movement_validation, and indeed all of OpenWorm, is free software under the [MIT license](http://opensource.org/licenses/MIT).
 
