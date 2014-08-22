@@ -9,8 +9,6 @@ from .. import utils
 
 from . import feature_comparisons as fc
 
-import WormFeatures as wf
-
 class Widths(object):
     
     fields = ('head', 'midbody', 'tail')
@@ -20,7 +18,7 @@ class Widths(object):
         nw = features_ref.nw
     
         for partition in self.fields:
-            setattr(self,partition,np.mean(nw.get_partition(partition, 'widths'),0))
+            setattr(self,partition, np.mean(nw.get_partition(partition, 'widths'),0))
     
     @classmethod
     def from_disk(cls,width_ref):
@@ -28,7 +26,7 @@ class Widths(object):
         self = cls.__new__(cls)
 
         for partition in self.fields:
-            setattr(self,partition,wf._extract_time_from_disk(width_ref,partition))
+            setattr(self,partition, utils._extract_time_from_disk(width_ref,partition))
     
         return self
         

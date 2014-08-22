@@ -32,9 +32,6 @@ from .. import config
 
 from . import feature_comparisons as fc
 
-#?? - why is this needed
-import WormFeatures
-#from . import WormFeatures
 
 class LocomotionBend(object):
     
@@ -48,8 +45,8 @@ class LocomotionBend(object):
 
         self = cls.__new__(cls)
 
-        self.amplitude = WormFeatures._extract_time_from_disk(bend_ref,'amplitude')
-        self.frequency = WormFeatures._extract_time_from_disk(bend_ref,'frequency')
+        self.amplitude = utils._extract_time_from_disk(bend_ref,'amplitude')
+        self.frequency = utils._extract_time_from_disk(bend_ref,'frequency')
         self.name = name
         
         return self    
@@ -1119,8 +1116,8 @@ class LocomotionForagingBends(object):
 
         self = cls.__new__(cls)
 
-        self.amplitude = WormFeatures._extract_time_from_disk(foraging_ref,'amplitude')
-        self.angle_speed = WormFeatures._extract_time_from_disk(foraging_ref,'angleSpeed')
+        self.amplitude = utils._extract_time_from_disk(foraging_ref,'amplitude')
+        self.angle_speed = utils._extract_time_from_disk(foraging_ref,'angleSpeed')
         
         return self
         

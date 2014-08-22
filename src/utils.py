@@ -24,7 +24,8 @@ __ALL__ = ['scatter',
            'write_to_CSV',
            'interpolate_with_threshold',
            'interpolate_with_threshold_2D',
-           'gausswin']
+           'gausswin',
+           '_extract_time_from_disk']
 
 
 def scatter(x, y):
@@ -564,3 +565,20 @@ def gausswin(L, alpha=2.5):
 
     return w
 
+
+
+
+def _extract_time_from_disk(parent_ref, name):
+    """
+    This is for handling Matlab save vs Python save when we get to that point.
+    """
+
+    temp = parent_ref[name].value
+
+    # Assuming vector, need to fix for eigenvectors
+    if temp.shape[0] > temp.shape[1]:
+        wtf = temp[:, 0]
+    else:
+        wtf = temp[0, :]
+
+    return wtf

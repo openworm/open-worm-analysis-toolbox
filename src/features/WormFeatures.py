@@ -13,10 +13,6 @@ WormPath
 
 WormFeatures
 
-Functions
----------------------------------------    
-_extract_time_from_disk
-
 
 A translation of Matlab code written by Jim Hokanson, in the 
 SegwormMatlabClasses GitHub repo.  
@@ -106,13 +102,13 @@ class WormMorphology(object):
         
         self = cls.__new__(cls)
 
-        self.length = _extract_time_from_disk(m_var, 'length')
+        self.length = utils._extract_time_from_disk(m_var, 'length')
         
         self.width = morphology_features.Widths.from_disk(m_var['width'])
 
-        self.area = _extract_time_from_disk(m_var, 'area')
-        self.area_per_length = _extract_time_from_disk(m_var, 'areaPerLength')
-        self.width_per_length = _extract_time_from_disk(m_var, 'widthPerLength')
+        self.area = utils._extract_time_from_disk(m_var, 'area')
+        self.area_per_length = utils._extract_time_from_disk(m_var, 'areaPerLength')
+        self.width_per_length = utils._extract_time_from_disk(m_var, 'widthPerLength')
 
         return self
 
@@ -317,8 +313,8 @@ class WormLocomotion(object):
         velocity_ref = m_var['velocity']
         for key in velocity_ref:
             value = velocity_ref[key]
-            temp_speed = _extract_time_from_disk(value, 'speed')
-            temp_direc = _extract_time_from_disk(value, 'direction')
+            temp_speed = utils._extract_time_from_disk(value, 'speed')
+            temp_direc = utils._extract_time_from_disk(value, 'direction')
             velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
 
         # NOTE: This only valid for MRC
@@ -340,7 +336,7 @@ class WormLocomotion(object):
                 self.motion_events[key] = \
                     events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
 
-            self.motion_mode = _extract_time_from_disk(motion_ref, 'mode')
+            self.motion_mode = utils._extract_time_from_disk(motion_ref, 'mode')
         else:
 			#This would indicate loading a new version
             raise Exception('Not yet implemented')
@@ -472,17 +468,17 @@ class WormPosture(object):
         # only the old is implemented
         temp_amp = p_var['amplitude']
 
-        self.amplitude_max = _extract_time_from_disk(temp_amp, 'max')
-        self.amplitude_ratio = _extract_time_from_disk(temp_amp, 'ratio')
+        self.amplitude_max = utils._extract_time_from_disk(temp_amp, 'max')
+        self.amplitude_ratio = utils._extract_time_from_disk(temp_amp, 'ratio')
 
         temp_wave = p_var['wavelength']
-        self.primary_wavelength = _extract_time_from_disk(temp_wave, 'primary')
-        self.secondary_wavelength = _extract_time_from_disk(
+        self.primary_wavelength = utils._extract_time_from_disk(temp_wave, 'primary')
+        self.secondary_wavelength = utils._extract_time_from_disk(
             temp_wave, 'secondary')
 
-        self.track_length = _extract_time_from_disk(p_var, 'tracklength')
-        self.eccentricity = _extract_time_from_disk(p_var, 'eccentricity')
-        self.kinks = _extract_time_from_disk(p_var, 'kinks')
+        self.track_length = utils._extract_time_from_disk(p_var, 'tracklength')
+        self.eccentricity = utils._extract_time_from_disk(p_var, 'eccentricity')
+        self.kinks = utils._extract_time_from_disk(p_var, 'kinks')
 
         events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
 
@@ -703,25 +699,3 @@ class WormFeatures(object):
             self.morphology == other.morphology and \
             self.posture    == other.posture    and \
             self.locomotion == other.locomotion
-
-
-"""
-===============================================================================
-===============================================================================
-"""
-
-
-def _extract_time_from_disk(parent_ref, name):
-    """
-    This is for handling Matlab save vs Python save when we get to that point.
-    """
-
-    temp = parent_ref[name].value
-
-    # Assuming vector, need to fix for eigenvectors
-    if temp.shape[0] > temp.shape[1]:
-        wtf = temp[:, 0]
-    else:
-        wtf = temp[0, :]
-
-    return wtf

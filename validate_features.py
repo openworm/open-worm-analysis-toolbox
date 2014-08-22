@@ -52,17 +52,17 @@ def main():
     # COMPARISON
     #----------------------
     # Show the results of the comparison
-    print("Locomotion: ")
-    print(matlab_worm_features.locomotion == openworm_features.locomotion)
+    print("Locomotion: " + 
+        str(matlab_worm_features.locomotion == openworm_features.locomotion))
 
-    print("Posture: ")
-    print(matlab_worm_features.posture == openworm_features.posture)
+    print("Posture: " +
+        str(matlab_worm_features.posture == openworm_features.posture))
 
-    print("Morphology: ")
-    print(matlab_worm_features.morphology == openworm_features.morphology)
+    print("Morphology: " +
+        str(matlab_worm_features.morphology == openworm_features.morphology))
 
-    print("Path: ")
-    print(matlab_worm_features.path == openworm_features.path)
+    print("Path: " +
+        str(matlab_worm_features.path == openworm_features.path))
 
 
 if __name__ == '__main__':
