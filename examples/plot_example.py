@@ -4,13 +4,15 @@
 
 """
 
+import sys
 import os
-import matplotlib.pyplot as plt
 
-import src
-from src import user_config
-from src import utils
-
+# We must add .. to the path so that we can perform the 
+# import of movement_validation while running this as 
+# a top-level script (i.e. with __name__ = '__main__')
+sys.path.append('..') 
+import movement_validation
+user_config = movement_validation.user_config
 
 def example_WormExperimentFile():
     """
@@ -22,7 +24,7 @@ def example_WormExperimentFile():
     worm_file_path = os.path.join(user_config.DROPBOX_PATH,
                                   user_config.WORM_FILE_PATH)
 
-    w = src.WormExperimentFile()
+    w = movement_validation.WormExperimentFile()
     w.load_HDF5_data(worm_file_path)
 
     return w
@@ -45,7 +47,7 @@ def example_nw():
                                         "masterEigenWorms_N2.mat")
 
     # Create our example instance by passing the two file locations
-    normalized_worm = src.NormalizedWorm(data_file_path,
+    normalized_worm = movement_validation.NormalizedWorm(data_file_path,
                                             eigen_worm_file_path)
 
     return normalized_worm
@@ -63,7 +65,7 @@ def example_real_worm_pipeline(data_file_path,
 
     """
 
-    snw_blocks = src.SchaferNormalizedWormBlocks(data_file_path,
+    snw_blocks = movement_validation.SchaferNormalizedWormBlocks(data_file_path,
                                                     eigen_worm_file_path)
     snw = snw_blocks.stitch()
     type(snw)
@@ -72,19 +74,19 @@ def example_real_worm_pipeline(data_file_path,
     # NormalizedWorm can load either:
     #  --> a 'VirtualWorm' file (wrapped in a class) or
     #  --> a 'Schafer' file (wrapped in a class)
-    nw = src.NormalizedWorm('Schafer', snw)
+    nw = movement_validation.NormalizedWorm('Schafer', snw)
 
     nw.compare_with_schafer(snw)
     #*** returns True, hopefully!
 
-    wf = src.WormFeatures(nw)
+    wf = movement_validation.WormFeatures(nw)
 
-    sef = src.SchaferExperimentFile(other_data_file_path)
+    sef = movement_validation.SchaferExperimentFile(other_data_file_path)
 
     wf.compare_with_schafer(sef)
     #*** returns True, hopefully!
 
-    wp = src.WormPlotter(wf)
+    wp = movement_validation.WormPlotter(wf)
 
     wp.show()  # show the plot
 
@@ -100,16 +102,16 @@ def example_virtual_worm_pipeline(data_file_path):
 
     """
 
-    vw = src.BasicWormData(data_file_path)
+    vw = movement_validation.BasicWormData(data_file_path)
 
     # NormalizedWorm can load either:
     #  --> a 'VirtualWorm' file (wrapped in a class) or
     #  --> a 'Schafer' file (wrapped in a class)
-    nw = src.NormalizedWorm('VirtualWorm', vw)
+    nw = movement_validation.NormalizedWorm('VirtualWorm', vw)
 
-    wf = src.WormFeatures(nw)
+    wf = movement_validation.WormFeatures(nw)
 
-    wp = src.WormPlotter(wf)
+    wp = movement_validation.WormPlotter(wf)
 
     wp.show()
 
@@ -124,27 +126,27 @@ def main():
     # Create a normalized worm from a hardcoded example location
 
     #-------------------------------------------------------------------
-    nw = example_nw()  # src.NormalizedWorm
+    nw = example_nw()  # movement_validation.NormalizedWorm
 
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
-    wf = src.WormFeatures(nw)
+    wf = movement_validation.WormFeatures(nw)
 
     # Plotting demonstration
-    # src.plot_frame_codes(nw)
+    # movement_validation.plot_frame_codes(nw)
     # plt.tight_layout()
 
     # I just saved a plaintext file with the motioncodes extracted from
     # the features result file, by viewing the results file using HDFView
     #motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
-    #wp = src.WormPlotter(nw, motion_codes, interactive=False)
-    wp = src.WormPlotter(nw, interactive=False)
+    #wp = movement_validation.WormPlotter(nw, motion_codes, interactive=False)
+    wp = movement_validation.WormPlotter(nw, interactive=False)
     wp.show()
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')
 
-    #utils.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
+    #movement_validation.utils.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 
 
 if __name__ == '__main__':

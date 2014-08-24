@@ -241,8 +241,9 @@ class NormalizedWorm(object):
         Load the frame_codes descriptions, which are stored in a .csv file
 
         """
-        file_path = os.path.join(os.path.abspath(os.getcwd()),
-                                 'src',
+        # Here we assume the CSV is located in the same directory 
+        # as this current module's directory.
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                  'frame_codes.csv')
         f = open(file_path, 'r')
 

@@ -652,7 +652,7 @@ class WormFeatures(object):
 
     """
 
-    def __init__(self, nw, video_info, processing_options = None):
+    def __init__(self, nw, video_info=None, processing_options=None):
 
         #TODO: Create the normalized worm in here ... 
 

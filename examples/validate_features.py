@@ -6,10 +6,16 @@ Test harness for OpenWorm's movement validation tool
 
 """
 
-import os
-from src import user_config
-from src import NormalizedWorm
-from src import WormFeatures
+import sys, os
+
+# We must add .. to the path so that we can perform the 
+# import of movement_validation while running this as 
+# a top-level script (i.e. with __name__ = '__main__')
+sys.path.append('..') 
+import movement_validation
+user_config = movement_validation.user_config
+NormalizedWorm = movement_validation.NormalizedWorm
+WormFeatures = movement_validation.WormFeatures
 
 
 def main():
