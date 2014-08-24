@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-  NormalizedWorm class
-  
-  @authors: @JimHokanson, @MichaelCurrie
-
-  A translation of Matlab code written by Jim Hokanson,
-  in the SegwormMatlabClasses GitHub repo.  Original code path:
-  SegwormMatlabClasses / 
-  +seg_worm / @normalized_worm / normalized_worm.m
+This module defines the NormalizedWorm class
 
 """
 

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-locomotion_turns.py
-
 Calculate the "Turns" locomotion feature
 
 There are two kinds of turn: an omega and an upsilon.

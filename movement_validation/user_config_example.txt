@@ -6,8 +6,6 @@
   This file is in the .gitignore file for the movement_validation repo, so
   you can put configuration settings here that apply to just your computer.
   
-  @authors: @JimHokanson, @MichaelCurrie
-  
 """
 
 

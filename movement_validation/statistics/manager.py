@@ -2,8 +2,6 @@
 """
 manager.py
 
-@authors: @JimHokanson, @MichaelCurrie
-
 Classes
 ---------------------------------------    
 Manager  (from +stats/@manager)

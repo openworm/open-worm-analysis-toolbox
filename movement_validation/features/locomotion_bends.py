@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-locomotion_bends.py
-
 Calculate the "Bends" locomotion feature
 
 Contains two classes:

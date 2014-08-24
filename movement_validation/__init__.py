@@ -1,5 +1,6 @@
 """
 movement_validation: A Python library
+https://github.com/openworm/movement_validation
 
 Takes raw videos of C. elegans worms and processes them into features and
 statistics.
@@ -10,8 +11,7 @@ simulation is to the behaviour of real worms.
 
 License
 ---------------------------------------
-movement_validation, and indeed all of OpenWorm, is free software 
-under the MIT license.
+https://github.com/openworm/movement_validation/LICENSE.md
 
 """
 from .SchaferExperimentFile import SchaferExperimentFile

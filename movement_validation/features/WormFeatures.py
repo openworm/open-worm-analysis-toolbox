@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-WormFeatures.py:
+WormFeatures module
 
-@authors: @JimHokanson, @MichaelCurrie
+Contains the classes needed for users to calculate the features 
+of a worm from a NormalizedWorm instance.
 
 Classes
 ---------------------------------------    

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-  This module shows an example of plotting a worm's features.
+  An example of plotting a worm's features.
 
 """
 
