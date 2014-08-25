@@ -4,8 +4,7 @@
 
 """
 
-import sys
-import os
+import sys, os
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 

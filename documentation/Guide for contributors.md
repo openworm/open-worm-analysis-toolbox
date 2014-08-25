@@ -1,6 +1,6 @@
 ##Guide for Contributors to this Repository##
 
-Thank you for your interest in contributing!  Whether you are a C. elegans researcher who wishes to add a feature set to the calculation engine, or an interested person looking to contribute to the overall OpenWorm effort, you are welcome to join in on the fun.
+Thank you for your interest in contributing!  Whether you are a *C. elegans* researcher who wishes to add a feature set to the calculation engine, or an interested person looking to contribute to the overall OpenWorm effort, you are welcome to join in on the fun.
 
 ###Objectives:###
 
@@ -18,9 +18,9 @@ The genesis of this repository all started with an [OpenWorm Journal Club event 
 
 Consequently, to start, in August 2013 [Jim Hokanson](https://github.com/JimHokanson) cloned the WT2 software, written in Matlab, into a repository he called ["SegWorm"](https://github.com/openworm/SegWorm).
 
-He took this repository as the starting point for our own code development work.  He revised this code from Sep 2013 to Jan 2014, to speed up and clarify the code.  This revised Matlab version is available in the ["SegWormMatlabClasses"](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
+He took this repository as the starting point for his code development work on behalf of OpenWorm.  He revised this code from September 2013 to January 2014, to speed up and clarify the code.  This revised Matlab version is available in the ["SegWormMatlabClasses"](https://github.com/JimHokanson/SegwormMatlabClasses/) repo.
 
-From about October 2013, [Michael Currie](https://github.com/MichaelCurrie) started to translate the SegWormMatlabClasses repository into Python so it would be fully open source.  To this end he started the [movement_validation](https://github.com/openworm/movement_validation) repository.
+From October 2013, [Michael Currie](https://github.com/MichaelCurrie) started to translate Jim's SegWormMatlabClasses repository into Python so it would be fully open source.  To this end he started the [movement_validation](https://github.com/openworm/movement_validation) repository.
 
 Currently only the movement_validation repository is being actively worked on.
 
@@ -30,7 +30,7 @@ An overview of the current status of the work on the movement_validation reposit
 
 Just find an issue in the "Ready" column of the [waffle board](https://waffle.io/openworm/movement_validation) and dig in.  Ask questions of others early and often; you can do so on our message board, [OpenWorm-discuss](https://groups.google.com/forum/#!forum/openworm-discuss).
 
-Please commit your code often, even if you've made a very small change, but only if you've verified that your change has not broken any [examples](https://github.com/openworm/movement_validation/tree/master/examples)
+Please commit your code often, even if you've made a very small change, but only if you've verified that your change has not broken any [examples](https://github.com/openworm/movement_validation/tree/master/examples).
 
 For more information, see ["Commit Often, Perfect Later, Publish Once: Git best practices"](http://sethrobertson.github.io/GitBestPractices/).
 

@@ -23,8 +23,8 @@
 4. Clone the repository to your computer
 5. Ask @MichaelCurrie or @JimHokanson to share the worm_data DropBox folder with you
 6. In the wormpy directory there should be a file `user_config_example.txt`.  Rename this file as `user_config.py`.  It will be ignored by github since it is in the .gitignore file.  So in `user_config.py`, specify your computer's specific DropBox folder root directory and other settings.
-7. Try running `wormpy_example.py`
-8. Hopefully it runs and shows plots of the worm's contour!
+7. Try running one of the scripts in the `examples` folder.
+8. Hopefully it runs successfully!  If not:
 
 Contact [@MichaelCurrie](https://github.com/MichaelCurrie) or anyone else on the [Movement Validation Team](https://github.com/orgs/openworm/teams/movement-validation) for troubleshooting these steps.
 
