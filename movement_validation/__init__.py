@@ -19,10 +19,6 @@ from .NormalizedWorm import NormalizedWorm
 from .features.WormFeatures import WormFeatures
 from .WormPlotter import WormPlotter
 
-#from .features.feature_comparisons import fp_isequal
-#from .features.feature_comparisons import corr_value_high
-#from .WormPlotter import plot_frame_codes
-
 __all__ = ['SchaferExperimentFile',
            'NormalizedWorm',
            'WormFeatures',
