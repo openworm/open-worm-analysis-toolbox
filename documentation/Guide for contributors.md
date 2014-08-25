@@ -14,7 +14,7 @@ Thank you for your interest in contributing!  Whether you are a *C. elegans* res
 
 ### History of this Repository ###
 
-The genesis of this repository all started with an [OpenWorm Journal Club event featuring Dr. Eviatar "Ev" Yemini](https://www.youtube.com/watch?v=YdBGbn_g_ls), on 16 August 2013.  He described how his software can process raw videos of worms into statistics describing their movement quantitatively.  It was realized that OpenWorm could adapt this software to validate whether its simulated worms were behaving correctly. 
+The genesis of this repository was an [OpenWorm Journal Club event featuring Dr. Eviatar "Ev" Yemini](https://www.youtube.com/watch?v=YdBGbn_g_ls), on 16 August 2013.  He described how his software can process raw videos of worms into statistics describing their movement quantitatively.  It was realized that OpenWorm could adapt this software to validate whether its simulated worms were behaving correctly. 
 
 Consequently, to start, in August 2013 [Jim Hokanson](https://github.com/JimHokanson) cloned the WT2 software, written in Matlab, into a repository he called ["SegWorm"](https://github.com/openworm/SegWorm).
 
