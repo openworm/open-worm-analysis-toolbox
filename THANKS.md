@@ -6,7 +6,7 @@
 
 [**Dr. William "Bill" Schafer**](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/), Schafer Lab eponym, for allowing us to use and adapt Ev's code.
 
-[**Dr. Andre Brown**](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/people2.html), post-doctoral scholar at the Schafer Lab for contributions to the original Matlab code and for his work on behavioural motifs, which we hope to add.
+[**Dr. André Brown**](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/people2.html), post-doctoral scholar at the Schafer Lab for contributions to the original Matlab code and for his work on behavioural motifs, which we hope to add.
 
 [**Barry Bentley**](http://www.neuroscience.cam.ac.uk/directory/profile.php?bb421), PhD student at the Schafer Lab, for his ongoing support of our use of their code.
 
