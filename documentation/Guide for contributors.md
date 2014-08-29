@@ -7,7 +7,7 @@ Thank you for your interest in contributing!  Whether you are a *C. elegans* res
 1. This repository should house a test [pipeline](https://github.com/OpenWorm/movement_validation/blob/master/documentation/Processing%20Pipeline.md) for the OpenWorm project to run a behavioural phenotyping of its virtual worm, using the same statistical tests the Schafer lab used on their real worm data.  
 [**Overall OpenWorm Milestone**: *#19*](https://github.com/openworm/OpenWorm/issues?milestone=19&state=open)  
 
-2. In achieving goal #1, this repository will also be an open source version of the Schafer Lab's Worm Tracker 2 (WT2) analysis pipeline that goes from raw real worm videos to worm measurements detected by machine vision, to a selection of calculated worm behavioural features like average speed.
+2. In achieving goal #1, this repository will also be an open source version of the Schafer Lab's [Worm Tracker 2 (WT2)](http://www.mrc-lmb.cam.ac.uk/wormtracker/) analysis pipeline that goes from raw real worm videos to worm measurements detected by machine vision, to a selection of calculated worm behavioural features like average speed.
 
 3. Also in achieving goal #1, we hope to have a system for tracking the statistics of hundreds of real and virtual worm strains in a database.
 
