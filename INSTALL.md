@@ -26,5 +26,5 @@
 7. Try running one of the scripts in the `examples` folder.
 8. Hopefully it runs successfully!  If not:
 
-Contact [@MichaelCurrie](https://github.com/MichaelCurrie) or anyone else on the [Movement Validation Team](https://github.com/orgs/openworm/teams/movement-validation) for troubleshooting these steps.
+Please contact the [OpenWorm-discuss mailing list](https://groups.google.com/forum/#!forum/openworm-discuss) if you encounter issues with the above steps.
 
