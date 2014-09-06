@@ -4,7 +4,7 @@
 
 <sub><sup><sup>Images: C. elegans by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/  Freely licensed. Contour credit: MRC Schafer Lab.  Simulated worm: OpenWorm.</sup></sup></sup>
 
-**movement_validation** is a Python port of the Schafer Lab's Worm Tracker 2 analysis software.
+**movement_validation** is a Python port of the Schafer Lab's [Worm Tracker 2](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis) analysis software.
 
 It can be used to process videos of *C. elegans* into statistics so the behaviour of individual worms can be compared.
 
