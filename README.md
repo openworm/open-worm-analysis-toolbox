@@ -6,7 +6,7 @@
 
 **movement_validation** is a Python port of the Schafer Lab's Worm Tracker 2 analysis software.
 
-It can be used to process videos of the *C. elegans* worm into statistics so the behaviour of individual worms can be compared.
+It can be used to process videos of *C. elegans* into statistics so the behaviour of individual worms can be compared.
 
 It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms.
 
