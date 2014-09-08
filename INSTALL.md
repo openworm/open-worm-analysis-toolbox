@@ -22,7 +22,7 @@
 3. Install Shapely, which is available [for Windows here](http://www.lfd.uci.edu/~gohlke/pythonlibs/).
 4. Clone the repository to your computer
 5. Ask @MichaelCurrie or @JimHokanson to share the worm_data DropBox folder with you
-6. In the `movement_validation/movement_validation` directory there should be a file `user_config_example.txt`.  Rename this file as `user_config.py`.  It will be ignored by github since it is in the .gitignore file.  So in `user_config.py`, specify your computer's specific DropBox folder root directory and other settings.
+6. In the `movement_validation/movement_validation` folder there should be a file `user_config_example.txt`.  Rename this file as `user_config.py`.  It will be ignored by github since it is in the .gitignore file.  So in `user_config.py`, specify your computer's specific DropBox folder root directory and other settings.
 7. Try running one of the scripts in the `examples` folder.
 8. Hopefully it runs successfully!  If not:
 
