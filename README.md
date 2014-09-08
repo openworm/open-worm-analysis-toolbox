@@ -16,6 +16,6 @@ It is only about 50% complete.  Please see:
 
 - [Guide for Contributors](https://github.com/openworm/movement_validation/blob/master/documentation/Guide%20for%20contributors.md)
 
-- [Waffle Board with current GitHub Issues](https://waffle.io/openworm/movement_validation)   [![Stories in Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
-
 - [Current Code Progress](https://github.com/openworm/movement_validation/blob/master/documentation/Code%20Progress.pdf)
+
+- [Waffle Board with current GitHub Issues](https://waffle.io/openworm/movement_validation)   [![Stories in Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
