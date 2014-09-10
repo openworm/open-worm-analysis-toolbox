@@ -10,6 +10,17 @@
 
 [**Barry Bentley**](http://www.neuroscience.cam.ac.uk/directory/profile.php?bb421), PhD student at the Schafer Lab, for his ongoing support of our use of their code.
 
+The Schafer Lab acknowledges:
+WT2 employs Java (version 1.6) for the tracking software and Matlab (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes. Special thanks and acknowledgements are due to Christopher J. Cronin and Paul W. Sternberg for supplying the Matlab code from their publication "An automated system for measuring parameters of nematode sinusoidal movement" (Cronin et al. 2005). Joan Lasenby and Nick Kingsbury were an invaluable resource for computer vision questions. Andrew Deonarine, Richard Samworth, Sreenivas Chavali, Guilhem Chalancon, Sarah Teichmann, and Madan Babu provided a wealth of help and information for the bioinformatic clustering and statistics. Finally, thanks and acknowledgements are due for the following freely available code at the Matlab Central File Exchange (http://www.mathworks.com/matlabcentral/fileexchange/):
+- the videoIO toolbox by Gerald Dalley, export\_fig function by Oliver Woodford,
+- notBoxPlot function by Rob Campbell, swtest function by Ahmed Ben Saïda, fexact
+- function by Michael Boedigheimer, and rdir function by Gus Brown.
+
+Sternberg Lab for locomotion features
+OpenCV computer vision library
+VideoIO matlab directShow library by Gerald Dalley
+Matt Swartz for 'slxwrite1' function on MatlabCentral
+
 ### OpenWorm ###
 
 [**Dr. Stephen Larson**](https://github.com/slarson), OpenWorm's project coordinator, for the original idea to adapt Ev's code and for encouragement and support.
