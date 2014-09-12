@@ -1,18 +1,16 @@
-""" wormpy\SchaferExperimentFile.py
+"""
 
-    Authors: @MichaelCurrie, @JimHokanson
+This module defines the SchaferExperimentFile class, which encapsulates
+the data contained in the Shafer lab worm experiment data files
 
-    This module defines the SchaferExperimentFile class, which encapsulates
-    the data contained in the Shafer lab worm experiment data files
-    
-    To use it, instantiate the class by specifying a particular worm 
-    HDF5 data file.  Then use the functions to extract information 
-    about the worm.
+To use it, instantiate the class by specifying a particular worm 
+HDF5 data file.  Then use the functions to extract information 
+about the worm.
 
-    Once you've created your SchaferExperimentFile object, you
-    will likely want to convert it to a wormpy.WormFeatures object using
-    WormFeatures.load_schafer_experiment_file, so you can do things
-    like animate the data.
+Once you've created your SchaferExperimentFile object, you
+will likely want to convert it to a wormpy.WormFeatures object using
+WormFeatures.load_schafer_experiment_file, so you can do things
+like animate the data.
 
 """
 

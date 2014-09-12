@@ -1,5 +1,6 @@
-
 #Motif analysis pipline#
+
+(By Balazs Szigeti, OpenWorm contributor)
 
 This document outlines my approach to behavioural analysis, the motif analysis pipeline. It meant to complement the motion validation engine developed by Michael and Jim. Neither methods are perfect in characterising behaviour, hence using them in a complementary fashion will enable to better understand how the behaviour of OpenWorm models differ from that of real worms. I will keep updating this document as progress happens, but feel free to add comments - especially if something is not clear - or get in touch if you want to know more details. 
 

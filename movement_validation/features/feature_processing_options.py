@@ -3,6 +3,7 @@
 This module will hold a class that will be referenced when processing features.
 
 I'd like to move things from "config" into here ...
+- @JimHokanson
 
 """
 

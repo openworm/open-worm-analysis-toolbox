@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-  config.py:
-    wormpy module configuration settings
-  
-  @authors: @JimHokanson, @MichaelCurrie
-  
-  The original Schafer Lab code contained many hardcoded values.  These are
-  tracked in a central location here.
-  Some hardcoded values were not implemented in this open-source translation.
-  these are shown here as being commented out.
-  
-  Best practice is to use this via "from wormpy import config", and then 
-  reference the configuration settings like this: e.g. "config.FPS" rather
-  than doing "from wormpy.config import *" and referencing "FPS"
-  since the latter approach pollutes the global namespace.
+Package-level configuration settings. The original Schafer Lab code 
+contained many hardcoded values.  These are tracked in a central 
+location here.
+
+Notes
+---------------------------------------
+Some hardcoded values were not implemented in this open-source translation.
+these are shown here as being commented out.
+
+Usage
+---------------------------------------
+Best practice is to use this via "from movement_validation import config", 
+and then reference the configuration settings like this: e.g. "config.FPS" 
+rather than doing "from wormpy.config import *" and referencing "FPS"
+since the latter approach pollutes the global namespace.
   
 """
 

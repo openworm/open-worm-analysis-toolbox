@@ -1,62 +1,60 @@
 # -*- coding: utf-8 -*-
 """
-  events.py
-  
-  A module for finding and describing frames-spanning "events" given a 
-  worm video.
+A module for finding and describing frames-spanning "events" given a 
+worm video.
 
-  Contents
-  ---------------------------------------
-  This module contains definitions for the following:
+Contents
+---------------------------------------
+This module contains definitions for the following:
 
-  Classes:
-    EventFinder
-      __init__
-      get_events
+Classes:
+  EventFinder
+    __init__
+    get_events
 
-    EventList
-      __init__
-      num_events @property
-      get_event_mask
-      merge
+  EventList
+    __init__
+    num_events @property
+    get_event_mask
+    merge
 
-    EventListWithFeatures
-      __init__
-      from_disk
-      test_equality
+  EventListWithFeatures
+    __init__
+    from_disk
+    test_equality
       
 
-  Usage
-  ---------------------------------------
-  One usage is in locomotion features.
+Usage
+---------------------------------------
+One usage is in locomotion features.
   
-  LocomotionFeatures.get_motion_codes() calculates the motion codes for the
-  worm, and to do so, for each of the possible motion states (forward, 
-  backward, paused) it creates an instance of the EventFinder class,
-  sets up appropriate parameters, and then calls EventFinder.get_events()
-  to obtain an instance of EventList, the "result" class.
+LocomotionFeatures.get_motion_codes() calculates the motion codes for the
+worm, and to do so, for each of the possible motion states (forward, 
+backward, paused) it creates an instance of the EventFinder class,
+sets up appropriate parameters, and then calls EventFinder.get_events()
+to obtain an instance of EventList, the "result" class.
   
-  Then to format the result appropriately, the EventListWithFeatures class is 
-  instantiated with our "result" and then get_feature_dict is called.
+Then to format the result appropriately, the EventListWithFeatures class is 
+instantiated with our "result" and then get_feature_dict is called.
   
-  So the flow from within LocomotionFeatures.get_motion_codes() is:
+So the flow from within LocomotionFeatures.get_motion_codes() is:
     # (approximately):
     ef = EventFinder()
     event_list = ef.get_events()
     me = EventListWithFeatures(event_list, features_per_frame)
 
-  EventListWithFeatures is used by not just get_motion_codes but also ...
-  DEBUG (add the other uses (e.g. upsilons))
+EventListWithFeatures is used by not just get_motion_codes but also ...
+DEBUG (add the other uses (e.g. upsilons))
   
-  Notes
-  ---------------------------------------
-  See https://github.com/openworm/movement_validation/blob/master/
-  documentation/Yemini%20Supplemental%20Data/Locomotion.md#2-motion-states
-  for a plain-English description of a motion state.
+Notes
+---------------------------------------
+See https://github.com/openworm/movement_validation/blob/master/
+documentation/Yemini%20Supplemental%20Data/Locomotion.md#2-motion-states
+for a plain-English description of a motion state.
 
-  The code for this module came from several files in the 
-  @event_finder, @event, and @event_ss folders from:
-  https://github.com/JimHokanson/SegwormMatlabClasses/blob/
+The code for this module came from several files in the 
+@event_finder, @event, and @event_ss folders from:
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/
     master/%2Bseg_worm/%2Bfeature/
 
 """

@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-  NormalizedWorm class
-  
-  @authors: @JimHokanson, @MichaelCurrie
-
-  A translation of Matlab code written by Jim Hokanson,
-  in the SegwormMatlabClasses GitHub repo.  Original code path:
-  SegwormMatlabClasses / 
-  +seg_worm / @normalized_worm / normalized_worm.m
+This module defines the NormalizedWorm class
 
 """
 
@@ -241,8 +234,9 @@ class NormalizedWorm(object):
         Load the frame_codes descriptions, which are stored in a .csv file
 
         """
-        file_path = os.path.join(os.path.abspath(os.getcwd()),
-                                 'src',
+        # Here we assume the CSV is located in the same directory 
+        # as this current module's directory.
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                  'frame_codes.csv')
         f = open(file_path, 'r')
 

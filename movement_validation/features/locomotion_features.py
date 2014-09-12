@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Insert description here
+Locomotion features
+
 """
 
 import numpy as np
