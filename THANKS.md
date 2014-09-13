@@ -44,7 +44,7 @@ WT2 employs Java (version 1.6) for the tracking software and Matlab (version 201
 
 **[The Movement Validation Team](https://github.com/orgs/openworm/teams/movement-validation):**
 
-- [**Dr. James "Jim" Hokanson**](https://github.com/JimHokanson) for improving upon the original Matlab code, doing much of the translation of the code into this Python repository, overall architectural decisions and documentation.  His [Matlab Standard Library](https://github.com/JimHokanson/matlab_standard_library) project has also been useful.
+- [**Dr. James "Jim" Hokanson**](https://github.com/JimHokanson) for improving upon the original Matlab code, doing much of the translation of the code into this Python repository, overall architectural decisions, documentation, and for his [Matlab Standard Library](https://github.com/JimHokanson/matlab_standard_library).
 
 - [**Michael Currie**](https://github.com/MichaelCurrie) for helping with the translation into Python, and helping with repository documentation.
 
