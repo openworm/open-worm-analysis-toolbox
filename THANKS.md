@@ -4,7 +4,7 @@
 
 [**Dr. Eviatar "Ev" Yemini**](https://sites.google.com/site/openarchitecture1/3-contributors-and-syntax/ev-yemini), for all the original Matlab code built as part of [the WormBehavior database](http://wormbehavior.mrc-lmb.cam.ac.uk/), written as part of his doctorate at the Schafer Lab.  Without him this project would not have been possible.  His PhD thesis was partly based on his work creating the analysis package we ported to form the basis of the package.
 
-[**Dr. Tadas Jucikas**](https://www.linkedin.com/in/tjucikas), post-doctoral scholar at the Schafer Lab, for co-authoring the Work Tracker 2.0 analysis package with Ev.
+[**Dr. Tadas Jucikas**](https://www.linkedin.com/in/tjucikas), post-doctoral scholar at the Schafer Lab, for co-authoring the Worm Tracker 2.0 analysis package with Ev.
 
 [**Dr. William "Bill" Schafer**](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/), Schafer Lab eponym, for allowing us to use and adapt Ev's code.
 
