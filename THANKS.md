@@ -2,15 +2,15 @@
 
 **[The Schafer Lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/)**, at the **[MRC Laboratory of Molecular Biology](http://www2.mrc-lmb.cam.ac.uk/)**, Cambridge, UK.
 
-[**Dr. Eviatar "Ev" Yemini**](https://sites.google.com/site/openarchitecture1/3-contributors-and-syntax/ev-yemini) for all the original Matlab code built as part of [the WormBehavior database](http://wormbehavior.mrc-lmb.cam.ac.uk/), written as part of his doctorate at the Schafer Lab.  Without him this project would not have been possible.
+[**Dr. Eviatar "Ev" Yemini**](https://sites.google.com/site/openarchitecture1/3-contributors-and-syntax/ev-yemini), for all the original Matlab code built as part of [the WormBehavior database](http://wormbehavior.mrc-lmb.cam.ac.uk/), written as part of his doctorate at the Schafer Lab.  Without him this project would not have been possible.  His PhD thesis was partly based on his work creating the analysis package we ported to form the basis of the package.
+
+[**Dr. Tadas Jucikas**](https://www.linkedin.com/in/tjucikas), post-doctoral scholar at the Schafer Lab, for co-authoring the Work Tracker 2.0 analysis package with Ev.
 
 [**Dr. William "Bill" Schafer**](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/), Schafer Lab eponym, for allowing us to use and adapt Ev's code.
 
 [**Dr. André Brown**](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/people2.html), post-doctoral scholar at the Schafer Lab, for contributions to the original Matlab code and for his work on behavioural motifs, which we hope to add.
 
 [**Barry Bentley**](http://www.neuroscience.cam.ac.uk/directory/profile.php?bb421), PhD student at the Schafer Lab, for his ongoing support of our use of their code.
-
-[**Dr. Tadas Jucikas**](https://www.linkedin.com/in/tjucikas), post-doctoral scholar at the Schafer Lab.
 
 
 *[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m)*
