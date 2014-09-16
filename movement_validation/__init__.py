@@ -16,10 +16,12 @@ https://github.com/openworm/movement_validation/LICENSE.md
 """
 from .SchaferExperimentFile import SchaferExperimentFile
 from .NormalizedWorm import NormalizedWorm
+from .VideoInfo import VideoInfo
 from .features.WormFeatures import WormFeatures
 from .WormPlotter import WormPlotter
 
 __all__ = ['SchaferExperimentFile',
            'NormalizedWorm',
+		   'VideoInfo',
            'WormFeatures',
            'WormPlotter']

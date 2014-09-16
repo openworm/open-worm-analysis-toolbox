@@ -4,6 +4,9 @@ Package-level configuration settings. The original Schafer Lab code
 contained many hardcoded values.  These are tracked in a central 
 location here.
 
+THIS IS BEING PHASED OUT
+- to be replaced with movement_validation/features/feature_processing_options.py
+
 Notes
 ---------------------------------------
 Some hardcoded values were not implemented in this open-source translation.
