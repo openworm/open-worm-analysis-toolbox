@@ -28,7 +28,13 @@ import numpy as np
 import collections  # For namedtuple
 
 from .. import config
-from .. import user_config
+
+#TODO: Can we do something differently ...????
+try:
+    from .. import user_config
+except ImportError:
+     raise Exception("user_config.py not found, copy the user_config_example.txt in the 'movement_validation' package to user_config.py in the same directory and edit the values")
+
 from .. import utils
 
 from . import feature_processing_options as fpo
@@ -83,6 +89,8 @@ class WormMorphology(object):
     """
 
     def __init__(self, features_ref):
+
+        print('Calculating Morphology Features')
 
         nw = features_ref.nw
 
@@ -198,6 +206,7 @@ class WormLocomotion(object):
         Initialization method for WormLocomotion
 
         """
+        print('Calculating Locomotion Features')    
 
         nw = features_ref.nw
 
@@ -395,22 +404,21 @@ class WormPosture(object):
         normalized_worm: a NormalizedWorm instance
 
         """
+        print('Calculating Posture Features')            
+        
         # Let's use a shorthand
         nw = normalized_worm
 
         # *** 1. Bends *** DONE
         self.bends = posture_features.Bends(nw)
 
-        # *** 2. Eccentricity & Orientation *** DONE, SLOW
-        # This has not been optimized, that Matlab version has
-        # NOTE: This is VERY slow, so we leave the user the option
-        #       to disable it in their user_config.py.
+        # *** 2. Eccentricity & Orientation *** 
         if user_config.PERFORM_SLOW_ECCENTRICITY_CALC:
-            print('Starting slow eccentricity calculation\n')
+            print('Starting slow eccentricity calculation')
             self.eccentricity, self.orientation = \
                 posture_features.get_eccentricity_and_orientation(nw.contour_x,
                                                                   nw.contour_y)
-            print('Finished slow eccentricity calculation\n')
+            print('Finished slow eccentricity calculation')
         else:
             print('Skipping slow eccentricity calculation.  To enable it, ' +
                   'change the PERFORM_SLOW_ECCENTRICITY_CALC variable in your ' +
@@ -500,36 +508,37 @@ class WormPosture(object):
 
     def __eq__(self, other):
 
-        # Comparisons to make
-        """
-         amplitude_ratio: Type::ndarray, Len: 4642
-            track_length: Type::ndarray, Len: 4642
-                skeleton: Type::skeleton, Len: 2
-        eigen_projection: Type::ndarray, Len: 4642
-                   kinks: Type::ndarray, Len: 4642
-      primary_wavelength: Type::Dataset, Len: 4642
-              directions: Type::Directions, Len: 1
-                    bend: Type::Bends, Len: 1
-            eccentricity: Type::ndarray, Len: 4642
-    secondary_wavelength: Type::Dataset, Len: 4642
-           amplitude_max: Type::ndarray, Len: 4642
-        """
-        return \
-            fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99) and \
-            fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio') and \
-            fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length') and \
-            fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks') and \
-            fc.corr_value_high(self.secondary_wavelength, other.secondary_wavelength, 'posture.secondary_wavelength') and \
-            fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max') and \
-            fc.corr_value_high(np.flatten(self.skeleton.x), np.flatten(other.skeleton.x), 'posture.skeleton.x') and \
-            fc.corr_value_high(np.flatten(self.skeleton.y), np.flatten(other.skeleton.y), 'posture.skeleton.y') and \
-            fc.corr_value_high(np.flatten(self.eigen_projection), np.flatten(
-                other.eigen_projection), 'posture.eigen_projection')
-
         # Missing:
         # primary_wavelength
         # directions
         # bend
+
+        #TODO: It would be nice to see all failures before returning false
+        #We might want to make a comparison class that handles these details 
+        #and then prints the results
+
+        eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
+        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985) 
+        eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
+        eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks')
+        eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength, other.secondary_wavelength, 'posture.secondary_wavelength')
+        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')
+        eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
+        eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
+        eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
+        
+        return \
+            eq_eccentricity and \
+            eq_amplitude_ratio and \
+            eq_track_length and \
+            eq_kinks and \
+            eq_secondary_wavelength and \
+            eq_amplitude_max and \
+            eq_skeleton_x and \
+            eq_skeleton_y and \
+            eq_eigen_projection
+
+
 
 
 """
@@ -561,12 +570,12 @@ class WormPath(object):
         """
         Initialization method for WormPosture
 
-        Parameters
-        ---------------------------------------    
+        Parameters:
+        -----------
         normalized_worm: a NormalizedWorm instance
-
-
         """
+        print('Calculating Path Features')        
+
         # Let's use a shorthand
         nw = normalized_worm
 
@@ -654,7 +663,15 @@ class WormFeatures(object):
     """
 
     def __init__(self, nw, video_info=None, processing_options=None):
-
+        """
+        Parameters:
+        -----------
+        nw: movement_validation.NormalizedWorm
+        video_info: 
+            This is not yet created but should eventually carry information
+            such as the frame rate.
+        """
+        
         #TODO: Create the normalized worm in here ... 
 
         if processing_options is None:

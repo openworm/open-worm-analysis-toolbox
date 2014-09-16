@@ -12,9 +12,10 @@ class FeatureProcessingOptions(object):
     def __init__(self):    
     
         #The idea with this attribute is that functions will check if they are
-        #in this list. If they are then they can 
+        #in this list. If they are then they can display some sort of popup that
+        #clarifies how they are working.
         #
-        #NOTE: No functions use this yet ...
+        #NOTE: No functions actually use this yet. It is just a place holder.
         self.functions_to_explain = []
         
         #This indicates that, where possible, code should attempt to replicate
@@ -23,10 +24,20 @@ class FeatureProcessingOptions(object):
         #compute features in the same way that they did.
         #
         #NOTE: There are a few instances where this is not supported such that
-        #the behavior will not match
+        #the behavior will not match even if this value is set to True.
         self.mimic_old_behaviour = True
     
         self.locomotion = LocomotionOptions()
+        
+        #This is not yet implemented. The idea is to support not 
+        #computing certain features. We might also allow disabling certain 
+        #groups of feature.
+        self.features_to_ignore = []
+        
+    def disable_contour_features(self):
+         #see self.features_to_ignore
+         pass
+         
 
 class LocomotionOptions(object):
     

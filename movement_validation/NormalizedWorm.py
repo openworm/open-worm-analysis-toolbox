@@ -9,6 +9,9 @@ import scipy.io
 
 import warnings
 import os
+import inspect
+import h5py
+
 from . import config
 from . import utils
 
@@ -28,7 +31,8 @@ class NormalizedWorm(object):
     * first column is original name
     * second column is renamed name, if renamed.
 
-    properties / dynamic methods:
+    Properties:
+    -----------
       eigen_worms      
 
       EIGENWORM_PATH
@@ -96,7 +100,7 @@ class NormalizedWorm(object):
     # and the # of pairs is one less than the # of samples
     eigen_worms = None
 
-    def __init__(self, data_file_path=None, eigen_worm_file_path=None):
+    def __init__(self, data_file_path=None):
         """ 
         Initialize this instance by loading both the worm and 
         the eigen_worm data
@@ -114,8 +118,7 @@ class NormalizedWorm(object):
         if data_file_path:
             self.load_normalized_data(data_file_path)
 
-        if eigen_worm_file_path:
-            self.load_eigen_worms(eigen_worm_file_path)
+        self.load_eigen_worms()
 
 
         # These are RANGE values, so the last value is not inclusive
@@ -147,6 +150,11 @@ class NormalizedWorm(object):
         # vulva so the ventral mode can be determined.  Here we just set
         # the ventral mode to a default value as a stopgap measure
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+
+    @classmethod
+    def load_from_matlab_data(self):
+        pass
+        #TODO: Merge the constructor and load_normalized_data into here...
 
     def load_normalized_data(self, data_file_path):
         """ 
@@ -511,42 +519,27 @@ class NormalizedWorm(object):
         # fix the axis settings
         return np.rollaxis(np.rollaxis(s1_rotated, 0, 3), 1)
 
-    def load_eigen_worms(self, eigen_worm_file_path):
+    def load_eigen_worms(self):
         """ 
-        Load the eigen_worms, which are stored in a MatLab data file
+        Load the eigen_worms, which are stored in a Matlab data file
 
+        The eigenworms were computed by the Schafer lab based on N2 worms
 
-        Parameters
-        ---------------------------------------    
-        eigen_worm_file_path: string
-          file location of the eigenworm file to be loaded
-
-
-        Notes
-        ---------------------------------------    
-        Translation of get.eigen_worms(obj) in SegwormMatlabClasses
+        Populates:
+        ----------
+        self.eigen_worms: [48 x 7]
 
         """
-        if(not os.path.isfile(eigen_worm_file_path)):
-            raise Exception(
-                "Eigenworm file not found: " + eigen_worm_file_path)
-        else:
-            # scipy.io.loadmat returns a dictionary with variable names
-            # as keys, and loaded matrices as values
-            eigen_worms_file = scipy.io.loadmat(eigen_worm_file_path)
+        
+        #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
+        package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))           
+         
+        repo_path        = os.path.split(package_path)[0]
+        eigen_worm_file_path = os.path.join(repo_path, 'data', 'masterEigenWorms_N2.mat')        
 
-            # TODO: turn this into a numpy array, probably
-            # TODO: and possibly extract other things of value from
-            #       eigen_worms_file
-            # self.eigen_worms = eigen_worms_file.values() # DEBUG: I think
-            # this is wrong
+        h = h5py.File(eigen_worm_file_path,'r')
+        self.eigen_worms = h['eigenWorms'].value
 
-            # DEBUG: another way to load eigenworms:
-            #h = h5py.File(uconfig.EIGENWORM_PATH,'r')
-            #eigen_worms = h['eigenWorms'].value
-
-            # DEBUG: I think this is wrong
-            self.eigen_worms = eigen_worms_file.values()
 
     @property
     def num_frames(self):
