@@ -8,7 +8,7 @@
 
 It can be used to process videos of *C. elegans* into statistics so the behaviour of individual worms can be compared.
 
-It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms.
+It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms.  It was started as a sub-project of the [OpenWorm project](https://github.com/openworm).
 
 It is only about 50% complete.  Please see:
 
