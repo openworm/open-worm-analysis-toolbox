@@ -10,9 +10,7 @@
 
 **Markdown editor:** http://markdownpad.com/  (optional!)
 
-**Google Drive:** To store examples of worm videos so the movement_validation package can be put through its paces.
-
-**Data repository:** We store the .mat files that flow between the steps of our pipeline, in a DropBox shared folder "worm_data".
+**Google Drive:** To store examples of worm videos and HDF5 (.mat) feature files so the movement_validation package can be put through its paces.
 
 
 ##Installing and running the movement_validation repository##
