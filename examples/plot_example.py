@@ -36,18 +36,13 @@ def example_nw():
     """
 
     # Let's take one example worm from our user_config.py file
-    norm_folder = os.path.join(user_config.DROPBOX_PATH,
-                               user_config.NORMALIZED_WORM_PATH)
+    norm_folder = os.path.join(user_config.EXAMPLE_DATA_PATH)
 
     data_file_path = os.path.join(os.path.abspath(norm_folder),
-                                  "norm_obj.mat")
-
-    eigen_worm_file_path = os.path.join(os.path.abspath(norm_folder),
-                                        "masterEigenWorms_N2.mat")
+                                  "example_video_norm_worm.mat")
 
     # Create our example instance by passing the two file locations
-    normalized_worm = movement_validation.NormalizedWorm(data_file_path,
-                                            eigen_worm_file_path)
+    normalized_worm = movement_validation.NormalizedWorm(data_file_path)
 
     return normalized_worm
 
