@@ -2,15 +2,15 @@
 
 **Language:** Python 3.x.  The code requires use of scientific computing packages (numpy, h5py), and as such getting the packages properly installed can be tricky. As such, if working in Windows, we recommend using [Spyder IDE](https://code.google.com/p/spyderlib/) and the [WinPython distribution](http://winpython.sourceforge.net/) for Windows.  (Note, this isn't required)
 
-**HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/).  Optional!  This tool can be used for debugging the file structure of the data files.
-
 **Plotting:** matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.  FFMPEG is used for video processing.
 
 **File processing:** The Schafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the Python module H5PY to extract the information from the Schafer Lab files.
 
-**Markdown editor:** [Markdownpad](http://markdownpad.com/).  Optional; for editing documents like this one.
-
 **Data storage:** Google Drive.  To store examples of worm videos and HDF5 (.mat) feature files so the movement_validation package can be put through its paces.
+
+**Markdown editor:** [MarkdownPad](http://markdownpad.com/).  Optional.  For editing documents like this one.
+
+**HDF reader:** [HDF viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/).  Optional.  This tool can be used for debugging the file structure of the data files.
 
 
 ##Installing and running the movement_validation repository##
