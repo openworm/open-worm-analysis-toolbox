@@ -55,7 +55,9 @@ def example_real_worm_pipeline(data_file_path,
       worm data to the features calculation and plotting
 
       At two places, we verify that our figures are the same as the 
-      Schafer figures
+      Schafer figures...
+      
+      This might be obsolete now [@Michael Currie, 22 Sep 2014]
 
     """
 
@@ -93,6 +95,8 @@ def example_virtual_worm_pipeline(data_file_path):
       This 'virtual' pipeline is simpler because there are no blocks to stitch
       and also we don't have to verify that our figures are the same as
       the Schafer figures
+      
+      This might be obsolete now [@Michael Currie, 22 Sep 2014]
 
     """
 
