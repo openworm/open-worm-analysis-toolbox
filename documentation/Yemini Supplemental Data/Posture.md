@@ -37,7 +37,7 @@ Briefly, 48 tangent angles are calculated along the skeleton and rotated to have
 
 (Also discussed at [issue 79](https://github.com/openworm/movement_validation/issues/79))
 
-![](eigenworms.gif)
+![](eigenworms.png)
 
 
 ###9. Orientation###
