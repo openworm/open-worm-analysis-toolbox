@@ -31,6 +31,10 @@ The eigenworm amplitudes are a measure of worm posture. They are the projections
 
 Briefly, 48 tangent angles are calculated along the skeleton and rotated to have a mean angle of zero. Principal components analysis is performed on the pooled angle data and we keep the 6 principal components (or eigenworms) that capture the most variance. The first eigenworm roughly corresponds to body curvature. The next two eigenworms are akin to sine and cosine waves encoding the travelling wave during crawling. The fourth eigenworm captures most of the remaining variance at the head and tail. Projected amplitudes are calculated from the posture in each frame. Even for the mutants, the data is always projected onto the N2-derived eigenworms. 
 
+(Also discussed at [issue 79](https://github.com/openworm/movement_validation/issues/79))
+
+![](eigenworms.gif)
+
 
 ###9. Orientation###
 The worm’s orientation is measured overall (from tail to head) as well as for the head and tail individually. The overall orientation is measured as the angular direction from the tail to the head centroid. The head and tail centroids are computed as the mean of their respective skeleton points. 
