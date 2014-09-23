@@ -38,6 +38,8 @@ For more information, see ["Commit Often, Perfect Later, Publish Once: Git best 
 
 [White Paper Describing Movement Validation at a high level](https://github.com/openworm/movement_validation/blob/master/documentation/Movement%20Validation%20White%20Paper.md) *(June 2014)*
 
+[movement_validation Google Docs folder](https://drive.google.com/#folders/0B9dU7zPD0s_LdHRndU9QQ3NTRUE), with various information including team member list, code progress, etc.
+
 [Archived Monthly Progress Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing) *(Maintained from September 2013 to March 2014, after which they were discontinued)*
 
 [Movement Validation](https://github.com/openworm/openworm_docs/blob/master/Projects/worm-movement.rst) documented at the OpenWorm/openworm_docs repository.  *(Has not been updated since 29 Dec 2013)*

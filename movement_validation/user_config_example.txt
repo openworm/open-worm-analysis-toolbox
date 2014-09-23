@@ -8,8 +8,9 @@
   
 """
 
+EXAMPLE_DATA_PATH = (r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public'
+                     r'\movement_validation\example_movement_validation_data')
 
-EXAMPLE_DATA_PATH = r'C:\Users\RNEL\Google Drive\open_worm\example_movement_validation_data'
 
 # There is a step that is very slow that can be disabled
 # if you are just debugging other parts of the code.

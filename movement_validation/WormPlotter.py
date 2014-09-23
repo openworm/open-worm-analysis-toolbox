@@ -26,9 +26,10 @@ information, you could run the following:
 wormpy.plot_frame_codes(nw)
 
 Creating such an instance nw of the NormalizedWorm class requires access 
-to worm data files. The easiest way to obtain such data files is to join 
-the shared DropBox folder, worm_data, where we've stored some examples. 
-Contact members of the team for access.
+to worm data files. The easiest way to obtain such data files is to sync
+with the Google Drive folder example_movement_validation_data, which is 
+discussed in the installation instructions: 
+https://github.com/openworm/movement_validation/blob/master/INSTALL.md
 
 Once you've joined the worm_data shared folder, you'll need to clone and 
 configure the movement_validation repository for yourself. Here is an 

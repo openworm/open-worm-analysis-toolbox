@@ -8,7 +8,7 @@
 
 It can be used to process videos of *C. elegans* into statistics so the behaviour of individual worms can be compared.
 
-It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms.
+It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms.  It was started as a sub-project of the [OpenWorm project](https://github.com/openworm).
 
 It is only about 50% complete.  Please see:
 
@@ -16,6 +16,6 @@ It is only about 50% complete.  Please see:
 
 - [Guide for Contributors](https://github.com/openworm/movement_validation/blob/master/documentation/Guide%20for%20contributors.md)
 
-- [Current Code Progress](https://github.com/openworm/movement_validation/blob/master/documentation/Code%20Progress.pdf)
+- [Current Code Progress](https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit?usp=sharing)
 
 - [Kanban Board with current GitHub Issues](https://waffle.io/openworm/movement_validation)   [![Stories in Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)

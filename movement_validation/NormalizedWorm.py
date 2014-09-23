@@ -532,10 +532,10 @@ class NormalizedWorm(object):
         """
         
         #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
-        package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))           
-         
+        package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        
         repo_path        = os.path.split(package_path)[0]
-        eigen_worm_file_path = os.path.join(repo_path, 'data', 'masterEigenWorms_N2.mat')        
+        eigen_worm_file_path = os.path.join(repo_path, 'data', 'masterEigenWorms_N2.mat')
 
         h = h5py.File(eigen_worm_file_path,'r')
         self.eigen_worms = h['eigenWorms'].value
