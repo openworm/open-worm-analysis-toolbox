@@ -12,6 +12,7 @@
 
 [**Barry Bentley**](http://www.neuroscience.cam.ac.uk/directory/profile.php?bb421), PhD student at the Schafer Lab, for his ongoing support of our use of their code.
 
+[**Laura Grundy**](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/), lab assistant at the Schafer Lab, for filming many hundreds of hours of *C. elegans* videos.
 
 *[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m)*
 
