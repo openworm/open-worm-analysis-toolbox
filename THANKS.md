@@ -14,7 +14,7 @@
 
 [**Laura Grundy**](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/), lab assistant at the Schafer Lab, for filming many hundreds of hours of *C. elegans* videos.
 
-*[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m)*
+*[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m#L1514)*
 
 WT2 employs Java (version 1.6) for the tracking software and Matlab (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes.
 
