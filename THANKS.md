@@ -1,6 +1,6 @@
 ### Schafer Lab ###
 
-**[The Schafer Lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/)**, at the **[MRC Laboratory of Molecular Biology](http://www2.mrc-lmb.cam.ac.uk/)**, Cambridge, UK.
+**[The Schafer Lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/)**, at the **[MRC Laboratory of Molecular Biology](http://www2.mrc-lmb.cam.ac.uk/)**, Cambridge, UK, developed the [Worm Tracker 2.0 (WT2)](http://www.mrc-lmb.cam.ac.uk/wormtracker/), upon which this package is primarily based.
 
 [**Dr. Eviatar "Ev" Yemini**](https://sites.google.com/site/openarchitecture1/3-contributors-and-syntax/ev-yemini), for all the original Matlab code built as part of [the WormBehavior database](http://wormbehavior.mrc-lmb.cam.ac.uk/), written as part of his doctorate at the Schafer Lab.  Without him this project would not have been possible.  His PhD thesis was partly based on his work creating the analysis package we ported to form the basis of the package.
 
@@ -16,7 +16,20 @@
 
 *[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m)*
 
-WT2 employs Java (version 1.6) for the tracking software and Matlab (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes. Special thanks and acknowledgements are due to Christopher J. Cronin and Paul W. Sternberg for supplying the Matlab code from their publication ["An automated system for measuring parameters of nematode sinusoidal movement" (Cronin et al. 2005)](http://www.ncbi.nlm.nih.gov/pubmed/15698479). Joan Lasenby and Nick Kingsbury were an invaluable resource for computer vision questions. Andrew Deonarine, Richard Samworth, Sreenivas Chavali, Guilhem Chalancon, Sarah Teichmann, and Madan Babu provided a wealth of help and information for the bioinformatic clustering and statistics. Finally, thanks and acknowledgements are due for the following freely available code at the Matlab Central File Exchange (http://www.mathworks.com/matlabcentral/fileexchange/):
+WT2 employs Java (version 1.6) for the tracking software and Matlab (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes.
+
+Special thanks and acknowledgements are due to [Christopher J. Cronin](http://wormlab.caltech.edu/members/pictures/IMG_0084.jpg) and [Paul W. Sternberg](http://wormlab.caltech.edu/members/paul.html) at Caltech's [Sternberg Lab](http://wormlab.caltech.edu/) for supplying the Matlab code from their publication, ["An automated system for measuring parameters of nematode sinusoidal movement" (Cronin et al. 2005)](http://www.ncbi.nlm.nih.gov/pubmed/15698479), for use in the [locomotion features](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Locomotion.md).
+
+[Joan Lasenby](http://www-sigproc.eng.cam.ac.uk/Main/JL) and [Nick Kingsbury](http://www-sigproc.eng.cam.ac.uk/Main/NGK) were an invaluable resource for computer vision questions.
+
+[Andrew Deonarine](http://www.immunology.cam.ac.uk/directory/adeonari@mrc-lmb.cam.ac.uk), [Richard Samworth](http://www.statslab.cam.ac.uk/~rjs57/), [Sreenivas Chavali](http://www.wolfson.cam.ac.uk/people/dr-sreenivas-chavali), Guilhem Chalancon, Sarah Teichmann, and Madan Babu provided a wealth of help and information for the bioinformatic clustering and statistics. 
+
+Thanks to the [OpenCV](http://opencv.org/) computer vision library.
+
+
+### [Matlab Central File Exchange](http://www.mathworks.com/matlabcentral/fileexchange/) ###
+
+Thanks and acknowledgements are due for the following freely available code:
 
 - the videoIO matlab directShow library toolbox by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
 
@@ -31,12 +44,6 @@ WT2 employs Java (version 1.6) for the tracking software and Matlab (version 201
 - rdir function by Gus Brown
 
 - slxwrite1 function by Matt Swartz
-
-
-
-- [Sternberg Lab](http://wormlab.caltech.edu/) for locomotion features
-
-- [OpenCV](http://opencv.org/) computer vision library
 
 
 ### OpenWorm ###
