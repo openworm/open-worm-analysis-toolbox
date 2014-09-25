@@ -2,6 +2,9 @@
 """
 Plot the eigenworms file.
 
+For more information see
+https://github.com/openworm/movement_validation/issues/79
+
 """
 
 import sys, os
@@ -28,7 +31,6 @@ def main():
     eigenworm_file.close()
 
     # Print the shape of eigenworm matrix
-    # WHY only 48 skeleton points?  Why not 49 as is normal??
     print(np.shape(eigenworms))
 
     # Plot the eigenworms
