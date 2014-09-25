@@ -7,7 +7,7 @@ Worm length is computed from the segmented skeleton by converting the chain-code
 Worm width is computed from the segmented skeleton. The head, midbody, and tail widths are measured as the mean of the widths associated with the skeleton points covering their respective sections. These widths are converted to microns. 
 
 ###3. Area###
-The worm area is computed from the number of pixels within the segmented contour. The sum of the pixels is converted to microns2. 
+The worm area is computed from the number of pixels within the segmented contour. The sum of the pixels is converted to microns squared (i.e. microns<sup>2</sup>)
 
 ###4. Area/Length###
 
