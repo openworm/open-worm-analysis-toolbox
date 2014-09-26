@@ -16,34 +16,33 @@
 
 *[Schafer Lab Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printing/methodsTIF.m#L1514)*
 
-WT2 employs Java (version 1.6) for the tracking software and Matlab (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes.
+- WT2 employs [Java](http://en.wikipedia.org/wiki/Java_(programming_language)) (version 1.6) for the tracking software and [Matlab](http://www.mathworks.com/products/matlab/) (version 2010a) for the analysis software. Standard Matlab functions are used along with the Image Processing, Statistics, and Bioinformatics toolboxes.
 
-Special thanks and acknowledgements are due to [Christopher J. Cronin](http://wormlab.caltech.edu/members/pictures/IMG_0084.jpg) and [Paul W. Sternberg](http://wormlab.caltech.edu/members/paul.html) at Caltech's [Sternberg Lab](http://wormlab.caltech.edu/) for supplying the Matlab code from their publication, ["An automated system for measuring parameters of nematode sinusoidal movement" (Cronin et al. 2005)](http://www.ncbi.nlm.nih.gov/pubmed/15698479), for use in the [locomotion features](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Locomotion.md).
+- Special thanks and acknowledgements are due to [Christopher J. Cronin](http://wormlab.caltech.edu/members/pictures/IMG_0084.jpg) and [Paul W. Sternberg](http://wormlab.caltech.edu/members/paul.html) at Caltech's [Sternberg Lab](http://wormlab.caltech.edu/) for supplying the Matlab code from their publication, ["An automated system for measuring parameters of nematode sinusoidal movement" (Cronin et al. 2005)](http://www.ncbi.nlm.nih.gov/pubmed/15698479), for use in the [locomotion features](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Locomotion.md).
 
-[Joan Lasenby](http://www-sigproc.eng.cam.ac.uk/Main/JL) and [Nick Kingsbury](http://www-sigproc.eng.cam.ac.uk/Main/NGK) were an invaluable resource for computer vision questions.
+- [Joan Lasenby](http://www-sigproc.eng.cam.ac.uk/Main/JL) and [Nick Kingsbury](http://www-sigproc.eng.cam.ac.uk/Main/NGK) were an invaluable resource for computer vision questions.
 
-[Andrew Deonarine](http://www.immunology.cam.ac.uk/directory/adeonari@mrc-lmb.cam.ac.uk), [Richard Samworth](http://www.statslab.cam.ac.uk/~rjs57/), [Sreenivas Chavali](http://www.wolfson.cam.ac.uk/people/dr-sreenivas-chavali), Guilhem Chalancon, Sarah Teichmann, and Madan Babu provided a wealth of help and information for the bioinformatic clustering and statistics. 
+- [Andrew Deonarine](http://www.immunology.cam.ac.uk/directory/adeonari@mrc-lmb.cam.ac.uk), [Richard Samworth](http://www.statslab.cam.ac.uk/~rjs57/), [Sreenivas Chavali](http://www.wolfson.cam.ac.uk/people/dr-sreenivas-chavali), [Guilhem Chalancon](http://www.mrc-lmb.cam.ac.uk/genomes/guilhem/), [Sarah Teichmann](http://www.ebi.ac.uk/about/people/sarah-teichmann), and [Dr. M. Madan Babu](http://mbgroup.mrc-lmb.cam.ac.uk/about-m-madan/) provided a wealth of help and information for the bioinformatic clustering and statistics. 
 
-Thanks to the [OpenCV](http://opencv.org/) computer vision library.
+- The [OpenCV](http://opencv.org/) computer vision library.
 
+- The [videoIOtoolbox for Matlab](http://sourceforge.net/projects/videoio/) by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
 
 ### [Matlab Central File Exchange](http://www.mathworks.com/matlabcentral/fileexchange/) ###
 
 Thanks and acknowledgements are due for the following freely available code:
 
-- the videoIO matlab directShow library toolbox by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
-
 - [export\_fig](https://github.com/ojwoodford/export_fig) function by [Oliver Woodford](https://github.com/ojwoodford)
 
-- [notBoxPlot](http://www.mathworks.com/matlabcentral/fileexchange/26508-notboxplot-alternative-to-box-plots) function by Rob Campbell
+- [notBoxPlot](http://www.mathworks.com/matlabcentral/fileexchange/26508-notboxplot-alternative-to-box-plots) function by [Rob Campbell](http://www.mathworks.ca/matlabcentral/fileexchange/authors/49773)
 
-- [swtest](http://www.mathworks.com/matlabcentral/fileexchange/13964-shapiro-wilk-and-shapiro-francia-normality-tests) function by Ahmed Ben Saïda
+- [swtest](http://www.mathworks.com/matlabcentral/fileexchange/13964-shapiro-wilk-and-shapiro-francia-normality-tests) function by [Ahmed Ben Saïda](http://www.mathworks.com/matlabcentral/fileexchange/authors/27181)
 
-- [fexact](http://www.mathworks.com/matlabcentral/fileexchange/22550-fisher-s-exact-test) function by Michael Boedigheimer
+- [fexact](http://www.mathworks.com/matlabcentral/fileexchange/22550-fisher-s-exact-test) function by [Michael Boedigheimer](https://www.linkedin.com/profile/view?id=155041881)
 
-- rdir function by Gus Brown
+- [rdir](http://www.mathworks.com/matlabcentral/fileexchange/19550-recursive-directory-listing) function by [Gus Brown](http://www.mathworks.gr/matlabcentral/fileexchange/authors/30177)
 
-- slxwrite1 function by Matt Swartz
+- [xlswrite1](http://www.mathworks.com/matlabcentral/fileexchange/10465-xlswrite1) function by [Matt Swartz](http://www.mathworks.com/matlabcentral/fileexchange/authors/22868)
 
 
 ### OpenWorm ###
@@ -55,4 +54,3 @@ Thanks and acknowledgements are due for the following freely available code:
 - [**Dr. James "Jim" Hokanson**](https://github.com/JimHokanson) for improving upon the original Matlab code, doing much of the translation of the code into this Python repository, overall architectural decisions, documentation, and for his [Matlab Standard Library](https://github.com/JimHokanson/matlab_standard_library).
 
 - [**Michael Currie**](https://github.com/MichaelCurrie) for helping with the translation into Python, and helping with repository documentation.
-
