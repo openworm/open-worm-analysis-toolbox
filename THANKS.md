@@ -24,9 +24,9 @@
 
 - [Andrew Deonarine](http://www.immunology.cam.ac.uk/directory/adeonari@mrc-lmb.cam.ac.uk), [Richard Samworth](http://www.statslab.cam.ac.uk/~rjs57/), [Sreenivas Chavali](http://www.wolfson.cam.ac.uk/people/dr-sreenivas-chavali), [Guilhem Chalancon](http://www.mrc-lmb.cam.ac.uk/genomes/guilhem/), [Sarah Teichmann](http://www.ebi.ac.uk/about/people/sarah-teichmann), and [Dr. M. Madan Babu](http://mbgroup.mrc-lmb.cam.ac.uk/about-m-madan/) provided a wealth of help and information for the bioinformatic clustering and statistics. 
 
-- The [OpenCV](http://opencv.org/) computer vision library.
+- Thanks to the [OpenCV](http://opencv.org/) computer vision library.
 
-- The [videoIOtoolbox for Matlab](http://sourceforge.net/projects/videoio/) by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
+- Thanks to the [videoIO toolbox for Matlab](http://sourceforge.net/projects/videoio/) by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
 
 ### [Matlab Central File Exchange](http://www.mathworks.com/matlabcentral/fileexchange/) ###
 
