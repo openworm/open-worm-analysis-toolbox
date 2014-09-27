@@ -26,7 +26,7 @@
 
 - Thanks to the [OpenCV](http://opencv.org/) computer vision library.
 
-- Thanks to the [videoIO toolbox for Matlab](http://sourceforge.net/projects/videoio/) by [Gerald Dalley](http://people.csail.mit.edu/dalleyg/)
+- Thanks to [Gerald Dalley](http://people.csail.mit.edu/dalleyg/) for the [videoIO toolbox for Matlab](http://sourceforge.net/projects/videoio/).
 
 ### [Matlab Central File Exchange](http://www.mathworks.com/matlabcentral/fileexchange/) ###
 
