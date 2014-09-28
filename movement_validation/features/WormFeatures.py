@@ -89,7 +89,13 @@ class WormMorphology(object):
     """
 
     def __init__(self, features_ref):
-
+        """
+        
+        Parameters:
+        -----------
+        features_ref : WormFeatures
+        
+        """
         print('Calculating Morphology Features')
 
         nw = features_ref.nw
@@ -98,6 +104,7 @@ class WormMorphology(object):
         
         self.width = morphology_features.Widths(features_ref)
 
+        #TODO: This should eventually be calculated from the contour and skeleton
         self.area = nw.tail_areas + \
             nw.head_areas + \
             nw.vulva_areas + \
@@ -210,17 +217,19 @@ class WormLocomotion(object):
 
         nw = features_ref.nw
 
-        self.velocity = locomotion_features.get_worm_velocity(features_ref)
+
+        self.velocity = locomotion_features.LocomotionVelocity(features_ref)
+        #self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
         self.motion_events = locomotion_features.get_motion_codes(\
-                                    self.velocity['midbody']['speed'],
+                                    self.velocity.midbody.speed,
                                              nw.lengths)
 
         # TODO: I'm not a big fan of how this is done ...
         # I'd prefer a tuple output from above ...
         self.motion_mode = self.motion_events['mode']
-
         del self.motion_events['mode']
+
 
         self.is_paused = self.motion_mode == 0
 
@@ -232,7 +241,7 @@ class WormLocomotion(object):
         self.foraging = locomotion_bends.LocomotionForagingBends(
             nw,nw.is_segmented,nw.ventral_mode)
 
-        midbody_distance = abs(self.velocity['midbody']['speed'] / config.FPS)
+        midbody_distance = abs(self.velocity.midbody.speed / config.FPS)
         is_stage_movement = nw.segmentation_status == 'm'
 
         self.turns = locomotion_turns.LocomotionTurns(nw, nw.angles,
@@ -249,13 +258,10 @@ class WormLocomotion(object):
         # TODO: Allow for a global config that provides more info ...
         # in case anything fails ...
 
-        # NOTE: Since all features are just attributes in this class we do
-        # the evaluation here rather than calling __eq__ on the classes
+        if not (self.velocity == other.velocity):
+            return False
 
-        #self_velocity  = self.velocity
-        #other_velocity = other.velocity
-
-        #velocities_same = [self_velocity[x] == other_velocity[x] for x in self_velocity]
+        """
         for key in self.velocity:
             self_speed = self.velocity[key]['speed']
             self_direction = self.velocity[key]['direction']
@@ -274,6 +280,7 @@ class WormLocomotion(object):
                 'locomotion.velocity.' + key + '.speed')
             if not same_direction:
                 return False
+        """
 
         # Test motion events
         #---------------------------------
@@ -311,28 +318,7 @@ class WormLocomotion(object):
 
         self = cls.__new__(cls)
 
-        # bends
-        # motion
-        # turns
-
-        velocity = {}
-
-        # velocity
-        #------------------------------
-
-        velocity_ref = m_var['velocity']
-        for key in velocity_ref:
-            value = velocity_ref[key]
-            temp_speed = utils._extract_time_from_disk(value, 'speed')
-            temp_direc = utils._extract_time_from_disk(value, 'direction')
-            velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
-
-        # NOTE: This only valid for MRC
-
-        velocity['head_tip'] = velocity.pop('headTip')
-        velocity['tail_tip'] = velocity.pop('tailTip')
-
-        self.velocity = velocity
+        self.velocity = locomotion_features.LocomotionVelocity.from_disk(m_var)
 
         # motion
         #------------------------------
@@ -566,18 +552,18 @@ class WormPath(object):
 
     """
 
-    def __init__(self, normalized_worm):
+    def __init__(self, features_ref):
         """
         Initialization method for WormPosture
 
         Parameters:
         -----------
-        normalized_worm: a NormalizedWorm instance
+        features_ref: a WormFeatures instance
         """
         print('Calculating Path Features')        
 
-        # Let's use a shorthand
-        nw = normalized_worm
+        nw = features_ref.nw
+        video_info = features_ref.video_info
 
         self.range = path_features.Range(nw.contour_x, nw.contour_y)
 
@@ -586,7 +572,7 @@ class WormPath(object):
         sx = nw.skeleton_x
         sy = nw.skeleton_y
         widths = nw.widths
-        self.duration = path_features.Duration(nw, sx, sy, widths, config.FPS)
+        self.duration = path_features.Duration(nw, sx, sy, widths, video_info.fps)
 
         #Coordinates (Done)
         #---------------------------------------------------
@@ -596,7 +582,7 @@ class WormPath(object):
         #Curvature (Done)
         #---------------------------------------------------
         self.curvature = path_features.worm_path_curvature(sx, sy,
-                                                           config.FPS,
+                                                           video_info.fps,
                                                            nw.ventral_mode)
 
     # TODO: Move to class in path_features
@@ -684,10 +670,10 @@ class WormFeatures(object):
         
         self.morphology = WormMorphology(self)
         self.locomotion = WormLocomotion(self)
-        midbody_distance = np.abs(self.locomotion.velocity['midbody']['speed']
-                                  / config.FPS)
+        midbody_distance = np.abs(self.locomotion.velocity.midbody.speed
+                                  / video_info.fps)
         self.posture = WormPosture(nw, midbody_distance)
-        self.path = WormPath(nw)
+        self.path = WormPath(self)
 
     @classmethod
     def from_disk(cls, file_path):
