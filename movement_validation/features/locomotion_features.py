@@ -179,6 +179,11 @@ class LocomotionVelocity(object):
         self.velocity = velocity
         """
 
+class MotionCodes(object):
+    
+    def __init__(self,features_ref,midbody_speed,skeleton_lengths):
+        pass
+
     
 #TODO: Transition this to a class as well - like LocomotionVelocity
 def get_motion_codes(midbody_speed, skeleton_lengths):

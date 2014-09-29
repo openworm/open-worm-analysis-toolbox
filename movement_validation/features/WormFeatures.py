@@ -483,9 +483,11 @@ class WormPosture(object):
         # TODO: Add contours
         skeleton = p_var['skeleton']
         nt = collections.namedtuple('skeleton', ['x', 'y'])
-        self.skeleton = nt(skeleton['x'].value, skeleton['y'].value)
-
-        self.eigen_projection = p_var['eigenProjection'].value
+        x_temp = utils._extract_time_from_disk(skeleton,'x',is_matrix=True)
+        y_temp = utils._extract_time_from_disk(skeleton,'y',is_matrix=True)
+        self.skeleton = nt(x_temp.transpose(), y_temp.transpose())
+        
+        self.eigen_projection = utils._extract_time_from_disk(p_var,'eigenProjection',is_matrix=True)
 
         return self
 
@@ -503,14 +505,21 @@ class WormPosture(object):
         #We might want to make a comparison class that handles these details 
         #and then prints the results
 
+        #NOTE: Doing all of these comparisons and then computing the results
+        #allows any failures to be printed, which at this point is useful for 
+        #getting the code to align
+
         eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
         eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985) 
         eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
         eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks')
         eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength, other.secondary_wavelength, 'posture.secondary_wavelength')
-        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')
+        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')        
         eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
         eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
+        
+        #This is currently false because of a hardcoded None value where it is computed
+        #Fix that then remove these comments
         eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
         
         return \
