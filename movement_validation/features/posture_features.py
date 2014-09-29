@@ -22,6 +22,11 @@ from .. import config
 
 from . import events
 
+class Skeleton(object):
+    def __init__(self,features_ref):
+        pass
+        #TODO: Implement this
+        
 
 class Bends(object):
 

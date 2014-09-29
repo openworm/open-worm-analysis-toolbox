@@ -568,17 +568,20 @@ def gausswin(L, alpha=2.5):
 
 
 
-def _extract_time_from_disk(parent_ref, name):
+def _extract_time_from_disk(parent_ref, name, is_matrix = False):
     """
     This is for handling Matlab save vs Python save when we get to that point.
     """
 
     temp = parent_ref[name].value
 
-    # Assuming vector, need to fix for eigenvectors
-    if temp.shape[0] > temp.shape[1]:
-        wtf = temp[:, 0]
+    if is_matrix:
+        wtf = temp     
     else:
-        wtf = temp[0, :]
+        # Assuming vector, need to fix for eigenvectors
+        if temp.shape[0] > temp.shape[1]:
+            wtf = temp[:, 0]
+        else:
+            wtf = temp[0, :]
 
     return wtf

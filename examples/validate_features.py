@@ -56,9 +56,7 @@ def main():
     # SCHAFER LAB
     #----------------------
     # Load the Matlab codes generated features from disk
-    matlab_worm_features = \
-        WormFeatures.from_disk(matlab_generated_file_path)
-
+    matlab_worm_features = WormFeatures.from_disk(matlab_generated_file_path)
 
     # COMPARISON
     #----------------------

@@ -10,29 +10,53 @@ from .. import utils
 from .. import config
 
 from . import events
+from . import feature_comparisons as fc
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
 
 
+class LocomotionVelocityElement(object):
+    
+    def __init__(self,name,speed,direction):
+        self.name = name
+        self.speed = speed
+        self.direction = direction
+        
+    def __eq__(self, other):
+        return fc.corr_value_high(self.speed,other.speed,
+                                  'locomotion.velocity.' + self.name + '.speed') and \
+               fc.corr_value_high(self.direction,other.direction,
+                                  'locomotion.velocity.' + self.name + '.direction')
+    def __repr__(self):
+        return utils.print_object(self)         
 
+    @classmethod
+    def from_disk(cls, parent_ref, name):
+        
+        self = cls.__new__(cls)        
+    
+             #   velocity['head_tip'] = velocity.pop('headTip')
+        #velocity['tail_tip'] = velocity.pop('tailTip')
+        #head_tip        
+        
+        self.name = name
+        self.speed = utils._extract_time_from_disk(parent_ref, 'speed')
+        self.direction = utils._extract_time_from_disk(parent_ref, 'direction')
+        
+        return self
 
 class LocomotionVelocity(object):
-    pass
-
-
-#TODO: Transition this to a class
-
-def get_worm_velocity(features_ref, ventral_mode=0):
-    """
-
     
-
+    """
     This is for the 'velocity' locomotion feature. The helper function,
     'compute_velocity' is used elsewhere  
 
     Compute the worm velocity (speed & direction) at the
     head-tip/head/midbody/tail/tail-tip
+
+
+    THIS IS OUT OF DATE
 
     Parameters
     ----------
@@ -44,6 +68,8 @@ def get_worm_velocity(features_ref, ventral_mode=0):
         1 = clockwise
         2 = anticlockwise
 
+    
+    
     Returns
     -------
     dict
@@ -60,29 +86,33 @@ def get_worm_velocity(features_ref, ventral_mode=0):
             direction = 
 
     """
-
-    nw = features_ref.nw
-
-    all_options = features_ref.options
     
-    locomotion_options = all_options.locomotion
-
     # NOTE: head_tip and tail_tip overlap head and tail, respectively, and
     #       this set of partitions does not cover the neck and hips
     attribute_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
+    
+    def __init__(self,features_ref,ventral_mode=0):
+        #TODO: Ventral mode needs to be handled differently
+        nw = features_ref.nw
 
-    data_keys = list(attribute_keys) #Make a copy
+        all_options = features_ref.options
+    
+        locomotion_options = all_options.locomotion
+    
+        data_keys = list(self.attribute_keys) #Make a copy. Data keys will 
+        #correspond to sections of the skeleton. Attribute keys correspond to 
+        #attributes of this class.
 
-    if(all_options.mimic_old_behaviour):
-        data_keys[2] = 'old_midbody_velocity'
+        if(all_options.mimic_old_behaviour):
+            data_keys[2] = 'old_midbody_velocity'
 
 
-    avg_body_angle = velocity_module.get_partition_angles(nw, 
+        avg_body_angle = velocity_module.get_partition_angles(nw, 
                                           partition_key='body',
                                           data_key='skeletons',
                                           head_to_tail=False)
 
-    sample_time_values = {
+        sample_time_values = {
             'head_tip': locomotion_options.velocity_tip_diff,
             'head':     locomotion_options.velocity_body_diff,
             'midbody':  locomotion_options.velocity_body_diff,
@@ -90,20 +120,72 @@ def get_worm_velocity(features_ref, ventral_mode=0):
             'tail_tip': locomotion_options.velocity_tip_diff
         }
 
-    # Set up a dictionary to store the velocity for each partition
-    velocity = {}
+        for attribute_key, data_key in zip(self.attribute_keys, data_keys):
+            x, y = nw.get_partition(data_key, 'skeletons', True)
 
-    for attribute_key, data_key in zip(attribute_keys, data_keys):
-        x, y = nw.get_partition(data_key, 'skeletons', True)
-
-        speed, direction = velocity_module.compute_velocity(x, y,
+            speed, direction = velocity_module.compute_velocity(x, y,
                                             avg_body_angle,
                                             sample_time_values[attribute_key],
                                             ventral_mode)[0:2]
-        velocity[attribute_key] = {'speed': speed, 'direction': direction}
+                                            
+            setattr(self,attribute_key,LocomotionVelocityElement(attribute_key,speed,direction))                                
 
-    return velocity
+    def __eq__(self, other):
+        is_same = True
+        for attribute_key in self.attribute_keys:
+            is_same = getattr(self,attribute_key) == getattr(other,attribute_key)
+            if not is_same:
+                break
+
+        return is_same
+
+    def __repr__(self):
+        return utils.print_object(self)
+
+    @classmethod
+    def from_disk(cls, parent_ref):
+        
+        self = cls.__new__(cls)
+
+        velocity_ref = parent_ref['velocity']
+
+        for key in self.attribute_keys:
+            
+            #NOTE: We'll eventually need to check for old or new data ...
+            if key is 'head_tip':
+                old_key = 'headTip'
+            elif key is 'tail_tip':
+                old_key = 'tailTip'
+            else:
+                old_key = key
+            local_ref = velocity_ref[old_key]
+            setattr(self,key,
+                    LocomotionVelocityElement.from_disk(local_ref,key))      
+        return self
+        
+        """
+        velocity_ref = m_var['velocity']
+        for key in velocity_ref:
+            value = velocity_ref[key]
+            temp_speed = utils._extract_time_from_disk(value, 'speed')
+            temp_direc = utils._extract_time_from_disk(value, 'direction')
+            velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
+
+        # NOTE: This only valid for MRC
+
+        velocity['head_tip'] = velocity.pop('headTip')
+        velocity['tail_tip'] = velocity.pop('tailTip')
+
+        self.velocity = velocity
+        """
+
+class MotionCodes(object):
     
+    def __init__(self,features_ref,midbody_speed,skeleton_lengths):
+        pass
+
+    
+#TODO: Transition this to a class as well - like LocomotionVelocity
 def get_motion_codes(midbody_speed, skeleton_lengths):
     """ 
     Calculate motion codes of the locomotion events
