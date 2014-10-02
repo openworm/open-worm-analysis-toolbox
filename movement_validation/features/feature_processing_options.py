@@ -42,9 +42,29 @@ class FeatureProcessingOptions(object):
 class LocomotionOptions(object):
     
     def __init__(self):
-        #Used in locomotion_features.get_worm_velocity
-        #
+        #locomotion_features.LocomotionVelocity
+        #-------------------------------------
         #Units: seconds
         #NOTE: We could get the defaults from the class ...
         self.velocity_tip_diff = 0.25
         self.velocity_body_diff = 0.5
+        
+        #locomotion_features.MotionEvents
+        #--------------------------------------
+        # Interpolate only this length of NaN run; anything longer is
+        # probably an omega turn.
+        # If set to "None", interpolate all lengths (i.e. infinity)
+        #TODO - Inf would be a better specification
+        self.motion_codes_longest_nan_run_to_interpolate = None
+        # These are a percentage of the worm's length
+        self.motion_codes_speed_threshold_pct = 0.05
+        self.motion_codes_distance_threshold_pct = 0.05
+        self.motion_codes_pause_threshold_pct = 0.025
+    
+        #   These are times (s)
+        self.motion_codes_min_frames_threshold = 0.5
+        self.motion_codes_max_interframes_threshold = 0.25  
+
+        
+        
+        

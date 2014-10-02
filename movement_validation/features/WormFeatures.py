@@ -221,26 +221,23 @@ class WormLocomotion(object):
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
         #self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
-        self.motion_events = locomotion_features.get_motion_codes(\
-                                    self.velocity.midbody.speed,
-                                             nw.lengths)
-
-        # TODO: I'm not a big fan of how this is done ...
-        # I'd prefer a tuple output from above ...
-        self.motion_mode = self.motion_events['mode']
-        del self.motion_events['mode']
-
-
-        self.is_paused = self.motion_mode == 0
+        self.motion_events = locomotion_features.MotionEvents(features_ref,
+                                                             self.velocity.midbody.speed,
+                                                             nw.lengths)
+        import pdb
+        pdb.set_trace()
+        
+        self.motion_mode = self.motion_events.get_motion_mode()
 
         self.bends = locomotion_bends.LocomotionCrawlingBends(
             nw.angles,
-            self.is_paused,
+            self.motion_events.is_paused,
             nw.is_segmented)
 
         self.foraging = locomotion_bends.LocomotionForagingBends(
             nw,nw.is_segmented,nw.ventral_mode)
 
+        #TODO: Should this be moved to a method of velocity?
         midbody_distance = abs(self.velocity.midbody.speed / config.FPS)
         is_stage_movement = nw.segmentation_status == 'm'
 
@@ -255,40 +252,15 @@ class WormLocomotion(object):
 
     def __eq__(self, other):
 
+        #TODO: Allow running all checks before returning false
+
         # TODO: Allow for a global config that provides more info ...
         # in case anything fails ...
 
         if not (self.velocity == other.velocity):
             return False
 
-        """
-        for key in self.velocity:
-            self_speed = self.velocity[key]['speed']
-            self_direction = self.velocity[key]['direction']
-            other_speed = other.velocity[key]['speed']
-            other_direction = other.velocity[key]['direction']
-
-            same_speed = fc.corr_value_high(self_speed,
-                                            other_speed,
-                                            'locomotion.velocity.' + key + '.speed')
-            if not same_speed:
-                return False
-
-            same_direction = fc.corr_value_high(
-                self_direction,
-                other_direction,
-                'locomotion.velocity.' + key + '.speed')
-            if not same_direction:
-                return False
-        """
-
-        # Test motion events
-        #---------------------------------
-        motion_events_same = [self.motion_events[x].test_equality(
-            other.motion_events[x], 'locomotion.motion_events.' + x)
-            for x in self.motion_events]
-
-        if not all(motion_events_same):
+        if not (self.motion_events == other.motion_events):
             return False
 
         # Test motion codes

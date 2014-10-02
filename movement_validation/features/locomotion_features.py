@@ -179,11 +179,163 @@ class LocomotionVelocity(object):
         self.velocity = velocity
         """
 
-class MotionCodes(object):
+class MotionEvents(object):
+    
+    #Still left to do:
+    #1) Implement loads    
+    
     
     def __init__(self,features_ref,midbody_speed,skeleton_lengths):
-        pass
+        """ 
+        Calculate motion codes of the locomotion events
+    
+        TODO: Documentation is out of date    
+    
+        A locomotion feature.
+    
+        See feature description at 
+          /documentation/Yemini%20Supplemental%20Data/Locomotion.md
+    
+        Parameters
+        ---------------------------------------
+        midbody_speed: numpy array 1 x n_frames
+          from locomotion.velocity.midbody.speed / config.FPS
+        skeleton_lengths: numpy array 1 x n_frames
+    
+        Returns
+        ---------------------------------------
+        The locomotion events; a dict (called locally all_events_dict) 
+        with event fields:
+          forward  - (event) forward locomotion
+          paused   - (event) no locomotion (the worm is paused)
+          backward - (event) backward locomotion
+          mode     = [1 x num_frames] the locomotion mode:
+                     -1 = backward locomotion
+                      0 = no locomotion (the worm is paused)
+                      1 = forward locomotion
+    
+        Notes
+        ---------------------------------------
+        Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
+    
+        """
 
+        fps = features_ref.video_info.fps        
+        
+        locomotion_options = features_ref.options.locomotion        
+        
+        # Initialize the worm speed and video frames.
+        num_frames = len(midbody_speed)
+    
+        # Compute the midbody's "instantaneous" distance travelled at each frame,
+        # distance per second / (frames per second) = distance per frame
+        distance_per_frame = abs(midbody_speed / fps)
+    
+        #  Interpolate the missing lengths.
+        skeleton_lengths = utils.interpolate_with_threshold(
+                               skeleton_lengths,
+                               locomotion_options.motion_codes_longest_nan_run_to_interpolate)
+    
+        #===================================
+        # SPACE CONSTRAINTS
+        # Make the speed and distance thresholds a fixed proportion of the
+        # worm's length at the given frame:
+        worm_speed_threshold = skeleton_lengths * locomotion_options.motion_codes_speed_threshold_pct
+        worm_distance_threshold = skeleton_lengths * locomotion_options.motion_codes_distance_threshold_pct
+        worm_pause_threshold = skeleton_lengths * locomotion_options.motion_codes_pause_threshold_pct
+    
+        # Minimum speed and distance required for movement to
+        # be considered "forward"
+        min_forward_speed = worm_speed_threshold
+        min_forward_distance = worm_distance_threshold
+    
+        # Minimum speed and distance required for movement to
+        # be considered "backward"
+        max_backward_speed = -worm_speed_threshold
+        min_backward_distance = worm_distance_threshold
+    
+        # Boundaries between which the movement would be considered "paused"
+        min_paused_speed = -worm_pause_threshold
+        max_paused_speed = worm_pause_threshold
+    
+        # Note that there is no maximum forward speed nor minimum backward speed.
+        #TODO: This might be better as a class attribute
+        frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+        
+        min_speeds = {'forward': min_forward_speed,
+                      'backward': None,
+                      'paused': min_paused_speed}
+        max_speeds = {'forward': None,
+                      'backward': max_backward_speed,
+                      'paused': max_paused_speed}
+        min_distance = {'forward': min_forward_distance,
+                        'backward': min_backward_distance,
+                        'paused': None}
+    
+        #===================================
+        # TIME CONSTRAINTS
+        # The minimum number of frames an event had to be taking place for
+        # to be considered a legitimate event
+        min_frames_threshold = \
+            fps * locomotion_options.motion_codes_min_frames_threshold
+        # Maximum number of contiguous contradicting frames within the event
+        # before the event is considered to be over.
+        max_interframes_threshold = \
+            fps * locomotion_options.motion_codes_max_interframes_threshold
+        
+        # Start with a blank numpy array, full of NaNs:
+        self._mode = np.empty(num_frames, dtype='float') * np.NaN
+    
+        for motion_type in frame_values:
+            # We will use EventFinder to determine when the
+            # event type "motion_type" occurred
+            ef = events.EventFinder()
+    
+            # "Space and time" constraints
+            ef.min_distance_threshold = min_distance[motion_type]
+            ef.max_distance_threshold = None  # we are not constraining max dist
+            ef.min_speed_threshold = min_speeds[motion_type]
+            ef.max_speed_threshold = max_speeds[motion_type]
+    
+            # "Time" constraints
+            ef.min_frames_threshold = min_frames_threshold
+            ef.max_inter_frames_threshold = max_interframes_threshold
+    
+            event_list = ef.get_events(midbody_speed, distance_per_frame)
+    
+            # Obtain only events entirely before the num_frames intervals
+            event_mask = event_list.get_event_mask(num_frames)
+    
+            # Take the start and stop indices and convert them to the structure
+            # used in the feature files
+            m_event = events.EventListWithFeatures(event_list,
+                                                   distance_per_frame,
+                                                   compute_distance_during_event=True)
+    
+
+            # Record this motion_type to our all_events_dict!
+            # Assign event type to relevant frames of all_events_dict['mode']
+            self._mode[event_mask] = frame_values[motion_type]
+            setattr(self,motion_type,m_event)    
+
+    def get_motion_mode(self):
+        return self._mode
+    
+    def __eq__(self, other):
+        # Test motion events
+        #---------------------------------
+        #JAH: At this point
+        motion_events_same = [self.motion_events[x].test_equality(
+            other.motion_events[x], 'locomotion.motion_events.' + x)
+            for x in self.motion_events]
+        return False
+    
+    def __repr__(self):
+        return utils.print_object(self)     
+     
+    @property   
+    def is_paused(self):
+        return self._mode == 0
     
 #TODO: Transition this to a class as well - like LocomotionVelocity
 def get_motion_codes(midbody_speed, skeleton_lengths):

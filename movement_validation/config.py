@@ -78,19 +78,7 @@ TIP_DIFF = 0.25
 BODY_DIFF = 0.5
 
 
-# Used in get_motion_codes:
-#-------------------------------
-# Interpolate only this length of NaN run; anything longer is
-# probably an omega turn.
-# If set to "None", interpolate all lengths (i.e. infinity)
-MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE = None
-# These are a percentage of the length
-SPEED_THRESHOLD_PCT = 0.05
-DISTANCE_THRSHOLD_PCT = 0.05
-PAUSE_THRESHOLD_PCT = 0.025
-#   These are times (s)
-EVENT_MIN_FRAMES_THRESHOLD = 0.5    # Half a second
-EVENT_MAX_INTER_FRAMES_THRESHOLD = 0.25
+
 
 # The following two are used in EventOutputStructure...
 # When retrieving the final structure
