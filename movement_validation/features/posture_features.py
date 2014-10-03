@@ -1215,5 +1215,4 @@ def get_eigenworms(sx, sy, eigen_worms, N_EIGENWORMS_USE):
 
     angles = angles - np.mean(angles, axis=0)
 
-    # DEBUG: hiding this error for now - @MichaelCurrie
-    return None  # np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+    return np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)

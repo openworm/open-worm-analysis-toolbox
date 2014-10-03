@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Insert description here
+This code may eventually change or may take on an inheritance structure as we
+start to clarify differences between simulated and real worms
 """
 
 class VideoInfo(object):

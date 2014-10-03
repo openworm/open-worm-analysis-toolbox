@@ -224,10 +224,10 @@ class WormLocomotion(object):
         self.motion_events = locomotion_features.MotionEvents(features_ref,
                                                              self.velocity.midbody.speed,
                                                              nw.lengths)
-        import pdb
-        pdb.set_trace()
-        
+
         self.motion_mode = self.motion_events.get_motion_mode()
+
+        #JAH: Got through code 
 
         self.bends = locomotion_bends.LocomotionCrawlingBends(
             nw.angles,
@@ -292,22 +292,9 @@ class WormLocomotion(object):
 
         self.velocity = locomotion_features.LocomotionVelocity.from_disk(m_var)
 
-        # motion
-        #------------------------------
-        self.motion_events = {}
+        self.motion_events = locomotion_features.MotionEvents.from_disk(m_var)
 
-        if 'motion' in m_var.keys():
-            # Old MRC Format:
-            # - forward, backward, paused, mode
-            motion_ref = m_var['motion']
-            for key in ['forward', 'backward', 'paused']:
-                self.motion_events[key] = \
-                    events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
-
-            self.motion_mode = utils._extract_time_from_disk(motion_ref, 'mode')
-        else:
-			#This would indicate loading a new version
-            raise Exception('Not yet implemented')
+        self.motion_mode = self.motion_events.get_motion_mode()
 
         bend_ref = m_var['bends']
         self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
@@ -459,7 +446,9 @@ class WormPosture(object):
         y_temp = utils._extract_time_from_disk(skeleton,'y',is_matrix=True)
         self.skeleton = nt(x_temp.transpose(), y_temp.transpose())
         
-        self.eigen_projection = utils._extract_time_from_disk(p_var,'eigenProjection',is_matrix=True)
+        temp_eigen_projection = utils._extract_time_from_disk(p_var,'eigenProjection',is_matrix=True)        
+        
+        self.eigen_projection = temp_eigen_projection.transpose()
 
         return self
 

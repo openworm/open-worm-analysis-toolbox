@@ -184,6 +184,7 @@ class MotionEvents(object):
     #Still left to do:
     #1) Implement loads    
     
+    attribute_keys = ['forward','backward','paused']
     
     def __init__(self,features_ref,midbody_speed,skeleton_lengths):
         """ 
@@ -321,14 +322,27 @@ class MotionEvents(object):
     def get_motion_mode(self):
         return self._mode
     
+    
+
+    @classmethod
+    def from_disk(cls, parent_ref):
+
+        self = cls.__new__(cls)
+        
+        motion_ref = parent_ref['motion']
+
+        for key in self.attribute_keys:
+            setattr(self,key,events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC'))
+            
+        self._mode = utils._extract_time_from_disk(motion_ref, 'mode')
+
+        return self
+
     def __eq__(self, other):
-        # Test motion events
-        #---------------------------------
-        #JAH: At this point
-        motion_events_same = [self.motion_events[x].test_equality(
-            other.motion_events[x], 'locomotion.motion_events.' + x)
-            for x in self.motion_events]
-        return False
+        motion_events_same = [self.__dict__[x].test_equality(
+            other.__dict__[x], 'locomotion.motion_events.' + x)
+            for x in self.attribute_keys]
+        return all(motion_events_same)
     
     def __repr__(self):
         return utils.print_object(self)     
