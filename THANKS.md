@@ -1,6 +1,6 @@
 ### Schafer Lab ###
 
-**[The Schafer Lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/)**, at the **[MRC Laboratory of Molecular Biology](http://www2.mrc-lmb.cam.ac.uk/)**, Cambridge, UK, developed the [Worm Tracker 2.0 (WT2)](http://www.mrc-lmb.cam.ac.uk/wormtracker/), upon which this package is primarily based.
+**[The Schafer Lab](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/)**, at the **[MRC Laboratory of Molecular Biology](http://www2.mrc-lmb.cam.ac.uk/)**, Cambridge, UK, developed the [Worm Analysis Toolbox](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis) to work with data from the [Worm Tracker 2.0 (WT2)](http://www.mrc-lmb.cam.ac.uk/wormtracker/).  The movement_validation package is a port of the last version of the Worm Analysis Toolbox, version 1.3.4.
 
 [**Dr. Eviatar "Ev" Yemini**](https://sites.google.com/site/openarchitecture1/3-contributors-and-syntax/ev-yemini), for all the original Matlab code built as part of [the WormBehavior database](http://wormbehavior.mrc-lmb.cam.ac.uk/), written as part of his doctorate at the Schafer Lab.  Without him this project would not have been possible.  His PhD thesis was partly based on his work creating the analysis package we ported to form the basis of the package.
 
