@@ -4,6 +4,8 @@ While porting the toolkit (version 1.3.4) to Python, several questions came up w
 
 ###Questions###
 
+- In the [Nature Methods paper](http://www.nature.com/nmeth/journal/v10/n9/fig_tab/nmeth.2560_F1.html), crawling features while the body motion is paused are omitted.  (Specifically, amplitude and frequency for head, midbody, and tail.)  Why?
+
 - Older version < 3 of segmentation had a bug in saving the failed frames. They have been indexed starting 0 not 1 (because of frame number being generated from time stamp rather than globalFrameCounter). To counter act it the indices for the frames that failed need to be added 1 to shift the failed frames by one and re-allign them. Here we will make a check for that and will raise a flag to add 1 in the upcoming loop: 
 
 ```Matlab
