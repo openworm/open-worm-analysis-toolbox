@@ -15,11 +15,13 @@
 
 ##Installing and running the movement_validation repository##
 
-1. Install Python 3.x and matplotlib
+1. Install Python 3.x, matplotlib, and Cython.  
 2. If it's not already included with your Python installation, install numpy.  Ideally use version 1.8 or greater.  Otherwise, if you have numpy version less than 1.8, you will need to:
 	1. Save [`nanfunctions.py`](https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py) to your Python library directory, in the `numpy/lib/` directory, and
 	2. Append the lines ```__all__ += nanfunctions.__all__``` and ```from .nanfunctions import *``` at the relevant places to `numpy/lib/__init__.py`.
-3. Install Shapely, which is available [for Windows here](http://www.lfd.uci.edu/~gohlke/pythonlibs/).
+3. Install Shapely:
+	a. Windows: [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/).
+	b. OS X: Install geos (e.g. brew install geos), followed by shapely (e.g. pip install shapely).  
 4. Clone this GitHub repository to your computer.
 5. If you don't already have an account, get a [Google Drive](https://www.google.com/intl/en/drive/) account.
 6. Install [Google Drive for desktop](https://tools.google.com/dlpage/drive).
