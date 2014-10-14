@@ -8,21 +8,6 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Experiment" files and
 - 10 "Control" files.
 
-The relevant Matlab script code, from the above file, is simply:
-
-    feature_files = sl.dir.rdir([root_path '\**\*.mat']);
-    
-    %We'll take the first 10 for the "experiment" and the next 10 for the
-    %"control"
-    expt_files = {feature_files(1:10).name};
-    ctl_files  = {feature_files(11:20).name};
-    
-    % STEP 2: Compute "new" Histograms - (just save in memory, don't 
-    %                                    bother writing to disk)
-    %----------------------------------------------------------------------    
-    hist_man_exp = seg_worm.stats.hist.manager(expt_files);
-    hist_man_ctl = seg_worm.stats.hist.manager(ctl_files);
-    stats_manager = seg_worm.stats.manager(hist_man_exp,hist_man_ctl);
 """
 
 
@@ -36,10 +21,54 @@ import movement_validation as mv
 
 
 def main():
-    # TODO
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
+
+    root_path = os.path.join(base_path, '30m_wait')
+    
+    compute_histograms(root_path)    
+    
     pass
 
+def get_matlab_filepaths(root_path):
+    """
+    Recursively traverses from root_path to find all .mat files
+    Returns a list of .mat files, with full path
 
+    """
+
+    matlab_filepaths = []
+    for root, dirs, files in os.walk(root_path):
+        mat_files = [f for f in files if f[-4:] == '.mat']
+        for f in mat_files:
+            matlab_filepaths.append(os.path.join(root, f))
+
+    return matlab_filepaths
+
+def compute_histograms(root_path):
+    """
+    Compute histograms for 10 experiment and 10 control feature files
+    
+    """
+    experiment_path = os.path.join(root_path, 'L')
+    control_path = os.path.join(root_path, 'R')
+
+    experiment_files = get_matlab_filepaths(experiment_path)
+    control_files = get_matlab_filepaths(control_path)
+
+    # We need at least 10 files in each
+    assert(len(experiment_files) >= 10)
+    assert(len(control_files) >= 10)
+
+    # Compute histograms on our files
+    histogram_manager_experiment = mv.HistogramManager(experiment_files[:10])
+    histogram_manager_control = mv.HistogramManager(control_files[:10])
+
+    # TODO: Translate from matlab:
+    # % stats_manager = seg_worm.stats.manager(hist_man_exp,hist_man_ctl);
+
+    # TODO:
+    # now somehow display the stats to prove that we generated them!
+    # maybe compare to the segwormmatlabclasses-generated stats somehow?
 
 
 

@@ -20,6 +20,9 @@ from .VideoInfo import VideoInfo
 from .features.WormFeatures import WormFeatures
 from .WormPlotter import WormPlotter
 
+from .statistics.histogram_manager import HistogramManager
+
+
 __all__ = ['SchaferExperimentFile',
            'NormalizedWorm',
 		   'VideoInfo',
