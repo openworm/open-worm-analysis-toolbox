@@ -1,6 +1,6 @@
 # Morphology Features #
 
- Credit for all Morphology feature definitions: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for all Locomotion feature definitions: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
 ###1. Length###
 Worm length is computed from the segmented skeleton by converting the [chain-code](http://en.wikipedia.org/wiki/Chain_code) pixel length to microns. 

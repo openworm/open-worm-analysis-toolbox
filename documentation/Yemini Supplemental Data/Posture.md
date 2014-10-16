@@ -1,4 +1,3 @@
-
 #Posture Features#
  
 ###1. Bends###
@@ -8,17 +7,17 @@ Worm bending is measured using the supplementary angles to the bends formed alon
 
 The supplementary angle can also be expressed as the difference in tangent angles at the skeleton point. The supplementary angle provides an intuitive measurement. Straight, unbent worms have an angle of 0°. Right angles are 90°. And the largest angle theoretically possible, a worm bending back on itself, would measure 180°. The supplementary angle is determined, per skeleton point, using edges 1/12 the skeleton’s chain-code length, in opposing directions, along the skeleton. When insufficient skeleton points are present, the angle remains undefined (i.e., the first and last 1/12 of the skeleton have no bending angle defined). The mean and standard deviation are measured for each body segment. The angle is signed to provide the bend’s dorsal-ventral orientation. When the worm has its ventral side internal to the bend, the bending angle is signed negatively. 
 
-Credit for this definition: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for this definition: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 ###2. Bend Count###
 The bend count is a rough measure of the number of bends along the worm. The supplementary skeleton angles are measured during segmentation and signed to reflect their dorsal-ventral orientation. These angles are convolved with a Gaussian filter, 1/12 the length of the skeleton, with a width defined by the Matlab “gausswin” function’s default a of 2.5 and normalized such that the filter integrates to 1, to smooth out any high-frequency changes. The angles are then sequentially checked from head to tail. Every time the angle changes sign or hits 0°, the end of a bend has been found and the count is incremented. Bends found at the start and end of the worm must reflect a segment at least 1/12 the skeleton length in order to be counted. This ignores small bends at the tip of the head and tail. 
 
-Credit for this definition: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for this definition: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 ###3. Eccentricity###
 The eccentricity of the worm’s posture is measured using the eccentricity of an equivalent ellipse to the worm’s filled contour. The orientation of the major axis for the equivalent ellipse is used in computing the amplitude, wavelength, and track length (#4, 5, and 6, described below). 
 
-Credit for this definition: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for this definition: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 ###4. Amplitude###
 Worm amplitude is expressed in two forms: a) the maximum amplitude found along the worm body and, b) the ratio of the maximum amplitudes found on opposing sides of the worm body (wherein the smaller of these two amplitudes is used as the numerator). The formula and code originate from the publication ["An automated system for measuring parameters of nematode sinusoidal movement" by Cronin *et al.* (2005)](http://www.biomedcentral.com/1471-2156/6/5).
@@ -36,7 +35,7 @@ The worm’s track length is the range of the skeleton’s horizontal projection
 ###7. Coils###
 Worm coiling (touching) events are found by scanning the video frame annotations. During segmentation, every frame that cannot be segmented is annotated with a cause for failure. Two of these annotations reflect coiling events. First, if we find fewer than two sharp ends on the contour (reflecting the head and tail) then the head and/or tail are obscured in a coiling event. Second, if the length between the head and tail on one side of the contour is more than double that of the other side, the worm has either assumed an omega bend or is crossed like a wreath. Empirically, less than 1/5 of a second is a very fast touch and not usually reflective of coiling. Therefore, when a period of unsegmented video frames exceeds 1/5 of a second, and either of the coiling annotations are found, we label the event coiling. 
 
-Credit for this definition: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for this definition: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 ###8. Eigen Projections###
 The eigenworm amplitudes are a measure of worm posture. They are the projections onto the first six eigenworms which together account for 97% of the variance in posture. The eigenworms were computed from 15 N2 videos (roughly three hours of video, 1/3 of a million frames) as previously described in [Stephens *et. al* (2008)](http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000028).
@@ -53,4 +52,4 @@ The worm’s orientation is measured overall (from tail to head) as well as for 
 
 The head and tail direction are computed by splitting these regions in two, then computing the centroid of each half. The head direction is measured as the angular direction from the its second half (the centroid of points 5-8) to its first half (the centroid of points 1-4). The tail direction is measured as the angular direction from the its second half (the centroid of points 42-45) to its first half (the centroid of points 46-49). 
 
-Credit for this definition: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
+Credit for this definition: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
