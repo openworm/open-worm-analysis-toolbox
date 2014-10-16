@@ -1,4 +1,6 @@
 #Locomotion Features#
+ 
+Credit for all Locomotion feature definitions: [Yemini et. al (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 There are four locomotion features: bends, motion, turns, and velocity.  Here they are in the actual HDF5 file storing them:
 
