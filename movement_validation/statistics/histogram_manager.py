@@ -4,6 +4,7 @@ Equivalent to seg_worm.stats.hist.manager class
 
 """
 import h5py
+import numpy as np
 import six # For compatibility between Python 2 and 3 in case we have to revert
 
 class HistogramManager:
@@ -16,12 +17,12 @@ class HistogramManager:
             their in-memory object equivalents
         
         """
+        #DEBUG: just for fun
         print("number of feature files passed:", len(feature_path_or_object_list))
         
         hist_cell_array = []        
         
         # Loop over all feature files and get histogram objects for each
-    #        num_videos = len(feature_file_list)
         for feature_path_or_object in feature_path_or_object_list:
             worm_features = None
             
@@ -35,11 +36,81 @@ class HistogramManager:
                 # as an in-memory HDF5 object
                 worm_features = feature_path_or_object
 
-            hist_cell_array.append(worm_features)            
+            # %TODO: Need to add on info to properties 
+            # %feature_obj.info -> obj.info
+
+            hist_cell_array.append(self.initObjects(worm_features))
+
+        self.hists = mergeObjects(hist_cell_array)
+
+    def initObjects(self, feature_obj):
+        """
+        %
+        %   hist_objs = seg_worm.stats.hist.manager.initObjects(feature_file_paths)
+        %
+        %   INPUTS
+        %   =======================================
+        %   feature_obj : (seg_worm.features or strut) This may truly be a feature
+        %       object or the old structure. Both have the same format.
+        %
+        %   This is essentially the constructor code. I moved it in here to avoid
+        %   the indenting.
+        %
+        %   Improvements
+        %   -----------------------------------------------------------------------
+        %   - We could optimize the histogram calculation data for motion data
+        %   - for event data, we should remove partial events (events that start at
+        %   the first frame or end at the last frame)
+        """
         
-        # TODO: 
-        """
-                %Merge the objects from each file
-        %--------------------------------------------------------------------------
-        obj.hists = seg_worm.stats.hist.mergeObjects(hist_cell_array); 
-        """
+        # Movement histograms - DONE
+        # TODO: replace None with seg_worm.stats.movement_specs.getSpecs
+        m_hists = self.h_computeMHists(feature_obj, None)
+        
+        # Simple histograms - DONE
+        # TODO: replace None with seg_worm.stats.movement_specs.getSpecs
+        s_hists = self.h_computeSHists(feature_obj, None)
+        
+        # Event histograms - DONE
+        
+        # :/ HACK  - @JimHokanson
+        # TODO: replace with num_samples = len(feature_obj.morphology.length)
+        num_samples = 40
+        
+        # TODO: replace None with seg_worm.stats.movement_specs.getSpecs
+        e_hists = self.h_computeEHists(feature_obj, None, num_samples);
+        
+        hist_objs = np.hstack((m_hists, s_hists, e_hists))
+    
+        return hist_objs    
+        
+    def h_computeMHists(self, feature_obj, specs):
+        pass
+
+    def h_computeSHists(self, feature_obj, specs):
+        pass
+
+    def h_computeEHists(self, feature_obj, specs, num_samples):
+        pass
+
+        
+        
+def mergeObjects(hist_cell_array):
+    """
+    This is a placeholder.  It will eventually be turned into a static
+    method for the class "hist".  See the mergeObjects method of
+    +seg_worm/+stats/@hist in SegwormMatlabClasses
+    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m
+    
+    
+    %The goal of this function is to go from n collections of 708
+    %histogram summaries of features each, to one set of 708 histogram
+    %summaries, that has n elements, one for each video
+    
+    """    
+    
+    # DEBUG: this is just a placeholder; instead of merging it just returns
+    #        the first feature set
+    return hist_cell_array[0]
+
+        
