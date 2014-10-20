@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Equivalent to seg_worm.stats.hist.manager class
+
+
+Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / manager.m
 
 """
 import h5py
 import numpy as np
 import six # For compatibility between Python 2 and 3 in case we have to revert
 
+from .histogram import Histogram
+
 class HistogramManager:
+    """
+    Equivalent to seg_worm.stats.hist.manager class
+    
+    """
     def __init__(self, feature_path_or_object_list):
         """
         Parameters
@@ -39,11 +47,12 @@ class HistogramManager:
             # %TODO: Need to add on info to properties 
             # %feature_obj.info -> obj.info
 
-            hist_cell_array.append(self.initObjects(worm_features))
+            hist_cell_array.append(self.init_objects(worm_features))
 
-        self.hists = mergeObjects(hist_cell_array)
+        self.hists = Histogram.merge_objects(hist_cell_array)
 
-    def initObjects(self, feature_obj):
+
+    def init_objects(self, feature_obj):
         """
         %
         %   hist_objs = seg_worm.stats.hist.manager.initObjects(feature_file_paths)
@@ -102,10 +111,7 @@ def mergeObjects(hist_cell_array):
     +seg_worm/+stats/@hist in SegwormMatlabClasses
     https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m
     
-    
-    %The goal of this function is to go from n collections of 708
-    %histogram summaries of features each, to one set of 708 histogram
-    %summaries, that has n elements, one for each video
+
     
     """    
     

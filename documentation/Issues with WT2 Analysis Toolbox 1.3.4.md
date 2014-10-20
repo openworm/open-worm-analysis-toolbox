@@ -100,9 +100,32 @@ As you can see, these bins do not line up.  Consequently, the merge step when we
 
 For large numbers the precise bin should not affect the results, so it would be perfectly appropriate to start all the bins for both a and b with whole numbers (i.e. like the bins for b), so that way the bins are identical and the merge step becomes trivial. 
 
+(This histogram bin merge step takes place in [the mergeObjects static method of the hist class](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m#L231).)
+
 
 **Videos are split into 10 pieces**
 
 Ends up creating many awkward corner cases when the range of frames you want to use straddles two pieces.
 
 All of that work you'd better only do if it gets you a tremendous performance advantage, which it did not.  Instead it just needlessly complicated the code.
+
+
+**Changed histogram code**
+(discussed on line 51 of [+seg_worm/+stats/@hist/hist.m](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m#L51))
+
+This version of the histogram differs significantly from the old SegWorm histogram code. Notably:
+    
+1. There is much less reliance on saving values to disk. There is no need to actually save files to disk.
+
+2. Two types of data are missing from the histogram.
+	- Types:
+		- stats computed on all video data merged together
+		- stats computed on the stats, i.e. the mean of the means
+	- These could easily be re-added but they are not used in the final statistical calculations so I (@JimHokanson) have omitted them for now.
+ 
+3. No special code is given to "experimental" vs "control" data.
+
+4. Signed histograms (positive, negative, absolute => all for motion) are separate objects instead of different properties in one object. This leads to more hist objects for a given set of features, but makes the code more straighforward. Later in the old code these are separated as well.
+
+5. sorting of values ... - (or is this just in stats -@JimHokanson)
+	- Stats are sorted by date in the old code, they are not in Jim's code.
