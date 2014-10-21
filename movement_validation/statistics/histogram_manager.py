@@ -92,7 +92,12 @@ class HistogramManager:
         hist_objs = np.hstack((m_hists, s_hists, e_hists))
     
         return hist_objs    
-        
+
+    ###########################################################################
+    ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
+    ## h_computeMHists, h_computeSHists, and h_computeEHists
+    ###########################################################################    
+    
     def h_computeMHists(self, feature_obj, specs):
         pass
 
@@ -102,21 +107,64 @@ class HistogramManager:
     def h_computeEHists(self, feature_obj, specs, num_samples):
         pass
 
+    ###########################################################################
+    ## SIX "PRIVATE" METHODS   (as private as Python gets, anyway)
+    ## h__getObject
+    ## h__filterData
+    ## h__getFilterMask
+    ## h__computeStats
+    ## h__initMeta
+    ## h__computeBinInfo
+    ###########################################################################
+    def h__createIndividualObject(self, data, specs, hist_type, motion_type, data_type):
+        o = self.h__getObject(len(data), specs, hist_type, motion_type, data_type)
         
+        if o.num_samples == 0:
+            return None
         
-def mergeObjects(hist_cell_array):
-    """
-    This is a placeholder.  It will eventually be turned into a static
-    method for the class "hist".  See the mergeObjects method of
-    +seg_worm/+stats/@hist in SegwormMatlabClasses
-    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m
+        # Compute the histogram counts for all the data
+        [o.bins, edges] = self.h__computeBinInfo(data, o.resolution)
+        
+        # Remove the extra bin at the end (for overflow)
+        o.counts = np.histogram(data, edges)[:-1]
+
+        o.pdf = o.counts / sum(o.counts)
+
+        # Compute stats
+        self.h__computeStats(data)
+        
     
+    def h__getObject(self, n_samples, specs, hist_type, motion_type, data_type):
+        pass
+    
+    def h__filterData(self, data):
+        pass
+
+    def h__getFilterMask(self, data):
+        pass
+
+    def h__computeStats(self, data):
+        pass
+
+    def h__initMeta(self, specs, hist_type, motion_type, data_type):
+        self.field            = specs.getLongField()
+        self.feature_category = specs.feature_category
+        self.resolution       = specs.resolution
+        self.is_zero_bin      = specs.is_zero_bin
+        self.is_signed        = specs.is_signed
+        self.name             = specs.name
+        self.short_name       = specs.short_name
+        self.units            = specs.units
+        
+        self.hist_type   = hist_type
+        self.motion_type = motion_type
+        self.data_type   = data_type
 
     
-    """    
+    def h__computeBinInfo(self, data, resolution):
+        """
+        Formerly: 
+        function [bins,edges] = h__computeBinInfo(data,resolution)
+        """
+        pass
     
-    # DEBUG: this is just a placeholder; instead of merging it just returns
-    #        the first feature set
-    return hist_cell_array[0]
-
-        
