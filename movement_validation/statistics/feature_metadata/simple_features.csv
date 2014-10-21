@@ -1,0 +1,5 @@
+Field,Category,Resolution,Name,Short Name,Unit
+path.duration.worm.times,path,1,Worm Dwelling,Worm,seconds
+path.duration.head.times,path,0.5,Head Dwelling,Head,seconds
+path.duration.midbody.times,path,1,Midbody Dwelling,Midbody,seconds
+path.duration.tail.times,path,0.5,Tail Dwelling,Tail,seconds

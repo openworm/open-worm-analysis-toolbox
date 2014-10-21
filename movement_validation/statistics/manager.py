@@ -22,15 +22,17 @@ SegwormMatlabClasses / +seg_worm / +stats / +helpers / swtest.m  260
 
 NOT DONE:
 
-SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
 SegwormMatlabClasses / +seg_worm / +stats / @hist                339
 SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
-SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
+
 SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
 SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
 SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
 SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
 
+MIGHT NOT BE NEEDED:
+SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
+SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
 SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots of lines of code... is this necessary?
 
 
@@ -44,10 +46,6 @@ there is one +stats and one in +stats/+hist !
 
 """
 from scipy import stats
-
-# The original Matlab code was classdef manager < handle
-# I don't know the significance of "< handle"
-# - @MichaelCurrie
 
 
 class Manager(object):

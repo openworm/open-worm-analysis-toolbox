@@ -127,5 +127,5 @@ This version of the histogram differs significantly from the old SegWorm histogr
 
 4. Signed histograms (positive, negative, absolute => all for motion) are separate objects instead of different properties in one object. This leads to more hist objects for a given set of features, but makes the code more straighforward. Later in the old code these are separated as well.
 
-5. sorting of values ... - (or is this just in stats -@JimHokanson)
-	- Stats are sorted by date in the old code, they are not in Jim's code.
+5. Sorting of values
+	- Stats are sorted by date in the old code, they are not in @JimHokason's code.
