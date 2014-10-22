@@ -11,7 +11,7 @@ import six # For compatibility between Python 2 and 3 in case we have to revert
 
 from .histogram import Histogram
 from . import specs
-from .. import config
+
 
 class HistogramManager(object):
     """
@@ -47,22 +47,27 @@ class HistogramManager(object):
                 worm_features = feature_path_or_object
 
             # %TODO: Need to add on info to properties 
-            # %feature_obj.info -> obj.info
+            # %worm_features.info -> obj.info
 
             hist_cell_array.append(self.init_objects(worm_features))
 
         self.hists = Histogram.merge_objects(hist_cell_array)
 
 
-    def init_objects(self, feature_obj):
+    def init_objects(self, worm_features):
         """
         This is essentially the constructor code.  Originally, @JimHokanson
         moved it here to "avoid the indenting".
 
         Parameters
         ------------------
-        feature_obj : (seg_worm.features or strut) This may truly be a feature
+        worm_features : An h5py group instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+            (seg_worm.features or strut) This may truly be a feature
             object or the old structure. Both have the same format.
+            -@JimHokanson
 
         Notes
         ------------------
@@ -78,18 +83,19 @@ class HistogramManager(object):
         """
         
         # Movement histograms
-        m_hists = self.h_computeMHists(feature_obj, specs.MovementSpecs.getSpecs())
+        m_hists = self.h_computeMHists(worm_features, specs.MovementSpecs.getSpecs())
         
         # Simple histograms
-        s_hists = self.h_computeSHists(feature_obj, specs.SimpleSpecs.getSpecs())
+        s_hists = self.h_computeSHists(worm_features, specs.SimpleSpecs.getSpecs())
         
         # Event histograms
         
         # :/ HACK  - @JimHokanson
-        # TODO: replace with num_samples = len(feature_obj.morphology.length)
-        num_samples = 40
+        # TODO: replace with:  (once you fix the fact the worm_features is currently a <Closed HDF5 group>)
+        # num_samples = len(worm_features["morphology"]["length"].value)
+        num_samples = 26994
         
-        e_hists = self.h_computeEHists(feature_obj, 
+        e_hists = self.h_computeEHists(worm_features, 
                                        specs.EventSpecs.getSpecs(), 
                                        num_samples)
 
@@ -101,7 +107,7 @@ class HistogramManager(object):
     ## h_computeMHists, h_computeSHists, and h_computeEHists
     ###########################################################################    
     
-    def h_computeMHists(self, feature_obj, specs):
+    def h_computeMHists(self, worm_features, specs):
         """
         For movement features, we compute either 4 or 16 histogram objects,
         depending on whether or not the feature can be signed. If the data is
@@ -123,12 +129,15 @@ class HistogramManager(object):
 
         Parameters
         -------------------------
-        feature_obj:
-        specs:
+        worm_features : An h5py group instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+        specs: A list of MovementSpecs instances
 
         Notes
         -------------------------
-        Formerly m_hists = h_computeMHists(feature_obj, specs)
+        Formerly m_hists = h_computeMHists(worm_features, specs)
 
         We could significantly reduce the amount of binning done in this
         function - @JimHokanson
@@ -137,7 +146,7 @@ class HistogramManager(object):
         pass
         """
         #---------------------------------------------------------
-        motion_modes = feature_obj.locomotion.motion.mode
+        motion_modes = worm_features.locomotion.motion.mode
         
         n_frames = len(motion_modes)
         
@@ -161,7 +170,7 @@ class HistogramManager(object):
             
             cur_specs = specs[iSpec]
             
-            cur_data = cur_specs.getData(feature_obj)
+            cur_data = cur_specs.getData(worm_features)
             
             good_data_mask = ~h__getFilterMask(cur_data)
             
@@ -176,8 +185,8 @@ class HistogramManager(object):
 
                 if cur_specs.is_signed:
                     
-                    #TODO: This could be improved by merging results 
-                    # from positive and negative - @JimHokanson
+                    # TODO: This could be improved by merging results 
+                    #       from positive and negative - @JimHokanson
                     all_hist_objects{hist_count+1} = h__createIndividualObject(abs(temp_data),cur_specs,'motion',cur_motion_type,data_types{2});
                     
                     
@@ -222,11 +231,71 @@ class HistogramManager(object):
 
         
 
-    def h_computeSHists(self, feature_obj, specs):
+    def h_computeSHists(self, worm_features, specs):
+        """
+        Compute simple histograms
+        
+        Parameters
+        ---------------------
+        worm_features : An h5py group instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+        specs: A list of SimpleSpecs instances
+        
+        """
         pass
+        """ TODO
+        return [self.h__createIndividualObject(self.h__filterData(specs[iSpec].getData(worm_features)), 
+                                               specs[iSpec], 
+                                               'simple', 'all', 'all') 
+                for iSpec in range(len(specs))]
+        """
 
-    def h_computeEHists(self, feature_obj, specs, num_samples):
+    def h_computeEHists(self, worm_features, specs, num_samples):
+        """
+        Compute event histograms
+
+        Parameters
+        ---------------------
+        worm_features : An h5py group instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+        specs: a list of EventSpecs instances
+        num_samples: int
+            number of samples
+
+        """
         pass
+        """ TODO
+        num_specs = len(specs)
+        temp_hists = []
+        
+        for iSpec in range(num_specs):
+            cur_specs = specs[iSpec]
+            
+            cur_data = cur_specs.getData(worm_features, num_samples)
+            
+            cur_data = self.h__filterData(cur_data)
+
+            # Calculate the first histogram, on all the data.
+            temp_hists.append(self.h__createIndividualObject(cur_data,cur_specs,'event','all','all'))
+
+            # If the data is signed, we calculate three more histograms:
+            # - On an absolute version of the data, 
+            # - On only the positive data, and 
+            # - On only the negative data.
+            if cur_specs.is_signed:
+                temp_hists.append(self.h__createIndividualObject(abs(cur_data),cur_specs,'event','all','absolute'))
+                positive_mask = cur_data > 0
+                negative_mask = cur_data < 0
+                temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask),cur_specs,'event','all','positive'))
+                temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask),cur_specs,'event','all','negative'))
+
+        return temp_hists
+        """
+
 
     ###########################################################################
     ## SIX "PRIVATE" METHODS   (as private as Python gets, anyway)
@@ -238,6 +307,8 @@ class HistogramManager(object):
     ## h__computeBinInfo
     ###########################################################################
     def h__createIndividualObject(self, data, specs, hist_type, motion_type, data_type):
+        pass
+        """ TODO: translate
         o = self.h__getObject(len(data), specs, hist_type, motion_type, data_type)
         
         if o.num_samples == 0:
@@ -253,19 +324,48 @@ class HistogramManager(object):
 
         # Compute stats
         self.h__computeStats(data)
-        
+        """        
     
     def h__getObject(self, n_samples, specs, hist_type, motion_type, data_type):
         pass
+
     
     def h__filterData(self, data):
+        """
+        Filter the data
+        
+        Parameters
+        ------------------
+        data: 
+        
+        """
+        # TODO: implement this function, currently the data doesn't get filtered
+        return data  
+
+        
+    def h__getFilterMask(self, data):
+        """
+        Get the filter mask
+        
+        Parameters
+        ------------------
+        data: 
+        
+        """
         pass
 
-    def h__getFilterMask(self, data):
-        pass
 
     def h__computeStats(self, data):
+        """
+        Compute the stats
+        
+        Parameters
+        ------------------
+        data: 
+        
+        """
         pass
+
 
     def h__initMeta(self, specs, hist_type, motion_type, data_type):
         self.field            = specs.getLongField()
@@ -284,6 +384,14 @@ class HistogramManager(object):
     
     def h__computeBinInfo(self, data, resolution):
         """
+        Compute histogram bin information
+        
+        Parameters
+        ---------------------
+        data:
+        resolution:
+
+        
         Formerly: 
         function [bins,edges] = h__computeBinInfo(data,resolution)
         """

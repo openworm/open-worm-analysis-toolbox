@@ -19,7 +19,7 @@ the latter three of which are subclasses of the first.
 """
 import os
 import csv
-
+import numpy as np
 
 class Specs(object):
     """
@@ -52,13 +52,20 @@ class Specs(object):
     @staticmethod
     def getObjectsHelper(csv_path, class_function_handle):
         """
-
+        Factory for creating Stats subclasses for every extended feature
+        in a CSV file
 
         Parameters
         ----------------------
-        csv_path:
-        class_function_handle:
+        csv_path: string
+            The path to a CSV file that has a list of extended features
+        class_function_handle: A class inheriting from Stats
 
+        Returns
+        ----------------------
+        A list of instances of the Stats subclass provided by 
+        class_function_handle, with each item in the list corresponding 
+        to a row in the CSV file at the provided csv_path.
 
         Notes
         ---------------------
@@ -145,7 +152,7 @@ class MovementSpecs(Specs):
 
     def __init__(self):
         self.index = None
-        self.is_time_series = None# TODO: This can be removed
+        self.is_time_series = None # TODO: This can be removed
         #%feature_category
         #%resolution
         #%is_zero_bin %This might not be important
@@ -154,11 +161,44 @@ class MovementSpecs(Specs):
         #%        short_name
         #%        units
 
+
+    def getData(self, feature_obj):
+        """
+        Parameters
+        -----------------------
+        feature_obj
+        
+        Notes
+        -----------------------
+        Formerly data = getData(obj,feature_obj)
+        
+        """
+        data = sl.struct.getSubField(feature_obj, self.feature_field)
+        # The above standard library method, getSubField, simply does the 
+        # following:
+        # data  = eval(['feature_obj.' obj.feature_field]);
+        
+        # NOTE: We can't filter data here because the data is 
+        #       filtered according to the value of the data, not 
+        #       according to the velocity of the midbody
+        
+        if ~np.isnan(self.index):
+            # This is basically for eigenprojections
+            # I really don't like the orientation: [Dim x n_frames]
+            # - @JimHokanson
+            data = data[self.index,:]
+
+        return data
+
+
     @staticmethod
     def getSpecs():
         """
         Formerly objs = getSpecs()
         %seg_worm.stats.movement_specs.getSpecs();
+        
+        Returns
+        ---------------------
 
         """
         csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
