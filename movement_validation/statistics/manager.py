@@ -14,6 +14,10 @@ DONE:
                                                               # of lines
 SegwormMatlabClasses / +seg_worm / @stats                        231 
 SegwormMatlabClasses / +seg_worm / +stats / @manager              61
+SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
+SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
+SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
+SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
 
 IN PROGRESS:
 
@@ -26,13 +30,9 @@ SegwormMatlabClasses / +seg_worm / +stats / @hist                339
 SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
 
 SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
-SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
-SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
-SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
 
 MIGHT NOT BE NEEDED:
 SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
-SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
 SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots of lines of code... is this necessary?
 
 

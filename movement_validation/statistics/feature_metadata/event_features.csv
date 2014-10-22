@@ -1,44 +1,43 @@
-feature_field,index,feature_category,is_time_series,resolution,is_zero_bin,is_signed,name,short_name,units
-Field,Sub Field,Category,Resolution,signed_field,Name,Short Name,Units,Zero_if_empty,remove_partials
-1,1,1,2,1,1,1,1,4,4
-posture.coils.frames,time,Posture,0.1,,Coil Time,Time,seconds,0,1
-posture.coils.frames,interTime,Posture,5,,Inter Coil Time,Inter Time,seconds,0,1
-posture.coils.frames,interDistance,Posture,100,,Inter Coil Distance,Inter Distance,microns,0,1
-posture.coils.frequency,,Posture,0.001,,Coils Frequency,Frequency,Hz,1,0
-posture.coils.timeRatio,,Posture,0.001,,Coils Time Ratio,Time Ratio,no units,1,0
-,,,,,,,,,
-locomotion.turns.omegas.frames,time,Locomotion,0.1,isVentral,Omega Turn Time (+/- = D/V Inside),Time,seconds,0,1
-locomotion.turns.omegas.frames,interTime,Locomotion,5,isVentral,Inter Omega Time (+/- = Previous D/V),Inter Time,seconds,0,1
-locomotion.turns.omegas.frames,interDistance,Locomotion,100,isVentral,Inter Omega Distance (+/- = Previous D/V),Inter Distance,microns,0,1
-locomotion.turns.omegas.frequency,,Locomotion,0.001,,Omega Turns Frequency,Frequency,Hz,1,0
-locomotion.turns.omegas.timeRatio,,Locomotion,0.001,,Omega Turns Time Ratio,Time Ratio,no units,1,0
-,,,,,,,,,
-locomotion.turns.upsilons.frames,time,Locomotion,0.1,isVentral,Upsilon Turn Time (+/- = D/V Inside),Time,seconds,0,1
-locomotion.turns.upsilons.frames,interTime,Locomotion,5,isVentral,Inter Upsilon Time (+/- = Previous D/V),Inter Time,seconds,0,1
-locomotion.turns.upsilons.frames,interDistance,Locomotion,100,isVentral,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,microns,0,1
-locomotion.turns.upsilons.frequency,,Locomotion,0.001,,Upsilon Turns Frequency,Frequency,Hz,1,0
-locomotion.turns.upsilons.timeRatio,,Locomotion,0.001,,Upsilon Turns Time Ratio,Time Ratio,no units,1,0
-,,,,,,,,,
-locomotion.motion.forward.frames,time,Locomotion,0.5,,Forward Time,Time,seconds,0,1
-locomotion.motion.forward.frames,distance,Locomotion,10,,Forward Distance,Distance,microns,0,1
-locomotion.motion.forward.frames,interTime,Locomotion,5,,Inter Forward Time,Inter Time,seconds,0,1
-locomotion.motion.forward.frames,interDistance,Locomotion,100,,Inter Forward Distance,Inter Distance,microns,0,1
-locomotion.motion.forward.frequency,,Locomotion,0.001,,Forward Motion Frequency,Frequency,Hz,1,0
-locomotion.motion.forward.ratio,time,Locomotion,0.001,,Forward Motion Time Ratio,Time Ratio,no units,1,0
-locomotion.motion.forward.ratio,distance,Locomotion,0.001,,Forward Motion Distance Ratio,Distance Ratio,no units,1,0
-,,,,,,,,,
-locomotion.motion.paused.frames,time,Locomotion,0.5,,Paused Time,Time,seconds,0,1
-locomotion.motion.paused.frames,distance,Locomotion,10,,Paused Distance,Distance,microns,0,1
-locomotion.motion.paused.frames,interTime,Locomotion,5,,Inter Paused Time,Inter Time,seconds,0,1
-locomotion.motion.paused.frames,interDistance,Locomotion,100,,Inter Paused Distance,Inter Distance,microns,0,1
-locomotion.motion.paused.frequency,,Locomotion,0.001,,Paused Motion Frequency,Frequency,Hz,1,0
-locomotion.motion.paused.ratio,time,Locomotion,0.001,,Paused Motion Time Ratio,Time Ratio,no units,1,0
-locomotion.motion.paused.ratio,distance,Locomotion,0.001,,Paused Motion Distance Ratio,Distance Ratio,no units,1,0
-,,,,,,,,,
-locomotion.motion.backward.frames,time,Locomotion,0.5,,Backward Time,Time,seconds,0,1
-locomotion.motion.backward.frames,distance,Locomotion,10,,Backward Distance,Distance,microns,0,1
-locomotion.motion.backward.frames,interTime,Locomotion,5,,Inter Backward Time,Inter Time,seconds,0,1
-locomotion.motion.backward.frames,interDistance,Locomotion,100,,Inter Backward Distance,Inter Distance,microns,0,1
-locomotion.motion.backward.frequency,,Locomotion,0.001,,Backward Motion Frequency,Frequency,Hz,1,0
-locomotion.motion.backward.ratio,time,Locomotion,0.001,,Backward Motion Time Ratio,Time Ratio,no units,1,0
-locomotion.motion.backward.ratio,distance,Locomotion,0.001,,Backward Motion Distance Ratio,Distance Ratio,no units,1,0
+feature_field,sub_field,feature_category,resolution,signed_field,name,short_name,units,make_zero_if_empty,remove_partials,is_zero_bin,is_signed
+1,1,1,2,1,1,1,1,4,4,4,4
+posture.coils.frames,time,Posture,0.1,,Coil Time,Time,seconds,0,1,0,0
+posture.coils.frames,interTime,Posture,5,,Inter Coil Time,Inter Time,seconds,0,1,0,0
+posture.coils.frames,interDistance,Posture,100,,Inter Coil Distance,Inter Distance,microns,0,1,0,0
+posture.coils.frequency,,Posture,0.001,,Coils Frequency,Frequency,Hz,1,0,0,0
+posture.coils.timeRatio,,Posture,0.001,,Coils Time Ratio,Time Ratio,no units,1,0,0,0
+,,,,,,,,,,,
+locomotion.turns.omegas.frames,time,Locomotion,0.1,isVentral,Omega Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1
+locomotion.turns.omegas.frames,interTime,Locomotion,5,isVentral,Inter Omega Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1
+locomotion.turns.omegas.frames,interDistance,Locomotion,100,isVentral,Inter Omega Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1
+locomotion.turns.omegas.frequency,,Locomotion,0.001,,Omega Turns Frequency,Frequency,Hz,1,0,0,0
+locomotion.turns.omegas.timeRatio,,Locomotion,0.001,,Omega Turns Time Ratio,Time Ratio,no units,1,0,0,0
+,,,,,,,,,,,
+locomotion.turns.upsilons.frames,time,Locomotion,0.1,isVentral,Upsilon Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1
+locomotion.turns.upsilons.frames,interTime,Locomotion,5,isVentral,Inter Upsilon Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1
+locomotion.turns.upsilons.frames,interDistance,Locomotion,100,isVentral,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1
+locomotion.turns.upsilons.frequency,,Locomotion,0.001,,Upsilon Turns Frequency,Frequency,Hz,1,0,0,0
+locomotion.turns.upsilons.timeRatio,,Locomotion,0.001,,Upsilon Turns Time Ratio,Time Ratio,no units,1,0,0,0
+,,,,,,,,,,,
+locomotion.motion.forward.frames,time,Locomotion,0.5,,Forward Time,Time,seconds,0,1,0,0
+locomotion.motion.forward.frames,distance,Locomotion,10,,Forward Distance,Distance,microns,0,1,0,0
+locomotion.motion.forward.frames,interTime,Locomotion,5,,Inter Forward Time,Inter Time,seconds,0,1,0,0
+locomotion.motion.forward.frames,interDistance,Locomotion,100,,Inter Forward Distance,Inter Distance,microns,0,1,0,0
+locomotion.motion.forward.frequency,,Locomotion,0.001,,Forward Motion Frequency,Frequency,Hz,1,0,0,0
+locomotion.motion.forward.ratio,time,Locomotion,0.001,,Forward Motion Time Ratio,Time Ratio,no units,1,0,0,0
+locomotion.motion.forward.ratio,distance,Locomotion,0.001,,Forward Motion Distance Ratio,Distance Ratio,no units,1,0,0,0
+,,,,,,,,,,,
+locomotion.motion.paused.frames,time,Locomotion,0.5,,Paused Time,Time,seconds,0,1,0,0
+locomotion.motion.paused.frames,distance,Locomotion,10,,Paused Distance,Distance,microns,0,1,0,0
+locomotion.motion.paused.frames,interTime,Locomotion,5,,Inter Paused Time,Inter Time,seconds,0,1,0,0
+locomotion.motion.paused.frames,interDistance,Locomotion,100,,Inter Paused Distance,Inter Distance,microns,0,1,0,0
+locomotion.motion.paused.frequency,,Locomotion,0.001,,Paused Motion Frequency,Frequency,Hz,1,0,0,0
+locomotion.motion.paused.ratio,time,Locomotion,0.001,,Paused Motion Time Ratio,Time Ratio,no units,1,0,0,0
+locomotion.motion.paused.ratio,distance,Locomotion,0.001,,Paused Motion Distance Ratio,Distance Ratio,no units,1,0,0,0
+,,,,,,,,,,,
+locomotion.motion.backward.frames,time,Locomotion,0.5,,Backward Time,Time,seconds,0,1,0,0
+locomotion.motion.backward.frames,distance,Locomotion,10,,Backward Distance,Distance,microns,0,1,0,0
+locomotion.motion.backward.frames,interTime,Locomotion,5,,Inter Backward Time,Inter Time,seconds,0,1,0,0
+locomotion.motion.backward.frames,interDistance,Locomotion,100,,Inter Backward Distance,Inter Distance,microns,0,1,0,0
+locomotion.motion.backward.frequency,,Locomotion,0.001,,Backward Motion Frequency,Frequency,Hz,1,0,0,0
+locomotion.motion.backward.ratio,time,Locomotion,0.001,,Backward Motion Time Ratio,Time Ratio,no units,1,0,0,0
+locomotion.motion.backward.ratio,distance,Locomotion,0.001,,Backward Motion Distance Ratio,Distance Ratio,no units,1,0,0,0

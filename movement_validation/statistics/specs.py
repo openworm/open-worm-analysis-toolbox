@@ -2,8 +2,20 @@
 """
 This is the Python port of 
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/specs.m
-and its subclass,
+and its subclasses,
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/movement_specs.m
+and
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/simple_specs.m
+and
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/event_specs.m
+
+In other words, this module defines the classes
+- Specs
+- MovementSpecs
+- SimpleSpecs
+- EventSpecs,
+the latter three of which are subclasses of the first.
+
 """
 import os
 import csv
@@ -77,7 +89,7 @@ class Specs(object):
             #    3 = int
             #    4 = bool
             #   (this mapping was recorded above in data_types)
-            field_data_types = feature_metadata.__next__()
+            field_data_types = next(feature_metadata)
     
             # The third to last rows of the CSV file contain the feature
             # metadata.  Let's now create a stats_instance for each
@@ -189,11 +201,143 @@ class SimpleSpecs(Specs):
         
         # Return a list of MovementSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        objs = Specs.getObjectsHelper(csv_path, SimpleSpecs)
+        return Specs.getObjectsHelper(csv_path, SimpleSpecs)
 
-        # TODO: Translate these two lines:
-        #[objs(:).is_zero_bin] = deal(false);
-        #[objs(:).is_signed]   = deal(false);
+
+class EventSpecs(Specs):
+    """
+
+    Notes
+    --------------------------
+    Formerly seg_worm.stats.event_specs
+
+    """
+    def __init__(self):
+        self.sub_field = None
+        # True will indicate that the data should be negated ...
+        self.signed_field = '' 
+        self.make_zero_if_empty = None
+        self.remove_partials = None
+
+
+    @property
+    def long_field(self):
+        """
+        Give the "long" version of the instance's name.
+
+        Returns
+        ----------------------
+        A string, which is a .-delimited concatenation of 
+        feature_field and sub_field.
         
-        return objs
- 
+        Notes
+        ----------------------
+        Formerly function value = getLongField(obj)
+        """
+        value = self.feature_field
+
+        if ~isempty(self.sub_field):
+            value = value + '.' + self.sub_field
+
+        return value
+
+   
+    @staticmethod
+    def getSpecs():
+        """    
+        Formerly function objs = getSpecs()
+            %
+            %
+            %   s_specs = seg_worm.stats.event_specs.getSpecs();
+            %
+            %
+        """
+        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'event_features.csv')
+      
+        # Return a list of MovementSpecs instances, one instance for each
+        # row in the csv_path CSV file.  Each row represents a feature. 
+        return Specs.getObjectsHelper(csv_path, EventSpecs)
+
+    
+    def getData(self, feature_obj, num_samples):
+        """
+        Formerly  function data = getData(obj,feature_obj,n_samples)
+        
+        NOTE: Because we are doing structure array indexing, we need to capture
+        multiple outputs using [], otherwise we will only get the first value
+        ...
+        
+        """            
+        print("NOTE TO MICHAEL: You'll need to translate EventSpecs.getData now!")
+
+        """
+        # TODO: Perhaps we'll add a property in the new object instead
+        #       of this poor check ...
+        is_old_code = isstruct(feature_obj);
+
+        if is_old_code:
+            start_value = 0;
+            end_value   = n_samples; # BUG IN OLD CODE: n_samples matches
+            # behavior, n_samples -1 does not
+            
+            # Except, for locomotion.motion.forward.frames - yikes!
+            if strcmp(obj.feature_field,'locomotion.motion.forward.frames'):
+                end_value = end_value - 1;
+        else:
+            start_value = 1;
+            end_value   = n_samples;
+
+        data = sl.struct.getSubField(feature_obj,obj.feature_field);
+            
+        if ~isempty(data):
+            if ~isempty(obj.sub_field):
+                # This will go from:
+                #    frames (structure array)
+                # to:
+                #    frames.time
+                # for example.
+                # 
+                # It is also used for event.ratio.time and event.ratio.distance
+                #      going from:
+                #          ratio (structure or [])
+                #      to:
+                #          ratio.time
+                #          ratio.distance
+                parent_data = data;
+                
+                data = [data.(obj.sub_field)];
+                
+                if self.is_signed:
+                    negate_mask = [parent_data.(obj.signed_field)];
+                    data(negate_mask) = -1*data(negate_mask);
+                
+                if self.remove_partials:
+                    starts = [parent_data.start];
+                    ends   = [parent_data.end];
+
+                    remove_mask = false(1,length(starts));
+
+                    if starts(1) == start_value:
+                        remove_mask(1) = true;
+
+                    if ends(end) == end_value:
+                        remove_mask(end) = true;
+                    
+                    data(remove_mask) = [];
+                
+            else:
+                # Check things that don't currently make sense unless
+                # nested in the way that we expect (i.e. in the frames
+                # struct)
+                pass
+                # TODO: Can't be signed
+                # TODO: Can't remove partials
+        
+        if isempty(data) && obj.make_zero_if_empty:
+            data = 0;
+        """
+        pass
+
+

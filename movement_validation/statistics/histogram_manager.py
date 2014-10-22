@@ -81,7 +81,7 @@ class HistogramManager(object):
         m_hists = self.h_computeMHists(feature_obj, specs.MovementSpecs.getSpecs())
         
         # Simple histograms
-        s_hists = self.h_computeSHists(feature_obj, specs.MovementSpecs.getSpecs())
+        s_hists = self.h_computeSHists(feature_obj, specs.SimpleSpecs.getSpecs())
         
         # Event histograms
         
@@ -90,7 +90,7 @@ class HistogramManager(object):
         num_samples = 40
         
         e_hists = self.h_computeEHists(feature_obj, 
-                                       specs.MovementSpecs.getSpecs(), 
+                                       specs.EventSpecs.getSpecs(), 
                                        num_samples)
 
         # Put all these histograms together into one matrix        
