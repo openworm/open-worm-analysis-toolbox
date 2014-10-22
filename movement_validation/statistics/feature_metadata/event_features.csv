@@ -1,4 +1,6 @@
+feature_field,index,feature_category,is_time_series,resolution,is_zero_bin,is_signed,name,short_name,units
 Field,Sub Field,Category,Resolution,signed_field,Name,Short Name,Units,Zero_if_empty,remove_partials
+1,1,1,2,1,1,1,1,4,4
 posture.coils.frames,time,Posture,0.1,,Coil Time,Time,seconds,0,1
 posture.coils.frames,interTime,Posture,5,,Inter Coil Time,Inter Time,seconds,0,1
 posture.coils.frames,interDistance,Posture,100,,Inter Coil Distance,Inter Distance,microns,0,1

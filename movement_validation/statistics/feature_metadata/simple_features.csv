@@ -1,4 +1,5 @@
-Field,Category,Resolution,Name,Short Name,Unit
+feature_field,feature_category,resolution,name,short_name,units
+1,1,2,1,1,1
 path.duration.worm.times,path,1,Worm Dwelling,Worm,seconds
 path.duration.head.times,path,0.5,Head Dwelling,Head,seconds
 path.duration.midbody.times,path,1,Midbody Dwelling,Midbody,seconds

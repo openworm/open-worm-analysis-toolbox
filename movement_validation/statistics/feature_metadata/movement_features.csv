@@ -1,5 +1,5 @@
 feature_field,index,feature_category,is_time_series,resolution,is_zero_bin,is_signed,name,short_name,units
-1,2,1,3,2,3,3,1,1,1
+1,3,1,4,2,4,4,1,1,1
 morphology.length,,morphology,1,1,0,0,Length,Length,Microns
 morphology.width.head,,morphology,1,1,0,0,Head Width,Head,Microns
 morphology.width.midbody,,morphology,1,1,0,0,Midbody Width,Midbody,Microns

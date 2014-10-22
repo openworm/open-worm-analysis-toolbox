@@ -18,14 +18,14 @@ class Specs(object):
     
     """
     def __init__(self):
-       feature_field = None
-       feature_category = None
-       resolution = None
-       is_zero_bin = None
-       is_signed = None
-       name = None
-       short_name = None
-       units = None
+       self.feature_field = None
+       self.feature_category = None
+       self.resolution = None
+       self.is_zero_bin = None
+       self.is_signed = None
+       self.name = None
+       self.short_name = None
+       self.units = None
 
 
     @property
@@ -83,6 +83,8 @@ class Specs(object):
             # metadata.  Let's now create a stats_instance for each
             # of these rows, initializing them with the row's metadata.
             for row in feature_metadata:
+                # Dynamically create an instance of the right kind 
+                # of class
                 stats_instance = class_function_handle()
                 
                 for field in row:
@@ -97,8 +99,11 @@ class Specs(object):
                     # Dynamically assign the field's value to the 
                     # member data element of the same name in the object
                     setattr(stats_instance, field, value)
-                
-                stats_instances.append(stats_instance)
+
+                # Only append this row to our list if there is 
+                # actually a name.  If not it's likely just a blank row.
+                if stats_instance.feature_field:
+                    stats_instances.append(stats_instance)
             
         return stats_instances    
     
@@ -152,3 +157,43 @@ class MovementSpecs(Specs):
         # row in the csv_path CSV file.  Each row represents a feature. 
         return Specs.getObjectsHelper(csv_path, MovementSpecs)
     
+
+class SimpleSpecs(Specs):
+    """
+    %
+    %   Class:
+    %   seg_worm.stats.simple_specs
+    %
+    """
+    def __init__(self):
+        pass
+
+    def getData(self, feature_obj):
+        pass
+        # TODO: translate this line:
+        # return eval(['feature_obj.' obj.feature_field]); 
+
+    @staticmethod
+    def getSpecs():
+        """    
+        Formerly function objs = getSpecs()
+            %
+            %
+            %   s_specs = seg_worm.stats.simple_specs.getSpecs();
+            %
+            %
+        """
+        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'simple_features.csv')
+        
+        # Return a list of MovementSpecs instances, one instance for each
+        # row in the csv_path CSV file.  Each row represents a feature. 
+        objs = Specs.getObjectsHelper(csv_path, SimpleSpecs)
+
+        # TODO: Translate these two lines:
+        #[objs(:).is_zero_bin] = deal(false);
+        #[objs(:).is_signed]   = deal(false);
+        
+        return objs
+ 
