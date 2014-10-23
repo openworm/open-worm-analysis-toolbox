@@ -642,6 +642,13 @@ class WormPath(object):
 ===============================================================================
 ===============================================================================
 """
+class VideoMetaData(object):
+    """
+    Encapsulates the metadata for a worm video
+    
+    """
+    def __init__(self):
+        pass
 
 
 class WormFeatures(object):
@@ -662,7 +669,7 @@ class WormFeatures(object):
         Parameters:
         -----------
         nw: movement_validation.NormalizedWorm
-        video_info: 
+        video_info: VideoMetaData instance
             This is not yet created but should eventually carry information
             such as the frame rate.
         """
