@@ -173,10 +173,7 @@ class MovementSpecs(Specs):
         Formerly data = getData(obj,feature_obj)
         
         """
-        data = sl.struct.getSubField(feature_obj, self.feature_field)
-        # The above standard library method, getSubField, simply does the 
-        # following:
-        # data  = eval(['feature_obj.' obj.feature_field]);
+        data = getattr(feature_obj, self.feature_field)
         
         # NOTE: We can't filter data here because the data is 
         #       filtered according to the value of the data, not 
@@ -276,7 +273,7 @@ class EventSpecs(Specs):
         """
         value = self.feature_field
 
-        if ~isempty(self.sub_field):
+        if ~np.isempty(self.sub_field):
             value = value + '.' + self.sub_field
 
         return value
@@ -301,8 +298,26 @@ class EventSpecs(Specs):
         return Specs.getObjectsHelper(csv_path, EventSpecs)
 
     
-    def getData(self, feature_obj, num_samples):
+    def getData(self, worm_features, num_samples):
         """
+        Compute event histograms
+
+        Parameters
+        ---------------------
+        worm_features: A WormFeatures instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+        num_samples: int
+            Number of samples (i.e. number of frames in the video)
+
+        Returns
+        ---------------------
+        
+
+
+        Notes
+        ---------------------
         Formerly  function data = getData(obj,feature_obj,n_samples)
         
         NOTE: Because we are doing structure array indexing, we need to capture
@@ -313,14 +328,17 @@ class EventSpecs(Specs):
         print("NOTE TO MICHAEL: You'll need to translate EventSpecs.getData now!")
 
         """
+        Note from @MichaelCurrie to @JimHokanson:
+        I'm not sure about this part.  Is this only a problem if the data
+        is in a struct or something?  I'm not sure when this case comes up.
         # TODO: Perhaps we'll add a property in the new object instead
         #       of this poor check ...
         is_old_code = isstruct(feature_obj);
 
         if is_old_code:
-            start_value = 0;
-            end_value   = n_samples; # BUG IN OLD CODE: n_samples matches
-            # behavior, n_samples -1 does not
+            start_value = 0
+            end_value   = num_samples; # BUG IN OLD CODE: n_samples matches
+                                       # behavior, n_samples -1 does not
             
             # Except, for locomotion.motion.forward.frames - yikes!
             if strcmp(obj.feature_field,'locomotion.motion.forward.frames'):
@@ -328,11 +346,14 @@ class EventSpecs(Specs):
         else:
             start_value = 1;
             end_value   = n_samples;
-
-        data = sl.struct.getSubField(feature_obj,obj.feature_field);
+        """
+        start_value = 0
+        end_value = num_samples
+        """  TODO: @MichaelCurrie, please finish this method!
+        data = getattr(worm_features, self.feature_field)
             
-        if ~isempty(data):
-            if ~isempty(obj.sub_field):
+        if ~np.isempty(data):
+            if ~np.isempty(self.sub_field):
                 # This will go from:
                 #    frames (structure array)
                 # to:
@@ -345,27 +366,29 @@ class EventSpecs(Specs):
                 #      to:
                 #          ratio.time
                 #          ratio.distance
-                parent_data = data;
+                parent_data = data
                 
-                data = [data.(obj.sub_field)];
+                data = getattr(parent_data, self.sub_field)
                 
                 if self.is_signed:
-                    negate_mask = [parent_data.(obj.signed_field)];
-                    data(negate_mask) = -1*data(negate_mask);
+                    negate_mask = [getattr(parent_data, self.signed_field)]
+                    data[negate_mask] = -1 * data[negate_mask]
                 
                 if self.remove_partials:
-                    starts = [parent_data.start];
-                    ends   = [parent_data.end];
+                    starts = [parent_data.start]
+                    ends   = [parent_data.end]
 
-                    remove_mask = false(1,length(starts));
+                    remove_mask = np.empty(len(starts)) * False
 
-                    if starts(1) == start_value:
-                        remove_mask(1) = true;
+                    if starts[0] == start_value:
+                        remove_mask[0] = True
 
-                    if ends(end) == end_value:
-                        remove_mask(end) = true;
+                    if ends[-1] == end_value:
+                        remove_mask[-1] = True
                     
-                    data(remove_mask) = [];
+                    # Remove all entries corresponding to True 
+                    # in the remove_mask
+                    data = data[~remove_mask]
                 
             else:
                 # Check things that don't currently make sense unless
@@ -375,9 +398,9 @@ class EventSpecs(Specs):
                 # TODO: Can't be signed
                 # TODO: Can't remove partials
         
-        if isempty(data) && obj.make_zero_if_empty:
-            data = 0;
+        if np.isempty(data) and self.make_zero_if_empty:
+            data = 0
+        
+        return data
         """
-        pass
-
 

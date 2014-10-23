@@ -91,10 +91,9 @@ class HistogramManager(object):
         
         # Event histograms
         
-        # :/ HACK  - @JimHokanson
-        # TODO: replace with:  (once you fix the fact the worm_features is currently a <Closed HDF5 group>)
-        # num_samples = len(worm_features["morphology"]["length"].value)
-        num_samples = 26994
+        # :/ HACK: - @JimHokanson
+        # Just get the size from the size of one of the pieces of data
+        num_samples = len(worm_features.morphology.length)
         
         e_hists = self.h_computeEHists(worm_features, 
                                        specs.EventSpecs.getSpecs(), 
@@ -245,13 +244,11 @@ class HistogramManager(object):
         specs: A list of SimpleSpecs instances
         
         """
-        pass
-        """ TODO
         return [self.h__createIndividualObject(self.h__filterData(specs[iSpec].getData(worm_features)), 
                                                specs[iSpec], 
                                                'simple', 'all', 'all') 
                 for iSpec in range(len(specs))]
-        """
+
 
     def h_computeEHists(self, worm_features, specs, num_samples):
         """
@@ -259,7 +256,7 @@ class HistogramManager(object):
 
         Parameters
         ---------------------
-        worm_features : An h5py group instance
+        worm_features : A WormFeatures instance
             All the feature data calculated for a single worm video.
             Arranged heirarchically into categories:, posture, morphology, 
             path, locomotion, in an h5py group.
@@ -268,12 +265,9 @@ class HistogramManager(object):
             number of samples
 
         """
-        pass
-        """ TODO
-        num_specs = len(specs)
         temp_hists = []
-        
-        for iSpec in range(num_specs):
+        """ TODO: @MichaelCurrie, please finish this method!
+        for iSpec in range(len(specs)):
             cur_specs = specs[iSpec]
             
             cur_data = cur_specs.getData(worm_features, num_samples)
@@ -281,21 +275,20 @@ class HistogramManager(object):
             cur_data = self.h__filterData(cur_data)
 
             # Calculate the first histogram, on all the data.
-            temp_hists.append(self.h__createIndividualObject(cur_data,cur_specs,'event','all','all'))
+            temp_hists.append(self.h__createIndividualObject(cur_data, cur_specs, 'event', 'all', 'all'))
 
             # If the data is signed, we calculate three more histograms:
             # - On an absolute version of the data, 
             # - On only the positive data, and 
             # - On only the negative data.
             if cur_specs.is_signed:
-                temp_hists.append(self.h__createIndividualObject(abs(cur_data),cur_specs,'event','all','absolute'))
+                temp_hists.append(self.h__createIndividualObject(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
                 positive_mask = cur_data > 0
                 negative_mask = cur_data < 0
-                temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask),cur_specs,'event','all','positive'))
-                temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask),cur_specs,'event','all','negative'))
-
-        return temp_hists
+                temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
+                temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
         """
+        return temp_hists
 
 
     ###########################################################################
