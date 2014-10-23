@@ -11,7 +11,7 @@ import six # For compatibility between Python 2 and 3 in case we have to revert
 
 from .histogram import Histogram
 from . import specs
-
+from ..features.worm_features import WormFeatures
 
 class HistogramManager(object):
     """
@@ -39,11 +39,12 @@ class HistogramManager(object):
             if isinstance(feature_path_or_object, six.string_types):
                 # If we have a string, it's a filepath to an HDF5 feature file
                 feature_file = h5py.File(feature_path_or_object, 'r')
-                worm_features = feature_file["worm"]
+                #worm_features = feature_file["worm"]
+                worm_features = WormFeatures.from_disk(feature_path_or_object)
                 feature_file.close()
             else:
                 # Otherwise the worm features have been passed directly
-                # as an in-memory HDF5 object
+                # as an instance of WormFeatures (we hope)
                 worm_features = feature_path_or_object
 
             # %TODO: Need to add on info to properties 

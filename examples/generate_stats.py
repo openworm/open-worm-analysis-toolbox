@@ -27,7 +27,9 @@ def main():
     
     compute_histograms(root_path)    
     
+    # TODO: do something with the histograms
     pass
+
 
 def get_matlab_filepaths(root_path):
     """
@@ -43,6 +45,7 @@ def get_matlab_filepaths(root_path):
             matlab_filepaths.append(os.path.join(root, f))
 
     return matlab_filepaths
+
 
 def compute_histograms(root_path):
     """
@@ -60,8 +63,10 @@ def compute_histograms(root_path):
     assert(len(control_files) >= 10)
 
     # Compute histograms on our files
-    histogram_manager_experiment = mv.HistogramManager(experiment_files[:10])
-    histogram_manager_control = mv.HistogramManager(control_files[:10])
+    # DEBUG: I've dialled this down to just 3 files each, for speed.  Really
+    #        this should be [:10] each
+    histogram_manager_experiment = mv.HistogramManager(experiment_files[:3])
+    histogram_manager_control = mv.HistogramManager(control_files[:3])
 
     # TODO: Translate from matlab:
     # % stats_manager = seg_worm.stats.manager(hist_man_exp,hist_man_ctl);
@@ -69,8 +74,6 @@ def compute_histograms(root_path):
     # TODO:
     # now somehow display the stats to prove that we generated them!
     # maybe compare to the segwormmatlabclasses-generated stats somehow?
-
-
 
 
 if __name__ == '__main__':
