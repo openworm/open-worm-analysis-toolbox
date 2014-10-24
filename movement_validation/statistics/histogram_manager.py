@@ -244,7 +244,7 @@ class HistogramManager(object):
         specs: A list of SimpleSpecs instances
         
         """
-        return [self.h__createIndividualObject(self.h__filterData(specs[iSpec].getData(worm_features)), 
+        return [self.h__createIndividualObject(self.filter_data(specs[iSpec].getData(worm_features)), 
                                                specs[iSpec], 
                                                'simple', 'all', 'all') 
                 for iSpec in range(len(specs))]
@@ -267,12 +267,13 @@ class HistogramManager(object):
         """
         temp_hists = []
         """ TODO: @MichaelCurrie, please finish this method!
+        """
         for iSpec in range(len(specs)):
             cur_specs = specs[iSpec]
             
             cur_data = cur_specs.getData(worm_features, num_samples)
             
-            cur_data = self.h__filterData(cur_data)
+            cur_data = self.filter_data(cur_data)
 
             # Calculate the first histogram, on all the data.
             temp_hists.append(self.h__createIndividualObject(cur_data, cur_specs, 'event', 'all', 'all'))
@@ -287,15 +288,14 @@ class HistogramManager(object):
                 negative_mask = cur_data < 0
                 temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
                 temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
-        """
         return temp_hists
 
 
     ###########################################################################
     ## SIX "PRIVATE" METHODS   (as private as Python gets, anyway)
     ## h__getObject
-    ## h__filterData
-    ## h__getFilterMask
+    ## filter_data
+    ## get_filter_mask
     ## h__computeStats
     ## h__initMeta
     ## h__computeBinInfo
@@ -319,46 +319,96 @@ class HistogramManager(object):
         # Compute stats
         self.h__computeStats(data)
         """        
-    
-    def h__getObject(self, n_samples, specs, hist_type, motion_type, data_type):
-        pass
 
     
-    def h__filterData(self, data):
+    def h__getObject(self, num_samples, specs, hist_type, motion_type, data_type):
         """
-        Filter the data
+        Constructor for this class???
         
         Parameters
         ------------------
-        data: 
-        
-        """
-        # TODO: implement this function, currently the data doesn't get filtered
-        return data  
+        num_samples:
+        specs:
+        hist_type:
+        motion_type:
+        data_type:
 
+        Returns
+        ------------------
+        An instance of this class
+
+        Notes
+        ------------------
+        Formerly function obj = 
+            h__getObject(n_samples,specs,hist_type,motion_type,data_type)
         
-    def h__getFilterMask(self, data):
         """
-        Get the filter mask
+        self = Histogram()    # ???????? - @MichaelCurrie
+        
+        self.h__initMeta(specs, hist_type, motion_type, data_type)
+        self.num_samples = num_samples
+
+    
+    def filter_data(self, data):
+        """
+        Filter the data, removing entries that are either Inf or NaN
         
         Parameters
         ------------------
-        data: 
+        data: numpy array
+
+        Returns
+        ------------------
+        numpy array
+
+        Notes
+        ------------------
+        Formerly function mask = h__filterData(data)
         
         """
-        pass
+        return data[self.get_filter_mask(data)]
+
+
+    def get_filter_mask(self, data):
+        """
+        Obtain a mask for the data numpy array that shows True if
+        the element of data is either Inf or Nan
+        
+        Parameters
+        ------------------
+        data: numpy array
+        
+        Returns
+        ------------------
+        boolean numpy array of same size as data
+
+        Notes
+        ------------------
+        Formerly function mask = h__getFilterMask(data)
+
+        """
+        return np.isinf(data) | np.isnan(data)
 
 
     def h__computeStats(self, data):
         """
-        Compute the stats
+        Compute the mean and standard deviation on the data array
+        Assign these to member data self.mean_per_video and 
+        self.std_per_video, respectively.
         
         Parameters
         ------------------
-        data: 
+        data: numpy array
         
         """
-        pass
+        self.mean_per_video = np.mean(data)
+        
+        num_samples = len(data)
+        if num_samples == 1:
+            self.std_per_video = 0
+        else:
+            # We can optimize std dev since we've already calculated the mean above
+            self.std_per_video = np.sqrt(1/(num_samples-1)*sum((data - self.mean_per_video)**2))
 
 
     def h__initMeta(self, specs, hist_type, motion_type, data_type):

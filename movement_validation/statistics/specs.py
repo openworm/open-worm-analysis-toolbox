@@ -300,7 +300,6 @@ class EventSpecs(Specs):
     
     def getData(self, worm_features, num_samples):
         """
-        Compute event histograms
 
         Parameters
         ---------------------
@@ -349,11 +348,13 @@ class EventSpecs(Specs):
         """
         start_value = 0
         end_value = num_samples
-        """  TODO: @MichaelCurrie, please finish this method!
+        """ DEBUG: bug: the first self.feature_field = 'posture.coils.frames',
+                        but this does not exist in worm_features!  Nor do
+                        many of the others in event_features, sadly.
         data = getattr(worm_features, self.feature_field)
             
-        if ~np.isempty(data):
-            if ~np.isempty(self.sub_field):
+        if data != None:
+            if self.sub_field != None:
                 # This will go from:
                 #    frames (structure array)
                 # to:
@@ -403,4 +404,3 @@ class EventSpecs(Specs):
         
         return data
         """
-
