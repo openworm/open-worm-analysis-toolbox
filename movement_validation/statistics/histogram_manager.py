@@ -11,8 +11,9 @@ import six # For compatibility between Python 2 and 3 in case we have to revert
 
 from .histogram import Histogram
 from . import specs
+from .. import utils
 from ..features.worm_features import WormFeatures
-from .. import config
+
 
 class HistogramManager(object):
     """
@@ -53,7 +54,7 @@ class HistogramManager(object):
 
             hist_cell_array.append(self.init_objects(worm_features))
 
-        self.hists = Histogram.merge_objects(hist_cell_array)
+        self.hists = Histogram.merge_histograms(hist_cell_array)
 
 
     def init_objects(self, worm_features):
@@ -181,18 +182,18 @@ class HistogramManager(object):
                 hist_count += 1
                 temp_data  = cur_data[indices_use_mask{iMotion} & good_data_mask]
                 
-                all_obj = self.h__createIndividualObject(temp_data, cur_specs, 'motion', cur_motion_type, data_types[0])
+                all_obj = self.create_histogram(temp_data, cur_specs, 'motion', cur_motion_type, data_types[0])
                 all_hist_objects[hist_count] = all_obj
 
                 if cur_specs.is_signed:
                     
                     # TODO: This could be improved by merging results 
                     #       from positive and negative - @JimHokanson
-                    all_hist_objects{hist_count+1} = h__createIndividualObject(abs(temp_data),cur_specs,'motion',cur_motion_type,data_types{2});
+                    all_hist_objects{hist_count+1} = create_histogram(abs(temp_data),cur_specs,'motion',cur_motion_type,data_types{2});
                     
                     
                     # NOTE: To get a speed up, we don't rely on 
-                    # h__createIndividualObject.  Instead we take the 
+                    # create_histogram.  Instead we take the 
                     # positive and negative aspects of the object 
                     # that included all data.
                     
@@ -206,7 +207,7 @@ class HistogramManager(object):
                         pos_obj.counts    = all_obj.counts(I_pos:end)
                         pos_obj.n_samples = sum(pos_obj.counts)
                         
-                        h__computeStats(pos_obj,temp_data(temp_data > 0))
+                        pos_obj.compute_statistics(pos_obj,temp_data(temp_data > 0))
                     
                     # Negative object ----------------------------------------
                     neg_obj  = self.h__getObject(0, cur_specs, 'motion', cur_motion_type, data_types[3])
@@ -219,8 +220,7 @@ class HistogramManager(object):
                         neg_obj.bins      = all_obj.bins(1:I_neg)
                         neg_obj.counts    = all_obj.counts(1:I_neg)
                         neg_obj.n_samples = sum(neg_obj.counts)
-                        self.h__computeStats(neg_obj, 
-                                             temp_data(temp_data < 0))
+                        neg_obj.compute_statistics(temp_data(temp_data < 0))
                     
                     # Final assignments -------------------------------------
                     all_hist_objects[hist_count+2] = pos_obj
@@ -245,10 +245,17 @@ class HistogramManager(object):
         specs: A list of SimpleSpecs instances
         
         """
-        return [self.h__createIndividualObject(self.filter_data(specs[iSpec].getData(worm_features)), 
-                                               specs[iSpec], 
-                                               'simple', 'all', 'all') 
+        """ RESTORE THE FILTER ONCE THE DATA IS AVIALALBE:
+        return [self.create_histogram(utils.filter_non_numeric(
+                                          specs[iSpec].getData(worm_features)), 
+                                      specs[iSpec], 
+                                      'simple', 'all', 'all') 
                 for iSpec in range(len(specs))]
+        """
+        return [self.create_histogram(specs[iSpec].getData(worm_features), 
+                                      specs[iSpec], 
+                                      'simple', 'all', 'all') 
+        for iSpec in range(len(specs))]
 
 
     def h_computeEHists(self, worm_features, specs, num_samples):
@@ -274,49 +281,44 @@ class HistogramManager(object):
             
             cur_data = cur_specs.getData(worm_features, num_samples)
             
-            cur_data = self.filter_data(cur_data)
+            # TODO: RESTORE THIS LINE ONCE DATA IS AVAILABLE:
+            #cur_data = utils.filter_non_numeric(cur_data)
 
             # Calculate the first histogram, on all the data.
-            temp_hists.append(self.h__createIndividualObject(cur_data, cur_specs, 'event', 'all', 'all'))
+            temp_hists.append(self.create_histogram(cur_data, cur_specs, 'event', 'all', 'all'))
 
             # If the data is signed, we calculate three more histograms:
             # - On an absolute version of the data, 
             # - On only the positive data, and 
             # - On only the negative data.
             if cur_specs.is_signed:
-                temp_hists.append(self.h__createIndividualObject(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
+                temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
                 positive_mask = cur_data > 0
                 negative_mask = cur_data < 0
-                temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
-                temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
+                temp_hists.append(self.create_histogram(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
+                temp_hists.append(self.create_histogram(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
         """
         return temp_hists
 
-    ###########################################################################
-    ## SIX "PRIVATE" METHODS   (as private as Python gets, anyway)
-    ## h__getObject
-    ## filter_data
-    ## get_filter_mask
-    ## h__computeStats
-    ## h__initMeta
-    ## h__computeBinInfo
-    ###########################################################################
-    def h__createIndividualObject(self, data, specs, hist_type, motion_type, data_type):
+
+    def create_histogram(self, data, specs, hist_type, motion_type, data_type):
         """
-        Create Individual Object
-        This is the constructor????
+        Create individual Histogram instance.
+        The only thing this does beyond the Histogram constructor is
+        to check if the data is empty.
         
         Parameters
         ------------------
-        data:
-        specs:
+        data: numpy array
+        specs: instance of Specs class
         hist_type:
         motion_type:
         data_type:
 
         Returns
         ------------------
-        o ???
+        An instance of the Histogram class, prepared with
+        the data provided.
 
         Notes
         ------------------
@@ -326,224 +328,9 @@ class HistogramManager(object):
                                                  data_type)
         
         """
-        pass
-        """ TODO: translate
-        o = self.h__getObject(len(data), specs, hist_type, motion_type, data_type)
-        
-        if o.num_samples == 0:
+        if not data or len(data) == 0:
             return None
-        
-        # Compute the histogram counts for all the data
-        [o.bins, edges] = self.h__computeBinInfo(data, o.resolution)
-        
-        # Remove the extra bin at the end (for overflow)
-        o.counts = np.histogram(data, edges)[:-1]
-
-        o.pdf = o.counts / sum(o.counts)
-
-        # Compute stats
-        self.h__computeStats(o, data)
-        
-        """        
-
-    
-    def h__getObject(self, num_samples, specs, hist_type, motion_type, data_type):
-        """
-        Constructor for this class???
-        
-        Parameters
-        ------------------
-        num_samples:
-        specs:
-        hist_type:
-        motion_type:
-        data_type:
-
-        Returns
-        ------------------
-        An instance of this class
-
-        Notes
-        ------------------
-        Formerly function obj = 
-            h__getObject(n_samples,specs,hist_type,motion_type,data_type)
-        
-        """
-        self = Histogram()    # ???????? - @MichaelCurrie
-        
-        self.h__initMeta(specs, hist_type, motion_type, data_type)
-        self.num_samples = num_samples
-
-    
-    def filter_data(self, data):
-        """
-        Filter the data, removing entries that are either Inf or NaN
-        
-        Parameters
-        ------------------
-        data: numpy array
-
-        Returns
-        ------------------
-        numpy array
-
-        Notes
-        ------------------
-        Formerly function mask = h__filterData(data)
-        
-        """
-        # TODO: restore this function once data isn't just None
-        return data        
-        #return data[self.get_filter_mask(data)]
-
-
-    def get_filter_mask(self, data):
-        """
-        Obtain a mask for the data numpy array that shows True if
-        the element of data is either Inf or Nan
-        
-        Parameters
-        ------------------
-        data: numpy array
-        
-        Returns
-        ------------------
-        boolean numpy array of same size as data
-
-        Notes
-        ------------------
-        Formerly function mask = h__getFilterMask(data)
-
-        """
-        # TODO: restore this function once data isn't just None
-        return data
-        #return np.isinf(data) | np.isnan(data)
-
-
-
-    def h__computeStats(self, data):
-        """
-        Compute the mean and standard deviation on the data array
-        Assign these to member data self.mean_per_video and 
-        self.std_per_video, respectively.
-        
-        Parameters
-        ------------------
-        data: numpy array
-
-        Returns 
-        ------------------
-        None
-        
-        """
-        self.mean_per_video = np.mean(data)
-        
-        num_samples = len(data)
-        if num_samples == 1:
-            self.std_per_video = 0
         else:
-            # We can optimize std dev since we've already calculated the mean above
-            self.std_per_video = np.sqrt((1/(num_samples-1)) * 
-                                         sum((data - self.mean_per_video)**2))
+            return Histogram(data, specs, hist_type, motion_type, data_type)
 
-
-    def h__initMeta(self, specs, hist_type, motion_type, data_type):
-        self.field            = specs.getLongField()
-        self.feature_category = specs.feature_category
-        self.resolution       = specs.resolution
-        self.is_zero_bin      = specs.is_zero_bin
-        self.is_signed        = specs.is_signed
-        self.name             = specs.name
-        self.short_name       = specs.short_name
-        self.units            = specs.units
-        
-        self.hist_type   = hist_type
-        self.motion_type = motion_type
-        self.data_type   = data_type
-
-    
-    def h__computeBinInfo(self, data, bin_width):
-        """
-        Compute histogram bin boundaries
-        
-        Parameters
-        ---------------------
-        data: numpy array
-        bin_width: float
-            The size of the bins
-
-        Returns
-        ---------------------
-        (bin_boundaries, bin_midpoints): A tuple of two numpy arrays
-            The bin_boundaries are the boundaries of the bins that will 
-            accomodate the data given.
-            All bins are right half-open except the last, which is closed.
-            i.e. if the array edges = (a1, a2, ..., a(n+1) was returned, 
-                 there are n bins and  
-                 bin #1 = [a1, a2)
-                 bin #2 = [a2, a3)
-                 ...
-                 bin #n = [an, an+1]
-            Note that the "bin_midpoints" array that is returned is an array 
-            of the midpoints of all the bins, strangely.  I'm not sure why 
-            we'd need that.
-
-        Notes
-        ---------------------
-        This version may have an extra bin than the previous version but
-        this one is MUCH simpler and merging should be much simpler as edges
-        should always align ...
-        %   min -65.4
-        %   max 20.01
-        %   resolution 1
-        %   Old:
-        %   boundaries -65.5 to 20.5
-        %   New:
-        %   boundaries -70 to 21
-
-        Formerly: 
-        function [bins,edges] = h__computeBinInfo(data,resolution)
-
-        """
-        #Compute the data range & padding
-        #------------------------------------------------
-        min_data = min(data)
-        max_data = max(data)
-        
-        # Let's "snap the bins to a grid" if you will, so that they will
-        # line up when we try to merge multiple histograms later.
-        # so if the bin_width = 2 and the min_data = 11, we will
-        # start the first bin at 10, since that is a multiple of the 
-        # bin width.
-        min_boundary = np.floor(min_data/bin_width) * bin_width
-        max_boundary = np.ceil(max_data/bin_width) * bin_width
-        
-        # If we have a singular value, then we will get a singular edge, 
-        # which isn't good for binning. We always need to make sure that 
-        # our data is bounded by a high and low end. Given how hist works 
-        # (it is inclusive on the low end, when we only have one edge we 
-        # add a second edge by increasing the high end, NOT by decreasing 
-        # the low end.
-        #
-        # i.e. In Matlab you can't bound 3 by having edges at 2 & 3, the edges would
-        #      need to be at 3 & 4
-        if min_boundary == max_boundary:
-            max_boundary = min_boundary + bin_width
-        
-        num_bins = (max_boundary - min_boundary) / bin_width
-        
-        if num_bins > config.MAX_NUMBER_BINS:
-            raise Exception("Given the specified resolution of " + \
-                            str(bin_width) + ", the number of data bins " + \
-                            "exceeds the maximum, which has been set to " + \
-                            "MAX_NUMBER_BINS = " + str(config.MAX_NUMBER_BINS))
-        
-        bin_boundaries = np.arange(min_boundary, 
-                                   max_boundary + bin_width, 
-                                   step=bin_width)
-        bin_midpoints  = bin_boundaries + bin_width/2
-        assert(min_data >= bin_boundaries[0])
-        assert(max_data <= bin_boundaries[-1])
-
-        return bin_boundaries, bin_midpoints
     
