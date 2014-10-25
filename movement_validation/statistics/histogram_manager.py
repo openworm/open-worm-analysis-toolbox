@@ -12,6 +12,7 @@ import six # For compatibility between Python 2 and 3 in case we have to revert
 from .histogram import Histogram
 from . import specs
 from ..features.worm_features import WormFeatures
+from .. import config
 
 class HistogramManager(object):
     """
@@ -267,7 +268,7 @@ class HistogramManager(object):
         """
         temp_hists = []
         """ TODO: @MichaelCurrie, please finish this method!
-        """
+
         for iSpec in range(len(specs)):
             cur_specs = specs[iSpec]
             
@@ -288,8 +289,8 @@ class HistogramManager(object):
                 negative_mask = cur_data < 0
                 temp_hists.append(self.h__createIndividualObject(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
                 temp_hists.append(self.h__createIndividualObject(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
+        """
         return temp_hists
-
 
     ###########################################################################
     ## SIX "PRIVATE" METHODS   (as private as Python gets, anyway)
@@ -301,6 +302,30 @@ class HistogramManager(object):
     ## h__computeBinInfo
     ###########################################################################
     def h__createIndividualObject(self, data, specs, hist_type, motion_type, data_type):
+        """
+        Create Individual Object
+        This is the constructor????
+        
+        Parameters
+        ------------------
+        data:
+        specs:
+        hist_type:
+        motion_type:
+        data_type:
+
+        Returns
+        ------------------
+        o ???
+
+        Notes
+        ------------------
+        Formerly:
+        function obj = h__createIndividualObject(self, data, specs, 
+                                                 hist_type, motion_type, 
+                                                 data_type)
+        
+        """
         pass
         """ TODO: translate
         o = self.h__getObject(len(data), specs, hist_type, motion_type, data_type)
@@ -317,7 +342,8 @@ class HistogramManager(object):
         o.pdf = o.counts / sum(o.counts)
 
         # Compute stats
-        self.h__computeStats(data)
+        self.h__computeStats(o, data)
+        
         """        
 
     
@@ -366,7 +392,9 @@ class HistogramManager(object):
         Formerly function mask = h__filterData(data)
         
         """
-        return data[self.get_filter_mask(data)]
+        # TODO: restore this function once data isn't just None
+        return data        
+        #return data[self.get_filter_mask(data)]
 
 
     def get_filter_mask(self, data):
@@ -387,7 +415,10 @@ class HistogramManager(object):
         Formerly function mask = h__getFilterMask(data)
 
         """
-        return np.isinf(data) | np.isnan(data)
+        # TODO: restore this function once data isn't just None
+        return data
+        #return np.isinf(data) | np.isnan(data)
+
 
 
     def h__computeStats(self, data):
@@ -399,6 +430,10 @@ class HistogramManager(object):
         Parameters
         ------------------
         data: numpy array
+
+        Returns 
+        ------------------
+        None
         
         """
         self.mean_per_video = np.mean(data)
@@ -408,7 +443,8 @@ class HistogramManager(object):
             self.std_per_video = 0
         else:
             # We can optimize std dev since we've already calculated the mean above
-            self.std_per_video = np.sqrt(1/(num_samples-1)*sum((data - self.mean_per_video)**2))
+            self.std_per_video = np.sqrt((1/(num_samples-1)) * 
+                                         sum((data - self.mean_per_video)**2))
 
 
     def h__initMeta(self, specs, hist_type, motion_type, data_type):
@@ -426,18 +462,88 @@ class HistogramManager(object):
         self.data_type   = data_type
 
     
-    def h__computeBinInfo(self, data, resolution):
+    def h__computeBinInfo(self, data, bin_width):
         """
-        Compute histogram bin information
+        Compute histogram bin boundaries
         
         Parameters
         ---------------------
-        data:
-        resolution:
+        data: numpy array
+        bin_width: float
+            The size of the bins
 
-        
+        Returns
+        ---------------------
+        (bin_boundaries, bin_midpoints): A tuple of two numpy arrays
+            The bin_boundaries are the boundaries of the bins that will 
+            accomodate the data given.
+            All bins are right half-open except the last, which is closed.
+            i.e. if the array edges = (a1, a2, ..., a(n+1) was returned, 
+                 there are n bins and  
+                 bin #1 = [a1, a2)
+                 bin #2 = [a2, a3)
+                 ...
+                 bin #n = [an, an+1]
+            Note that the "bin_midpoints" array that is returned is an array 
+            of the midpoints of all the bins, strangely.  I'm not sure why 
+            we'd need that.
+
+        Notes
+        ---------------------
+        This version may have an extra bin than the previous version but
+        this one is MUCH simpler and merging should be much simpler as edges
+        should always align ...
+        %   min -65.4
+        %   max 20.01
+        %   resolution 1
+        %   Old:
+        %   boundaries -65.5 to 20.5
+        %   New:
+        %   boundaries -70 to 21
+
         Formerly: 
         function [bins,edges] = h__computeBinInfo(data,resolution)
+
         """
-        pass
+        #Compute the data range & padding
+        #------------------------------------------------
+        min_data = min(data)
+        max_data = max(data)
+        
+        # Let's "snap the bins to a grid" if you will, so that they will
+        # line up when we try to merge multiple histograms later.
+        # so if the bin_width = 2 and the min_data = 11, we will
+        # start the first bin at 10, since that is a multiple of the 
+        # bin width.
+        min_boundary = np.floor(min_data/bin_width) * bin_width
+        max_boundary = np.ceil(max_data/bin_width) * bin_width
+        
+        # If we have a singular value, then we will get a singular edge, 
+        # which isn't good for binning. We always need to make sure that 
+        # our data is bounded by a high and low end. Given how hist works 
+        # (it is inclusive on the low end, when we only have one edge we 
+        # add a second edge by increasing the high end, NOT by decreasing 
+        # the low end.
+        #
+        # i.e. In Matlab you can't bound 3 by having edges at 2 & 3, the edges would
+        #      need to be at 3 & 4
+        if min_boundary == max_boundary:
+            max_boundary = min_boundary + bin_width
+        
+        num_bins = (max_boundary - min_boundary) / bin_width
+        
+        if num_bins > config.MAX_NUMBER_BINS:
+            raise Exception("Given the specified resolution of " + \
+                            str(bin_width) + ", the number of data bins " + \
+                            "exceeds the maximum, which has been set to " + \
+                            "MAX_NUMBER_BINS = " + str(config.MAX_NUMBER_BINS))
+        
+        bin_boundaries = np.arange(min_boundary, 
+                                   max_boundary + bin_width, 
+                                   step=bin_width)
+        bin_midpoints  = bin_boundaries + bin_width/2
+        assert(min_data >= bin_boundaries[0])
+        assert(max_data <= bin_boundaries[-1])
+
+        return bin_boundaries, bin_midpoints
     
