@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Locomotion features
+Locomotion features.  Note that LocomotionFeatures is not defined here.
+
+Classes defined in this module:
+
+LocomotionVelocityElement
+LocomotionVelocity
+MotionCodes
 
 """
 
@@ -180,143 +186,169 @@ class LocomotionVelocity(object):
         """
 
 class MotionCodes(object):
-    
-    def __init__(self,features_ref,midbody_speed,skeleton_lengths):
-        pass
-
-    
-#TODO: Transition this to a class as well - like LocomotionVelocity
-def get_motion_codes(midbody_speed, skeleton_lengths):
-    """ 
-    Calculate motion codes of the locomotion events
-
-    A locomotion feature.
-
-    See feature description at 
-      /documentation/Yemini%20Supplemental%20Data/Locomotion.md
-
-    Parameters
-    ---------------------------------------
-    midbody_speed: numpy array 1 x n_frames
-      from locomotion.velocity.midbody.speed / config.FPS
-    skeleton_lengths: numpy array 1 x n_frames
-
-    Returns
-    ---------------------------------------
-    The locomotion events; a dict (called locally all_events_dict) 
-    with event fields:
-      forward  - (event) forward locomotion
-      paused   - (event) no locomotion (the worm is paused)
-      backward - (event) backward locomotion
-      mode     = [1 x num_frames] the locomotion mode:
-                 -1 = backward locomotion
-                  0 = no locomotion (the worm is paused)
-                  1 = forward locomotion
-
-    Notes
-    ---------------------------------------
-    Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
-
     """
-    # Initialize the worm speed and video frames.
-    num_frames = len(midbody_speed)
+    Encapsulates the events associated with midbody_speed and skeleton_lengths
+    (Actually can be used on more general data.)
+    
+    Once initialized it contains four member variables:
+    
+    mode: numpy array
+        For each frame, contains either -1, 0, or 1, depending on:
+        {'forward': 1, 'backward': -1, 'paused': 0}
+    forward: an EventListWithFeatures instance
+    backward: an EventListWithFeatures instance
+    paused: an EventListWithFeatures instance
+    
+    """
+    def __init__(self, midbody_speed, skeleton_lengths):
+        """ 
+        Calculate and store motion codes of the locomotion events
+    
+        A locomotion feature.
+    
+        See feature description at 
+          /documentation/Yemini%20Supplemental%20Data/Locomotion.md
+    
+        Parameters
+        ---------------------------------------
+        midbody_speed: numpy array 1 x n_frames
+          from locomotion.velocity.midbody.speed / config.FPS
+        skeleton_lengths: numpy array 1 x n_frames
+    
+        Returns
+        ---------------------------------------
+        The locomotion events; a dict (called locally all_events_dict) 
+        with event fields:
+          forward  - (event) forward locomotion
+          paused   - (event) no locomotion (the worm is paused)
+          backward - (event) backward locomotion
+          mode     = [1 x num_frames] the locomotion mode:
+                     -1 = backward locomotion
+                      0 = no locomotion (the worm is paused)
+                      1 = forward locomotion
+    
+        Notes
+        ---------------------------------------
+        Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
+    
+        """
+        # Initialize the worm speed and video frames.
+        num_frames = len(midbody_speed)
+    
+        # Compute the midbody's "instantaneous" distance travelled at 
+        # each frame,
+        # distance per second / (frames per second) = distance per frame
+        distance_per_frame = abs(midbody_speed / config.FPS)
+    
+        #  Interpolate the missing lengths.
+        skeleton_lengths = utils.interpolate_with_threshold(
+              skeleton_lengths,
+              config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
+    
+        #===================================
+        # SPACE CONSTRAINTS
+        # Make the speed and distance thresholds a fixed proportion of the
+        # worm's length at the given frame:
+        worm_speed_threshold = skeleton_lengths * config.SPEED_THRESHOLD_PCT
+        worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT
+        worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT
+    
+        # Minimum speed and distance required for movement to
+        # be considered "forward"
+        min_forward_speed = worm_speed_threshold
+        min_forward_distance = worm_distance_threshold
+    
+        # Minimum speed and distance required for movement to
+        # be considered "backward"
+        max_backward_speed = -worm_speed_threshold
+        min_backward_distance = worm_distance_threshold
+    
+        # Boundaries between which the movement would be considered "paused"
+        min_paused_speed = -worm_pause_threshold
+        max_paused_speed = worm_pause_threshold
+    
+        # Note that there is no maximum forward speed nor 
+        #                       minimum backward speed.
+        frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+        min_speeds = {'forward': min_forward_speed,
+                      'backward': None,
+                      'paused': min_paused_speed}
+        max_speeds = {'forward': None,
+                      'backward': max_backward_speed,
+                      'paused': max_paused_speed}
+        min_distance = {'forward': min_forward_distance,
+                        'backward': min_backward_distance,
+                        'paused': None}
+    
+        #===================================
+        # TIME CONSTRAINTS
+        # The minimum number of frames an event had to be taking place for
+        # to be considered a legitimate event
+        min_frames_threshold = \
+            config.FPS * config.EVENT_MIN_FRAMES_THRESHOLD
+        # Maximum number of contiguous contradicting frames within the event
+        # before the event is considered to be over.
+        max_interframes_threshold = \
+            config.FPS * config.EVENT_MAX_INTER_FRAMES_THRESHOLD
 
-    # Compute the midbody's "instantaneous" distance travelled at each frame,
-    # distance per second / (frames per second) = distance per frame
-    distance_per_frame = abs(midbody_speed / config.FPS)
+        # For mode, start with a blank numpy array, full of NaNs:
+        self.mode = np.empty(num_frames, dtype='float') * np.NaN
+    
+        for motion_type in frame_values:
+            # We will use EventFinder to determine when the
+            # event type "motion_type" occurred
+            ef = events.EventFinder()
+    
+            # "Space and time" constraints
+            ef.min_distance_threshold = min_distance[motion_type]
+            ef.max_distance_threshold = None  # We are not constraining max dist
+            ef.min_speed_threshold = min_speeds[motion_type]
+            ef.max_speed_threshold = max_speeds[motion_type]
+    
+            # "Time" constraints
+            ef.min_frames_threshold = min_frames_threshold
+            ef.max_inter_frames_threshold = max_interframes_threshold
+    
+            event_list = ef.get_events(midbody_speed, distance_per_frame)
+    
+            # Start at 1, not 7 for forward
+            # What happens from 1900 to 1907
+    
+            # Obtain only events entirely before the num_frames intervals
+            event_mask = event_list.get_event_mask(num_frames)
+    
+            # Take the start and stop indices and convert them to the structure
+            # used in the feature files
+            m_event = events.EventListWithFeatures(event_list,
+                                                   distance_per_frame,
+                                                   compute_distance_during_event=True)
+    
+            # Assign this event type to relevant frames of self.mode
+            self.mode[event_mask] = frame_values[motion_type]
+            
+            # Record this motion_type to the variable self.[motion_type],
+            # where [motion_type] is forward, backward, or paused.
+            setattr(self, motion_type, m_event)
 
-    #  Interpolate the missing lengths.
-    skeleton_lengths = utils.interpolate_with_threshold(
-                           skeleton_lengths,
-                           config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
+    def __repr__(self):
+        return utils.print_object(self)
 
-    #===================================
-    # SPACE CONSTRAINTS
-    # Make the speed and distance thresholds a fixed proportion of the
-    # worm's length at the given frame:
-    worm_speed_threshold = skeleton_lengths * config.SPEED_THRESHOLD_PCT
-    worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT
-    worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT
+    @classmethod
+    def from_disk(cls, m_var):
+        self = cls.__new__(cls)        
+        
+        if 'motion' in m_var.keys():
+            # Old MRC Format:
+            # - forward, backward, paused, mode
+            motion_ref = m_var['motion']
+            for key in ['forward', 'backward', 'paused']:
+                setattr(self, key,
+                    events.EventListWithFeatures.from_disk(motion_ref[key], 
+                                                           'MRC'))
 
-    # Minimum speed and distance required for movement to
-    # be considered "forward"
-    min_forward_speed = worm_speed_threshold
-    min_forward_distance = worm_distance_threshold
-
-    # Minimum speed and distance required for movement to
-    # be considered "backward"
-    max_backward_speed = -worm_speed_threshold
-    min_backward_distance = worm_distance_threshold
-
-    # Boundaries between which the movement would be considered "paused"
-    min_paused_speed = -worm_pause_threshold
-    max_paused_speed = worm_pause_threshold
-
-    # Note that there is no maximum forward speed nor minimum backward speed.
-    frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
-    min_speeds = {'forward': min_forward_speed,
-                  'backward': None,
-                  'paused': min_paused_speed}
-    max_speeds = {'forward': None,
-                  'backward': max_backward_speed,
-                  'paused': max_paused_speed}
-    min_distance = {'forward': min_forward_distance,
-                    'backward': min_backward_distance,
-                    'paused': None}
-
-    #===================================
-    # TIME CONSTRAINTS
-    # The minimum number of frames an event had to be taking place for
-    # to be considered a legitimate event
-    min_frames_threshold = \
-        config.FPS * config.EVENT_MIN_FRAMES_THRESHOLD
-    # Maximum number of contiguous contradicting frames within the event
-    # before the event is considered to be over.
-    max_interframes_threshold = \
-        config.FPS * config.EVENT_MAX_INTER_FRAMES_THRESHOLD
-
-    # This is the dictionary this function will return.  Keys will be:
-    # forward
-    # backward
-    # paused
-    # mode
-    all_events_dict = {}
-
-    # Start with a blank numpy array, full of NaNs:
-    all_events_dict['mode'] = np.empty(num_frames, dtype='float') * np.NaN
-
-    for motion_type in frame_values:
-        # We will use EventFinder to determine when the
-        # event type "motion_type" occurred
-        ef = events.EventFinder()
-
-        # "Space and time" constraints
-        ef.min_distance_threshold = min_distance[motion_type]
-        ef.max_distance_threshold = None  # we are not constraining max dist
-        ef.min_speed_threshold = min_speeds[motion_type]
-        ef.max_speed_threshold = max_speeds[motion_type]
-
-        # "Time" constraints
-        ef.min_frames_threshold = min_frames_threshold
-        ef.max_inter_frames_threshold = max_interframes_threshold
-
-        event_list = ef.get_events(midbody_speed, distance_per_frame)
-
-        # Start at 1, not 7 for forward
-        # What happens from 1900 to 1907
-
-        # Obtain only events entirely before the num_frames intervals
-        event_mask = event_list.get_event_mask(num_frames)
-
-        # Take the start and stop indices and convert them to the structure
-        # used in the feature files
-        m_event = events.EventListWithFeatures(event_list,
-                                               distance_per_frame,
-                                               compute_distance_during_event=True)
-
-        # Record this motion_type to our all_events_dict!
-        # Assign event type to relevant frames of all_events_dict['mode']
-        all_events_dict['mode'][event_mask] = frame_values[motion_type]
-        all_events_dict[motion_type] = m_event
-
-    return all_events_dict
+            self.mode = utils._extract_time_from_disk(motion_ref, 'mode')
+        else:
+			#This would indicate loading a new version
+            raise Exception('Not yet implemented')        
+        
+        return self

@@ -221,14 +221,14 @@ class WormLocomotion(object):
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
         #self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
-        self.motion_events = locomotion_features.get_motion_codes(\
+        self.motion_events = locomotion_features.MotionCodes(\
                                     self.velocity.midbody.speed,
-                                             nw.lengths)
+                                    nw.lengths)
 
         # TODO: I'm not a big fan of how this is done ...
         # I'd prefer a tuple output from above ...
-        self.motion_mode = self.motion_events['mode']
-        del self.motion_events['mode']
+        self.motion_mode = self.motion_events.mode
+        del self.motion_events.mode
 
 
         self.is_paused = self.motion_mode == 0
@@ -270,7 +270,7 @@ class WormLocomotion(object):
 
             same_speed = fc.corr_value_high(self_speed,
                                             other_speed,
-                                            'locomotion.velocity.' + key + '.speed')
+                            'locomotion.velocity.' + key + '.speed')
             if not same_speed:
                 return False
 
@@ -284,15 +284,25 @@ class WormLocomotion(object):
 
         # Test motion events
         #---------------------------------
-        motion_events_same = [self.motion_events[x].test_equality(
-            other.motion_events[x], 'locomotion.motion_events.' + x)
-            for x in self.motion_events]
+        motion_events_same = True
+        
+        #motion_types = ['forward', 'backward', 'paused']        
+        
+        motion_events_same = motion_events_same and \
+            self.motion_events.forward.test_equality(other.motion_events.forward, 'locomotion.motion_events.' + 'forward')
 
-        if not all(motion_events_same):
+        motion_events_same = motion_events_same and \
+            self.motion_events.backward.test_equality(other.motion_events.backward, 'locomotion.motion_events.' + 'backward')
+
+        motion_events_same = motion_events_same and \
+            self.motion_events.paused.test_equality(other.motion_events.paused, 'locomotion.motion_events.' + 'paused')
+
+        if not (motion_events_same):
             return False
 
         # Test motion codes
-        if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
+        if not fc.corr_value_high(self.motion_mode, other.motion_mode, 
+                                  'locomotion.motion_mode'):
             return False
 
         #TODO: Define ne for all functions
@@ -322,20 +332,9 @@ class WormLocomotion(object):
 
         # motion
         #------------------------------
-        self.motion_events = {}
-
-        if 'motion' in m_var.keys():
-            # Old MRC Format:
-            # - forward, backward, paused, mode
-            motion_ref = m_var['motion']
-            for key in ['forward', 'backward', 'paused']:
-                self.motion_events[key] = \
-                    events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC')
-
-            self.motion_mode = utils._extract_time_from_disk(motion_ref, 'mode')
-        else:
-			#This would indicate loading a new version
-            raise Exception('Not yet implemented')
+        self.motion_events = locomotion_features.MotionCodes.from_disk(m_var)
+        self.motion_mode = self.motion_events.mode
+        del self.motion_events.mode
 
         bend_ref = m_var['bends']
         self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
@@ -475,7 +474,7 @@ class WormPosture(object):
         self.eccentricity = utils._extract_time_from_disk(p_var, 'eccentricity')
         self.kinks = utils._extract_time_from_disk(p_var, 'kinks')
 
-        events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
+        self.coils = events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
 
         self.directions = posture_features.Directions.from_disk(
             p_var['directions'])
@@ -645,6 +644,7 @@ class WormPath(object):
 class VideoMetaData(object):
     """
     Encapsulates the metadata for a worm video
+    e.g. can be populated with a member variable, fps, for frames per second.
     
     """
     def __init__(self):

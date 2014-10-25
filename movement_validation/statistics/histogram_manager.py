@@ -30,7 +30,7 @@ class HistogramManager(object):
         
         """
         #DEBUG: just for fun
-        print("number of feature files passed:", len(feature_path_or_object_list))
+        print("Number of feature files passed:", len(feature_path_or_object_list))
         
         hist_cell_array = []        
         
@@ -52,15 +52,18 @@ class HistogramManager(object):
             # %TODO: Need to add on info to properties 
             # %worm_features.info -> obj.info
 
-            hist_cell_array.append(self.init_objects(worm_features))
+            hist_cell_array.append(self.init_histograms(worm_features))
 
-        self.hists = Histogram.merge_histograms(hist_cell_array)
+        self.hists = HistogramManager.merge_histograms(hist_cell_array)
 
 
-    def init_objects(self, worm_features):
+    def init_histograms(self, worm_features):
         """
-        This is essentially the constructor code.  Originally, @JimHokanson
-        moved it here to "avoid the indenting".
+        For a given set of worm features, prepare a 2D array of Histogram 
+        instances, organized into three columns:
+        - A column for the movement histograms
+        - A column for the "simple" histograms
+        - A column for the event histograms
 
         Parameters
         ------------------
@@ -103,6 +106,7 @@ class HistogramManager(object):
 
         # Put all these histograms together into one matrix        
         return np.hstack((m_hists, s_hists, e_hists))
+
 
     ###########################################################################
     ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
@@ -333,4 +337,115 @@ class HistogramManager(object):
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)
 
-    
+
+    @staticmethod
+    def merge_histograms(hist_cell_array):
+        """            
+        The goal of this function is to go from n collections of 708
+        histogram summaries of features each, to one set of 708 histogram
+        summaries, that has n elements, one for each video
+        
+        i.e. from something like:
+        {a.b a.b a.b a.b} where .b may have size [1 x m]
+        
+        to:
+        
+        a.b, where .b is of size [n x m], in this case [4 x m]
+        
+        This requires merging histograms that are computed using different
+        bins. IMPORTANTLY, because of the way that we do the bin
+        definitions, bin edges will always match if they are close, i.e.
+        we'll NEVER have:
+        
+        edges 1: 1,2,3,4,5
+        edges 2: 3.5,4.5,5.5,6.5
+        
+        Instead we might have:
+        edges 2: 3,4,5,6,7,8
+        
+        This simplifies the merging process a bit. This is accomplished by
+        always setting bin edges at multiples of the bin_width. This was
+        not done previously.
+
+        Parameters
+        -------------------------
+        Formerly objs = seg_worm.stats.hist.mergeObjects(hist_cell_array)
+
+        Parameters
+        -------------------------
+        hist_cell_array: a list of objects
+            Currently each object should only contain a single set of data
+            (i.e. single video) prior to merging. This could be changed.
+
+
+        Returns
+        -------------------------
+        One object
+
+        """
+        # DEBUG: just for fun
+        print("In Histogram.merge_histograms... # of histograms to merge:", len(hist_cell_array))
+
+        #all_objs = [hist_cell_array{:}]
+
+        """
+        num_videos_per_object = [all_objs(1,:).n_videos]
+        
+        if any(n_videos_per_object ~= 1):
+            error('Multiple videos per object not yet implemented')
+        
+        num_videos   = size(all_objs,2)
+        num_features = size(all_objs,1)
+        
+        temp_results = cell(1,n_features)
+        
+        for iFeature in range(num_features):
+            
+            cur_feature_array = all_objs(iFeature,:)
+            
+            # Create an output object with same meta properties
+            final_obj   =  cur_feature_array(1).createCopy();
+            
+            
+            # Align all bins
+            # ---------------------------------------------------------------
+            n_bins     = [cur_feature_array.n_bins]
+            start_bins = [cur_feature_array.first_bin]
+            min_bin    = min(start_bins)
+            max_bin    = max([cur_feature_array.last_bin])
+            
+            cur_bin_width = final_obj.bin_width
+            new_bins       = min_bin:cur_bin_width:max_bin
+            
+            # Colon operator was giving warnings about non-integer indices :/
+            # - @JimHokanson
+            start_indices = round((start_bins - min_bin)./cur_bin_width + 1);
+            end_indices   = start_indices + n_bins - 1;
+            
+            new_counts = zeros(length(new_bins),n_videos);
+            
+            for iVideo in range(num_videos):
+                cur_start = start_indices(iVideo)
+                if ~isnan(cur_start):
+                    cur_end   = end_indices(iVideo)
+                    new_counts(cur_start:cur_end,iVideo) = cur_feature_array(iVideo).counts
+            
+            # Update final properties
+            # ---------------------------------------------------------------
+            final_obj.bins      = new_bins
+            final_obj.counts    = new_counts
+            final_obj.n_samples       = cat(1,cur_feature_array.n_samples)
+            final_obj.mean_per_video  = cat(1,cur_feature_array.mean_per_video)
+            final_obj.std_per_video   = cat(1,cur_feature_array.std_per_video)
+            final_obj.pdf       = sum(final_obj.counts,2)./sum(final_obj.n_samples)
+            
+            # Hold onto final object for output
+            temp_results{iFeature} = final_obj
+        
+
+        objs = [temp_results{:}]
+        """
+        # DEBUG: this is just a placeholder; instead of merging it just returns
+        #        the first feature set
+        return hist_cell_array[0]
+        
