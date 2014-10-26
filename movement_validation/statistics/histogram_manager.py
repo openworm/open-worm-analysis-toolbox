@@ -152,7 +152,7 @@ class HistogramManager(object):
         pass
         """
         #---------------------------------------------------------
-        motion_modes = worm_features.locomotion.motion.mode
+        motion_modes = worm_features.locomotion.motion_mode
         
         n_frames = len(motion_modes)
         
@@ -279,14 +279,14 @@ class HistogramManager(object):
         """
         temp_hists = []
         """ TODO: @MichaelCurrie, please finish this method!
-
+        """
         for iSpec in range(len(specs)):
             cur_specs = specs[iSpec]
             
             cur_data = cur_specs.getData(worm_features, num_samples)
             
             # TODO: RESTORE THIS LINE ONCE DATA IS AVAILABLE:
-            #cur_data = utils.filter_non_numeric(cur_data)
+            cur_data = utils.filter_non_numeric(cur_data)
 
             # Calculate the first histogram, on all the data.
             temp_hists.append(self.create_histogram(cur_data, cur_specs, 'event', 'all', 'all'))
@@ -301,6 +301,7 @@ class HistogramManager(object):
                 negative_mask = cur_data < 0
                 temp_hists.append(self.create_histogram(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
                 temp_hists.append(self.create_histogram(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
+        """
         """
         return temp_hists
 

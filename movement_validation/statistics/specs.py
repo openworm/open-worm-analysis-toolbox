@@ -114,7 +114,13 @@ class Specs(object):
                         # to the correct data type of the field,
                         # which was recorded in the prop_types dictionary.
                         data_type = data_types[int(field_data_types[field])]
-                        value = data_type(row[field])
+                        if data_type == bool:
+                            # We must handle bool as a separate case because
+                            # bool('0') = True.  To correct this, we must 
+                            # first cast to int: e.g. bool(int('0')) = False
+                            value = bool(int(row[field]))
+                        else:
+                            value = data_type(row[field])
                     # Dynamically assign the field's value to the 
                     # member data element of the same name in the object
                     setattr(stats_instance, field, value)
@@ -326,32 +332,20 @@ class EventSpecs(Specs):
         """            
         print("NOTE TO MICHAEL: You'll need to translate EventSpecs.getData now!")
 
-        """
-        Note from @MichaelCurrie to @JimHokanson:
-        I'm not sure about this part.  Is this only a problem if the data
-        is in a struct or something?  I'm not sure when this case comes up.
-        # TODO: Perhaps we'll add a property in the new object instead
-        #       of this poor check ...
-        is_old_code = isstruct(feature_obj);
-
-        if is_old_code:
-            start_value = 0
-            end_value   = num_samples; # BUG IN OLD CODE: n_samples matches
-                                       # behavior, n_samples -1 does not
-            
-            # Except, for locomotion.motion.forward.frames - yikes!
-            if strcmp(obj.feature_field,'locomotion.motion.forward.frames'):
-                end_value = end_value - 1;
-        else:
-            start_value = 1;
-            end_value   = n_samples;
-        """
         start_value = 0
-        end_value = num_samples
+        end_value   = num_samples
+
         """ DEBUG: bug: the first self.feature_field = 'posture.coils.frames',
                         but this does not exist in worm_features!  Nor do
                         many of the others in event_features, sadly.
-        data = getattr(worm_features, self.feature_field)
+        """
+        data = worm_features
+        # Call getattr as many times as is necessary, to dynamically 
+        # access a potentially nested field.
+        # e.g. if self.feature_field = 'posture.coils', we'll need to call
+        #      getattr twice, first on 'posture', and second on 'coils'.
+        for cur_feature_field in self.feature_field.split('.'):
+            data = getattr(data, cur_feature_field)
             
         if data != None:
             if self.sub_field != None:
@@ -376,15 +370,15 @@ class EventSpecs(Specs):
                     data[negate_mask] = -1 * data[negate_mask]
                 
                 if self.remove_partials:
-                    starts = [parent_data.start]
-                    ends   = [parent_data.end]
+                    start_frames = np.copy(parent_data.start_frames)
+                    end_frames   = np.copy(parent_data.end_frames)
 
-                    remove_mask = np.empty(len(starts)) * False
+                    remove_mask = np.empty(len(start_frames), dtype=bool)*False
 
-                    if starts[0] == start_value:
+                    if start_frames[0] == start_value:
                         remove_mask[0] = True
 
-                    if ends[-1] == end_value:
+                    if end_frames[-1] == end_value:
                         remove_mask[-1] = True
                     
                     # Remove all entries corresponding to True 
@@ -399,8 +393,7 @@ class EventSpecs(Specs):
                 # TODO: Can't be signed
                 # TODO: Can't remove partials
         
-        if np.isempty(data) and self.make_zero_if_empty:
+        if data.size == 0 and self.make_zero_if_empty:
             data = 0
         
         return data
-        """
