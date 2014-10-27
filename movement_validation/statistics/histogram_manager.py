@@ -299,8 +299,10 @@ class HistogramManager(object):
                 temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
                 positive_mask = cur_data > 0
                 negative_mask = cur_data < 0
-                temp_hists.append(self.create_histogram(cur_data(positive_mask), cur_specs, 'event', 'all', 'positive'))
-                temp_hists.append(self.create_histogram(cur_data(negative_mask), cur_specs, 'event', 'all', 'negative'))
+                if len(positive_mask) != len(cur_data) or len(negative_mask) != len(cur_data):
+                    print("uh oh")
+                temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
+                temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
         """
         """
         return temp_hists

@@ -826,7 +826,7 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     """
     Note that in the past, the former (Matlab) code for this function
     added an is_ventral to each FRAME.  EventListForOutput does not have a 
-    frames variable, so instead we simply have an is_vental array.
+    frames variable, so instead we simply have an is_vental numpy array.
     - @MichaelCurrie
       
     Here is the former code, using correct variable names and Python syntax:

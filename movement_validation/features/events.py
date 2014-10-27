@@ -950,16 +950,21 @@ class EventListWithFeatures(EventList):
                         frame_values[key] = np.array([file_ref[x][0][0] for x in ref_array[0]])   
                     
                 except AttributeError:
-                #AttributeError: 'numpy.float64' object has no attribute 'encode'
+                    # AttributeError: 'numpy.float64' object has no attribute 
+                    #                 'encode'
                     ref_element = ref_array
                     frame_values[key] = [ref_element[0][0]]
-            
-            #import pdb
-            #pdb.set_trace()            
             
             self.start_frames = np.array(frame_values['start'], dtype=int)
             self.end_frames = np.array(frame_values['end'], dtype=int)
             self.event_durations = np.array(frame_values['time'])
+            if('isVentral' in frame_values.keys()):
+                # For isVentral to even exist we must be at a signed event, 
+                # such as where
+                # frames.name == '/worm/locomotion/turns/omegas/frames
+                self.is_ventral = np.array(frame_values['isVentral'], 
+                                           dtype=bool)
+
 
             # Remove NaN value at end
             n_events = self.start_frames.size

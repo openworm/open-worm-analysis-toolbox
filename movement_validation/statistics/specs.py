@@ -313,7 +313,8 @@ class EventSpecs(Specs):
 
         Notes
         ---------------------
-        Formerly  function data = getData(obj,feature_obj,n_samples)
+        Formerly  SegwormMatlabClasses / +seg_worm / +stats / event_specs.m
+                  function data = getData(obj,feature_obj,n_samples)
         
         NOTE: Because we are doing structure array indexing, we need to capture
         multiple outputs using [], otherwise we will only get the first value
@@ -348,10 +349,29 @@ class EventSpecs(Specs):
                 data = getattr(parent_data, self.sub_field)
                 
                 if self.is_signed:
-                    if not hasattr(parent_data, self.signed_field):
-                        print("hi there!")
-                    negate_mask = [getattr(parent_data, self.signed_field)]
-                    data[negate_mask] = -1 * data[negate_mask]
+                    negate_mask = getattr(parent_data, self.signed_field)
+                    if len(negate_mask) == 1 and negate_mask == True:
+                        # Handle the case where data is just one value, 
+                        # a scalar, rather than a numpy array
+                        data *= -1
+                    elif len(negate_mask) == len(data):
+                        # Our mask size perfectly matches the data size
+                        # e.g. for event_durations
+                        data[negate_mask] *= -1
+                    elif len(negate_mask) == len(data) + 1:
+                        # Our mask is one larger than the data size
+                        # e.g. for time_between_events
+                        # DEBUG: Are we masking the right entry here?
+                        #        should we perhaps be using
+                        #        negate_mask[:-1] instead?
+                        data[negate_mask[1:]] *= -1
+                    else:
+                        raise Exception("For the signed_field " + 
+                                        self.signed_field + " and the data " + 
+                                        self.long_field + ", " +
+                                        "len(negate_mask) is not the same " +
+                                        "size or one smaller as len(data), " +
+                                        "as required.")
                 
                 if self.remove_partials:
                     # Remove the starting and ending event if it's right

@@ -216,8 +216,12 @@ class Histogram(object):
                                         max_boundary + self.bin_width, 
                                         step=self.bin_width)
         self.bin_midpoints  = self.bin_boundaries + self.bin_width/2
-        assert(min_data >= self.bin_boundaries[0])
-        assert(max_data <= self.bin_boundaries[-1])
+
+        # Because of the nature of floating point figures we can't guarantee
+        # that these asserts work without the extra buffer of + self.bin_width
+        # (though this bound could probably be greatly improved)
+        assert(min_data >= self.bin_boundaries[0] - self.bin_width)
+        assert(max_data <= self.bin_boundaries[-1] + self.bin_width)
 
         return None
     
@@ -227,14 +231,13 @@ class Histogram(object):
         Compute the actual counts for the bins given the data
        
         """
-        assert(min(self.data) >= self.bin_boundaries[0])
-        assert(max(self.data) <= self.bin_boundaries[-1])
-        
-        # TODO: check that this np.histogram function actually works!
-        # Remove the extra bin at the end (for overflow)
-        self.counts = np.histogram(self.data, self.bin_boundaries)[:-1]
+        self.counts = np.histogram(self.data, bins = self.bin_boundaries)[0]
 
-        self.pdf = self.counts / sum(self.counts)
+        if sum(self.counts) == 0:
+            # Handle the divide-by-zero case
+            self.pdf = None
+        else:
+            self.pdf = self.counts / sum(self.counts)
 
     
     def compute_statistics(self):
