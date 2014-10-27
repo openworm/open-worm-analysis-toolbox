@@ -149,90 +149,82 @@ class HistogramManager(object):
         function - @JimHokanson
 
         """
-        pass
-        """
-        #---------------------------------------------------------
         motion_modes = worm_features.locomotion.motion_mode
         
-        n_frames = len(motion_modes)
+        num_frames = len(motion_modes)
         
-        indices_use_mask = {...
-            true(1,n_frames) ...
-            motion_modes == 1 ...
-            motion_modes == 0 ...
-            motion_modes == -1}
-        
-        #NOTE: motion types refers to the motion of the worm's midbody
-        motion_types = {'all' 'forward'     'paused'    'backward'}
-        data_types   = {'all' 'absolute'    'positive'  'negative'}
-        #---------------------------------------------------------
-        
-        all_hist_objects = cell(1, config.MAX_NUM_HIST_OBJECTS)
-        hist_count = 0
-        
-        n_specs = len(specs)
-        
-        for iSpec in range(n_specs):
-            
-            cur_specs = specs[iSpec]
-            
+        indices_use_mask = {}
+        indices_use_mask["all"]      = np.ones(num_frames, dtype=bool)
+        indices_use_mask["forward"]  = motion_modes == 1
+        indices_use_mask["backward"] = motion_modes == -1
+        indices_use_mask["paused"]   = motion_modes == 0
+
+        # NOTE: motion types refers to the motion of the worm's midbody
+        motion_types = ['all', 'forward', 'paused', 'backward']
+        data_types = ['all', 'absolute', 'positive', 'negative']
+
+        movement_histograms = []
+
+        for cur_specs in specs:
+
             cur_data = cur_specs.getData(worm_features)
             
-            good_data_mask = ~h__getFilterMask(cur_data)
+            good_data_mask = ~utils.get_non_numeric_mask(cur_data)
             
-            for iMotion in range(4):
-                cur_motion_type = motion_types[iMotion]
-                
-                hist_count += 1
-                temp_data  = cur_data[indices_use_mask{iMotion} & good_data_mask]
-                
-                all_obj = self.create_histogram(temp_data, cur_specs, 'motion', cur_motion_type, data_types[0])
-                all_hist_objects[hist_count] = all_obj
+            for cur_motion_type in motion_types:
+                cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
+                temp_data = cur_data[cur_mask]
+
+                # Create the histogram for the case where we consider all
+                # numeric data                
+                all_hist = self.create_histogram(temp_data,
+                                                 cur_specs, 
+                                                 'motion',
+                                                 cur_motion_type, 
+                                                 data_types[0])
+
+                movement_histograms.append(all_hist)
 
                 if cur_specs.is_signed:
                     
+                    # Histogram for the data made absolute
                     # TODO: This could be improved by merging results 
                     #       from positive and negative - @JimHokanson
-                    all_hist_objects{hist_count+1} = create_histogram(abs(temp_data),cur_specs,'motion',cur_motion_type,data_types{2});
-                    
-                    
-                    # NOTE: To get a speed up, we don't rely on 
-                    # create_histogram.  Instead we take the 
+                    abs_hist = self.create_histogram(abs(temp_data),
+                                                     cur_specs,
+                                                     'motion',
+                                                     cur_motion_type,
+                                                     data_types[1])
+                                        
+                    # TODO: To get a speed-up, we could avoid reliance on 
+                    # create_histogram.  Instead, we could take the 
                     # positive and negative aspects of the object 
-                    # that included all data.
+                    # that included all data. - @JimHokanson
+                    # (see the SegWormMatlabClasses version of this to see
+                    #  how this could be done)
                     
-                    # Positive object ----------------------------------------
-                    pos_obj  = h__getObject(0,cur_specs,'motion',cur_motion_type,data_types{3});
+                    # Histogram for just the positive data
+                    pos_hist  = self.create_histogram(
+                                    temp_data[temp_data >= 0],
+                                    cur_specs,
+                                    'motion',
+                                    cur_motion_type,
+                                    data_types[2])
                     
-                    I_pos = find(all_obj.bins > 0 & all_obj.counts > 0,1);
+                    # Histogram for just the negative data
+                    neg_hist  = self.create_histogram(
+                                    temp_data[temp_data <= 0], 
+                                    cur_specs, 
+                                    'motion', 
+                                    cur_motion_type, 
+                                    data_types[3])
                     
-                    if ~isempty(I_pos):
-                        pos_obj.bins      = all_obj.bins(I_pos:end)
-                        pos_obj.counts    = all_obj.counts(I_pos:end)
-                        pos_obj.n_samples = sum(pos_obj.counts)
-                        
-                        pos_obj.compute_statistics(pos_obj,temp_data(temp_data > 0))
-                    
-                    # Negative object ----------------------------------------
-                    neg_obj  = self.h__getObject(0, cur_specs, 'motion', cur_motion_type, data_types[3])
-                    
-                    I_neg = find(all_obj.bins < 0 & all_obj.counts > 0, 
-                                 1, 
-                                 'last')
-                    
-                    if ~isempty(I_neg):
-                        neg_obj.bins      = all_obj.bins(1:I_neg)
-                        neg_obj.counts    = all_obj.counts(1:I_neg)
-                        neg_obj.n_samples = sum(neg_obj.counts)
-                        neg_obj.compute_statistics(temp_data(temp_data < 0))
-                    
-                    # Final assignments -------------------------------------
-                    all_hist_objects[hist_count+2] = pos_obj
-                    all_hist_objects[hist_count+3] = neg_obj
-                    hist_count += 3
+                    # Append our list with these histograms
+                    movement_histograms.append(abs_hist)
+                    movement_histograms.append(pos_hist)
+                    movement_histograms.append(neg_hist)
         
-        return [all_hist_objects[:hist_count]]
-        """
+        return movement_histograms
 
         
 
@@ -278,8 +270,7 @@ class HistogramManager(object):
 
         """
         temp_hists = []
-        """ TODO: @MichaelCurrie, please finish this method!
-        """
+
         for iSpec in range(len(specs)):
             cur_specs = specs[iSpec]
             
@@ -301,8 +292,7 @@ class HistogramManager(object):
                 negative_mask = cur_data < 0
                 temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
                 temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
-        """
-        """
+
         return temp_hists
 
 

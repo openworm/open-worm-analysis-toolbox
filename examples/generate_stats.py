@@ -10,7 +10,6 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 
 """
 
-
 import sys, os
 
 # We must add .. to the path so that we can perform the 

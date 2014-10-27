@@ -61,10 +61,39 @@ class Specs(object):
 
         return value
     
-    @staticmethod
-    def getObjectsHelper(csv_path, class_function_handle):
+    
+    def getData(self, worm_features):
         """
-        Factory for creating Stats subclasses for every extended feature
+        Drill down into the nested data structure of worm_features to obtain
+        the numpy array with the data specific to this specification.
+
+        Parameters
+        ------------------------
+        worm_features: A WormFeatures instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+
+        Returns
+        ------------------------
+        A numpy array
+
+        """
+        data = worm_features
+        # Call getattr as many times as is necessary, to dynamically 
+        # access a potentially nested field.
+        # e.g. if self.feature_field = 'posture.coils', we'll need to call
+        #      getattr twice, first on 'posture', and second on 'coils'.
+        for cur_feature_field in self.feature_field.split('.'):
+            data = getattr(data, cur_feature_field)
+
+        return data
+
+    
+    @staticmethod
+    def specs_factory(csv_path, class_function_handle):
+        """
+        Factory for creating Specs subclasses for every extended feature
         in a CSV file
 
         Parameters
@@ -81,7 +110,8 @@ class Specs(object):
 
         Notes
         ---------------------
-        Formerly function objs = seg_worm.stats.specs.getObjectsHelper(csv_path,class_function_handle,prop_names,prop_types)
+        Formerly function objs = seg_worm.stats.specs.getObjectsHelper( ...
+            csv_path,class_function_handle,prop_names,prop_types)
         
         The inherited objects can give relatively simple
         instructions on how their properties should be interpreted
@@ -145,8 +175,6 @@ class Specs(object):
         return stats_instances    
     
 
-
-    
 class MovementSpecs(Specs):
     """
     %
@@ -180,18 +208,20 @@ class MovementSpecs(Specs):
         #%        units
 
 
-    def getData(self, feature_obj):
+    def getData(self, worm_features):
         """
         Parameters
         -----------------------
-        feature_obj
-        
+        worm_features: A WormFeatures instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.        
         Notes
         -----------------------
         Formerly data = getData(obj,feature_obj)
         
         """
-        data = getattr(feature_obj, self.feature_field)
+        data = super().getData(worm_features)
         
         # NOTE: We can't filter data here because the data is 
         #       filtered according to the value of the data, not 
@@ -222,7 +252,7 @@ class MovementSpecs(Specs):
         
         # Return a list of MovementSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.getObjectsHelper(csv_path, MovementSpecs)
+        return Specs.specs_factory(csv_path, MovementSpecs)
     
 
 class SimpleSpecs(Specs):
@@ -235,10 +265,6 @@ class SimpleSpecs(Specs):
     def __init__(self):
         pass
 
-    def getData(self, feature_obj):
-        pass
-        # TODO: translate this line:
-        # return eval(['feature_obj.' obj.feature_field]); 
 
     @staticmethod
     def getSpecs():
@@ -256,7 +282,7 @@ class SimpleSpecs(Specs):
         
         # Return a list of MovementSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.getObjectsHelper(csv_path, SimpleSpecs)
+        return Specs.specs_factory(csv_path, SimpleSpecs)
 
 
 class EventSpecs(Specs):
@@ -291,7 +317,7 @@ class EventSpecs(Specs):
       
         # Return a list of MovementSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.getObjectsHelper(csv_path, EventSpecs)
+        return Specs.specs_factory(csv_path, EventSpecs)
 
     
     def getData(self, worm_features, num_samples):
@@ -321,14 +347,7 @@ class EventSpecs(Specs):
         ...
         
         """            
-        data = worm_features
-        # Call getattr as many times as is necessary, to dynamically 
-        # access a potentially nested field.
-        # e.g. if self.feature_field = 'posture.coils', we'll need to call
-        #      getattr twice, first on 'posture', and second on 'coils'.
-        for cur_feature_field in self.feature_field.split('.'):
-            data = getattr(data, cur_feature_field)
-
+        data = super().getData(worm_features)
             
         if data != None:
             if self.sub_field != None:

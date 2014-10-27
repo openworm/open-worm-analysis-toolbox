@@ -4,8 +4,8 @@ manager.py
 
 Classes
 ---------------------------------------    
-Manager  (from +stats/@manager)
-Stats    (from @stats)
+StatisticsManager
+WormStatistics
 
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.  Original code paths:
@@ -14,24 +14,20 @@ DONE:
                                                               # of lines
 SegwormMatlabClasses / +seg_worm / @stats                        231 
 SegwormMatlabClasses / +seg_worm / +stats / @manager              61
+SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
 SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
 SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
 SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
 SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
-
-IN PROGRESS:
-
-SegwormMatlabClasses / +seg_worm / +stats / +helpers / fexact.m  405
-SegwormMatlabClasses / +seg_worm / +stats / +helpers / swtest.m  260
-
-NOT DONE:
-
 SegwormMatlabClasses / +seg_worm / +stats / @hist                339
+
+ALMOST COMPLETE:
 SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
 
-SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
 
 MIGHT NOT BE NEEDED:
+SegwormMatlabClasses / +seg_worm / +stats / +helpers / fexact.m  405
+SegwormMatlabClasses / +seg_worm / +stats / +helpers / swtest.m  260
 SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
 SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots of lines of code... is this necessary?
 
@@ -48,7 +44,7 @@ there is one +stats and one in +stats/+hist !
 from scipy import stats
 
 
-class Manager(object):
+class StatisticsManager(object):
 
     """
 
@@ -108,7 +104,7 @@ class Manager(object):
         self.stats = []
         for iObj in range(n_objs):
             # seg_worm.stats.initObject
-            self.stats.append(Stats(exp_hists[iObj],
+            self.stats.append(WormStatistics(exp_hists[iObj],
                                     ctl_hists[iObj],
                                     p_values[iObj]))
 
@@ -124,44 +120,18 @@ class Manager(object):
         self.q_worm = min([stats_objs.q_w])
 
 
-class Stats(object):
-
+class WormStatistics(object):
     """
 
-    Class:
-    seg_worm.stats
-
-    Important Files
-    ---------------------------------------------------------
-    seg_worm.w.stats.worm2histogram         TODO: Move this ...
-    seg_worm.w.stats.addWormHistograms
-    seg_worm.w.stats.worm2StatsInfo
-    seg_worm.w.stats.wormStats2Matrix
-
-
-    QUESTIONS:
-    ================================================================
-    1)
-
-    Processing Steps:
-    ================================================================
-    1) Create histogram files for "experiment" and "control" files
-        - seg_worm.stats.hist
-    2)
-
-    Main initialization code in:
-    --------------------------------------------------------------
-
-    See Also:
-    seg_worm.stats.manager.initObject
-    seg_worm.stats.initObject
-    seg_worm.stats.hist
+    Notes
+    --------------------
+    Formerly: seg_worm.stats
 
     Some of the statistics are aggegrate:
-    p_value
-    q_value
-    list of exclusive features
+    - p_value
+    - q_value
 
+    List of exclusive features:
      properties
 
          #TODO: Move to object that both hist and stats display
