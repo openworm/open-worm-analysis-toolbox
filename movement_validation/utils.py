@@ -594,7 +594,7 @@ def filter_non_numeric(data):
     
     Parameters
     ------------------
-    data: numpy array
+    data: scalar, or a numpy array
 
     Returns
     ------------------
@@ -605,7 +605,13 @@ def filter_non_numeric(data):
     Formerly function mask = h__filterData(data)
     
     """
-    return data[get_non_numeric_mask(data)]
+    if isinstance(data, np.ndarray):
+        return data[~get_non_numeric_mask(data)]
+    else:
+        if data == np.Inf or data == np.NaN:
+            return None
+        else:
+            return data
 
 
 def get_non_numeric_mask(data):

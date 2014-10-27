@@ -129,3 +129,7 @@ This version of the histogram differs significantly from the old SegWorm histogr
 
 5. Sorting of values
 	- Stats are sorted by date in the old code, they are not in @JimHokason's code.
+
+Also:
+
+1. Refactored the CSV files in the stats/docs folder, renaming the whole folder to "feature_metadata", adding a second row giving the data type of the column, and renaming several columns such as changing the column title "resolution" to "bin_width"

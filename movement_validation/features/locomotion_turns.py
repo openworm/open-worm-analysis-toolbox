@@ -824,17 +824,17 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     turn_event_output.is_ventral = is_ventral
 
     """
-  Note that in the past, the former (Matlab) code for this function
-  added an is_ventral to each FRAME.  EvenListForOutput does not have a 
-  frames variable, so instead we simply have an is_vental array.
-  - @MichaelCurrie
+    Note that in the past, the former (Matlab) code for this function
+    added an is_ventral to each FRAME.  EventListForOutput does not have a 
+    frames variable, so instead we simply have an is_vental array.
+    - @MichaelCurrie
+      
+    Here is the former code, using correct variable names and Python syntax:
+    
+    # Add extra field, isVentral ...
+    for iEvent = range(len(turn_event_output.frames)):
+        turn_event_output.frames[iEvent].isVentral = is_ventral[iEvent]
   
-  Here is the former code, using correct variable names and Python syntax:
-
-  # Add extra field, isVentral ...
-  for iEvent = range(len(turn_event_output.frames)):
-    turn_event_output.frames[iEvent].isVentral = is_ventral[iEvent]
-  
-  """
+    """
 
     return turn_event_output

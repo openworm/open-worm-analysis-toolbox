@@ -43,11 +43,23 @@ class Specs(object):
     @property
     def long_field(self):
         """
-        Formerly getLongField
+        Give the "long" version of the instance's name.
 
+        Returns
+        ----------------------
+        A string, which is a .-delimited concatenation of 
+        feature_field and sub_field.
+        
+        Notes
+        ----------------------
+        Formerly function value = getLongField(obj)
         """
-        return self.feature_field
+        value = self.feature_field
 
+        if self.sub_field != None and self.sub_field != '':
+            value = value + '.' + self.sub_field
+
+        return value
     
     @staticmethod
     def getObjectsHelper(csv_path, class_function_handle):
@@ -185,7 +197,7 @@ class MovementSpecs(Specs):
         #       filtered according to the value of the data, not 
         #       according to the velocity of the midbody
         
-        if ~np.isnan(self.index):
+        if self.index != None:
             # This is basically for eigenprojections
             # I really don't like the orientation: [Dim x n_frames]
             # - @JimHokanson
@@ -262,28 +274,6 @@ class EventSpecs(Specs):
         self.make_zero_if_empty = None
         self.remove_partials = None
 
-
-    @property
-    def long_field(self):
-        """
-        Give the "long" version of the instance's name.
-
-        Returns
-        ----------------------
-        A string, which is a .-delimited concatenation of 
-        feature_field and sub_field.
-        
-        Notes
-        ----------------------
-        Formerly function value = getLongField(obj)
-        """
-        value = self.feature_field
-
-        if ~np.isempty(self.sub_field):
-            value = value + '.' + self.sub_field
-
-        return value
-
    
     @staticmethod
     def getSpecs():
@@ -330,15 +320,6 @@ class EventSpecs(Specs):
         ...
         
         """            
-        print("NOTE TO MICHAEL: You'll need to translate EventSpecs.getData now!")
-
-        start_value = 0
-        end_value   = num_samples
-
-        """ DEBUG: bug: the first self.feature_field = 'posture.coils.frames',
-                        but this does not exist in worm_features!  Nor do
-                        many of the others in event_features, sadly.
-        """
         data = worm_features
         # Call getattr as many times as is necessary, to dynamically 
         # access a potentially nested field.
@@ -346,6 +327,7 @@ class EventSpecs(Specs):
         #      getattr twice, first on 'posture', and second on 'coils'.
         for cur_feature_field in self.feature_field.split('.'):
             data = getattr(data, cur_feature_field)
+
             
         if data != None:
             if self.sub_field != None:
@@ -366,20 +348,26 @@ class EventSpecs(Specs):
                 data = getattr(parent_data, self.sub_field)
                 
                 if self.is_signed:
+                    if not hasattr(parent_data, self.signed_field):
+                        print("hi there!")
                     negate_mask = [getattr(parent_data, self.signed_field)]
                     data[negate_mask] = -1 * data[negate_mask]
                 
                 if self.remove_partials:
-                    start_frames = np.copy(parent_data.start_frames)
-                    end_frames   = np.copy(parent_data.end_frames)
+                    # Remove the starting and ending event if it's right
+                    # up against the edge of the data, since we can't be
+                    # sure that the video captured the full extent of the
+                    # event
+                    start_frames = parent_data.start_frames
+                    end_frames   = parent_data.end_frames
 
-                    remove_mask = np.empty(len(start_frames), dtype=bool)*False
+                    remove_mask = np.empty(len(data), dtype=bool)*False
 
-                    if start_frames[0] == start_value:
-                        remove_mask[0] = True
+                    if start_frames[0] == 0:
+                        remove_mask[:end_frames[0]+1] = True
 
-                    if end_frames[-1] == end_value:
-                        remove_mask[-1] = True
+                    if end_frames[-1] == num_samples:
+                        remove_mask[start_frames[-1]:] = True
                     
                     # Remove all entries corresponding to True 
                     # in the remove_mask

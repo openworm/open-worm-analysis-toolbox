@@ -333,7 +333,7 @@ class HistogramManager(object):
                                                  data_type)
         
         """
-        if not data or len(data) == 0:
+        if data == None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)
