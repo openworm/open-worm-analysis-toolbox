@@ -231,7 +231,9 @@ class MovementSpecs(Specs):
         #       according to the velocity of the midbody
         
         if self.index != None:
-            # This is basically for eigenprojections
+            # This is for eigenprojections, i.e. for instances when 
+            # self.feature_field = 'posture.eigen_projection'
+            
             # I really don't like the orientation: [Dim x n_frames]
             # - @JimHokanson
             data = data[self.index,:]
