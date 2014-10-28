@@ -131,7 +131,7 @@ class HistogramManager(object):
             - both positive and negative
 
         By combining the motion of the midbody with the sign of the data, we
-        get 16 different possible combinations
+        get 16 different possible combinations for each feature specification.
 
         Parameters
         -------------------------
@@ -169,10 +169,18 @@ class HistogramManager(object):
 
             cur_data = cur_specs.getData(worm_features)
             
-            good_data_mask = ~utils.get_non_numeric_mask(cur_data)
+            good_data_mask = ~utils.get_non_numeric_mask(cur_data).flatten()
+            
+            # Now let's create 16 histograms, for each element of
+            # (motion_types x data_types)
             
             for cur_motion_type in motion_types:
+                if good_data_mask.size != indices_use_mask[cur_motion_type].size:
+                    print("uh oh uh oh")
+
                 cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
+                if not isinstance(cur_data, np.ndarray) or not isinstance(cur_mask, np.ndarray) or cur_data.size != cur_mask.size:
+                    print("uh oh")
                 temp_data = cur_data[cur_mask]
 
                 # Create the histogram for the case where we consider all
@@ -256,7 +264,12 @@ class HistogramManager(object):
 
     def h_computeEHists(self, worm_features, specs, num_samples):
         """
-        Compute event histograms
+        Compute event histograms.  We produce four histograms for each
+        specification in specs, for:
+        - all data
+        - absolute data
+        - positive data
+        - negative data
 
         Parameters
         ---------------------
@@ -271,8 +284,7 @@ class HistogramManager(object):
         """
         temp_hists = []
 
-        for iSpec in range(len(specs)):
-            cur_specs = specs[iSpec]
+        for cur_specs in specs:
             
             cur_data = cur_specs.getData(worm_features, num_samples)
             

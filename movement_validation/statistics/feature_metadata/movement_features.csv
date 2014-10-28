@@ -17,11 +17,11 @@ posture.bends.neck.std_dev,posture.bends.neck.stdDev,,posture,1,0.5,1,1,Neck Ben
 posture.bends.midbody.std_dev,posture.bends.midbody.stdDev,,posture,1,0.5,1,1,Midbody Bend S.D. (+/- = D/V Inside),Midbody,Degrees
 posture.bends.hips.std_dev,posture.bends.hips.stdDev,,posture,1,0.5,1,1,Hips Bend S.D. (+/- = D/V Inside),Hips,Degrees
 posture.bends.tail.std_dev,posture.bends.tail.stdDev,,posture,1,0.5,1,1,Tail Bend S.D. (+/- = D/V Inside),Tail,Degrees
-posture.amplitude.max,posture.amplitude.max,,posture,1,1,0,0,Max Amplitude,Amplitude,Microns
-posture.amplitude.ratio,posture.amplitude.ratio,,posture,1,0.01,0,0,Amplitude Ratio,Ratio,No Units
-posture.wavelength.primary,posture.wavelength.primary,,posture,1,1,0,0,Primary Wavelength,Primary,Microns
-posture.wavelength.secondary,posture.wavelength.secondary,,posture,1,1,0,0,Secondary Wavelength,Secondary,Microns
-posture.tracklength,posture.tracklength,,posture,1,1,0,0,Track Length,Track,Microns
+posture.amplitude_max,posture.amplitude.max,,posture,1,1,0,0,Max Amplitude,Amplitude,Microns
+posture.amplitude_ratio,posture.amplitude.ratio,,posture,1,0.01,0,0,Amplitude Ratio,Ratio,No Units
+posture.primary_wavelength,posture.wavelength.primary,,posture,1,1,0,0,Primary Wavelength,Primary,Microns
+posture.secondary_wavelength,posture.wavelength.secondary,,posture,1,1,0,0,Secondary Wavelength,Secondary,Microns
+posture.track_length,posture.tracklength,,posture,1,1,0,0,Track Length,Track,Microns
 posture.eccentricity,posture.eccentricity,,posture,1,0.01,0,0,Eccentricity,Eccentricity,No Units
 posture.kinks,posture.kinks,,posture,1,1,1,0,Bend Count,Bends,Counts
 posture.directions.tail2head,posture.directions.tail2head,,posture,1,1,1,1,Tail-To-Head Orientation,Tail-To-Head,Degrees

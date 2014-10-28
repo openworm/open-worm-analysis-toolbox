@@ -456,7 +456,7 @@ class WormPosture(object):
     def from_disk(cls, p_var):
 
         self = cls.__new__(cls)
-        self.bend = posture_features.Bends.from_disk(p_var['bends'])
+        self.bends = posture_features.Bends.from_disk(p_var['bends'])
 
         # NOTE: This will be considerably different for old vs new format. Currently
         # only the old is implemented

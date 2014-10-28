@@ -11,7 +11,6 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 """
 
 import sys, os
-import sqlite3 as lite
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -47,11 +46,6 @@ def get_matlab_filepaths(root_path):
     return matlab_filepaths
 
 
-def sqlite_test():
-    pass
-
-
-
 def compute_histograms(root_path):
     """
     Compute histograms for 10 experiment and 10 control feature files
@@ -67,13 +61,11 @@ def compute_histograms(root_path):
     assert(len(experiment_files) >= 10)
     assert(len(control_files) >= 10)
 
-    sqlite_test()
-
     # Compute histograms on our files
     # DEBUG: I've dialled this down to just 3 files each, for speed.  Really
     #        this should be [:10] each
-    #histogram_manager_experiment = mv.HistogramManager(experiment_files[:3])
-    #histogram_manager_control = mv.HistogramManager(control_files[:3])
+    histogram_manager_experiment = mv.HistogramManager(experiment_files[:3])
+    histogram_manager_control = mv.HistogramManager(control_files[:3])
 
     # TODO: Translate from matlab:
     # % stats_manager = seg_worm.stats.manager(hist_man_exp,hist_man_ctl);

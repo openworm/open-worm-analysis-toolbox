@@ -56,7 +56,8 @@ class Specs(object):
         """
         value = self.feature_field
 
-        if self.sub_field != None and self.sub_field != '':
+        if hasattr(self, 'sub_field') and \
+           self.sub_field != None and self.sub_field != '':
             value = value + '.' + self.sub_field
 
         return value
@@ -85,6 +86,8 @@ class Specs(object):
         # e.g. if self.feature_field = 'posture.coils', we'll need to call
         #      getattr twice, first on 'posture', and second on 'coils'.
         for cur_feature_field in self.feature_field.split('.'):
+            if not hasattr(data, cur_feature_field):
+                print("uh oh")
             data = getattr(data, cur_feature_field)
 
         return data
