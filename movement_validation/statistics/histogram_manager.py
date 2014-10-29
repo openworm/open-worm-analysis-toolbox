@@ -165,41 +165,43 @@ class HistogramManager(object):
 
         movement_histograms = []
 
-        for cur_specs in specs:
+        for cur_spec in specs:
 
-            cur_data = cur_specs.getData(worm_features)
-            
+            cur_data = cur_spec.getData(worm_features)
+
             good_data_mask = ~utils.get_non_numeric_mask(cur_data).flatten()
             
             # Now let's create 16 histograms, for each element of
             # (motion_types x data_types)
             
             for cur_motion_type in motion_types:
-                if good_data_mask.size != indices_use_mask[cur_motion_type].size:
-                    print("uh oh uh oh")
+                assert(good_data_mask.size == \
+                       indices_use_mask[cur_motion_type].size)
 
                 cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
-                if not isinstance(cur_data, np.ndarray) or not isinstance(cur_mask, np.ndarray) or cur_data.size != cur_mask.size:
-                    print("uh oh")
+                assert(isinstance(cur_data, np.ndarray))
+                assert(isinstance(cur_mask, np.ndarray))
+                assert(cur_data.size == cur_mask.size)
+
                 temp_data = cur_data[cur_mask]
 
                 # Create the histogram for the case where we consider all
                 # numeric data                
                 all_hist = self.create_histogram(temp_data,
-                                                 cur_specs, 
+                                                 cur_spec, 
                                                  'motion',
                                                  cur_motion_type, 
                                                  data_types[0])
 
                 movement_histograms.append(all_hist)
 
-                if cur_specs.is_signed:
+                if cur_spec.is_signed:
                     
                     # Histogram for the data made absolute
                     # TODO: This could be improved by merging results 
                     #       from positive and negative - @JimHokanson
                     abs_hist = self.create_histogram(abs(temp_data),
-                                                     cur_specs,
+                                                     cur_spec,
                                                      'motion',
                                                      cur_motion_type,
                                                      data_types[1])
@@ -214,7 +216,7 @@ class HistogramManager(object):
                     # Histogram for just the positive data
                     pos_hist  = self.create_histogram(
                                     temp_data[temp_data >= 0],
-                                    cur_specs,
+                                    cur_spec,
                                     'motion',
                                     cur_motion_type,
                                     data_types[2])
@@ -222,7 +224,7 @@ class HistogramManager(object):
                     # Histogram for just the negative data
                     neg_hist  = self.create_histogram(
                                     temp_data[temp_data <= 0], 
-                                    cur_specs, 
+                                    cur_spec, 
                                     'motion', 
                                     cur_motion_type, 
                                     data_types[3])

@@ -306,12 +306,12 @@ class WormLocomotion(object):
             return False
 
         #TODO: Define ne for all functions
-        if not (self.foraging == other.foraging):
-            print('Mismatch in locomotion.foraging events')
+        if not (self.foraging_bends == other.foraging_bends):
+            print('Mismatch in locomotion.foraging_bends events')
             return False
             
-        if not (self.bends == other.bends):
-            print('Mismatch in locomotion.bends events')
+        if not (self.crawling_bends == other.crawling_bends):
+            print('Mismatch in locomotion.crawling_bends events')
             return False
 
         #TODO: Make eq in events be an error - use test_equality instead        
@@ -337,8 +337,8 @@ class WormLocomotion(object):
         del self.motion_events.mode
 
         bend_ref = m_var['bends']
-        self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
-        self.bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
+        self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        self.crawling_bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
 
         self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 

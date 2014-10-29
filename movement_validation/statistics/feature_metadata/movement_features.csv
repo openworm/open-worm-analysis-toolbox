@@ -27,12 +27,12 @@ posture.kinks,posture.kinks,,posture,1,1,1,0,Bend Count,Bends,Counts
 posture.directions.tail2head,posture.directions.tail2head,,posture,1,1,1,1,Tail-To-Head Orientation,Tail-To-Head,Degrees
 posture.directions.head,posture.directions.head,,posture,1,1,1,1,Head Orientation,Head,Degrees
 posture.directions.tail,posture.directions.tail,,posture,1,1,1,1,Tail Orientation,Tail,Degrees
-posture.eigen_projection,posture.eigenProjection,1,posture,1,1,1,1,Eigen Projection 1,Projection 1,No Units
-posture.eigen_projection,posture.eigenProjection,2,posture,1,1,1,1,Eigen Projection 2,Projection 2,No Units
-posture.eigen_projection,posture.eigenProjection,3,posture,1,1,1,1,Eigen Projection 3,Projection 3,No Units
-posture.eigen_projection,posture.eigenProjection,4,posture,1,1,1,1,Eigen Projection 4,Projection 4,No Units
-posture.eigen_projection,posture.eigenProjection,5,posture,1,1,1,1,Eigen Projection 5,Projection 5,No Units
-posture.eigen_projection,posture.eigenProjection,6,posture,1,1,1,1,Eigen Projection 6,Projection 6,No Units
+posture.eigen_projection,posture.eigenProjection,0,posture,1,1,1,1,Eigen Projection 1,Projection 1,No Units
+posture.eigen_projection,posture.eigenProjection,1,posture,1,1,1,1,Eigen Projection 2,Projection 2,No Units
+posture.eigen_projection,posture.eigenProjection,2,posture,1,1,1,1,Eigen Projection 3,Projection 3,No Units
+posture.eigen_projection,posture.eigenProjection,3,posture,1,1,1,1,Eigen Projection 4,Projection 4,No Units
+posture.eigen_projection,posture.eigenProjection,4,posture,1,1,1,1,Eigen Projection 5,Projection 5,No Units
+posture.eigen_projection,posture.eigenProjection,5,posture,1,1,1,1,Eigen Projection 6,Projection 6,No Units
 locomotion.velocity.head_tip.speed,locomotion.velocity.headTip.speed,,locomotion,1,1,1,1,Head Tip Speed (+/- = Forward/Backward),Head Tip,Microns/Seconds
 locomotion.velocity.head.speed,locomotion.velocity.head.speed,,locomotion,1,1,1,1,Head Speed (+/- = Forward/Backward),Head,Microns/Seconds
 locomotion.velocity.midbody.speed,locomotion.velocity.midbody.speed,,locomotion,1,1,1,1,Midbody Speed (+/- = Forward/Backward),Midbody,Microns/Seconds
@@ -43,13 +43,13 @@ locomotion.velocity.head.direction,locomotion.velocity.head.direction,,locomotio
 locomotion.velocity.midbody.direction,locomotion.velocity.midbody.direction,,locomotion,1,0.01,1,1,Midbody Motion Direction (+/- = Toward D/V),Midbody,Degrees/Seconds
 locomotion.velocity.tail.direction,locomotion.velocity.tail.direction,,locomotion,1,0.01,1,1,Tail Motion Direction (+/- = Toward D/V),Tail,Degrees/Seconds
 locomotion.velocity.tail_tip.direction,locomotion.velocity.tailTip.direction,,locomotion,1,0.01,1,1,Tail Tip Motion Direction (+/- = Toward D/V),Tail Tip,Degrees/Seconds
-locomotion.bends.foraging.amplitude,locomotion.bends.foraging.amplitude,,locomotion,1,1,1,1,Foraging Amplitude (+/- = Toward D/V),Amplitude,Microns
-locomotion.bends.foraging.angleSpeed,locomotion.bends.foraging.angleSpeed,,locomotion,1,10,1,1,Foraging Speed (+/- = Toward D/V),Speed,Degrees/Seconds
-locomotion.bends.head.amplitude,locomotion.bends.head.amplitude,,locomotion,1,1,1,1,Head Crawling Amplitude (+/- = D/V Inside),Head,Degrees
-locomotion.bends.midbody.amplitude,locomotion.bends.midbody.amplitude,,locomotion,1,1,1,1,Midbody Crawling Amplitude (+/- = D/V Inside),Midbody,Degrees
-locomotion.bends.tail.amplitude,locomotion.bends.tail.amplitude,,locomotion,1,1,1,1,Tail Crawling Amplitude (+/- = D/V Inside),Tail,Degrees
-locomotion.bends.head.frequency,locomotion.bends.head.frequency,,locomotion,1,0.1,1,1,Head Crawling Frequency (+/- = D/V Inside),Head,Hz
-locomotion.bends.midbody.frequency,locomotion.bends.midbody.frequency,,locomotion,1,0.1,1,1,Midbody Crawling Frequency (+/- = D/V Inside),Midbody,Hz
-locomotion.bends.tail.frequency,locomotion.bends.tail.frequency,,locomotion,1,0.1,1,1,Tail Crawling Frequency (+/- = D/V Inside),Tail,Hz
-path.range,path.range,,path,1,10,0,0,Path Range,Range,Microns
+locomotion.foraging_bends.amplitude,locomotion.bends.foraging.amplitude,,locomotion,1,1,1,1,Foraging Amplitude (+/- = Toward D/V),Amplitude,Microns
+locomotion.foraging_bends.angle_speed,locomotion.bends.foraging.angleSpeed,,locomotion,1,10,1,1,Foraging Speed (+/- = Toward D/V),Speed,Degrees/Seconds
+locomotion.crawling_bends.head.amplitude,locomotion.bends.head.amplitude,,locomotion,1,1,1,1,Head Crawling Amplitude (+/- = D/V Inside),Head,Degrees
+locomotion.crawling_bends.midbody.amplitude,locomotion.bends.midbody.amplitude,,locomotion,1,1,1,1,Midbody Crawling Amplitude (+/- = D/V Inside),Midbody,Degrees
+locomotion.crawling_bends.tail.amplitude,locomotion.bends.tail.amplitude,,locomotion,1,1,1,1,Tail Crawling Amplitude (+/- = D/V Inside),Tail,Degrees
+locomotion.crawling_bends.head.frequency,locomotion.bends.head.frequency,,locomotion,1,0.1,1,1,Head Crawling Frequency (+/- = D/V Inside),Head,Hz
+locomotion.crawling_bends.midbody.frequency,locomotion.bends.midbody.frequency,,locomotion,1,0.1,1,1,Midbody Crawling Frequency (+/- = D/V Inside),Midbody,Hz
+locomotion.crawling_bends.tail.frequency,locomotion.bends.tail.frequency,,locomotion,1,0.1,1,1,Tail Crawling Frequency (+/- = D/V Inside),Tail,Hz
+path.range.value,path.range,,path,1,10,0,0,Path Range,Range,Microns
 path.curvature,path.curvature,,path,1,0.005,1,1,Path Curvature (+/- = D/V Inside),Curvature,Radians/Microns
