@@ -410,8 +410,8 @@ class EventFinder:
         """
         # If we've established no distance thresholds, we have nothing to
         # remove from event_candidates
-        if self.min_distance_threshold == None and \
-           self.max_distance_threshold == None:
+        if self.min_distance_threshold is None and \
+           self.max_distance_threshold is None:
             return event_candidates
 
         # Sum over the event and threshold data so we know exactly how far
@@ -438,14 +438,14 @@ class EventFinder:
         # elements, since we may have opted to simply not include this
         # threshold at all.
         min_threshold_sums = np.empty(num_runs, dtype=float)
-        if self.min_distance_threshold != None:
+        if self.min_distance_threshold is not None:
             for i in range(num_runs):
                 min_threshold_sums[i] = np.nanmean(self.min_distance_threshold
                                                    [event_candidates[i][0]:(event_candidates[i][1] + 1)])
 
         # Same procedure as above, but for the maximum distance threshold.
         max_threshold_sums = np.empty(num_runs, dtype=float)
-        if self.max_distance_threshold != None:
+        if self.max_distance_threshold is not None:
             for i in range(num_runs):
                 max_threshold_sums[i] = np.nanmean(self.max_distance_threshold
                                                    [event_candidates[i][0]:(event_candidates[i][1] + 1)])
@@ -456,14 +456,14 @@ class EventFinder:
         events_to_remove = np.zeros(num_runs, dtype=bool)
 
         # Remove events where the worm travelled too little
-        if self.min_distance_threshold != None:
+        if self.min_distance_threshold is not None:
             if self.include_at_distance_threshold:
                 events_to_remove = (event_sums <= min_threshold_sums)
             else:
                 events_to_remove = (event_sums < min_threshold_sums)
 
         # Remove events where the worm travelled too much
-        if self.max_distance_threshold != None:
+        if self.max_distance_threshold is not None:
             if self.include_at_distance_threshold:
                 events_to_remove = events_to_remove | \
                     (event_sums >= max_threshold_sums)
@@ -526,14 +526,14 @@ class EventList(object):
         self.end_frames = None
 
         # Check if our events array exists and there is at least one event
-        if event_starts_and_stops != None and event_starts_and_stops.size != 0:
+        if event_starts_and_stops is not None and event_starts_and_stops.size != 0:
             self.start_frames = event_starts_and_stops[:, 0]
             self.end_frames = event_starts_and_stops[:, 1]
 
-        if(self.start_frames == None):
+        if(self.start_frames is None):
             self.start_frames = np.array([], dtype=int)
 
-        if(self.end_frames == None):
+        if(self.end_frames is None):
             self.end_frames = np.array([], dtype=int)
 
     def __repr__(self):
@@ -586,7 +586,7 @@ class EventList(object):
 
         """
         # Check if the end_frames have any entries at all
-        if self.end_frames != None and self.end_frames.size != 0:
+        if self.end_frames is not None and self.end_frames.size != 0:
             return self.end_frames[-1]
         else:
             return 0
@@ -950,16 +950,21 @@ class EventListWithFeatures(EventList):
                         frame_values[key] = np.array([file_ref[x][0][0] for x in ref_array[0]])   
                     
                 except AttributeError:
-                #AttributeError: 'numpy.float64' object has no attribute 'encode'
+                    # AttributeError: 'numpy.float64' object has no attribute 
+                    #                 'encode'
                     ref_element = ref_array
                     frame_values[key] = [ref_element[0][0]]
-            
-            #import pdb
-            #pdb.set_trace()            
             
             self.start_frames = np.array(frame_values['start'], dtype=int)
             self.end_frames = np.array(frame_values['end'], dtype=int)
             self.event_durations = np.array(frame_values['time'])
+            if('isVentral' in frame_values.keys()):
+                # For isVentral to even exist we must be at a signed event, 
+                # such as where
+                # frames.name == '/worm/locomotion/turns/omegas/frames
+                self.is_ventral = np.array(frame_values['isVentral'], 
+                                           dtype=bool)
+
 
             # Remove NaN value at end
             n_events = self.start_frames.size

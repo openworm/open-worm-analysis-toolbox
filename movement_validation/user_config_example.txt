@@ -9,7 +9,7 @@
 """
 
 EXAMPLE_DATA_PATH = (r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public'
-                     r'\movement_validation\example_movement_validation_data')
+                     r'\movement_validation\example_data')
 
 
 # There is a step that is very slow that can be disabled

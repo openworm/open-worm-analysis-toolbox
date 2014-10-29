@@ -585,3 +585,53 @@ def _extract_time_from_disk(parent_ref, name, is_matrix = False):
             wtf = temp[0, :]
 
     return wtf
+
+
+
+def filter_non_numeric(data):
+    """
+    Filter a numpy array, removing entries that are either Inf or NaN
+    
+    Parameters
+    ------------------
+    data: scalar, or a numpy array
+
+    Returns
+    ------------------
+    numpy array
+
+    Notes
+    ------------------
+    Formerly function mask = h__filterData(data)
+    
+    """
+    if isinstance(data, np.ndarray):
+        return data[~get_non_numeric_mask(data)]
+    else:
+        if data == np.Inf or data == np.NaN:
+            return None
+        else:
+            return data
+
+
+def get_non_numeric_mask(data):
+    """
+    Obtain a mask for the data numpy array that shows True if
+    the element of data is either Inf or Nan
+    
+    Parameters
+    ------------------
+    data: numpy array
+    
+    Returns
+    ------------------
+    boolean numpy array of same size as data
+
+    Notes
+    ------------------
+    Formerly function mask = h__getFilterMask(data)
+
+    """
+    return np.isinf(data) | np.isnan(data)
+
+

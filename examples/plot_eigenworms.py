@@ -2,6 +2,9 @@
 """
 Plot the eigenworms file.
 
+For more information see
+https://github.com/openworm/movement_validation/issues/79
+
 """
 
 import sys, os
@@ -16,12 +19,6 @@ sys.path.append('..')
 import movement_validation
 
 
-
-user_config = movement_validation.user_config
-NormalizedWorm = movement_validation.NormalizedWorm
-WormFeatures = movement_validation.WormFeatures
-VideoInfo = movement_validation.VideoInfo
-
 def main():
     # Open the eigenworms file    
     features_path = os.path.dirname(movement_validation.features.__file__)
@@ -34,7 +31,6 @@ def main():
     eigenworm_file.close()
 
     # Print the shape of eigenworm matrix
-    # WHY only 48 skeleton points?  Why not 49 as is normal??
     print(np.shape(eigenworms))
 
     # Plot the eigenworms

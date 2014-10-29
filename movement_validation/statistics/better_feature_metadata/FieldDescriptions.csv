@@ -1,0 +1,22 @@
+Field,DataType,Description,InSimple,InMovement,InEvent
+feature_type,1,"The type of feature: Event, Movement, or Simple.",1,1,1
+feature_category,1,"The category: Morphology, Posture, Locomotion, or Path.",1,1,1
+feature_field,1,"The full heirarchical path, delimited by periods (.)",1,1,1
+old_feature_field,1,The old feature_field name in the original Schafer Lab code.,1,1,1
+name,1,A longer description of the feature,1,1,1
+short_name,1,A shorter description of the feature,1,1,1
+bin_width,2,"AKA ""resolution"".  The width of the bins for the histogram.",1,1,1
+is_signed,4,Are negative values allowed?,1,1,1
+is_zero_bin,4,?,1,1,1
+units,1,What units the quantity is expressed in,1,1,1
+sub_field,1,"The final entry in the heirarchical name, which we hold out separately for event features because we must also access the previous level of the heirarchy.",0,0,1
+old_sub_field,1,The old sub_field in the original Schafer Lab code.,0,0,1
+signed_field,1,The name of the field containing the signed data,0,0,1
+remove_partials,4,?,0,0,1
+make_zero_if_empty,4,?,0,0,1
+index,3,Used only for eigen_projections: the index of the eigen_projection,0,1,0
+is_time_series,4,Is the data a time series? (?),0,1,0
+,,,,,
+,,,,,
+,,,,,
+,,,,,

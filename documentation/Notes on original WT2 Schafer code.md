@@ -24,30 +24,3 @@ Information on [downloading data from the Schafer Lab repository](https://github
 
 [5] [Yemini, et al.  A database of Caenorhabditis elegans behavioral phenotypes. Nature methods (2013).  Supplementary Data.  nmeth.2560-S1](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
-
-
-
-### Relevant Code for worm statistics calculations ###
-
-**Relevant Code**
-- https://github.com/JimHokanson/SegWorm/blob/master/Worms/Statistics/worm2histogram.m
-- https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bw/%2Bstats/worm2histogram.m
-- https://github.com/JimHokanson/SegWorm/blob/master/Worms/Statistics/worm2stats.m
-- https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bw/%2Bstats/worm2stats.m
-- https://github.com/JimHokanson/SegWorm/blob/master/Worms/Statistics/worm2StatsInfo.m
-- https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bw/%2Bstats/worm2StatsInfo.m
-- https://github.com/JimHokanson/SegWorm/blob/master/Worms/Statistics/wormStats2Matrix.m
-- https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bw/%2Bstats/wormStats2Matrix.m
-- https://github.com/JimHokanson/SegWorm/blob/master/Worms/Statistics/wormStatsInfo.m
-- https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bw/%2Bstats/wormStatsInfo.m
-
-
-### Summary Matlab Calls ###
-
-- worm parsing (multiple files)
-- featureProcess.m (multiple sub files called)
-- worm2histogram.m
-- worm2stats.m (This can be skipped, since the stats are a subset of the histogram)
-- worm2StatsInfo.m
-- wormStats2Matrix.m
-  - wormStatsInfo.m

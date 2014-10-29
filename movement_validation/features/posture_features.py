@@ -84,7 +84,7 @@ class BendSection(object):
         self = cls.__new__(cls)
 
         self.mean = saved_bend_data['mean'].value
-        self.stdDev = saved_bend_data['stdDev'].value
+        self.std_dev = saved_bend_data['stdDev'].value
 
         return self
 
@@ -1156,7 +1156,7 @@ class Directions(object):
         self = cls.__new__(cls)
 
         for key in data:
-            setattr(self, key, data[key])
+            setattr(self, key, data[key].value)
 
         return self
 

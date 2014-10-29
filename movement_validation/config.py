@@ -97,3 +97,21 @@ INCLUDE_AT_INTER_FRAMES_THRESHOLD = False
 
 # used in WormPosture
 N_EIGENWORMS_USE = 6
+
+
+
+
+
+
+# STATISTICS
+
+# Used in Histogram.h_computeMHists
+MAX_NUM_HIST_OBJECTS = 1000
+
+# Used in HistogramManager.h__computeBinInfo
+# The maximum # of bins that we'll use. Since the data
+# is somewhat random, outliers could really chew up memory. I'd prefer not
+# to have some event which all of a sudden tells the computer we need to
+# allocate a few hundred gigabytes of data. If this does ever end up a
+# problem we'll need a better solution (or really A solution)
+MAX_NUMBER_BINS = 10**6

@@ -126,9 +126,12 @@ def main():
     #-------------------------------------------------------------------
     nw = example_nw()  # movement_validation.NormalizedWorm
 
+    # Placeholder for video metadata
+    v = movement_validation.VideoInfo(video_name="Example name", fps=25)
+
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
-    wf = movement_validation.WormFeatures(nw)
+    wf = movement_validation.WormFeatures(nw, v)
 
     # Plotting demonstration
     # movement_validation.plot_frame_codes(nw)

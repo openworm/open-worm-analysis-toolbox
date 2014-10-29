@@ -1,4 +1,6 @@
 #Locomotion Features#
+ 
+Credit for all Locomotion feature definitions: [Yemini *et al.* (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf) 
 
 There are four locomotion features: bends, motion, turns, and velocity.  Here they are in the actual HDF5 file storing them:
 
@@ -132,7 +134,7 @@ We use a Fourier transform to measure the amplitude and frequency within the win
 
 ![](Locomotion%20-%20turns.gif)
 
-**Omega** and **upsilon** turn events are computed similarly to a previously described method but using skeleton bends instead of a single head-midbody-tail angle. Omega and upsilon turns are signed negatively whenever the worm’s ventral side is sheltered within the concavity of its midbody bend. 
+**Omega** and **upsilon** turn events are computed similarly to a previously described method [("Machine-vision-based detection of omega bends and reversals in *C. elegans*" by Huang et. al, also of the Schafer Lab (2006))](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/Huang2006.pdf) but using skeleton bends instead of a single head-midbody-tail angle. Omega and upsilon turns are signed negatively whenever the worm’s ventral side is sheltered within the concavity of its midbody bend. 
 
 The worm bends (described in the section on “[Posture](Posture.md)”) are used to find a contiguous sequence of frames (interruptible by coiling and other segmentation failures) wherein a large bend travels from the worm’s head, through its midbody, to its tail. The worm’s body is separated into three equal parts from its head to its tail. The mean supplementary angle is measured along each third. 
 - For **omega** turns, this angle must initially exceed 30° at the first but not the last third of the body (the head but not the tail). The middle third must then exceed 30°. And finally, the last but not the first third of the body must exceed 30° (the tail but not the head). This sequence of a 30° mean supplementary angle, passing continuously along the worm from head to tail, is labeled an omega turn event. 

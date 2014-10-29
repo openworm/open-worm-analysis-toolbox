@@ -1,0 +1,6 @@
+feature_field,feature_category,bin_width,name,short_name,units,is_zero_bin,is_signed
+1,1,2,1,1,1,4,4
+path.duration.worm.times,path,1,Worm Dwelling,Worm,seconds,0,0
+path.duration.head.times,path,0.5,Head Dwelling,Head,seconds,0,0
+path.duration.midbody.times,path,1,Midbody Dwelling,Midbody,seconds,0,0
+path.duration.tail.times,path,0.5,Tail Dwelling,Tail,seconds,0,0
