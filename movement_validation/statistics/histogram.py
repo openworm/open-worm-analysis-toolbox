@@ -66,13 +66,14 @@ class Histogram(object):
         self.data             = data
         self.num_samples      = len(self.data)
 
-        # Compute the histogram counts using bins that properly 
-        # cover that data
+        # Find a set of bins that will cover the data
         self.compute_covering_bins()
+        # Compute the histogram counts using those bins we just found
+        # i.e. populate self.counts and self.pdf
+        #      (pdf = the probability density value for each bin)
         self.compute_histogram_counts()
-        # Compute statistics: populate self.counts and self.pdf
-        # (pdf = the probability density value for each bin)
-        self.compute_statistics()
+
+        self.compute_summary_statistics()
 
         # TODO: Not included yet ...
         # p_normal, only for n_valid_measurements >= 3
@@ -240,7 +241,7 @@ class Histogram(object):
             self.pdf = self.counts / sum(self.counts)
 
     
-    def compute_statistics(self):
+    def compute_summary_statistics(self):
         """
         Compute the mean and standard deviation on the data array
         Assign these to member data self.mean_per_video and 

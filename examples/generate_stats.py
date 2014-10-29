@@ -15,6 +15,7 @@ import sys, os
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
+
 sys.path.append('..') 
 import movement_validation as mv
 import matplotlib.pyplot as plt
@@ -58,7 +59,7 @@ def plot_histogram(histogram):
     bins = histogram.bin_midpoints[:-1]  # because there are for some reason one too many
     y_values = histogram.counts
     
-    plt.plot(bins, y_values, 'r--', linewidth=1)
+    plt.bar(bins, y_values)
     
     plt.xlabel('Counts')
     plt.ylabel(histogram.field)
@@ -67,8 +68,8 @@ def plot_histogram(histogram):
     plt.grid(True)
     
     plt.show()    
-
-
+    
+    
 def compute_histograms(root_path):
     """
     Compute histograms for 10 experiment and 10 control feature files
@@ -90,7 +91,7 @@ def compute_histograms(root_path):
     experiment_histograms = mv.HistogramManager(experiment_files[:3])
     control_histograms = mv.HistogramManager(control_files[:3])
 
-    plot_histogram(experiment_histograms.hists[0])
+    plot_histogram(experiment_histograms.hists[1])
     
     # DEBUG: why does len(experiment_histograms.hists[0].bin_midpoints) - 
     #                 len(experiment_histograms.hists[0].counts) = 1?

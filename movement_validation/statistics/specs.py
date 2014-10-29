@@ -56,7 +56,7 @@ class Specs(object):
 
         if hasattr(self, 'sub_field') and \
            self.sub_field != None and self.sub_field != '':
-            value = value + '.' + self.sub_field
+            value += self.sub_field
 
         return value
     
@@ -85,7 +85,9 @@ class Specs(object):
         #      getattr twice, first on 'posture', and second on 'coils'.
         for cur_feature_field in self.feature_field.split('.'):
             if not hasattr(data, cur_feature_field):
-                print("uh oh")
+                raise Exception("The WormFeatures instance passed does " + 
+                                "not have the feature: " + cur_feature_field + 
+                                ". Its full name is " + self.long_field)
             data = getattr(data, cur_feature_field)
 
         return data
