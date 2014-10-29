@@ -51,6 +51,8 @@ def plot_histogram(histogram):
     """
     Use matplotlib to plot a Histogram instance.
     
+    Note: You must still call plt.show() after calling this function.
+    
     Parameters
     -----------------------
     histogram: a Histogram instance
@@ -66,8 +68,6 @@ def plot_histogram(histogram):
     plt.title("Histogram of a worm's " + histogram.field)
     #plt.axis([40, 160, 0, 0.03])
     plt.grid(True)
-    
-    plt.show()    
     
     
 def compute_histograms(root_path):
@@ -91,7 +91,11 @@ def compute_histograms(root_path):
     experiment_histograms = mv.HistogramManager(experiment_files[:3])
     control_histograms = mv.HistogramManager(control_files[:3])
 
-    plot_histogram(experiment_histograms.hists[1])
+    for i in range(8):
+        plot_histogram(experiment_histograms.hists[i])
+    
+    plt.show()    
+
     
     # DEBUG: why does len(experiment_histograms.hists[0].bin_midpoints) - 
     #                 len(experiment_histograms.hists[0].counts) = 1?

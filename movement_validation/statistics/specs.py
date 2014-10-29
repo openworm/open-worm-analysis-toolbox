@@ -56,7 +56,7 @@ class Specs(object):
 
         if hasattr(self, 'sub_field') and \
            self.sub_field != None and self.sub_field != '':
-            value += self.sub_field
+            value += '.' + self.sub_field
 
         return value
     
