@@ -8,8 +8,6 @@ from __future__ import division
 import warnings
 import numpy as np
 
-from .. import config
-
 __ALL__ = ['get_angles',
            'get_partition_angles',
            'h__computeAngularSpeed',
@@ -67,34 +65,60 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
 
 def get_partition_angles(nw, partition_key, data_key='skeletons',
                          head_to_tail=False):
-    """ Obtain the "angle" of a subset of the 49 points of a worm for each 
-        frame
+    """ 
+    
+    Obtain the "angle" of a subset of the 49 points of a worm for each frame
 
-        INPUT: head_to_tail=True means the worm points are order head to tail.
+    #TODO: I have no idea what this is actually doing, what is an "angle" for 
+    a body part
 
-        OUTPUT: A numpy array of shape (n) and stores the worm body's "angle" 
-                (in degrees) for each frame of video
+    Parameters:
+    -----------
+    nw : Normalized Worm (class name???)
+    partition_key :
+    data_key : str
+        ???? - what is this ?????
+    head_to_tail : bool
+    =True means the worm points are order head to tail.
 
+    Returns:
+    --------
+    numpy array of shape (n)
+        Stores the worm body's "angle" (in degrees) for each frame of video.
+        
     """
+
     # the shape of both segment_x and segment_y is (partition length, n)
     segment_x, segment_y = nw.get_partition(partition_key, data_key, True)
 
     return get_angles(segment_x, segment_y, head_to_tail)
 
 
-def h__computeAngularSpeed(segment_x, segment_y,
+def h__computeAngularSpeed(fps, segment_x, segment_y,
                            left_I, right_I, ventral_mode):
-    """ INPUT: 
-          segment_x: the x's of the partition being considered. shape (p,n)
-          segment_y: the y's of the partition being considered. shape (p,n)
-          left_I: the angle's first point
-          right_I: the angle's second point
-          ventral_mode: 0, 1, or 2, specifying that the ventral side is...
-                          0 = unknown
-                          1 = clockwise
-                          2 = anticlockwise
+    """ 
+    TODO: What does this do????    
+    
+    Parameters:
+    ----------- 
+    fps :    
+    segment_x : 
+        The x's of the partition being considered. shape (p,n)
+    segment_y : 
+        The y's of the partition being considered. shape (p,n)
+    left_I : 
+        The angle's first point (frame?)
+    right_I : 
+        The angle's second point
+    ventral_mode : 
+        0, 1, or 2, specifying that the ventral side is...
+          0 = unknown
+          1 = clockwise
+          2 = anticlockwise
 
-        OUTPUT: a numpy array of shape n, in units of degrees per second
+    Returns:
+    --------
+    a numpy array of shape n, in units of degrees per second
 
     """
     # Compute the body part direction for each frame
@@ -108,7 +132,7 @@ def h__computeAngularSpeed(segment_x, segment_y,
     angular_speed = (angular_speed + 180) % (360) - 180
 
     # Change units from degrees per frame to degrees per second
-    angular_speed = angular_speed * (1 / config.FPS)
+    angular_speed = angular_speed * (1 / fps)
 
     # Sign the direction for dorsal/ventral locomotion.
     # if ventral_mode is anything but anticlockwise, then negate angular_speed:
@@ -296,7 +320,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
 
 
 
-def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
+def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     """
     The velocity is computed not using the nearest values but values
     that are separated by a sufficient time (sample_time). 
@@ -327,13 +351,17 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     -------
     Three numpy arrays of shape (n), speed, angular_speed, motion_direction
 
+    Known Callers
+    -------------
+    LocomotionVelocity
+
     """
 
     num_frames = np.shape(sx)[1]
 
     # We need to go from a time over which to compute the velocity
     # to a # of samples. The # of samples should be odd.
-    frames_per_sample = get_frames_per_sample(sample_time)
+    frames_per_sample = get_frames_per_sample(fps, sample_time)
 
     # If we don't have enough frames to satisfy our sampling scale,
     # return with nothing.
@@ -367,7 +395,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     dY = y_mean[right_I] - y_mean[left_I]
 
     distance = np.sqrt(dX ** 2 + dY ** 2)
-    time = (right_I - left_I) / config.FPS
+    time = (right_I - left_I) / fps
 
     speed = np.empty((num_frames))
     speed.fill(np.NaN)
@@ -377,7 +405,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     # --------------------------------------------------------
     angular_speed = np.empty((num_frames))
     angular_speed.fill(np.NaN)
-    angular_speed[keep_mask] = h__computeAngularSpeed(sx, sy, left_I, right_I,
+    angular_speed[keep_mask] = h__computeAngularSpeed(fps, sx, sy, left_I, right_I,
                                                       ventral_mode)
 
     # Sign the speed.
@@ -421,7 +449,7 @@ def compute_velocity(sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     #            'body_direction': body_direction,
 
 
-def get_frames_per_sample(sample_time):
+def get_frames_per_sample(fps, sample_time):
     """
 
     Matlab code: getWindowWidthAsInteger
@@ -435,7 +463,9 @@ def get_frames_per_sample(sample_time):
         INPUT: sample_time: number of seconds to sample.
     """
 
-    ostensive_sampling_scale = sample_time * config.FPS
+    ostensive_sampling_scale = sample_time * fps
+
+        
 
     # Code would be better as: (Matlab code shown)
     #------------------------------------------------

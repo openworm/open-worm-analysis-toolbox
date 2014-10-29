@@ -7,6 +7,8 @@ I'd like to move things from "config" into here ...
 
 """
 
+from .. import utils
+
 class FeatureProcessingOptions(object):
     
     def __init__(self,fps):    
@@ -37,6 +39,9 @@ class FeatureProcessingOptions(object):
     def disable_contour_features(self):
          #see self.features_to_ignore
          pass
+
+    def __repr__(self):
+        return utils.print_object(self)
          
 
 class LocomotionOptions(object):
@@ -46,7 +51,7 @@ class LocomotionOptions(object):
         #-------------------------------------
         #Units: seconds
         #NOTE: We could get the defaults from the class ...
-        self.velocity_tip_diff = 0.25
+        self.velocity_tip_diff  = 0.25
         self.velocity_body_diff = 0.5
         
         #locomotion_features.MotionEvents
@@ -67,6 +72,9 @@ class LocomotionOptions(object):
 
         #locomotion_bends.LocomotionCrawlingBends
         self.crawling_bends = LocomotionCrawlingBends(fps)
+
+    def __repr__(self):
+        return utils.print_object(self)
 
 class LocomotionCrawlingBends(object):
 
@@ -89,38 +97,20 @@ class LocomotionCrawlingBends(object):
         self.min_time_for_bend = 0.5
         self.max_time_for_bend = 15
         
+        #TODO: What are the units on these things ????
+        #This is a spatial frequency
         self.min_frequency = 0.25 * self.max_time_for_bend
-        self.max_frequency = 0.25 * fps        
         
-
-        #
-        #
-        # DEBUG: Why are the indices used that are used ????
-        #
-        # NOTE: These indices are not symettric. Should we use the skeleton indices
-        # instead, or move these to the skeleton indices???
-        # 
-
-
-#        minBodyWinTime = 0.5
-#        minBodyWin = round(minBodyWinTime * config.FPS)
-#        maxBodyWinTime = 15
-#        maxBodyWin = round(maxBodyWinTime * config.FPS)
-#
-#        options = {'minWin': minBodyWin,
-#                   'maxWin': maxBodyWin,
-#                   'res': 2 ** 14,
-#                   'headI': (5, 10),
-#                   'midI': (22, 27),
-#                   'tailI': (39, 44),
-#                   # Require at least 50% of the wave:
-#                   'minFreq': 1 / (4 * maxBodyWinTime),
-#                   # With 4 frames we can resolve 75% of a wave????:
-#                   'maxFreq': config.FPS / 4,
-#                   'max_amp_pct_bandwidth': 0.5,
-#                   'peakEnergyThr': 0.5}
-#
-#        bends_partitions = {'head':     (5, 10),
-#                            'midbody':  (22, 27),
-#                            'tail':     (39, 44)}
+        #What is the technical max???? 0.5 fps????
+        self.max_frequency = 0.25 * fps
+        
+        #This is a processing optimization.
+        #How far into the maximum peaks should we look ...
+        #If this value is low, an expensive computation could go faster. If it
+        #is too low, then we end up rerunning the calculation the whole dataset
+        #and we end up losing time
+        self.initial_max_I_pct = 0.5
+        
+    def __repr__(self):
+        return utils.print_object(self)        
         

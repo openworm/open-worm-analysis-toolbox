@@ -215,19 +215,21 @@ class WormLocomotion(object):
         """
         print('Calculating Locomotion Features')    
 
-        nw = features_ref.nw
-
+        nw  = features_ref.nw
+        fps = features_ref.video_info.fps
 
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
-        #self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
-        self.motion_events = locomotion_features.MotionEvents(features_ref,
-                                                             self.velocity.midbody.speed,
-                                                             nw.lengths)
+        self.motion_events = \
+            locomotion_features.MotionEvents(features_ref,
+                                             self.velocity.midbody.speed,
+                                             nw.lengths)
 
         self.motion_mode = self.motion_events.get_motion_mode()
 
-        #JAH: Got through the motion code
+        #JAH: Got through the motion_mode, working on cleaning up 
+        #LocomotionCrawlingBends - rewrote a lot of it, now it needs    
+        #to be tested, I'm expecting some bugs related to passing in fps
 
         self.bends = locomotion_bends.LocomotionCrawlingBends(
             features_ref,
@@ -239,7 +241,7 @@ class WormLocomotion(object):
             nw,nw.is_segmented,nw.ventral_mode)
 
         #TODO: Should this be moved to a method of velocity?
-        midbody_distance = abs(self.velocity.midbody.speed / config.FPS)
+        midbody_distance  = abs(self.velocity.midbody.speed / fps)
         is_stage_movement = nw.segmentation_status == 'm'
 
         self.turns = locomotion_turns.LocomotionTurns(nw, nw.angles,
@@ -609,30 +611,41 @@ class WormPath(object):
 class WormFeatures(object):
 
     """ 
-      WormFeatures: takes as input a NormalizedWorm instance, and
-      during initialization calculates all the features of the worm.
+    WormFeatures: Takes a NormalizedWorm instance and
+    during initialization calculates all the features of the worm.
 
-      There are two ways to initialize a WormFeatures instance: 
-      1. by passing a NormalizedWorm instance and generating the features, or
-      2. by loading the already-calculated features from an HDF5 file.
+    There are two ways to initialize a WormFeatures instance: 
+    1. by passing a NormalizedWorm instance and generating the features, or
+    2. by loading the already-calculated features from an HDF5 file.
          (via the from_disk method)
+         
+    Attributes
+    ----------      
+    video_info : movement_validation.video_info
+    options : movement_validation.features.feature_processing_options
+    nw : movement_validation.NormalizedWorm
+    morphology :
+    locomotion :
+    posture :
+    path :
 
     """
 
-    def __init__(self, nw, video_info=None, processing_options=None):
+    def __init__(self, nw, video_info, processing_options=None):
         """
-        Parameters:
-        -----------
-        nw: movement_validation.NormalizedWorm
-        video_info: 
-            This is not yet created but should eventually carry information
-            such as the frame rate.
+        
+        Parameters
+        ----------
+        nw : movement_validation.NormalizedWorm
+        video_info : movement_validation.video_info
+        processing_options : movement_validation.features.feature_processing_options
+
         """
         
         #TODO: Create the normalized worm in here ... 
 
         if processing_options is None:
-            processing_options = fpo.FeatureProcessingOptions()
+            processing_options = fpo.FeatureProcessingOptions(video_info.fps)
 
         #These are saved locally for reference by others when processing
         self.video_info = video_info

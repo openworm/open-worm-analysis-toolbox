@@ -198,9 +198,9 @@ class LocomotionCrawlingBends(object):
                          'amplitude': nan_data.copy()}
                          
             raise Exception('This is no longer impelemented properly')
-            self.head = bend_dict.copy()
+            self.head    = bend_dict.copy()
             self.midbody = bend_dict.copy()
-            self.tail = bend_dict.copy()
+            self.tail    = bend_dict.copy()
             return
 
         for cur_partition_name in self.bend_names:
@@ -217,13 +217,17 @@ class LocomotionCrawlingBends(object):
             if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
                 avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
                   
+            bound_info = CrawlingBendsBoundInfo(avg_bend_angles,is_paused,options,fps)      
+                  
             [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
+                                                         bound_info,
                                                          options,
-                                                         is_paused,cur_partition_name,fps)
+                                                         cur_partition_name,
+                                                         fps)
 
             setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
 
-    def h__getBendData(self, avg_bend_angles, options, is_paused,cur_partition,fps):
+    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
         """
         Compute the bend amplitude and frequency.
 
@@ -231,66 +235,41 @@ class LocomotionCrawlingBends(object):
         ----------------------
         avg_bend_angles : [1 x n_frames]
         options         : LocomotionCrawlingBends in feature_processing_options
-          This is defined in the calling function
+            This is defined in the calling function
         is_paused       : [1 x n_frames]
-          Whether or not the worm is considered to be paused during the frame
+            Whether or not the worm is considered to be paused during the frame
 
         """
-        INIT_MAX_I_FOR_BANDWIDTH = 2000  # TODO: Relate this to a real frequency ...
-        # and pass it in from higher up. This number is NOT IMPORTANT TO THE OUTCOME
-        # and is only to the speed in which the function runs. We try and find the
-        # bandwidth within this number of samples.
-
-        # TODO: We need to check that the value above is less than the # of samples
-        # in the FFT. We might also change this to being a percentage of the # of
-        # points. Currently this is around 25% of the # of samples.
-
-
-        max_window = options['maxWin']
-        max_freq = options['maxFreq']
-        min_freq = options['minFreq']
-        fft_n_samples = options['res']
-        max_amp_pct_bandwidth = options['max_amp_pct_bandwidth']
-        peakEnergyThr = options['peakEnergyThr']
-
-        #All of this would be better in a method - get bounds
-        #-----------------------------------------------------
-
-        #-----------------------------------------------------    
         
-
-        # Compute conditions by which we will ignore frames:
-        # -------------------------------------------------
-        #1) frame is not bounded on both sides by a sign change
-        #- avg_bend_angles is NaN, this will only happen on the edges because we
-        #    interpolate over the other frames ... (we just don't extrapolate)
-        #- the sign change region is too large
-        #- the bounds we settle on exceed the data region
-        #- mode segmentation determined the frame was a paused frame
-        #
-        #
-        #??? - what about large NaN regions, are those paused regions???
-
-        #Why not 2*half_distances > max_window ???
-        is_bad_mask  = (back_zeros_I == -1) | \
-            (front_zeros_I == -1) | \
-            np.isnan(avg_bend_angles) | \
-            (half_distances > max_window) | \
-            (left_bounds < 0) | \
-            (right_bounds > n_frames) | \
-            is_paused
-
         # Compute the short-time Fourier transforms (STFT).
+        #--------------------------------------------------
+        #Unpack options ...
+        max_freq = options.max_frequency
+        min_freq = options.min_frequency
+        fft_n_samples = options.fft_n_samples
+        max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
+        peak_energy_threshold = options.peak_energy_threshold
 
         # Maximum index to keep for frequency analysis:
-        fft_max_I = fft_n_samples / 2
+        fft_max_I   = fft_n_samples / 2
 
-        freq_scalar = (config.FPS / 2) * 1 / (fft_max_I - 1)
+        #This gets multiplied by an index to compute the frequency at that index
+        freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
 
-        amps = np.empty(n_frames) * np.NaN
+        n_frames = len(avg_bend_angles)
+        amps  = np.empty(n_frames) * np.NaN
         freqs = np.empty(n_frames) * np.NaN
+        
+        left_bounds  = bound_info.left_bounds
+        right_bounds = bound_info.right_bounds
+        is_bad_mask  = bound_info.is_bad_mask
+        
+        #This is a processing optimization that in general will speed things up
+        max_freq_I = max_freq/freq_scalar        
+        INIT_MAX_I_FOR_BANDWIDTH = round(options.initial_max_I_pct * max_freq_I)        
+        
         for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
+            windowed_data   = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
             data_win_length = len(windowed_data)
 
             #
@@ -305,18 +284,19 @@ class LocomotionCrawlingBends(object):
             maxPeakI = np.argmax(fft_data)
             maxPeak  = fft_data[maxPeakI]
 
-
-
-            # NOTE: If this is true, we'll never bound the peak on the left ...
+            # NOTE: If this is true, we'll never bound the peak on the left.
+            #We are looking for a hump with a peak, not just a decaying signal.
             if maxPeakI == 0:
                 continue
 
-            # TODO: Not sure if this value is correct ...
             unsigned_freq = freq_scalar * maxPeakI
 
+            #TODO: This places a restriction on where to look for the peak
+            #We shouldn't ever look for something than the max_freq
             if not (min_freq <= unsigned_freq <= max_freq):
                 continue
 
+            #TODO: We
             [peakStartI, peakEndI] = \
                 self.h__getBandwidth(data_win_length,
                                      fft_data,
@@ -326,18 +306,18 @@ class LocomotionCrawlingBends(object):
             # Store data
             #------------------------------------------------------------------
             if not (peakStartI.size == 0 or
-                    peakEndI.size == 0 or
+                    peakEndI.size   == 0 or
                     # The minimums can't be too big:
                     fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakEndI]   > (max_amp_pct_bandwidth * maxPeak) or
                     # Needs to have enough energy:
                     (sum(fft_data[peakStartI:peakEndI] ** 2) <
-                     (peakEnergyThr * sum(fft_data ** 2)))
+                     (peak_energy_threshold * sum(fft_data ** 2)))
                     ):
 
                 # Convert the peak to a time frequency.
-                dataSign = np.sign(np.nanmean(windowed_data))  # sign the data
-                amps[iFrame] = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
+                dataSign      = np.sign(np.nanmean(windowed_data))  # sign the data
+                amps[iFrame]  = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
                 freqs[iFrame] = unsigned_freq * dataSign
 
         return [amps, freqs]
@@ -354,9 +334,10 @@ class LocomotionCrawlingBends(object):
         range of frequencies, as execution time is proportional to the length
         of the input data.  If this fails we use the full data set.
 
+        Called by: h__getBendData
 
         Parameters
-        ---------------------------------------    
+        ----------
         data_win_length
           Length of real data (ignoring zero padding) that 
           went into computing the FFT
@@ -372,7 +353,7 @@ class LocomotionCrawlingBends(object):
 
 
         Returns
-        ---------------------------------------    
+        -------
         peak_start_I: scalar
 
         peak_end_I: scalar
@@ -427,8 +408,9 @@ class LocomotionCrawlingBends(object):
             del min_peaks   # this part of max_peaks_dist's return is unused
 
             peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+            peak_end_I   = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
 
+        #TODO: Why is this not a tuple - tuple would be more consistent
         return [peak_start_I, peak_end_I]
 
     @classmethod
@@ -436,9 +418,9 @@ class LocomotionCrawlingBends(object):
 
         self = cls.__new__(cls)
         
-        self.head = LocomotionBend.from_disk(bend_ref['head'],'head')
+        self.head    = LocomotionBend.from_disk(bend_ref['head'],'head')
         self.midbody = LocomotionBend.from_disk(bend_ref['midbody'],'midbody')
-        self.tail = LocomotionBend.from_disk(bend_ref['tail'],'tail')        
+        self.tail    = LocomotionBend.from_disk(bend_ref['tail'],'tail')        
 
         return self
 
@@ -839,10 +821,26 @@ class LocomotionForagingBends(object):
 
 class CrawlingBendsBoundInfo(object):
     
-    def __init__(self,avg_bend_angles):
+    """
+    This class is used by LocomotionCrawlingBends.
+    
+    Attributes
+    ----------
+    back_zeros_I :
+    front_zeros_I :
+    left_bounds :
+    right_bounds :
+    half_distances :
+    
+    
+    """
+    def __init__(self,avg_bend_angles,is_paused,options,fps):
         
         # TODO: This needs to be cleaned up ...  - @JimHokanson
         min_number_frames_for_bend = round(options.min_time_for_bend*fps)
+        max_number_frames_for_bend = round(options.max_time_for_bend*fps)        
+        
+        
         [back_zeros_I, front_zeros_I] = \
             self.h__getBoundingZeroIndices(avg_bend_angles, 
                                            min_number_frames_for_bend)
@@ -859,11 +857,45 @@ class CrawlingBendsBoundInfo(object):
         #+1 for slicing to be inclusive of the right bound
         right_bounds = np.array(range(n_frames)) + half_distances + 1
     
-    
+        self.back_zeros_I   = back_zeros_I
+        self.front_zeros_I  = front_zeros_I
+        self.left_bounds    = left_bounds
+        self.right_bounds   = right_bounds
+        self.half_distances = half_distances
+        
+
+        # Compute conditions by which we will ignore frames:
+        # -------------------------------------------------
+        #1) frame is not bounded on both sides by a sign change
+        #- avg_bend_angles is NaN, this will only happen on the edges because we
+        #    interpolate over the other frames ... (we just don't extrapolate)
+        #- the sign change region is too large
+        #- the bounds we settle on exceed the data region
+        #- mode segmentation determined the frame was a paused frame
+        #
+        #
+        #??? - what about large NaN regions, are those paused regions???
+
+        #MRC code placed restriction on half distance, not on the full distance
+        #This is still left in place below
+        #Should be 2*half_distances > max_number_frames_for_bend
+
+
+        self.is_bad_mask  = \
+            (back_zeros_I  == -1) | \
+            (front_zeros_I == -1) | \
+            np.isnan(avg_bend_angles) | \
+            (half_distances > max_number_frames_for_bend) | \
+            (left_bounds < 0) | \
+            (right_bounds > n_frames) | \
+            is_paused
+            
     def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
         """
         The goal of this function is to bound each index of avg_bend_angles by 
         sign changes.
+
+        #TODO: rename min_win_size to min_number_frames_for_bend
 
         Parameters:
         -----------

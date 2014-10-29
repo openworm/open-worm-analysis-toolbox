@@ -103,9 +103,9 @@ class LocomotionTurns(object):
                                          'body_angles_with_long_nans',
                                          'is_stage_movement'])
 
-        first_third = nw.get_subset_partition_mask('first_third')
+        first_third  = nw.get_subset_partition_mask('first_third')
         second_third = nw.get_subset_partition_mask('second_third')
-        last_third = nw.get_subset_partition_mask('last_third')
+        last_third   = nw.get_subset_partition_mask('last_third')
 
         # NOTE: For some reason the first and last few angles are NaN, so we use
         # nanmean instead of mean.  We could probably avoid this for the body.
