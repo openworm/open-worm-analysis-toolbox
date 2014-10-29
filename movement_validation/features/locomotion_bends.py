@@ -33,9 +33,13 @@ from . import feature_comparisons as fc
 
 class LocomotionBend(object):
     
-    def __init__(self,bends_dict,name):
-        self.amplitude = bends_dict['amplitude']
-        self.frequency = bends_dict['frequency']
+    """
+    Element for LocomotionCrawlingBends
+    
+    """
+    def __init__(self,amplitude,frequency,name):
+        self.amplitude = amplitude
+        self.frequency = frequency
         self.name = name
         
     @classmethod
@@ -168,46 +172,23 @@ class LocomotionCrawlingBends(object):
 
     """
 
-    def __init__(self, bend_angles, is_paused, is_segmented_mask):
+    bend_names = ['head', 'midbody', 'tail']
+
+    def __init__(self, features_ref, bend_angles, is_paused, is_segmented_mask):
         """
         Compute the temporal bending frequency at the head, midbody, and tail.    
 
-        Parameters
-        ---------------------------------------    
+        Parameters:
+        -----------   
         bend_angles       : [49 x n_frames]
         is_paused         : [1 x n_frames]
         is_segmented_mask : [1 x n_frames]
 
         """
-        minBodyWinTime = 0.5
-        minBodyWin = round(minBodyWinTime * config.FPS)
-        maxBodyWinTime = 15
-        maxBodyWin = round(maxBodyWinTime * config.FPS)
 
-        options = {'minWin': minBodyWin,
-                   'maxWin': maxBodyWin,
-                   'res': 2 ** 14,
-                   'headI': (5, 10),
-                   'midI': (22, 27),
-                   'tailI': (39, 44),
-                   # Require at least 50% of the wave:
-                   'minFreq': 1 / (4 * maxBodyWinTime),
-                   # With 4 frames we can resolve 75% of a wave????:
-                   'maxFreq': config.FPS / 4,
-                   'max_amp_pct_bandwidth': 0.5,
-                   'peakEnergyThr': 0.5}
+        options = features_ref.options.locomotion.crawling_bends
 
-        # max_amp_pct_bandwidth - when determining the bandwidth,
-        # the minimums that are found can't exceed this percentage of the maximum.
-        # Doing so invalidates the result,
-        #
-        #
-        # DEBUG: Why are the indices used that are used ????
-        #
-        # NOTE: These indices are not symettric. Should we use the skeleton indices
-        # instead, or move these to the skeleton indices???
-        #
-        #SI = seg_worm.skeleton_indices
+        fps = features_ref.video_info.fps
 
         # Special Case: No worm data.
         #------------------------------------
@@ -222,25 +203,11 @@ class LocomotionCrawlingBends(object):
             self.tail = bend_dict.copy()
             return
 
-        #TODO: Why are we using this?
-        # - this is defined above and we are replicating it here, ideally it
-        #   wouldn't be in this file at all
-        # Set things up for the loop
-        #------------------------------------
-        #    section     = {'head'           'midbody'       'tail'}
-        bends_partitions = {'head':     (5, 10),
-                            'midbody':  (22, 27),
-                            'tail':     (39, 44)}
-
-        ordered_bend_names = ['head', 'midbody', 'tail'] #For helping debug
-        #vs Matlab in which these things are ordered
-
-        bends = {}
-        for cur_partition in ordered_bend_names:
+        for cur_partition_name in self.bend_names:
             # Find the mean bend angle for the current partition, across all
             # frames
         
-            s = slice(*bends_partitions[cur_partition])
+            s = slice(*options.bends_partitions[cur_partition_name])
             avg_bend_angles = np.nanmean(bend_angles[s, :],axis=0)
 
             # Ensure there are both data and gaps if we are going to
@@ -249,41 +216,24 @@ class LocomotionCrawlingBends(object):
             # - that something is segmented - i.e. gaps
             if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
                 avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
-
-            #We don't have these NaN values: [236 237 238 239 240]
-            #They don't have: [232 233]            
-            
+                  
             [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                          options,
-                                                         is_paused,cur_partition)
+                                                         is_paused,cur_partition_name,fps)
 
-            bends[cur_partition] = {}
-            bends[cur_partition]['amplitude'] = amplitude
-            bends[cur_partition]['frequency'] = frequency
+            setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
 
-        # turn our bends dictionary into properties of the class itself
-        self.head = LocomotionBend(bends['head'],'head')
-        self.midbody = LocomotionBend(bends['midbody'],'midbody')
-        self.tail = LocomotionBend(bends['tail'],'tail')
-
-    def h__getBendData(self, avg_bend_angles, options, is_paused,cur_partition):
+    def h__getBendData(self, avg_bend_angles, options, is_paused,cur_partition,fps):
         """
         Compute the bend amplitude and frequency.
 
         Parameters
         ----------------------
         avg_bend_angles : [1 x n_frames]
-        options         : Dictionary
+        options         : LocomotionCrawlingBends in feature_processing_options
           This is defined in the calling function
         is_paused       : [1 x n_frames]
           Whether or not the worm is considered to be paused during the frame
-
-        Notes
-        ----------------------
-        Formerly [amplitude,frequency] = h__getBendData(avg_bend_angles, 
-                                                        fps, options, is_paused)
-
-        TODO: implement options as an *args parameter
 
         """
         INIT_MAX_I_FOR_BANDWIDTH = 2000  # TODO: Relate this to a real frequency ...
@@ -295,11 +245,7 @@ class LocomotionCrawlingBends(object):
         # in the FFT. We might also change this to being a percentage of the # of
         # points. Currently this is around 25% of the # of samples.
 
-        #return [None, None]  # DEBUG
 
-        #TODO: Change these names to match naming convention
-        # Options extraction
-        min_window = options['minWin']
         max_window = options['maxWin']
         max_freq = options['maxFreq']
         min_freq = options['minFreq']
@@ -307,26 +253,15 @@ class LocomotionCrawlingBends(object):
         max_amp_pct_bandwidth = options['max_amp_pct_bandwidth']
         peakEnergyThr = options['peakEnergyThr']
 
-        # TODO: This needs to be cleaned up ...  - @JimHokanson
-        [back_zeros_I, front_zeros_I] = \
-            self.h__getBoundingZeroIndices(avg_bend_angles, min_window)
+        #All of this would be better in a method - get bounds
+        #-----------------------------------------------------
 
-        n_frames = len(avg_bend_angles)
-
-        left_distances = np.array(range(n_frames)) - back_zeros_I
-        right_distances = front_zeros_I - np.array(range(n_frames))
-        half_distances = np.maximum(left_distances, right_distances)
-
-        left_bounds = np.array(range(n_frames)) - half_distances
-        
-        #+1 for slicing
-        right_bounds = np.array(range(n_frames)) + half_distances + 1
-
+        #-----------------------------------------------------    
         
 
         # Compute conditions by which we will ignore frames:
         # -------------------------------------------------
-        #- frame is not bounded on both sides by a sign change
+        #1) frame is not bounded on both sides by a sign change
         #- avg_bend_angles is NaN, this will only happen on the edges because we
         #    interpolate over the other frames ... (we just don't extrapolate)
         #- the sign change region is too large
@@ -355,8 +290,7 @@ class LocomotionCrawlingBends(object):
         amps = np.empty(n_frames) * np.NaN
         freqs = np.empty(n_frames) * np.NaN
         for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data = avg_bend_angles[left_bounds[iFrame]:
-                                            right_bounds[iFrame]]
+            windowed_data = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
             data_win_length = len(windowed_data)
 
             #
@@ -388,11 +322,7 @@ class LocomotionCrawlingBends(object):
                                      fft_data,
                                      maxPeakI,
                                      INIT_MAX_I_FOR_BANDWIDTH)
-            
-            #if cur_partition is 'midbody' and iFrame in np.array([232,233,236,237,238,239,240]):
-            #   import pdb
-            #   pdb.set_trace()            
-            
+                 
             # Store data
             #------------------------------------------------------------------
             if not (peakStartI.size == 0 or
@@ -412,226 +342,7 @@ class LocomotionCrawlingBends(object):
 
         return [amps, freqs]
 
-    def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
-        """
-        The goal of this function is to bound each index by 
-        DEBUG
-
-        Parameters
-        ----------------------
-        avg_bend_angles : [1 x n_frames]
-        min_win_size    : int
-          The minimum size of the data window
-
-        Returns
-        ----------------------
-        back_zeros_I    : [1 x n_frames]
-          For each frame, this specifies a preceding frame in which a 
-          change in the bend angle occurs. Invalid entries are 
-          indicated by -1.
-        front_zeros_I   : [1 x n_frames]
-
-        Notes
-        ----------------------
-        Formerly [back_zeros_I,front_zeros_I] = \
-                h__getBoundingZeroIndices(avg_bend_angles,min_win_size)
-
-        """
-
-        # Getting sign change indices ...
-        # ---------------------------------------
-        # The old code found sign changes for every frame, even though
-        # the sign changes never changed. Instead we find all sign changes,
-        # and then for each frame know which frame to the left and right
-        # have sign changes. We do this in such a way so that if we need to
-        # look further to the left or right, it is really easy to get the
-        # next answer. In other words, if we are bounded by the 3rd and 4th sign
-        # change, and we are going towards the 3rd sign change, then if the 
-        # 3rd sign change doesn't work, we can go to the 2nd sign change index,
-        # not by searching the data array, but by getting the 2nd element of
-        # the sign change index array.
-        
-        with np.errstate(invalid='ignore'):        
-            sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
-                np.sign(avg_bend_angles[1:])
-        
-        sign_change_I = np.flatnonzero(sign_change_mask)
-        n_sign_changes = len(sign_change_I)
-
-        """
-        To get the correct frame numbers, we need to do the following 
-        depending on whether or not the bound is the left (backward) 
-        bound or the right (forward) bound. 
-        
-        Note from @JimHokanson: I haven't really thought through why 
-        this is, but it mimics the old code.
-        
-        for left bounds   - at sign changes - don't subtract or add
-        for right bounds  - we need to add 1
     
-        
-        Let's say we have sign changes at indices 3  6  9
-        What we need ...
-                1 2 3 4 5 6 7  9  10  Indices
-        Left  = 0 0 0 3 3 3 6  6  6   - at 4, the left sign change is at 3
-        Right = 4 4 4 7 7 7 10 10 0   - at 4, the right sign change is at 7
-        
-        NOTE: The values above are the final indices or values, but instead we
-        want to work with the indices, so we need:
-         
-                1 2 3 4 5 6 7  9  10  Indices
-        Left  = 0 0 0 1 1 1 2  2  2 - left_sign_change_I
-        Right = 1 1 1 2 2 2 3  3  3 - right_sign_change_I
-        
-        we also need:
-        left_values  = [3 6 9]  #the sign change indices
-        right_values = [4 7 10] #+1
-        
-        So this says:
-        left_sign_change_I(7) => 2
-        left_values(2) => 6, our sign change is at 6
-        
-        Let's say we need to expand further to the left, then we take 
-        left_sign_change_I(7) - 1 => 1
-        left_values(1) => 3, our new sign change is at 3
-        
-        Further:
-        left_sign_change_I(7) - 2 => 0
-        We've gone too far, nothing at index 0, set to invalid
-        """
-
-        n_frames = len(avg_bend_angles)
-
-        #For each element, determine the indices to the left and right of the
-        #element at which a sign change occurs.
-
-        BAD_INDEX_VALUE = -1
-
-        # For each element in the array, these values indicate which
-        # sign change index to use ...
-        left_sign_change_I = np.zeros(n_frames)
-        
-        left_sign_change_I[sign_change_I + 1] = 1
-        # We increment at values to the right of the sign changes
-        left_sign_change_I = left_sign_change_I.cumsum() - 1
-        
-        #NOTE: We need to do this after the cumsum :/        
-        left_sign_change_I[:sign_change_I[0]] = BAD_INDEX_VALUE
-        # The previous line is a little Matlab trick in which
-        # something like:
-        # 0  1 0 1 0 0 1 0 0 <= sign change indices
-        # 0  1 2 3 4 5 6 7 8 <= indices
-        # becomes:
-        # -1 0 0 1 1 1 2 2 2 <= -1 is off limits, values are inclusive
-        #
-        # so now at each frame, we get the index of the value that
-        # is to the left.
-        #
-        #From above; sign_change_I = [0 3 6]
-        #
-        #So at index 5, the next sign change is at sign_change_I[left_change_I[5]]
-        # or sign_change_I[1] => 3        
-        
-        #This does:
-        #0  1 0 1 0 0 1 0   0 <= sign change indices
-        #0  1 2 3 4 5 6 7   8 <= indices
-        #0  0 1 1 2 2 2 -1 -1 <= indices of sign change to right    
-        right_sign_change_I = np.zeros(n_frames)
-        right_sign_change_I[sign_change_I[:-1] + 1] = 1
-        right_sign_change_I[0] = 1
-        right_sign_change_I = right_sign_change_I.cumsum() - 1
-        # We must have nothing to the right of the last change:
-        right_sign_change_I[sign_change_I[-1]+1:] = BAD_INDEX_VALUE
-
-        #Indices that each left_sign_change_I or right_sign_change_I points to
-        left_values = sign_change_I
-        right_values = sign_change_I + 1 #By definition
-        #----------------------------------------------------------------
-
-        back_zeros_I  = np.zeros(n_frames)
-        back_zeros_I[:] = BAD_INDEX_VALUE
-        front_zeros_I = np.zeros(n_frames)
-        back_zeros_I[:] = BAD_INDEX_VALUE
-
-        for iFrame in range(n_frames):
-            cur_left_index = left_sign_change_I[iFrame]
-            cur_right_index = right_sign_change_I[iFrame]
-
-            if cur_left_index == BAD_INDEX_VALUE or cur_right_index == BAD_INDEX_VALUE:
-                continue
-
-            back_zero_I = left_values[cur_left_index]
-            front_zero_I = right_values[cur_right_index]
-
-            use_values = True
-
-            # Expand the zero-crossing window.
-            #----------------------------------
-            # Note from @JimHokanson: 
-            #
-            # TODO: Fix and move this code to old config
-            #
-            # General problem, we specify a minimum acceptable window size, 
-            # and the old code needlessly expands the window past this point
-            # by doing the following comparison:
-            #
-            # - distance from right to left > min_window_size?
-            #
-            #   The following code centers on 2x the larger of the following gaps:
-            #
-            #   - distance from left to center
-            #   - distance from right to center
-            #
-            #   So we should check if either of these is half ot the
-            #   required width.
-            #
-            # half-window sizes:
-            # left_window_size  = iFrame - back_zero_I
-            # right_window_size = front_zero_I - iFrame
-            #
-            # so in reality we should use:
-            #
-            # front_zero_I - iFrame < min_win_size/2 and
-            # iFrame - back_zero_I < min_win_size/2
-            #
-            # By not doing this, we overshoot the minimum window size that
-            # we need to use. Consider window sizes that are in terms of
-            # the minimum window size.
-            #
-            # i.e. 0.5w means the left or right window is half min_win_size
-            #
-            # Consider we have:
-            # 0.5w left
-            # 0.3w right
-            #
-            #   total 0.8w => not at 1w, thus old code should expand
-            #
-            #   But in reality, if we stopped now we would be at twice 0.5w
-
-            while (front_zero_I - back_zero_I + 1) < min_win_size:
-                # Expand the smaller of the two windows
-                # -------------------------------------
-                #  left_window_size       right_window_size
-                if (iFrame - back_zero_I) < (front_zero_I - iFrame):
-                    # Expand to the left:
-                    cur_left_index = cur_left_index - 1
-                    if cur_left_index == BAD_INDEX_VALUE:
-                        use_values = False
-                        break
-                    back_zero_I = left_values[cur_left_index]
-                else:
-                    # Expand to the right:
-                    cur_right_index = cur_right_index + 1
-                    if cur_right_index >= n_sign_changes:
-                        use_values = False
-                        break
-                    front_zero_I = right_values[cur_right_index]
-
-            if use_values:
-                back_zeros_I[iFrame] = back_zero_I
-                front_zeros_I[iFrame] = front_zero_I
-
-        return [back_zeros_I, front_zeros_I]
 
     def h__getBandwidth(self, data_win_length, fft_data,
                         max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
@@ -1125,3 +836,247 @@ class LocomotionForagingBends(object):
     def __eq__(self, other):
         return fc.corr_value_high(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
              fc.corr_value_high(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+
+class CrawlingBendsBoundInfo(object):
+    
+    def __init__(self,avg_bend_angles):
+        
+        # TODO: This needs to be cleaned up ...  - @JimHokanson
+        min_number_frames_for_bend = round(options.min_time_for_bend*fps)
+        [back_zeros_I, front_zeros_I] = \
+            self.h__getBoundingZeroIndices(avg_bend_angles, 
+                                           min_number_frames_for_bend)
+
+        n_frames = len(avg_bend_angles)
+
+        #Go left and right, and get the 
+        left_distances  = np.array(range(n_frames)) - back_zeros_I
+        right_distances = front_zeros_I - np.array(range(n_frames))
+        half_distances  = np.maximum(left_distances, right_distances)
+
+        left_bounds = np.array(range(n_frames)) - half_distances
+        
+        #+1 for slicing to be inclusive of the right bound
+        right_bounds = np.array(range(n_frames)) + half_distances + 1
+    
+    
+    def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
+        """
+        The goal of this function is to bound each index of avg_bend_angles by 
+        sign changes.
+
+        Parameters:
+        -----------
+        avg_bend_angles : [1 x n_frames]
+        min_win_size    : int
+          The minimum size of the data window
+
+        Returns
+        ----------------------
+        back_zeros_I    : [1 x n_frames]
+          For each frame, this specifies a preceding frame in which a 
+          change in the bend angle occurs. Invalid entries are 
+          indicated by -1.
+        front_zeros_I   : [1 x n_frames]
+
+        Notes
+        ----------------------
+        Formerly [back_zeros_I,front_zeros_I] = \
+                h__getBoundingZeroIndices(avg_bend_angles,min_win_size)
+
+        """
+
+        # Getting sign change indices ...
+        # ---------------------------------------
+        # The old code found sign changes for every frame, even though
+        # the sign changes never changed. Instead we find all sign changes,
+        # and then for each frame know which frame to the left and right
+        # have sign changes. We do this in such a way so that if we need to
+        # look further to the left or right, it is really easy to get the
+        # next answer. In other words, if we are bounded by the 3rd and 4th sign
+        # change, and we are going towards the 3rd sign change, then if the 
+        # 3rd sign change doesn't work, we can go to the 2nd sign change index,
+        # not by searching the data array, but by getting the 2nd element of
+        # the sign change index array.
+        
+        with np.errstate(invalid='ignore'):        
+            sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
+                np.sign(avg_bend_angles[1:])
+        
+        sign_change_I = np.flatnonzero(sign_change_mask)
+        n_sign_changes = len(sign_change_I)
+
+        """
+        To get the correct frame numbers, we need to do the following 
+        depending on whether or not the bound is the left (backward) 
+        bound or the right (forward) bound. 
+        
+        Note from @JimHokanson: I haven't really thought through why 
+        this is, but it mimics the old code.
+        
+        for left bounds   - at sign changes - don't subtract or add
+        for right bounds  - we need to add 1
+    
+        
+        Let's say we have sign changes at indices 3  6  9
+        What we need ...
+                1 2 3 4 5 6 7  9  10  Indices
+        Left  = 0 0 0 3 3 3 6  6  6   - at 4, the left sign change is at 3
+        Right = 4 4 4 7 7 7 10 10 0   - at 4, the right sign change is at 7
+        
+        NOTE: The values above are the final indices or values, but instead we
+        want to work with the indices, so we need:
+         
+                1 2 3 4 5 6 7  9  10  Indices
+        Left  = 0 0 0 1 1 1 2  2  2 - left_sign_change_I
+        Right = 1 1 1 2 2 2 3  3  3 - right_sign_change_I
+        
+        we also need:
+        left_values  = [3 6 9]  #the sign change indices
+        right_values = [4 7 10] #+1
+        
+        So this says:
+        left_sign_change_I(7) => 2
+        left_values(2) => 6, our sign change is at 6
+        
+        Let's say we need to expand further to the left, then we take 
+        left_sign_change_I(7) - 1 => 1
+        left_values(1) => 3, our new sign change is at 3
+        
+        Further:
+        left_sign_change_I(7) - 2 => 0
+        We've gone too far, nothing at index 0, set to invalid
+        """
+
+        n_frames = len(avg_bend_angles)
+
+        #For each element, determine the indices to the left and right of the
+        #element at which a sign change occurs.
+
+        BAD_INDEX_VALUE = -1
+
+        # For each element in the array, these values indicate which
+        # sign change index to use ...
+        left_sign_change_I = np.zeros(n_frames)
+        
+        left_sign_change_I[sign_change_I + 1] = 1
+        # We increment at values to the right of the sign changes
+        left_sign_change_I = left_sign_change_I.cumsum() - 1
+        
+        #NOTE: We need to do this after the cumsum :/        
+        left_sign_change_I[:sign_change_I[0]] = BAD_INDEX_VALUE
+        # The previous line is a little Matlab trick in which
+        # something like:
+        # 0  1 0 1 0 0 1 0 0 <= sign change indices
+        # 0  1 2 3 4 5 6 7 8 <= indices
+        # becomes:
+        # -1 0 0 1 1 1 2 2 2 <= -1 is off limits, values are inclusive
+        #
+        # so now at each frame, we get the index of the value that
+        # is to the left.
+        #
+        #From above; sign_change_I = [0 3 6]
+        #
+        #So at index 5, the next sign change is at sign_change_I[left_change_I[5]]
+        # or sign_change_I[1] => 3        
+        
+        #This does:
+        #0  1 0 1 0 0 1  0  0 <= sign change indices
+        #0  1 2 3 4 5 6  7  8 <= indices
+        #0  0 1 1 2 2 2 -1 -1 <= indices of sign change to right    
+        right_sign_change_I = np.zeros(n_frames)
+        right_sign_change_I[sign_change_I[:-1] + 1] = 1
+        right_sign_change_I[0] = 1
+        right_sign_change_I = right_sign_change_I.cumsum() - 1
+        # We must have nothing to the right of the last change:
+        right_sign_change_I[sign_change_I[-1]+1:] = BAD_INDEX_VALUE
+
+        #Indices that each left_sign_change_I or right_sign_change_I points to
+        left_values = sign_change_I
+        right_values = sign_change_I + 1 #By definition
+        #----------------------------------------------------------------
+
+        back_zeros_I  = np.zeros(n_frames)
+        back_zeros_I[:] = BAD_INDEX_VALUE
+        front_zeros_I = np.zeros(n_frames)
+        back_zeros_I[:] = BAD_INDEX_VALUE
+
+        for iFrame in range(n_frames):
+            cur_left_index = left_sign_change_I[iFrame]
+            cur_right_index = right_sign_change_I[iFrame]
+
+            if cur_left_index == BAD_INDEX_VALUE or cur_right_index == BAD_INDEX_VALUE:
+                continue
+
+            back_zero_I = left_values[cur_left_index]
+            front_zero_I = right_values[cur_right_index]
+
+            use_values = True
+
+            # Expand the zero-crossing window.
+            #----------------------------------
+            # Note from @JimHokanson: 
+            #
+            # TODO: Fix and move this code to old config
+            #
+            # General problem, we specify a minimum acceptable window size, 
+            # and the old code needlessly expands the window past this point
+            # by doing the following comparison:
+            #
+            # - distance from right to left > min_window_size?
+            #
+            #   The following code centers on 2x the larger of the following gaps:
+            #
+            #   - distance from left to center
+            #   - distance from right to center
+            #
+            #   So we should check if either of these is half ot the
+            #   required width.
+            #
+            # half-window sizes:
+            # left_window_size  = iFrame - back_zero_I
+            # right_window_size = front_zero_I - iFrame
+            #
+            # so in reality we should use:
+            #
+            # front_zero_I - iFrame < min_win_size/2 and
+            # iFrame - back_zero_I < min_win_size/2
+            #
+            # By not doing this, we overshoot the minimum window size that
+            # we need to use. Consider window sizes that are in terms of
+            # the minimum window size.
+            #
+            # i.e. 0.5w means the left or right window is half min_win_size
+            #
+            # Consider we have:
+            # 0.5w left
+            # 0.3w right
+            #
+            #   total 0.8w => not at 1w, thus old code should expand
+            #
+            #   But in reality, if we stopped now we would be at twice 0.5w
+
+            while (front_zero_I - back_zero_I + 1) < min_win_size:
+                # Expand the smaller of the two windows
+                # -------------------------------------
+                #  left_window_size       right_window_size
+                if (iFrame - back_zero_I) < (front_zero_I - iFrame):
+                    # Expand to the left:
+                    cur_left_index = cur_left_index - 1
+                    if cur_left_index == BAD_INDEX_VALUE:
+                        use_values = False
+                        break
+                    back_zero_I = left_values[cur_left_index]
+                else:
+                    # Expand to the right:
+                    cur_right_index = cur_right_index + 1
+                    if cur_right_index >= n_sign_changes:
+                        use_values = False
+                        break
+                    front_zero_I = right_values[cur_right_index]
+
+            if use_values:
+                back_zeros_I[iFrame] = back_zero_I
+                front_zeros_I[iFrame] = front_zero_I
+
+        return [back_zeros_I, front_zeros_I]

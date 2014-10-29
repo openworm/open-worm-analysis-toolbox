@@ -227,9 +227,10 @@ class WormLocomotion(object):
 
         self.motion_mode = self.motion_events.get_motion_mode()
 
-        #JAH: Got through code 
+        #JAH: Got through the motion code
 
         self.bends = locomotion_bends.LocomotionCrawlingBends(
+            features_ref,
             nw.angles,
             self.motion_events.is_paused,
             nw.is_segmented)
