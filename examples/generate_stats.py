@@ -17,7 +17,7 @@ import sys, os
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
 import movement_validation as mv
-
+import matplotlib.pyplot as plt
 
 def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
@@ -46,6 +46,29 @@ def get_matlab_filepaths(root_path):
     return matlab_filepaths
 
 
+def plot_histogram(histogram):
+    """
+    Use matplotlib to plot a Histogram instance.
+    
+    Parameters
+    -----------------------
+    histogram: a Histogram instance
+    
+    """
+    bins = histogram.bin_midpoints[:-1]  # because there are for some reason one too many
+    y_values = histogram.counts
+    
+    plt.plot(bins, y_values, 'r--', linewidth=1)
+    
+    plt.xlabel('Counts')
+    plt.ylabel(histogram.field)
+    plt.title("Histogram of a worm's " + histogram.field)
+    #plt.axis([40, 160, 0, 0.03])
+    plt.grid(True)
+    
+    plt.show()    
+
+
 def compute_histograms(root_path):
     """
     Compute histograms for 10 experiment and 10 control feature files
@@ -64,14 +87,22 @@ def compute_histograms(root_path):
     # Compute histograms on our files
     # DEBUG: I've dialled this down to just 3 files each, for speed.  Really
     #        this should be [:10] each
-    histogram_manager_experiment = mv.HistogramManager(experiment_files[:3])
-    histogram_manager_control = mv.HistogramManager(control_files[:3])
+    experiment_histograms = mv.HistogramManager(experiment_files[:3])
+    control_histograms = mv.HistogramManager(control_files[:3])
 
-    # TODO: Translate from matlab:
-    # % stats_manager = seg_worm.stats.manager(hist_man_exp,hist_man_ctl);
+    plot_histogram(experiment_histograms.hists[0])
+    
+    # DEBUG: why does len(experiment_histograms.hists[0].bin_midpoints) - 
+    #                 len(experiment_histograms.hists[0].counts) = 1?
+    # it should equal 0!
+
+    # TODO: test this:
+    # stats = mv.StatsManager(experiment_histograms, control_histograms)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!
+
+    # TODO:
     # maybe compare to the segwormmatlabclasses-generated stats somehow?
 
 

@@ -12,8 +12,7 @@ in the SegwormMatlabClasses GitHub repo.  Original code paths:
 
 DONE:
                                                               # of lines
-SegwormMatlabClasses / +seg_worm / @stats                        231 
-SegwormMatlabClasses / +seg_worm / +stats / @manager              61
+SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
 SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
 SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
 SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
@@ -22,7 +21,9 @@ SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV fi
 SegwormMatlabClasses / +seg_worm / +stats / @hist                339
 
 ALMOST COMPLETE:
-SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
+SegwormMatlabClasses / +seg_worm / @stats                        231 
+SegwormMatlabClasses / +seg_worm / +stats / @manager              61
+
 
 
 MIGHT NOT BE NEEDED:
@@ -36,9 +37,6 @@ SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots
                                                                unclear so far if the CSV files
                                                                are being loaded and used by the
                                                                code or if they are just docs
-
-DEBUG: understand why there is an @manager class in two different scopes!
-there is one +stats and one in +stats/+hist !
 
 """
 from scipy import stats
