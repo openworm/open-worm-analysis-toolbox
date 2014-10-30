@@ -393,17 +393,17 @@ class HistogramManager(object):
 
         #all_objs = [hist_cell_array{:}]
 
-        """
-        num_videos_per_object = [all_objs(1,:).n_videos]
+        num_videos_per_object = [obj.num_videos for obj in hist_cell_array]
+
+        if any(num_videos_per_object != 1):
+            raise Exception("Multiple videos per object not yet implemented")
+
+        num_videos   = np.shape(hist_cell_array)[1]
+        num_features = np.shape(hist_cell_array)[0]
         
-        if any(n_videos_per_object ~= 1):
-            error('Multiple videos per object not yet implemented')
-        
-        num_videos   = size(all_objs,2)
-        num_features = size(all_objs,1)
-        
-        temp_results = cell(1,n_features)
-        
+        temp_results = []   #  cell(1,n_features)
+
+        """        
         for iFeature in range(num_features):
             
             cur_feature_array = all_objs(iFeature,:)
@@ -447,8 +447,7 @@ class HistogramManager(object):
             # Hold onto final object for output
             temp_results{iFeature} = final_obj
         
-
-        objs = [temp_results{:}]
+        return temp_results   # TODO:make a COPY of these
         """
         # DEBUG: this is just a placeholder; instead of merging it just returns
         #        the first feature set
