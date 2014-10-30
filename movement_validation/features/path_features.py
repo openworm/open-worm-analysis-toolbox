@@ -346,7 +346,7 @@ def worm_path_curvature(x, y, fps, ventral_mode):
         velocity_module.compute_velocity(fps, x[BODY_I, :], y[BODY_I,:], \
                                          avg_body_angles_d, config.BODY_DIFF, ventral_mode)
 
-    frame_scale = velocity_module.get_frames_per_sample(config.BODY_DIFF)
+    frame_scale = velocity_module.get_frames_per_sample(fps, config.BODY_DIFF)
     half_frame_scale = (frame_scale - 1) / 2
 
     # Compute the angle differentials and distances.

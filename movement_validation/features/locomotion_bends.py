@@ -2,6 +2,8 @@
 """
 Calculate the "Bends" locomotion feature
 
+JAH: 2014-10-29 - this documentation is out of date
+
 Contains two classes:
   LocomotionCrawlingBends, which yields properties:
     .head
@@ -26,7 +28,6 @@ import scipy.ndimage.filters as filters
 import warnings
 
 from .. import utils
-from .. import config
 
 from . import feature_comparisons as fc
 
@@ -75,29 +76,11 @@ class LocomotionCrawlingBends(object):
     """
     Locomotion Crawling Bends Feature.
 
-
-    Properties
-    ---------------------------------------    
-    head = {'amplitude': int, 'frequency': int}
-    midbody = {'amplitude': int, 'frequency': int}
-    tail = {'amplitude': int, 'frequency': int}
-
-    , where int is a variable of type int.
-
-
-    Methods
-    ---------------------------------------    
-    __init__(self, bend_angles, is_paused, is_segmented_mask)
-    calls...
-    h__getBendData(self, avg_bend_angles, options, is_paused)
-    calls...
-      h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size)
-      and 
-      h__getBandwidth(self, data_win_length,fft_data,max_peak_I,
-                      INIT_MAX_I_FOR_BANDWIDTH)
-
-      , which calls seg_worm.util.maxPeaksDis
-
+    Attributes
+    ----------    
+    head : LocomotionBend
+    midbody : LocomotionBend
+    tail : LocomotionBend
 
     Notes
     ---------------------------------------    
@@ -291,12 +274,9 @@ class LocomotionCrawlingBends(object):
 
             unsigned_freq = freq_scalar * maxPeakI
 
-            #TODO: This places a restriction on where to look for the peak
-            #We shouldn't ever look for something than the max_freq
             if not (min_freq <= unsigned_freq <= max_freq):
                 continue
 
-            #TODO: We
             [peakStartI, peakEndI] = \
                 self.h__getBandwidth(data_win_length,
                                      fft_data,
@@ -443,8 +423,8 @@ class LocomotionForagingBends(object):
     """
     Locomotion Foraging Bends Feature.
 
-    Properties
-    ---------------------------------------    
+    Attributes
+    ----------    
     amplitude
     angleSpeed
 
@@ -537,25 +517,26 @@ class LocomotionForagingBends(object):
 
     """
 
-    def __init__(self, nw, is_segmented_mask, ventral_mode):
+    def __init__(self, features_ref, is_segmented_mask, ventral_mode):
         """
         Initialize an instance of LocomotionForagingBends
 
 
         Parameters
-        ---------------------------------------    
+        ----------  
         nw: NormalizedWorm instance
-
         is_segmented_mask: boolean numpy array [1 x n_frames]
-
         ventral_mode: boolean numpy array [1 x n_frames]
 
         """
         # self.amplitude  = None  # DEBUG
         # self.angleSpeed = None # DEBUG
 
-        MIN_NOSE_WINDOW = round(0.1 * config.FPS)
-        MAX_NOSE_INTERP = 2 * MIN_NOSE_WINDOW - 1
+        nw  = features_ref.nw
+        
+        options = features_ref.options.locomotion.foraging_bends
+
+        fps = features_ref.video_info.fps
 
         nose_x, nose_y = nw.get_partition('head_tip', data_key='skeletons',
                                           split_spatial_dimensions=True)
@@ -565,6 +546,7 @@ class LocomotionForagingBends(object):
 
         # TODO: Add "reversed" and "interpolated" options to the get_partition
         # function, to replace the below blocks of code!
+        #----------------------------------------------------------------------
 
         # We need to flip the orientation (i.e. reverse the entries along the
         # first, or skeleton index, axis) for angles and consistency with old
@@ -587,10 +569,13 @@ class LocomotionForagingBends(object):
         # utils.interpolate_with_threshold code.
         interp = utils.interpolate_with_threshold_2D
 
-        nose_xi = interp(nose_x, threshold=MAX_NOSE_INTERP)
-        nose_yi = interp(nose_y, threshold=MAX_NOSE_INTERP)
-        neck_xi = interp(neck_x, threshold=MAX_NOSE_INTERP)
-        neck_yi = interp(neck_y, threshold=MAX_NOSE_INTERP)
+        max_samples_interp = options.max_samples_interp_nose
+
+        nose_xi = interp(nose_x, threshold=max_samples_interp)
+        nose_yi = interp(nose_y, threshold=max_samples_interp)
+        neck_xi = interp(neck_x, threshold=max_samples_interp)
+        neck_yi = interp(neck_y, threshold=max_samples_interp)
+        #----------------------------------------------------------------------
 
 
         # Step 2: Calculation of the bend angles
@@ -599,13 +584,14 @@ class LocomotionForagingBends(object):
 
         # Step 3:
         #---------------------------------------
-        [nose_amps, nose_freqs] = self.h__foragingData(nose_bends, MIN_NOSE_WINDOW)
+        [nose_amps, nose_freqs] = \
+            self.h__foragingData(fps, nose_bends, options.min_nose_window_samples)
 
         if ventral_mode > 1:
             nose_amps = -nose_amps
             nose_freqs = -nose_freqs
 
-        self.amplitude = nose_amps
+        self.amplitude   = nose_amps
         self.angle_speed = nose_freqs
 
     def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
@@ -614,14 +600,14 @@ class LocomotionForagingBends(object):
         head tip and head base).
 
         Parameters
-        ---------------------------------------    
+        ----------    
         nose_x: [4 x n_frames]
         nose_y: [4 x n_frames]
         neck_x: [4 x n_frames]
         neck_y: [4 x n_frames]
 
         Returns
-        ---------------------------------------    
+        -------
         nose_bends_d
 
         Notes
@@ -676,12 +662,13 @@ class LocomotionForagingBends(object):
 
         return angles
 
-    def h__foragingData(self, nose_bend_angle_d, min_win_size):
+    def h__foragingData(self, fps, nose_bend_angle_d, min_win_size):
         """
         Compute the foraging amplitude and angular speed.
 
         Parameters
-        ---------------------------------------    
+        ----------
+        fps :
         nose_bend_angle_d : [n_frames x 1]
         min_win_size : (scalar)
 
@@ -698,17 +685,14 @@ class LocomotionForagingBends(object):
         """
         if min_win_size > 0:
             # Clean up the signal with a gaussian filter.
-            gauss_filter    = utils.gausswin(2 * min_win_size + 1) \
-                / min_win_size
+            gauss_filter = utils.gausswin(2*min_win_size+1)/min_win_size
             nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
                                                    gauss_filter,
                                                    cval=0,
                                                    mode='constant')
-            #gaussFilter       = np.gausswin(2 * min_win_size + 1) / min_win_size
-            #nose_bend_angle_d = np.conv(nose_bend_angle_d, gaussFilter, 'same')
 
             # Remove partial data frames ...
-            nose_bend_angle_d[:min_win_size] = np.NaN
+            nose_bend_angle_d[:min_win_size]  = np.NaN
             nose_bend_angle_d[-min_win_size:] = np.NaN
 
         # Calculate amplitudes
@@ -726,7 +710,7 @@ class LocomotionForagingBends(object):
 
         #???? - why multiply and not divide by fps????
 
-        d_data = np.diff(nose_bend_angle_d) * config.FPS
+        d_data = np.diff(nose_bend_angle_d) * fps
         speeds = np.empty(amplitudes.size) * np.NaN
         # This will leave the first and last frame's speed as NaN:
         speeds[1:-1] = (d_data[:-1] + d_data[1:]) / 2

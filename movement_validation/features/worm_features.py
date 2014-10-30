@@ -159,58 +159,25 @@ class WormLocomotion(object):
     """
     The worm's locomotion features class.
 
-    Properties
-    ---------------------------------------    
-    velocity:
-      (head_tip, head, midbody, tail, tail_tip) x (speed, direction)
-    motion
-    motion_mode
-    is_paused
-    bends
-    foraging
-    omegas
-    upsilons
-
-    Properties (full listing)
-    ---------------------------------------    
-
-    .velocity
-      .headTip
-        .speed - time series   
-        .direction - time series   
-      .head - all have same format
-      .midbody
-      .tail
-      .tailTip
-    .motion
-      .forward
-      .backward
-      .paused
-      .mode - time series   
-    .bends
-      .foraging
-        .amplitude - time series 
-        .angleSpeed - time series 
-      .head
-        .amplitude - time series 
-        .frequency - time series 
-      .midbody - same as head
-      .tail  - same as head
-    .turns
-      .omegas
-      .upsilons
-
-
-    Notes
-    ---------------------------------------    
-    Formerly SegwormMatlabClasses / 
-      +seg_worm / +features / @locomotion / locomotion.m
+    Attributes
+    ----------    
+    velocity :
+    motion :
+    motion_mode : 
+    bends :
+    foraging :
+    omegas :
+    upsilons :
 
     """
 
     def __init__(self, features_ref):
         """
         Initialization method for WormLocomotion
+
+        Parameters
+        ----------
+        features_ref : WormFeatures
 
         """
         print('Calculating Locomotion Features')    
@@ -227,10 +194,6 @@ class WormLocomotion(object):
 
         self.motion_mode = self.motion_events.get_motion_mode()
 
-        #JAH: Got through the motion_mode, working on cleaning up 
-        #LocomotionCrawlingBends - rewrote a lot of it, now it needs    
-        #to be tested, I'm expecting some bugs related to passing in fps
-
         self.bends = locomotion_bends.LocomotionCrawlingBends(
             features_ref,
             nw.angles,
@@ -238,13 +201,14 @@ class WormLocomotion(object):
             nw.is_segmented)
 
         self.foraging = locomotion_bends.LocomotionForagingBends(
-            nw,nw.is_segmented,nw.ventral_mode)
+            features_ref,nw.is_segmented,nw.ventral_mode)
 
         #TODO: Should this be moved to a method of velocity?
         midbody_distance  = abs(self.velocity.midbody.speed / fps)
         is_stage_movement = nw.segmentation_status == 'm'
 
-        self.turns = locomotion_turns.LocomotionTurns(nw, nw.angles,
+        self.turns = locomotion_turns.LocomotionTurns(features_ref, 
+                                                      nw.angles,
                                                       is_stage_movement,
                                                       midbody_distance,
                                                       nw.skeleton_x,
@@ -255,38 +219,40 @@ class WormLocomotion(object):
 
     def __eq__(self, other):
 
-        #TODO: Allow running all checks before returning false
-
         # TODO: Allow for a global config that provides more info ...
         # in case anything fails ...
+        #   JAH: I'm not sure how this will work. We might need to move
+        #   away from the equality operator to a function that returns
+        #   an equality result
+
+        #NOTE: We'll test everything instead of short-circuiting
+        same_locomotion = True
 
         if not (self.velocity == other.velocity):
-            return False
+            same_locomotion = False
 
         if not (self.motion_events == other.motion_events):
-            return False
+            same_locomotion = False
 
         # Test motion codes
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
-            return False
+            same_locomotion = False
 
         #TODO: Define ne for all functions
         if not (self.foraging == other.foraging):
             print('Mismatch in locomotion.foraging events')
-            return False
+            same_locomotion = False
             
         if not (self.bends == other.bends):
             print('Mismatch in locomotion.bends events')
-            return False
+            same_locomotion = False
 
         #TODO: Make eq in events be an error - use test_equality instead        
         if not (self.turns == other.turns):
-            import pdb
-            pdb.set_trace()
             print('Mismatch in locomotion.turns events')
-            return False
+            same_locomotion = False
 
-        return True
+        return same_locomotion
 
     @classmethod
     def from_disk(cls, m_var):

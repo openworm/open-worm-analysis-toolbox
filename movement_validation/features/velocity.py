@@ -465,31 +465,32 @@ def get_frames_per_sample(fps, sample_time):
 
     ostensive_sampling_scale = sample_time * fps
 
-        
-
-    # Code would be better as: (Matlab code shown)
-    #------------------------------------------------
-    #half_scale = round(window_width_as_samples/2);
-    #window_width_integer = 2*half_scale + 1;
-
-    # We need sampling_scale to be an odd integer, so
-    # first we check if we already have an integer.
-    if((ostensive_sampling_scale).is_integer()):
-        # In this case ostensive_sampling_scale is an integer.
-        # But is it odd or even?
-        if(ostensive_sampling_scale % 2 == 0):  # EVEN so add one
-            sampling_scale = ostensive_sampling_scale + 1
-        else:                                  # ODD
-            sampling_scale = ostensive_sampling_scale
-    else:
-        # Otherwise, ostensive_sampling_scale is not an integer,
-        # so take the nearest odd integerw
-        sampling_scale_low = np.floor(ostensive_sampling_scale)
-        sampling_scale_high = np.ceil(ostensive_sampling_scale)
-        if(sampling_scale_high % 2 == 0):
-            sampling_scale = sampling_scale_low
-        else:
-            sampling_scale = sampling_scale_high
+    half_scale = round(ostensive_sampling_scale/2)
+    sampling_scale = 2*half_scale + 1     
+    
+    #    # Code would be better as: (Matlab code shown)
+    #    #------------------------------------------------
+    #    #half_scale = round(window_width_as_samples/2);
+    #    #window_width_integer = 2*half_scale + 1;
+    #
+    #    # We need sampling_scale to be an odd integer, so
+    #    # first we check if we already have an integer.
+    #    if((ostensive_sampling_scale).is_integer()):
+    #        # In this case ostensive_sampling_scale is an integer.
+    #        # But is it odd or even?
+    #        if(ostensive_sampling_scale % 2 == 0):  # EVEN so add one
+    #            sampling_scale = ostensive_sampling_scale + 1
+    #        else:                                  # ODD
+    #            sampling_scale = ostensive_sampling_scale
+    #    else:
+    #        # Otherwise, ostensive_sampling_scale is not an integer,
+    #        # so take the nearest odd integerw
+    #        sampling_scale_low = np.floor(ostensive_sampling_scale)
+    #        sampling_scale_high = np.ceil(ostensive_sampling_scale)
+    #        if(sampling_scale_high % 2 == 0):
+    #            sampling_scale = sampling_scale_low
+    #        else:
+    #            sampling_scale = sampling_scale_high
 
     assert(sampling_scale.is_integer())
     return int(sampling_scale)

@@ -72,9 +72,25 @@ class LocomotionOptions(object):
 
         #locomotion_bends.LocomotionCrawlingBends
         self.crawling_bends = LocomotionCrawlingBends(fps)
+        self.foraging_bends = LocomotionForagingBends(fps)
+        self.locomotion_turns = LocomotionTurns(fps)
 
     def __repr__(self):
         return utils.print_object(self)
+
+class LocomotionTurns(object):
+    
+    def __init__(self,fps):
+        self.max_interpolation_gap_allowed = 9 #frames
+        self.min_omega_event_length = round(fps/4)
+
+class LocomotionForagingBends(object):
+    
+    def __init__(self,fps):
+        #NOTE: The nose & neck can also be thought of as the head tip 
+        #and head neck
+        self.min_nose_window_samples = round(0.1 * fps)
+        self.max_samples_interp_nose = 2*self.min_nose_window_samples - 1
 
 class LocomotionCrawlingBends(object):
 

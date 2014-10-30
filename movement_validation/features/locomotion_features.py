@@ -7,7 +7,6 @@ Locomotion features
 import numpy as np
 
 from .. import utils
-from .. import config
 
 from . import events
 from . import feature_comparisons as fc
