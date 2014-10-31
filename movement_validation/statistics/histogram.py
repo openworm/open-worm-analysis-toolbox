@@ -15,12 +15,6 @@ class Histogram(object):
     
     All bins in this histogram have an equal bin width.
 
-   Current Status:
-    %   -----------------------------------------------------------------
-    %   Working but could be optimized a bit and there are some missing
-    %   features. At this point however it will work for computing the
-    %   statistics objects. Documentation could also be improved.
-    
     TODO:  Missing Features:
     -----------------------------------------
         - saving to disk
@@ -46,8 +40,7 @@ class Histogram(object):
             Either all values are included or:
               - the absolute values are used
               - only positive values are used
-              - only negative values are used     
-        Returns        
+              - only negative values are used
         
         """
         self.field            = specs.long_field
@@ -84,12 +77,15 @@ class Histogram(object):
     @property
     def valid_means(self):
         """
-        mean_per_video, excluding NaN
+        Return mean_per_video, excluding NaN
         """
         return self.mean_per_video(~np.isnan(self.mean_per_video))
 
     @property
     def mean(self):
+        """
+        The mean of the means across all non-nan video means.
+        """
         return np.nanmean(self.mean_per_video)
 
     @property
@@ -117,19 +113,26 @@ class Histogram(object):
             return 1
 
     @property
-    def first_bin(self):
-        return self.bins[0]
+    def first_bin_midpoint(self):
+        return self.bin_midpoints[0]
 
     @property
-    def last_bin(self):
-        return self.bins[-1]
+    def last_bin_midpoint(self):
+        return self.bin_midpoints[-1]
 
     @property
     def num_bins(self):
-        return len(self.bins)
+        return len(self.bin_midpoints)
 
     @property
-    def all_valid(self):
+    def all_means_valid(self):
+        """
+        Returns
+        ------------------
+        boolean
+            True if there are no NaN means
+            False if there is even one NaN mean
+        """
         return all(~np.isnan(self.mean_per_video))
 
     @property
@@ -185,10 +188,18 @@ class Histogram(object):
         function [bins,edges] = h__computeBinInfo(data,bin_width)
 
         """
-        # Compute the data range
-        min_data = min(self.data)
-        max_data = max(self.data)
+        # Compute the data range.  We apply np.ravel because for some reason
+        # with posture.bends.head.mean the data was coming in like:
+        # >> self.data
+        # array([[-33.1726576 ], [-33.8501644 ],[-32.60058523], ...])
+        # Applying ravel removes any extraneous array structure so it becomes:
+        # array([-33.1726576, -33.8501644, -32.60058523, ...])
+        min_data = min(np.ravel(self.data))
+        max_data = max(np.ravel(self.data))
         
+        assert(not isinstance(min_data, np.ndarray))        
+        assert(not isinstance(max_data, np.ndarray))
+                
         # Let's "snap the bins to a grid" if you will, so that they will
         # line up when we try to merge multiple histograms later.
         # so if the bin_width = 2 and the min_data = 11, we will
@@ -221,7 +232,7 @@ class Histogram(object):
         self.bin_boundaries = np.arange(min_boundary, 
                                         max_boundary + self.bin_width, 
                                         step=self.bin_width)
-        self.bin_midpoints  = self.bin_boundaries + self.bin_width/2
+        self.bin_midpoints  = self.bin_boundaries[:-1] + self.bin_width/2
 
         # Because of the nature of floating point figures we can't guarantee
         # that these asserts work without the extra buffer of + self.bin_width

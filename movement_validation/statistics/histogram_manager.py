@@ -65,6 +65,7 @@ class HistogramManager(object):
         # Here we merge them and we assign to self.hists a numpy array
         # of 700+ Histogram instances, for the merged video
         self.hists = HistogramManager.merge_histograms(hist_cell_array)
+        #self.hists = hist_cell_array[0]   # DEBUG: remove this and replace with above
 
 
     def init_histograms(self, worm_features):
@@ -97,12 +98,14 @@ class HistogramManager(object):
           start at the first frame or end at the last frame)
           
         """
-        
+
         # Movement histograms
-        m_hists = self.h_computeMHists(worm_features, specs.MovementSpecs.getSpecs())
+        m_hists = self.__movement_histograms(worm_features, 
+                                             specs.MovementSpecs.getSpecs())
         
         # Simple histograms
-        s_hists = self.h_computeSHists(worm_features, specs.SimpleSpecs.getSpecs())
+        s_hists = self.__simple_histograms(worm_features, 
+                                           specs.SimpleSpecs.getSpecs())
         
         # Event histograms
         
@@ -110,20 +113,44 @@ class HistogramManager(object):
         # Just get the size from the size of one of the pieces of data
         num_samples = len(worm_features.morphology.length)
         
-        e_hists = self.h_computeEHists(worm_features, 
-                                       specs.EventSpecs.getSpecs(), 
-                                       num_samples)
+        e_hists = self.__event_histograms(worm_features, 
+                                          specs.EventSpecs.getSpecs(), 
+                                          num_samples)
 
-        # Put all these histograms together into one matrix        
+        # Put all these histograms together into one single-dim numpy array.
         return np.hstack((m_hists, s_hists, e_hists))
 
 
     ###########################################################################
     ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
-    ## h_computeMHists, h_computeSHists, and h_computeEHists
+    ## __simple_histograms, __movement_histograms, __event_histograms
     ###########################################################################    
+       
+    def __simple_histograms(self, worm_features, specs):
+        """
+        Compute simple histograms
+        
+        Parameters
+        ---------------------
+        worm_features : An h5py group instance
+            All the feature data calculated for a single worm video.
+            Arranged heirarchically into categories:, posture, morphology, 
+            path, locomotion, in an h5py group.
+        specs: A list of SimpleSpecs instances
+        
+        Returns
+        --------------------        
+        A list of Histogram instances, one for each of the simple features
+        
+        """
+        return [self.create_histogram(utils.filter_non_numeric(
+                                          specs[iSpec].getData(worm_features)), 
+                                      specs[iSpec], 
+                                      'simple', 'all', 'all') 
+                for iSpec in range(len(specs))]
+
     
-    def h_computeMHists(self, worm_features, specs):
+    def __movement_histograms(self, worm_features, specs):
         """
         For movement features, we compute either 4 or 16 histogram objects,
         depending on whether or not the feature can be signed. If the data is
@@ -150,6 +177,10 @@ class HistogramManager(object):
             Arranged heirarchically into categories:, posture, morphology, 
             path, locomotion, in an h5py group.
         specs: A list of MovementSpecs instances
+
+        Returns
+        --------------------        
+        A list of Histogram instances, one for each of the movement features
 
         Notes
         -------------------------
@@ -246,35 +277,8 @@ class HistogramManager(object):
         
         return movement_histograms
 
-        
 
-    def h_computeSHists(self, worm_features, specs):
-        """
-        Compute simple histograms
-        
-        Parameters
-        ---------------------
-        worm_features : An h5py group instance
-            All the feature data calculated for a single worm video.
-            Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.
-        specs: A list of SimpleSpecs instances
-        
-        """
-        """ RESTORE THE FILTER ONCE THE DATA IS AVIALALBE:
-        return [self.create_histogram(utils.filter_non_numeric(
-                                          specs[iSpec].getData(worm_features)), 
-                                      specs[iSpec], 
-                                      'simple', 'all', 'all') 
-                for iSpec in range(len(specs))]
-        """
-        return [self.create_histogram(specs[iSpec].getData(worm_features), 
-                                      specs[iSpec], 
-                                      'simple', 'all', 'all') 
-        for iSpec in range(len(specs))]
-
-
-    def h_computeEHists(self, worm_features, specs, num_samples):
+    def __event_histograms(self, worm_features, specs, num_samples):
         """
         Compute event histograms.  We produce four histograms for each
         specification in specs, for:
@@ -293,6 +297,10 @@ class HistogramManager(object):
         num_samples: int
             number of samples
 
+        Returns
+        --------------------        
+        A list of Histogram instances, one for each of the event features
+
         """
         temp_hists = []
 
@@ -300,7 +308,7 @@ class HistogramManager(object):
             
             cur_data = cur_specs.getData(worm_features, num_samples)
             
-            # TODO: RESTORE THIS LINE ONCE DATA IS AVAILABLE:
+            # Remove the NaN and Inf entries
             cur_data = utils.filter_non_numeric(cur_data)
 
             # Calculate the first histogram, on all the data.
@@ -388,7 +396,7 @@ class HistogramManager(object):
         
         This simplifies the merging process a bit. This is accomplished by
         always setting bin edges at multiples of the bin_width. This was
-        not done previously.
+        not done in the original Schafer Lab code.
 
         Parameters
         -------------------------
@@ -411,9 +419,12 @@ class HistogramManager(object):
 
         hist_cell_array = np.array(hist_cell_array)
 
-        num_videos_per_object = [obj.num_videos for obj in hist_cell_array if obj is not None]
+        num_videos_per_object = [obj.num_videos for obj 
+                                 in hist_cell_array.flatten() 
+                                 if obj is not None]
 
-        if any(num_videos_per_object != 1):
+        if any(num_videos_per_object != \
+               np.ones(len(num_videos_per_object))):
             raise Exception("Multiple videos per object not yet implemented")
 
         num_videos   = np.shape(hist_cell_array)[0]
@@ -427,6 +438,18 @@ class HistogramManager(object):
         for iFeature in range(num_features):
             
             video_array = hist_cell_array[:,iFeature]
+
+
+            # This is @MichaelCurrie's kludge to step over features that
+            # for some reason didn't get their histograms populated on all
+            # videos.
+            none_video_found = False
+            for video in video_array:
+                if video is None:
+                    print("found a None video in the feature list")
+                    none_video_found = True
+            if none_video_found:
+                continue
             
             # Create an output object with same meta properties
             final_obj   =  copy.copy(video_array[0])
@@ -437,32 +460,37 @@ class HistogramManager(object):
 
             # Align all bins
             # ---------------------------------------------------------------
-            num_bins   = [x.num_bins for x in video_array]
-            first_bins = [x.first_bin for x in video_array]
-            min_bin    = min(first_bins)
-            max_bin    = max([x.last_bin for x in video_array])
+            num_bins = [x.num_bins for x in video_array]
+            first_bin_midpoints = [x.first_bin_midpoint for x in video_array]
+            min_bin_midpoint = min(first_bin_midpoints)
+            max_bin_midpoint = max([x.last_bin_midpoint for x in video_array])
             
             cur_bin_width = final_obj.bin_width
-            new_bins      = np.arange(min_bin, max_bin, step=cur_bin_width)
+            new_bin_midpoints = np.arange(min_bin_midpoint, 
+                                          max_bin_midpoint+cur_bin_width, 
+                                          step=cur_bin_width)
             
             # Colon operator was giving warnings about non-integer indices :/
             # - @JimHokanson
-            start_indices = round((first_bins - min_bin)/cur_bin_width + 1)
-            end_indices   = start_indices + num_bins - 1
+            start_indices = (first_bin_midpoints - min_bin_midpoint) / \
+                             cur_bin_width
+            start_indices = start_indices.round()
+            end_indices   = start_indices + num_bins
             
-            new_counts = np.zeros((num_videos, len(new_bins)))
+            new_counts = np.zeros((num_videos, len(new_bin_midpoints)))
             
             for iVideo in range(num_videos):
                 cur_start = start_indices[iVideo]
-                if ~np.isnan(cur_start):
+                if not np.isnan(cur_start):
                     cur_end   = end_indices[iVideo]
-                    new_counts[iVideo, cur_start:cur_end] = video_array[iVideo].counts
+                    new_counts[iVideo, cur_start:cur_end] = \
+                                                video_array[iVideo].counts
             
             # Update final properties
             # Note that each of these is now no longer a scalar as in the
             # single-video case; it is now a numpy array
             # ---------------------------------------------------------------
-            final_obj.bins           = new_bins
+            final_obj.bin_midpoints  = new_bin_midpoints
             final_obj.counts         = new_counts
             final_obj.num_samples    = [x.num_samples for x in video_array]
             final_obj.mean_per_video = [x.mean_per_video for x in video_array]
@@ -474,8 +502,3 @@ class HistogramManager(object):
             temp_results.append(final_obj)
         
         return temp_results
-
-        # DEBUG: this is just a placeholder; instead of merging it just returns
-        #        the first feature set
-        # return hist_cell_array[0]
-        

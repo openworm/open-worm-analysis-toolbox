@@ -11,6 +11,8 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 """
 
 import sys, os
+import numpy as np
+import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -18,7 +20,7 @@ import sys, os
 
 sys.path.append('..') 
 import movement_validation as mv
-import matplotlib.pyplot as plt
+
 
 def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
@@ -58,15 +60,17 @@ def plot_histogram(histogram):
     histogram: a Histogram instance
     
     """
-    bins = histogram.bin_midpoints[:-1]  # because there are for some reason one too many
-    y_values = histogram.counts
+    bins = histogram.bin_midpoints
+    # Sum along first dimension to add up counts across all videos
+    y_values = np.sum(histogram.counts, 0)  
     
+    plt.figure()
     plt.bar(bins, y_values)
     
     plt.xlabel('Counts')
     plt.ylabel(histogram.field)
     plt.title("Histogram of a worm's " + histogram.field)
-    #plt.axis([40, 160, 0, 0.03])
+
     plt.grid(True)
     
     
@@ -89,7 +93,9 @@ def compute_histograms(root_path):
     # DEBUG: I've dialled this down to just 3 files each, for speed.  Really
     #        this should be [:10] each
     experiment_histograms = mv.HistogramManager(experiment_files[:3])
-    control_histograms = mv.HistogramManager(control_files[:3])
+    #control_histograms = mv.HistogramManager(control_files[:3])
+
+    print("we have a total of " + str(len(experiment_histograms.hists)) + " histograms")
 
     for i in range(8):
         plot_histogram(experiment_histograms.hists[i])
