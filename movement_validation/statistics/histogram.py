@@ -81,7 +81,6 @@ class Histogram(object):
         # q_normal - 
         # - @JimHokanson
 
-
     @property
     def valid_means(self):
         """
@@ -109,7 +108,13 @@ class Histogram(object):
         """
         The number of  of videos that this instance contains.
         """
-        return len(self.mean_per_video)
+        try:
+            return len(self.mean_per_video)
+        except TypeError:
+            # If mean_per_video is just a float, then calling len on it will
+            # throw a TypeError, since you can't take the len of a float.
+            # This will therefore tell us that we just have one video:
+            return 1
 
     @property
     def first_bin(self):

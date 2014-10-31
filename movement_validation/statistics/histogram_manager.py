@@ -7,6 +7,7 @@ Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / manager.m
 """
 import h5py
 import numpy as np
+import copy
 import six # For compatibility between Python 2 and 3 in case we have to revert
 
 from .histogram import Histogram
@@ -18,6 +19,10 @@ from ..features.worm_features import WormFeatures
 class HistogramManager(object):
     """
     Equivalent to seg_worm.stats.hist.manager class
+    
+    Member variables
+    ------------------------    
+    hists: a list of 
     
     """
     def __init__(self, feature_path_or_object_list):
@@ -54,6 +59,11 @@ class HistogramManager(object):
 
             hist_cell_array.append(self.init_histograms(worm_features))
 
+        # At this point hist_cell_array is a list, with one element for 
+        # each video.
+        # Each element is a numpy array of 700+ Histogram instances.
+        # Here we merge them and we assign to self.hists a numpy array
+        # of 700+ Histogram instances, for the merged video
         self.hists = HistogramManager.merge_histograms(hist_cell_array)
 
 
@@ -343,6 +353,14 @@ class HistogramManager(object):
             return Histogram(data, specs, hist_type, motion_type, data_type)
 
 
+    def merge_histograms_michael(hist_cell_array):
+        """
+        I don't understand Jim's merge_histograms method.  Here's my version.
+        """
+        pass
+        #hist_cell_array = np.arra
+
+
     @staticmethod
     def merge_histograms(hist_cell_array):
         """            
@@ -391,65 +409,73 @@ class HistogramManager(object):
         # DEBUG: just for fun
         print("In Histogram.merge_histograms... # of histograms to merge:", len(hist_cell_array))
 
-        #all_objs = [hist_cell_array{:}]
+        hist_cell_array = np.array(hist_cell_array)
 
-        num_videos_per_object = [obj.num_videos for obj in hist_cell_array]
+        num_videos_per_object = [obj.num_videos for obj in hist_cell_array if obj is not None]
 
         if any(num_videos_per_object != 1):
             raise Exception("Multiple videos per object not yet implemented")
 
-        num_videos   = np.shape(hist_cell_array)[1]
-        num_features = np.shape(hist_cell_array)[0]
+        num_videos   = np.shape(hist_cell_array)[0]
+        num_features = np.shape(hist_cell_array)[1]
         
-        temp_results = []   #  cell(1,n_features)
+        # temp_results will contain 700+ Histogram instances.
+        temp_results = []
 
-        """        
+        # Go through each feature and create a merged histogram across
+        # all the videos.
         for iFeature in range(num_features):
             
-            cur_feature_array = all_objs(iFeature,:)
+            video_array = hist_cell_array[:,iFeature]
             
             # Create an output object with same meta properties
-            final_obj   =  cur_feature_array(1).createCopy();
-            
-            
+            final_obj   =  copy.copy(video_array[0])
+            # This underlying data, which was just for the FIRST video, 
+            # will not be correct after the object is made to contain 
+            # the merged histogram information:
+            final_obj.data = None   
+
             # Align all bins
             # ---------------------------------------------------------------
-            n_bins     = [cur_feature_array.n_bins]
-            start_bins = [cur_feature_array.first_bin]
-            min_bin    = min(start_bins)
-            max_bin    = max([cur_feature_array.last_bin])
+            num_bins   = [x.num_bins for x in video_array]
+            first_bins = [x.first_bin for x in video_array]
+            min_bin    = min(first_bins)
+            max_bin    = max([x.last_bin for x in video_array])
             
             cur_bin_width = final_obj.bin_width
-            new_bins       = min_bin:cur_bin_width:max_bin
+            new_bins      = np.arange(min_bin, max_bin, step=cur_bin_width)
             
             # Colon operator was giving warnings about non-integer indices :/
             # - @JimHokanson
-            start_indices = round((start_bins - min_bin)./cur_bin_width + 1);
-            end_indices   = start_indices + n_bins - 1;
+            start_indices = round((first_bins - min_bin)/cur_bin_width + 1)
+            end_indices   = start_indices + num_bins - 1
             
-            new_counts = zeros(length(new_bins),n_videos);
+            new_counts = np.zeros((num_videos, len(new_bins)))
             
             for iVideo in range(num_videos):
-                cur_start = start_indices(iVideo)
-                if ~isnan(cur_start):
-                    cur_end   = end_indices(iVideo)
-                    new_counts(cur_start:cur_end,iVideo) = cur_feature_array(iVideo).counts
+                cur_start = start_indices[iVideo]
+                if ~np.isnan(cur_start):
+                    cur_end   = end_indices[iVideo]
+                    new_counts[iVideo, cur_start:cur_end] = video_array[iVideo].counts
             
             # Update final properties
+            # Note that each of these is now no longer a scalar as in the
+            # single-video case; it is now a numpy array
             # ---------------------------------------------------------------
-            final_obj.bins      = new_bins
-            final_obj.counts    = new_counts
-            final_obj.n_samples       = cat(1,cur_feature_array.n_samples)
-            final_obj.mean_per_video  = cat(1,cur_feature_array.mean_per_video)
-            final_obj.std_per_video   = cat(1,cur_feature_array.std_per_video)
-            final_obj.pdf       = sum(final_obj.counts,2)./sum(final_obj.n_samples)
+            final_obj.bins           = new_bins
+            final_obj.counts         = new_counts
+            final_obj.num_samples    = [x.num_samples for x in video_array]
+            final_obj.mean_per_video = [x.mean_per_video for x in video_array]
+            final_obj.std_per_video  = [x.std_per_video for x in video_array]
+            final_obj.pdf            = sum(final_obj.counts, 0) / \
+                                       sum(final_obj.num_samples)
             
             # Hold onto final object for output
-            temp_results{iFeature} = final_obj
+            temp_results.append(final_obj)
         
-        return temp_results   # TODO:make a COPY of these
-        """
+        return temp_results
+
         # DEBUG: this is just a placeholder; instead of merging it just returns
         #        the first feature set
-        return hist_cell_array[0]
+        # return hist_cell_array[0]
         
