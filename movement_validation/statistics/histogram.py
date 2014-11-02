@@ -43,7 +43,8 @@ class Histogram(object):
               - only negative values are used
         
         """
-        self.field            = specs.long_field
+        # Features specifications
+        self.long_field       = specs.long_field
         self.name             = specs.name
         self.short_name       = specs.short_name
         self.units            = specs.units
@@ -52,10 +53,12 @@ class Histogram(object):
         self.is_zero_bin      = specs.is_zero_bin
         self.is_signed        = specs.is_signed
 
-        self.hist_type   = hist_type
-        self.motion_type = motion_type
-        self.data_type   = data_type
+        # "Expanded" features specifications
+        self.hist_type        = hist_type
+        self.motion_type      = motion_type
+        self.data_type        = data_type
 
+        # The underlying data itself
         self.data             = data
         self.num_samples      = len(self.data)
 
@@ -73,6 +76,17 @@ class Histogram(object):
         # [~,cur_s.p_normal]  = seg_worm.fex.swtest(cur_h_e.mean, 0.05, 0);
         # q_normal - 
         # - @JimHokanson
+
+    @property
+    def description(self):
+        """
+        Give a longer version of the name, suitable for use as the title
+        of a histogram plot.
+        
+        """
+        return self.long_field + ' ' + \
+               ', motion_type:' + self.motion_type + ', data_type: ' + self.data_type 
+        
 
     @property
     def valid_means(self):

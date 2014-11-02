@@ -353,6 +353,8 @@ class EventSpecs(Specs):
                 # heirarchy of data in worm_features.
                 parent_data = data
                 
+                if not hasattr(parent_data, self.sub_field):
+                    print('uh oh')
                 data = getattr(parent_data, self.sub_field)
                 
                 if self.is_signed:

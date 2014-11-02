@@ -62,7 +62,7 @@ class StatisticsManager(object):
         """
         Initializes the Manager class.    
 
-        Parameter
+        Parameters
         ---------------------------------------    
         exp_hists
           An array of exp_hist entries
@@ -74,10 +74,6 @@ class StatisticsManager(object):
         Formerly seg_worm.stats.manager.initObject
 
         """
-        self.stats = None
-        self.p_worm = None
-        self.q_worm = None
-
         n_objs = len(exp_hists)
 
         # p_t Initialization
@@ -105,7 +101,7 @@ class StatisticsManager(object):
             self.stats.append(WormStatistics(exp_hists[iObj],
                                     ctl_hists[iObj],
                                     p_values[iObj]))
-
+        """
         # Followup with properties that depend on the aggregate
         #----------------------------------------------------------------------
         [~, q_t_all] = mafdr([stats_objs.p_t])
@@ -116,7 +112,7 @@ class StatisticsManager(object):
 
         self.p_worm = min([stats_objs.p_w])
         self.q_worm = min([stats_objs.q_w])
-
+        """
 
 class WormStatistics(object):
     """

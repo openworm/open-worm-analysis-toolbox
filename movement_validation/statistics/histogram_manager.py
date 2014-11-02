@@ -70,11 +70,11 @@ class HistogramManager(object):
 
     def init_histograms(self, worm_features):
         """
-        For a given set of worm features, prepare a 2D array of Histogram 
-        instances, organized into three columns:
-        - A column for the movement histograms
-        - A column for the "simple" histograms
-        - A column for the event histograms
+        For a given set of worm features, prepare a 1D array of Histogram 
+        instances, consisting of, in order:
+        - The movement histograms
+        - The "simple" histograms
+        - The event histograms
 
         Parameters
         ------------------
@@ -438,7 +438,6 @@ class HistogramManager(object):
         for iFeature in range(num_features):
             
             video_array = hist_cell_array[:,iFeature]
-
 
             # This is @MichaelCurrie's kludge to step over features that
             # for some reason didn't get their histograms populated on all

@@ -574,8 +574,10 @@ class OmegaTurns(object):
         self.omegas = events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
         return self
         
+        
     def __eq__(self, other):
         return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
+
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """
@@ -725,6 +727,7 @@ class OmegaTurns(object):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             return avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
+
 
     def h__filterAndSignFrames(self, body_angles_i, is_omega_frame,
                                MIN_OMEGA_EVENT_LENGTH):

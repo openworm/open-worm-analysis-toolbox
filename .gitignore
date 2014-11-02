@@ -1,4 +1,5 @@
 /.idea
 *.pyc
+*.dat
 __pycache__\*
 /movement_validation/user_config.py
