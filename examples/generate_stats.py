@@ -29,14 +29,14 @@ def main():
     
     
     #for i in range(0, 700, 100):
-    for i in range(1):
-        plot_histogram(experiment_histograms.hists[i],
-                       control_histograms.hists[i])
+    #for i in range(1):
+    #    plot_histogram(experiment_histograms.hists[i],
+    #                   control_histograms.hists[i])
     
-    plt.show()    
+    #plt.show()    
 
     # TODO: test this:
-    # stats = mv.StatsManager(experiment_histograms, control_histograms)
+    stats = mv.StatisticsManager(experiment_histograms, control_histograms)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!
@@ -128,6 +128,10 @@ def obtain_histograms(root_path, pickle_file_path):
         for the experiment and control samples, respectively.
     pickle_file_path: string
         A relative path, to the pickle file that has serialized the histograms
+    
+    Returns
+    -------------------------
+    Two items: experiment_histograms and control_histograms    
     
     """
     if os.path.isfile(pickle_file_path):

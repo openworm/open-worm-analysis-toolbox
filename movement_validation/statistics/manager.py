@@ -74,7 +74,7 @@ class StatisticsManager(object):
         Formerly seg_worm.stats.manager.initObject
 
         """
-        n_objs = len(exp_hists)
+        n_objs = len(exp_hists.hists)
 
         # p_t Initialization
         #----------------------------------------------------------------------
@@ -89,6 +89,13 @@ class StatisticsManager(object):
         # for each object, instead of all of them at once?
         # Formerly: p_t_all =
         # mattest([exp_hists.mean_per_video]',[ctl_hists.mean_per_video]')
+        # http://www.mathworks.com/help/bioinfo/ref/mattest.html
+        # perform an unpaired t-test for differential expression with
+        # a standard two-tailed and two-sample t-test on every gene in DataX and DataY
+        # and return a p-value for each gene.
+        # PValues = mattest(DataX, DataY)
+        # p_t_all is a 726x1 matrix with values between 0 and 1.
+
         t_statistics, p_values = stats.ttest_ind(exp_hists.mean_per_video,
                                                  ctl_hists.mean_per_video)
         # Removed this line: [stats_objs.p_t] = sl.struct.dealArray(p_t_all)
@@ -195,7 +202,14 @@ class WormStatistics(object):
   #        q_normal  #
       """
 
-    def __init__(self, exp_hist, ctl_hist, p_t):
+    def __init__(self):
+        """
+        blank initializer I believe.
+        """
+        pass
+
+
+    def initObject(self, exp_hist, ctl_hist, p_t):
         """
         I added p_t as a parameter because I think this is needed, but in the 
         code it seems not!  Then why were the p-values calculated in Manager 
@@ -211,7 +225,8 @@ class WormStatistics(object):
            See Also:
            seg_worm.stats.helpers.swtest
 
-
+        """
+        pass
         """
         self.p_t = p_t
         del(p_t)
@@ -248,15 +263,15 @@ class WormStatistics(object):
         # -infinity.
 
         if np.isnan(exp_hist.mean):
-            if (USE_OLD_CODE & & is_exclusive) | |
-                (~USE_OLD_CODE & & ctl_hist.n_valid_measurements > 1):
+            if (USE_OLD_CODE and is_exclusive) or
+                (~USE_OLD_CODE and ctl_hist.n_valid_measurements > 1):
                 self.z_score_experiment = -np.Inf
             else:
                 self.z_score_experiment = np.NaN
 
         elif np.isnan(ctl_hist.mean):
-            if (USE_OLD_CODE & & is_exclusive) | |
-                (~USE_OLD_CODE & & exp_hist.n_valid_measurements > 1):
+            if (USE_OLD_CODE and is_exclusive) or
+                (~USE_OLD_CODE and exp_hist.n_valid_measurements > 1):
                 self.z_score_experiment = np.Inf
             else:
                 self.z_score_experiment = np.NaN
@@ -272,17 +287,18 @@ class WormStatistics(object):
         # with the comparative statistics between the two groups
         # - @JimHokanson
         #----------------------------------------------------------------------
-        hist_objs = {'p_normal_experiment': exp_hist,
-                     'p_normal_control': ctl_hist}
-
-        for cur_p_field, cur_hist_obj in hist_objs:
-            if cur_hist_obj.n_valid_measurements < 3:
-                self.(cur_p_field) = np.NaN
-            else:
-                self.(cur_p_field) = seg_worm.stats.helpers.swtest(
-                    cur_hist_obj.mean_per_video,
-                    ALPHA,
-                    TAIL)
+        p_fields  = {'p_normal_experiment' 'p_normal_control'};
+        hist_objs = {exp_hist ctl_hist};
+        
+        for iObj = 1:2
+            cur_field    = p_fields{iObj};
+            cur_hist_obj = hist_objs{iObj};
+            if cur_hist_obj.n_valid_measurements < 3
+                obj.(cur_field) = NaN;
+            else
+                obj.(cur_field) = seg_worm.stats.helpers.swtest(cur_hist_obj.mean_per_video,ALPHA,TAIL);
+            end
+        end
 
         # Rules are:
         # --------------------------------------
@@ -314,3 +330,5 @@ class WormStatistics(object):
         # pWValues - these seem to be the real statistics used ...
         # - exclusive - fexact  seg_worm.stats.helpers.fexact
         # - ranksum
+        """
+        pass
