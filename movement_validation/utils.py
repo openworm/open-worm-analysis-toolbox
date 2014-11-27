@@ -632,6 +632,10 @@ def get_non_numeric_mask(data):
     Formerly function mask = h__getFilterMask(data)
 
     """
-    return np.isinf(data) | np.isnan(data)
+    try:   # DEBUG: remove late
+        return np.isinf(data) | np.isnan(data)
+    except TypeError:   # DEBUG: remove late
+        print("uh oh")     # DEBUG: remove late
+    
 
 

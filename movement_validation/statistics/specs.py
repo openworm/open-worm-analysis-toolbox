@@ -30,14 +30,12 @@ class Specs(object):
     
     """
     def __init__(self):
-       self.feature_field = None
-       self.feature_category = None
-       self.resolution = None
-       self.is_zero_bin = None
-       self.is_signed = None
-       self.name = None
-       self.short_name = None
-       self.units = None
+        """
+        This initialization method does nothing.  To instantiate, you need
+        to call the static factory method Specs.specs_factory
+        
+        """
+        pass
 
 
     @property
@@ -58,7 +56,7 @@ class Specs(object):
 
         if hasattr(self, 'sub_field') and \
            self.sub_field != None and self.sub_field != '':
-            value = value + '.' + self.sub_field
+            value += '.' + self.sub_field
 
         return value
     
@@ -87,7 +85,9 @@ class Specs(object):
         #      getattr twice, first on 'posture', and second on 'coils'.
         for cur_feature_field in self.feature_field.split('.'):
             if not hasattr(data, cur_feature_field):
-                print("uh oh")
+                raise Exception("The WormFeatures instance passed does " + 
+                                "not have the feature: " + cur_feature_field + 
+                                ". Its full name is " + self.long_field)
             data = getattr(data, cur_feature_field)
 
         return data
@@ -176,7 +176,37 @@ class Specs(object):
                     stats_instances.append(stats_instance)
             
         return stats_instances    
+
+
+class SimpleSpecs(Specs):
+    """
+    %
+    %   Class:
+    %   seg_worm.stats.simple_specs
+    %
+    """
+    def __init__(self):
+        pass
     
+    
+    @staticmethod
+    def getSpecs():
+        """    
+        Formerly function objs = getSpecs()
+            %
+            %
+            %   s_specs = seg_worm.stats.simple_specs.getSpecs();
+            %
+            %
+        """
+        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'simple_features.csv')
+        
+        # Return a list of MovementSpecs instances, one instance for each
+        # row in the csv_path CSV file.  Each row represents a feature. 
+        return Specs.specs_factory(csv_path, SimpleSpecs)
+
 
 class MovementSpecs(Specs):
     """
@@ -200,15 +230,7 @@ class MovementSpecs(Specs):
     """
 
     def __init__(self):
-        self.index = None
-        self.is_time_series = None # TODO: This can be removed
-        #%feature_category
-        #%resolution
-        #%is_zero_bin %This might not be important
-        #%is_signed   %I think this dictates having 4 or 16 events ...
-        #%        name
-        #%        short_name
-        #%        units
+        pass
 
 
     def getData(self, worm_features):
@@ -230,13 +252,14 @@ class MovementSpecs(Specs):
         #       filtered according to the value of the data, not 
         #       according to the velocity of the midbody
         
-        if self.index != None:
+        if self.index != None and data != None:
             # This is for eigenprojections, i.e. for instances when 
             # self.feature_field = 'posture.eigen_projection'
-            
-            # I really don't like the orientation: [Dim x n_frames]
-            # - @JimHokanson
-            data = data[self.index,:]
+            # In these cases the data is stored as a num_frames x 6 numpy 
+            # array.  We use self.index to identify which of the 6 eigenworms
+            # we are looking for projections of, for this particular feature.
+            data = data[:, self.index]
+            # So now our data has shape num_frames instead of (num_frames, 6)
 
         return data
 
@@ -260,36 +283,6 @@ class MovementSpecs(Specs):
         return Specs.specs_factory(csv_path, MovementSpecs)
     
 
-class SimpleSpecs(Specs):
-    """
-    %
-    %   Class:
-    %   seg_worm.stats.simple_specs
-    %
-    """
-    def __init__(self):
-        pass
-
-
-    @staticmethod
-    def getSpecs():
-        """    
-        Formerly function objs = getSpecs()
-            %
-            %
-            %   s_specs = seg_worm.stats.simple_specs.getSpecs();
-            %
-            %
-        """
-        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                'feature_metadata',
-                                'simple_features.csv')
-        
-        # Return a list of MovementSpecs instances, one instance for each
-        # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.specs_factory(csv_path, SimpleSpecs)
-
-
 class EventSpecs(Specs):
     """
 
@@ -299,11 +292,7 @@ class EventSpecs(Specs):
 
     """
     def __init__(self):
-        self.sub_field = None
-        # True will indicate that the data should be negated ...
-        self.signed_field = '' 
-        self.make_zero_if_empty = None
-        self.remove_partials = None
+        pass
 
    
     @staticmethod
@@ -353,23 +342,19 @@ class EventSpecs(Specs):
         
         """            
         data = super().getData(worm_features)
-            
+       
         if data != None:
             if self.sub_field != None:
-                # This will go from:
-                #    frames (structure array)
-                # to:
-                #    frames.time
-                # for example.
-                # 
-                # It is also used for event.ratio.time and event.ratio.distance
-                #      going from:
-                #          ratio (structure or [])
-                #      to:
-                #          ratio.time
-                #          ratio.distance
+                # For example, self.feature_field might be 
+                #   locomotion.motion_events.forward,
+                # and self.sub_field might be
+                #   time_between_events or distance_between_events, etc.
+                # Basically we want to drill to the bottom of the nested
+                # heirarchy of data in worm_features.
                 parent_data = data
                 
+                if not hasattr(parent_data, self.sub_field):
+                    print('uh oh')
                 data = getattr(parent_data, self.sub_field)
                 
                 if self.is_signed:
@@ -397,7 +382,7 @@ class EventSpecs(Specs):
                                         "size or one smaller as len(data), " +
                                         "as required.")
                 
-                if self.remove_partials:
+                if self.remove_partial_events:
                     # Remove the starting and ending event if it's right
                     # up against the edge of the data, since we can't be
                     # sure that the video captured the full extent of the
@@ -417,13 +402,8 @@ class EventSpecs(Specs):
                     # in the remove_mask
                     data = data[~remove_mask]
                 
-            else:
-                # Check things that don't currently make sense unless
-                # nested in the way that we expect (i.e. in the frames
-                # struct)
-                pass
-                # TODO: Can't be signed
-                # TODO: Can't remove partials
+        else:
+            raise Exception("The WormFeature contains no data for " + self.long_field)
         
         if data.size == 0 and self.make_zero_if_empty:
             data = 0

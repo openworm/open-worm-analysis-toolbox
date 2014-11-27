@@ -102,6 +102,7 @@ class EventFinder:
         self.max_speed_threshold = None  # (scalar or [1 x n_frames])
         self.include_at_speed_threshold = config.INCLUDE_AT_SPEED_THRESHOLD
 
+
     def get_events(self, speed_data, distance_data=None):
         """
         Obtain the events implied by event_data, given how this instance
@@ -175,8 +176,10 @@ class EventFinder:
 
         return EventList(event_candidates)
 
+
     def __repr__(self):
         return utils.print_object(self)
+
 
     def get_speed_threshold_mask(self, event_data):
         """
@@ -223,6 +226,7 @@ class EventFinder:
                         event_data < self.max_speed_threshold)
 
         return event_mask
+
 
     def get_start_stop_indices(self, event_data, event_mask):
         """
@@ -304,6 +308,7 @@ class EventFinder:
 
         return np.array(event_candidates)
 
+
     def remove_gaps(self, event_candidates, threshold,
                     comparison_operator):
         """
@@ -354,6 +359,7 @@ class EventFinder:
 
         return np.array(new_event_candidates)
 
+
     def remove_too_small_events(self, event_candidates):
         """
         This function filters events based on time (really sample count)
@@ -380,6 +386,7 @@ class EventFinder:
             events_to_remove = event_num_frames < self.min_frames_threshold
 
         return event_candidates[np.flatnonzero(~events_to_remove)]
+
 
     def remove_events_by_data_sum(self, event_candidates, distance_data):
         """
@@ -536,8 +543,10 @@ class EventList(object):
         if(self.end_frames is None):
             self.end_frames = np.array([], dtype=int)
 
+
     def __repr__(self):
         return utils.print_object(self)
+
 
     @property
     def starts_and_stops(self):
@@ -556,6 +565,7 @@ class EventList(object):
         else:
             return np.array([])
 
+
     @property
     def __len__(self):
         """ 
@@ -572,6 +582,7 @@ class EventList(object):
             return len(self.start_frames)
         except TypeError:
             return self.start_frames.size
+
 
     @property
     def last_event_frame(self):
@@ -591,6 +602,7 @@ class EventList(object):
         else:
             return 0
 
+
     @property
     def num_events_for_stats(self):
         """
@@ -604,6 +616,7 @@ class EventList(object):
                 value = value - 1
 
         return value
+
 
     def get_event_mask(self, num_frames=None):
         """
@@ -645,6 +658,7 @@ class EventList(object):
                  self.end_frames[i_event] + 1] = True
 
         return mask[0:num_frames]
+
 
     @classmethod
     def merge(cls, obj1, obj2):
@@ -804,6 +818,7 @@ class EventListWithFeatures(EventList):
             # Calculate the features
             self.calculate_features(compute_distance_during_event)
 
+
     def calculate_features(self, compute_distance_during_event):
         """
         num_video_frames
@@ -818,6 +833,7 @@ class EventListWithFeatures(EventList):
         time_ratio
         data_ratio
         num_events_for_stats
+        
         """
         FPS = config.FPS
 
@@ -860,6 +876,7 @@ class EventListWithFeatures(EventList):
 
         self.time_ratio = np.nansum(self.event_durations) / self.total_time
 
+
     def get_event_mask(self):
         """
         Return a numpy boolean array corresponding to the events
@@ -879,6 +896,7 @@ class EventListWithFeatures(EventList):
         """
         EventList.get_event_mask(self.num_video_frames)
 
+
     @classmethod
     def from_disk(cls, event_ref, ref_format):
         """
@@ -897,29 +915,22 @@ class EventListWithFeatures(EventList):
         EventList.__init__(self, None)
 
         """
-    num_video_frames
-    start_frames
-    end_frames
-    event_durations
-    time_between_events
-    distance_during_events
-    distance_between_events
-    total_time
-    frequency
-    time_ratio
-    data_ratio
-    num_events_for_stats
-    """
+        num_video_frames
+        start_frames
+        end_frames
+        event_durations
+        time_between_events
+        distance_during_events
+        distance_between_events
+        total_time
+        frequency
+        time_ratio
+        data_ratio
+        num_events_for_stats
+        """
 
         if ref_format is 'MRC':
-            try:
-                frames = event_ref['frames']
-            except:
-                import pdb
-                pdb.set_trace()
-                
-            #???? How to tell if bad
-            # h5py._hl.dataset.Dataset
+            frames = event_ref['frames']
 
             if type(frames) == h5py._hl.dataset.Dataset:
                 self.is_null = True
@@ -927,13 +938,13 @@ class EventListWithFeatures(EventList):
             else:
                 self.is_null = False
 
-            #In Matlab this is a structure array
-            #Our goal is to go from an array of structures to a 
-            #single "structure" with arrays of values
+            # In Matlab this is a structure array
+            # Our goal is to go from an array of structures to a 
+            # single "structure" with arrays of values
             #
-            #If only a single element is present, the data are saved
-            #differently. In this case the values are saved directly without
-            #a reference to dereference.
+            # If only a single element is present, the data are saved
+            # differently. In this case the values are saved directly without
+            # a reference to dereference.
             frame_values = {}
             file_ref = frames.file
             for key in frames:
@@ -1011,13 +1022,7 @@ class EventListWithFeatures(EventList):
                 print('Event mismatch %s' % event_name)
                 return False
         except:
-            import pdb
-            pdb.set_trace()
-
-        """
-    THINGS COMPARED BELOW (in the return statement):
-    ---------------------
-    """
+            raise Exception("Problem while testing inequality")
 
         # TODO: Add an integer equality comparison with name printing
         return \
@@ -1033,27 +1038,3 @@ class EventListWithFeatures(EventList):
             fc.fp_isequal(
                 self.num_events_for_stats, other.num_events_for_stats, event_name + '.total_time')
            
-#        if not return_value:
-#            print('Event mismatch %s' % event_name)
-#            #import pdb
-#            #pdb.set_trace()
-#        
-#        return return_value
-
-    # TODO: find out if anyone actually uses this method.
-    #@staticmethod
-    # def get_null_struct(data_sum_name, inter_data_sum_name):
-#    """
-#    Factory method that returns a blank event instance
-#
-#    Notes
-#    ---------------------------------------
-#    Formerly getNullStruct(fps,data_sum_name,inter_data_sum_name)
-#    Formerly seg_worm.feature.event.getNullStruct
-#
-#    """
-    #  event_list = EventList(None)
-        # TODO: get this code to work below:
-        #obj = seg_worm.feature.event(event_ss,[],data_sum_name,inter_data_sum_name);
-        #s = obj.getFeatureStruct();
-        # return s

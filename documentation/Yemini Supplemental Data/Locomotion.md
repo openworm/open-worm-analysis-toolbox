@@ -115,6 +115,14 @@ Missing frames are linearly interpolated, per each skeleton point, for fragments
 
 The foraging amplitude is defined as the largest foraging angle measured, prior to crossing 0°. In other words, the largest nose bend prior to returning to a straight, unbent position. Therefore, the foraging amplitude time series follows a discrete, stair-step pattern. The amplitude is signed negatively whenever the nose points towards the worm’s ventral side. The foraging angular speed is measured as the foraging angle difference between subsequent frames divided by the time between these frames. To centre the foraging angular speed at the frame of interest and eliminate noise, each frame is assigned the mean of the angular speed computed between the previous frame and itself and between itself and the next frame. The angular speed is signed negatively whenever its vector points towards the worm’s ventral side. 
 
+
+**Note from Ev Yemini on Setup Options:**
+
+
+Empirically I've found the values below achieve good signal.
+
+Furthermore, Huang et al. in 2006, measure foraging frequencies for several worms and find the signal centered at roughly 4Hz. For N2 worms, they see a second signal at 10Hz but I find this value too close to the background noise present in segmentation. Visually inspecting the foraging signal, as the bend between the nose and neck, corroborates a roughly 4Hz signal. But, foraging usually encompasses only half to a quarter cycle. In other words, the worm bends it nose sharply and sometimes bends it back but a full wave, akin to a body bend, occurs far less frequently. Therefore I chose to measure angular speed for foraging.  
+
 #### Bends sub-features (for crawling): "head", "midbody", "tail" ####
 
 Worm crawling is expressed as both an amplitude and frequency:

@@ -21,6 +21,7 @@ from .features.worm_features import WormFeatures
 from .WormPlotter import WormPlotter
 
 from .statistics.histogram_manager import HistogramManager
+from .statistics.manager import StatisticsManager
 
 
 __all__ = ['SchaferExperimentFile',
