@@ -33,7 +33,7 @@
 
 [2011 (November) - High-throughput, single-worm tracking and analysis in Caenorhabditis elegans.  Eviatar Yemini's PhD dissertation.](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/EvYemini.pdf)
 
-###Schafer Lab's C. elegans behavioural database back pages###
+###Schafer Lab's *C. elegans* behavioural database back pages###
 
 [Worm Segmentation](Worm Segmentation.md)
 
