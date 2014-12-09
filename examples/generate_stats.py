@@ -29,14 +29,14 @@ def main():
     
     
     #for i in range(0, 700, 100):
-    #for i in range(1):
-    #    plot_histogram(experiment_histograms.hists[i],
-    #                   control_histograms.hists[i])
+    for i in range(1):
+        plot_histogram(experiment_histograms.hists[i],
+                       control_histograms.hists[i])
     
-    #plt.show()    
+    plt.show()
 
     # TODO: test this:
-    stats = mv.StatisticsManager(experiment_histograms, control_histograms)
+    #stats = mv.StatisticsManager(experiment_histograms, control_histograms)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!

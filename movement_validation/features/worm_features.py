@@ -14,10 +14,6 @@ WormPath
 
 WormFeatures
 
-
-A translation of Matlab code written by Jim Hokanson, in the 
-SegwormMatlabClasses GitHub repo.  
-
 Original code path:
 SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
@@ -26,10 +22,11 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
+import warnings
+import os, inspect
 
 from .. import config
 
-#TODO: Can we do something differently ...????
 try:
     from .. import user_config
 except ImportError:
@@ -55,7 +52,6 @@ from . import morphology_features
 
 
 class WormMorphology(object):
-
     """
     The worm's morphology features class.
 
@@ -87,7 +83,6 @@ class WormMorphology(object):
       schaferFeatures_process.m
 
     """
-
     def __init__(self, features_ref):
         """
         
@@ -113,6 +108,7 @@ class WormMorphology(object):
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
 
+
     @classmethod
     def from_disk(cls, m_var):
         
@@ -128,6 +124,7 @@ class WormMorphology(object):
 
         return self
 
+
     def __eq__(self, other):
         
         # NOTE: Since all features are just attributes in this class we do
@@ -139,8 +136,10 @@ class WormMorphology(object):
             fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
             fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
 
+
     def __repr__(self):
         return utils.print_object(self)
+
 
     def save_for_gepetto(self):
         # See
@@ -217,11 +216,9 @@ class WormLocomotion(object):
 
         nw = features_ref.nw
 
-
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
-        #self.velocity = locomotion_features.get_worm_velocity(features_ref)
 
-        self.motion_events = locomotion_features.MotionCodes(\
+        self.motion_events = locomotion_features.MotionCodes(
                                     self.velocity.midbody.speed,
                                     nw.lengths)
 
@@ -233,13 +230,11 @@ class WormLocomotion(object):
 
         self.is_paused = self.motion_mode == 0
 
-        self.bends = locomotion_bends.LocomotionCrawlingBends(
-            nw.angles,
-            self.is_paused,
-            nw.is_segmented)
+        self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
+            nw.angles, self.is_paused, nw.is_segmented)
 
-        self.foraging = locomotion_bends.LocomotionForagingBends(
-            nw,nw.is_segmented,nw.ventral_mode)
+        self.foraging_bends = locomotion_bends.LocomotionForagingBends(
+            nw, nw.is_segmented, nw.ventral_mode)
 
         midbody_distance = abs(self.velocity.midbody.speed / config.FPS)
         is_stage_movement = nw.segmentation_status == 'm'
@@ -249,9 +244,13 @@ class WormLocomotion(object):
                                                       midbody_distance,
                                                       nw.skeleton_x,
                                                       nw.skeleton_y)
+        
+        
+
 
     def __repr__(self):
         return utils.print_object(self)
+
 
     def __eq__(self, other):
 
@@ -323,6 +322,7 @@ class WormLocomotion(object):
 
         return True
 
+
     @classmethod
     def from_disk(cls, m_var):
 
@@ -338,7 +338,7 @@ class WormLocomotion(object):
 
         bend_ref = m_var['bends']
         self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
-        self.crawling_bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
+        self.crawling_bends = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
 
         self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
@@ -352,7 +352,6 @@ class WormLocomotion(object):
 
 
 class WormPosture(object):
-
     """
     Worm posture feature class.
 
@@ -445,12 +444,26 @@ class WormPosture(object):
         self.skeleton = nt(nw.skeleton_x, nw.skeleton_y)
 
         # *** 8. EigenProjection *** DONE
-        eigen_worms = nw.eigen_worms
+
+        # shape = (7, 48)
+        # NOTE: It is one less than 49 because
+        #       the values are calculated from paired values,
+        # and the # of pairs is one less than the # of samples
+        #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
+        package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        
+        repo_path        = os.path.split(package_path)[0]
+        eigen_worm_file_path = os.path.join(repo_path, 'features', 
+                                            config.EIGENWORM_FILE)
+        
+        h = h5py.File(eigen_worm_file_path,'r')
+        eigen_worms = h['eigenWorms'].value
 
         self.eigen_projection = posture_features.get_eigenworms(
             nw.skeleton_x, nw.skeleton_y,
             np.transpose(eigen_worms),
             config.N_EIGENWORMS_USE)
+
 
     @classmethod
     def from_disk(cls, p_var):
@@ -490,24 +503,27 @@ class WormPosture(object):
 
         return self
 
+
     def __repr__(self):
         return utils.print_object(self)
 
+
     def __eq__(self, other):
+        """
+        Missing:
+        - primary_wavelength
+        - directions
+        - bend
 
-        # Missing:
-        # primary_wavelength
-        # directions
-        # bend
+        TODO: It would be nice to see all failures before returning false
+        We might want to make a comparison class that handles these details 
+        and then prints the results
 
-        #TODO: It would be nice to see all failures before returning false
-        #We might want to make a comparison class that handles these details 
-        #and then prints the results
+        NOTE: Doing all of these comparisons and then computing the results
+        allows any failures to be printed, which at this point is useful for 
+        getting the code to align
 
-        #NOTE: Doing all of these comparisons and then computing the results
-        #allows any failures to be printed, which at this point is useful for 
-        #getting the code to align
-
+        """
         eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
         eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985) 
         eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
@@ -517,9 +533,13 @@ class WormPosture(object):
         eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
         eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
         
-        #This is currently false because of a hardcoded None value where it is computed
-        #Fix that then remove these comments
-        eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
+        # TODO: This is currently False because of a hardcoded None value 
+        # where it is computed. Fix that, then remove these comments.
+        # - @JimHokanson
+        eq_eigen_projection = fc.corr_value_high(
+            np.ravel(self.eigen_projection), 
+            np.ravel(other.eigen_projection), 
+            'posture.eigen_projection')
         
         return \
             eq_eccentricity and \
@@ -533,8 +553,6 @@ class WormPosture(object):
             eq_eigen_projection
 
 
-
-
 """
 ===============================================================================
 ===============================================================================
@@ -542,7 +560,6 @@ class WormPosture(object):
 
 
 class WormPath(object):
-
     """
     Worm posture feature class.
 
@@ -554,7 +571,7 @@ class WormPath(object):
     curvature :
 
     Notes
-    ---------------------------------------    
+    ------------------------
     Formerly SegwormMatlabClasses / 
     +seg_worm / @feature_calculator / getPathFeatures.m
 
@@ -567,6 +584,7 @@ class WormPath(object):
         Parameters:
         -----------
         features_ref: a WormFeatures instance
+ 
         """
         print('Calculating Path Features')        
 
@@ -599,6 +617,7 @@ class WormPath(object):
         Coordinates = collections.namedtuple('Coordinates', ['x', 'y'])
         return Coordinates(x, y)
 
+
     @classmethod
     def from_disk(cls, path_var):
 
@@ -616,8 +635,10 @@ class WormPath(object):
 
         return self
 
+
     def __repr__(self):
         return utils.print_object(self)
+
 
     def __eq__(self, other):
 
@@ -633,8 +654,10 @@ class WormPath(object):
                                high_corr_value=0.95,
                                merge_nans=True)
 
-        # NOTE: Unfortunately the curvature is slightly different. It looks the same
-        # but I'm guessing there are a few off by 1 errors in it.
+        # NOTE: Unfortunately the curvature is slightly different. 
+        # It looks the same but I'm guessing there are a few off-by-one
+        # errors in it.
+        # - @JimHokanson
 
 
 """
@@ -672,8 +695,8 @@ class WormFeatures(object):
         video_info: VideoMetaData instance
             This is not yet created but should eventually carry information
             such as the frame rate.
+
         """
-        
         #TODO: Create the normalized worm in here ... 
 
         if processing_options is None:
@@ -691,6 +714,7 @@ class WormFeatures(object):
         self.posture = WormPosture(nw, midbody_distance)
         self.path = WormPath(self)
 
+
     @classmethod
     def from_disk(cls, file_path):
 
@@ -706,8 +730,27 @@ class WormFeatures(object):
 
         return self
 
+
+    def write_to_disk(self, output_path):
+        """
+        Write this object to a disk, in HDF5 format
+        
+        Parameters
+        -------------------
+        output_path: string
+            The path to the file
+           
+        """
+        feature_file = h5py.File(output_path, 'w')
+        warnings.warn("write_to_file has not yet been implemented for WormFeatures")    
+    
+        feature_file.close()
+
+
+
     def __repr__(self):
         return utils.print_object(self)
+
 
     def __eq__(self, other):
         """

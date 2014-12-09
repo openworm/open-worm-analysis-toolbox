@@ -11,6 +11,7 @@ import scipy.ndimage.filters as filters
 import numpy as np
 import warnings
 import time
+import os, inspect, h5py
 import collections
 
 # http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
@@ -662,40 +663,40 @@ def h__centerAndRotateOutlines(x_outline, y_outline):
     y_mc = y_outline - np.mean(y_outline, axis=0)    
     
     """
-%Rough rotation of the worm
-%--------------------------------------------------------------------------
-%
-%   We rotate the worm by the vector formed from going from the first point
-%   to the last point. This accomplishes two things.
-%
-%   1) For the brute force approach, this makes it so the worm is
-%   encompassed better by a rectangle instead of a square, which means that
-%   there are fewer grid points to test that are not in the worm (as
-%   opposed to a worm that is on a 45 degree angle that would have many
-%   points on the grid outside of the worm). In other words, the bounding
-%   box is a better approximation of the worm when the worm is rotated then
-%   when it is not. In the brute force case we place points in the bounding
-%   box, so the smaller the bounding box, the faster the code will run.
-%
-%   2) This allows us to hardcode only looking for "simple" worms 
-%   (see description below) that vary in the x-direction. Otherwise we
-%   might need to also look for simple worms in the y direction. Along
-%   similar lines this makes it more likely that we will get simple worms.
+    Rough rotation of the worm
+    --------------------------------------------------------------------------
 
-%NOTE: Here we are assuming that the head or tail is located at this middle
-%index    
+    We rotate the worm by the vector formed from going from the first point
+    to the last point. This accomplishes two things.
+
+    1) For the brute force approach, this makes it so the worm is
+    encompassed better by a rectangle instead of a square, which means that
+    there are fewer grid points to test that are not in the worm (as
+    opposed to a worm that is on a 45 degree angle that would have many
+    points on the grid outside of the worm). In other words, the bounding
+    box is a better approximation of the worm when the worm is rotated then
+    when it is not. In the brute force case we place points in the bounding
+    box, so the smaller the bounding box, the faster the code will run.
+
+    2) This allows us to hardcode only looking for "simple" worms 
+    (see description below) that vary in the x-direction. Otherwise we
+    might need to also look for simple worms in the y direction. Along
+    similar lines this makes it more likely that we will get simple worms.
+
+    NOTE: Here we are assuming that the head or tail is located at this middle
+    index    
     """
     
     n_outline_points = x_outline.shape[0]
 
     """
-%        6  5   <= 
-%      1      4
-%  =>    2  3
-%
-%   NOTE: we want indices 1 and 4 in this example, 4 is half of 6, + 1
-%    
-   """
+          6  5   <= 
+        1      4
+    =>    2  3
+
+    NOTE: we want indices 1 and 4 in this example, 4 is half of 6, + 1
+    
+    """
    
     head_or_tail_index = round(n_outline_points/2)   
    
@@ -1162,6 +1163,32 @@ class Directions(object):
 
     def __repr__(self):
         return utils.print_object(self)
+
+
+def load_eigen_worms(self):
+    """ 
+    Load the eigen_worms, which are stored in a Matlab data file
+
+    The eigenworms were computed by the Schafer lab based on N2 worms
+
+    Returns
+    ----------
+    eigen_worms: [48 x 7]
+
+    """
+    #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
+    package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    
+    repo_path        = os.path.split(package_path)[0]
+    eigen_worm_file_path = os.path.join(repo_path, config.EIGENWORM_FILE)
+
+    h = h5py.File(eigen_worm_file_path,'r')
+    eigen_worms = h['eigenWorms'].value
+    
+    return eigen_worms
+
+
+
 
 
 def get_eigenworms(sx, sy, eigen_worms, N_EIGENWORMS_USE):

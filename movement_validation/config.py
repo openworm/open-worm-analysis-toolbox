@@ -109,8 +109,7 @@ INCLUDE_AT_INTER_FRAMES_THRESHOLD = False
 
 # used in WormPosture
 N_EIGENWORMS_USE = 6
-
-
+EIGENWORM_FILE = 'master_eigen_worms_N2.mat'
 
 
 

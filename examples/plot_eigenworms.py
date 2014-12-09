@@ -22,7 +22,8 @@ import movement_validation
 def main():
     # Open the eigenworms file    
     features_path = os.path.dirname(movement_validation.features.__file__)
-    eigenworm_path = os.path.join(features_path, 'masterEigenWorms_N2_v2.mat')
+    eigenworm_path = os.path.join(features_path, 
+                                  movement_validation.config.EIGENWORM_FILE)
     eigenworm_file = h5py.File(eigenworm_path, 'r')
     
     # Extract the data
