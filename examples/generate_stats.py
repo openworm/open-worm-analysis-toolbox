@@ -16,23 +16,23 @@ import matplotlib.pyplot as plt
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
-sys.path.append('..') 
+sys.path.append('..')
 import movement_validation as mv
 
 
 def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     root_path = os.path.join(base_path, '30m_wait')
-    
+
     experiment_histograms, control_histograms = \
         obtain_histograms(root_path, "pickled_histograms.dat")
-    
-    
+
+
     #for i in range(0, 700, 100):
     for i in range(1):
         plot_histogram(experiment_histograms.hists[i],
                        control_histograms.hists[i])
-    
+
     plt.show()
 
     # TODO: test this:
@@ -61,7 +61,7 @@ def plot_histogram(exp_hist, ctl_hist):
     
     """
     # Verify that we are comparing the same feature
-    assert(exp_hist.long_field == ctl_hist.long_field)    
+    assert(exp_hist.long_field == ctl_hist.long_field)
 
     ctl_bins = ctl_hist.bin_midpoints
     ctl_y_values = ctl_hist.pdf
@@ -70,30 +70,30 @@ def plot_histogram(exp_hist, ctl_hist):
     exp_y_values = exp_hist.pdf
     min_x = min([h.bin_midpoints[0] for h in [ctl_hist, exp_hist]])
     max_x = min([h.bin_midpoints[-1] for h in [ctl_hist, exp_hist]])
-    
+
 
     plt.figure(figsize=(12, 9))
     plt.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
     plt.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
-     
+
     plt.xlabel(exp_hist.long_field, fontsize=16)
     plt.ylabel('bin pdf', fontsize = 16)
     plt.title(exp_hist.description, fontsize = 25)
     plt.xlim(min_x, max_x)
-    
-    
+
+
     ax = plt.gca()
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     # ticks only needed at bottom and right
-    ax.get_xaxis().tick_bottom() 
+    ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
     ax.legend(loc='upper left')
-    
 
 
-    
-    
+
+
+
 def get_matlab_filepaths(root_path):
     """
     Recursively traverses from root_path to find all .mat files
@@ -113,7 +113,7 @@ def get_matlab_filepaths(root_path):
 
     return matlab_filepaths
 
-    
+
 def obtain_histograms(root_path, pickle_file_path):
     """
     Compute histograms for 10 experiment and 10 control feature files.
@@ -127,7 +127,8 @@ def obtain_histograms(root_path, pickle_file_path):
         A path that has two subfolders, L and R, containing some .mat files,
         for the experiment and control samples, respectively.
     pickle_file_path: string
-        A relative path, to the pickle file that has serialized the histograms
+        A relative path, to the pickle file that has serialized the histograms. This is
+        generally found in the examples folder if one wishes to delete it to rerun the code fresh
     
     Returns
     -------------------------
@@ -135,8 +136,8 @@ def obtain_histograms(root_path, pickle_file_path):
     
     """
     if os.path.isfile(pickle_file_path):
-        print("Found a pickled version of the histogram managers.  Let's " + \
-              "attempt to unpickle rather than re-calculate, to save time...")
+        print("Found a pickled version of the histogram managers at:\n%s\n" % pickle_file_path +
+              "Let's attempt to unpickle rather than re-calculate, to save time...")
         with open(pickle_file_path, "rb") as pickle_file:
             experiment_histograms = pickle.load(pickle_file)
             control_histograms = pickle.load(pickle_file)
@@ -146,29 +147,29 @@ def obtain_histograms(root_path, pickle_file_path):
 
         experiment_path = os.path.join(root_path, 'L')
         control_path = os.path.join(root_path, 'R')
-    
+
         experiment_files = get_matlab_filepaths(experiment_path)
         control_files = get_matlab_filepaths(control_path)
-    
+
         # We need at least 10 files in each
         assert(len(experiment_files) >= 10)
         assert(len(control_files) >= 10)
-    
+
         # Compute histograms on our files
         # DEBUG: I've dialled this down to just 3 files each, for speed. 
         #        Really this should be [:10] each
         # DEBUG: [experiment_files[4]] and [experiment_files[5]] and possibly 
         #        more have a problem: locomotion.turns.upsilons.upsilons has 
         #        no attribute event_durations for some reason.
-        experiment_histograms = mv.HistogramManager(experiment_files[:3])
-        control_histograms = mv.HistogramManager(control_files[:3])
+        experiment_histograms = mv.HistogramManager(experiment_files)
+        control_histograms = mv.HistogramManager(control_files)
         with open(pickle_file_path, "wb") as pickle_file:
             pickle.dump(experiment_histograms, pickle_file)
             pickle.dump(control_histograms, pickle_file)
-    
+
     print("Experiment has a total of " + \
           str(len(experiment_histograms.hists)) + " histograms")
-        
+
     return experiment_histograms, control_histograms
 
 

@@ -983,14 +983,14 @@ class EventListWithFeatures(EventList):
                 self.time_between_events = np.zeros(0)
                 self.distance_between_events = np.zeros(0)
             else:
-                self.time_between_events = frame_values['interTime'][:-1]                
-                self.distance_between_events = frame_values['interDistance'][:-1]
+                self.time_between_events = np.array(frame_values['interTime'][:-1])
+                self.distance_between_events = np.array(frame_values['interDistance'][:-1])
 
             self.frequency = event_ref['frequency'].value[0][0]
 
             if 'ratio' in event_ref.keys():
                 ratio = event_ref['ratio']
-                self.distance_during_events = frame_values['distance']
+                self.distance_during_events = np.array(frame_values['distance'])
                 self.time_ratio = ratio['time'][0][0]
                 self.data_ratio = ratio['distance'][0][0]
             else:
