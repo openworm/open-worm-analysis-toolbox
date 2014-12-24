@@ -321,88 +321,102 @@ class EventSpecs(Specs):
         ---------------------
         worm_features: A WormFeatures instance
             All the feature data calculated for a single worm video.
-            Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.
+            Arranged hierarchically into categories:
+               - posture
+               - morphology,
+               - path
+               - locomotion, in an h5py group.
         num_samples: int
             Number of samples (i.e. number of frames in the video)
 
         Returns
         ---------------------
         
-
+        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/event_specs.m#L55
 
         Notes
         ---------------------
         Formerly  SegwormMatlabClasses / +seg_worm / +stats / event_specs.m
                   function data = getData(obj,feature_obj,n_samples)
-        
-        NOTE: Because we are doing structure array indexing, we need to capture
-        multiple outputs using [], otherwise we will only get the first value
-        ...
-        
-        """            
-        data = super().getData(worm_features)
-       
-        if data != None:
-            if self.sub_field != None:
-                # For example, self.feature_field might be 
-                #   locomotion.motion_events.forward,
-                # and self.sub_field might be
-                #   time_between_events or distance_between_events, etc.
-                # Basically we want to drill to the bottom of the nested
-                # heirarchy of data in worm_features.
-                parent_data = data
-                
-                if not hasattr(parent_data, self.sub_field):
-                    print('uh oh')
-                data = getattr(parent_data, self.sub_field)
-                
-                if self.is_signed:
-                    negate_mask = getattr(parent_data, self.signed_field)
-                    if len(negate_mask) == 1 and negate_mask == True:
-                        # Handle the case where data is just one value, 
-                        # a scalar, rather than a numpy array
-                        data *= -1
-                    elif len(negate_mask) == len(data):
-                        # Our mask size perfectly matches the data size
-                        # e.g. for event_durations
-                        data[negate_mask] *= -1
-                    elif len(negate_mask) == len(data) + 1:
-                        # Our mask is one larger than the data size
-                        # e.g. for time_between_events
-                        # DEBUG: Are we masking the right entry here?
-                        #        should we perhaps be using
-                        #        negate_mask[:-1] instead?
-                        data[negate_mask[1:]] *= -1
-                    else:
-                        raise Exception("For the signed_field " + 
-                                        self.signed_field + " and the data " + 
-                                        self.long_field + ", " +
-                                        "len(negate_mask) is not the same " +
-                                        "size or one smaller as len(data), " +
-                                        "as required.")
-                
-                if self.remove_partial_events:
-                    # Remove the starting and ending event if it's right
-                    # up against the edge of the data, since we can't be
-                    # sure that the video captured the full extent of the
-                    # event
-                    start_frames = parent_data.start_frames
-                    end_frames   = parent_data.end_frames
 
-                    remove_mask = np.empty(len(data), dtype=bool)*False
+        """
 
-                    if start_frames[0] == 0:
-                        remove_mask[:end_frames[0]+1] = True
+        # For example, self.feature_field might be
+        #   locomotion.motion_events.forward,
+            # and self.sub_field might be
+            #   time_between_events or distance_between_events, etc.
+            # Basically we want to drill to the bottom of the nested
+            # heirarchy of data in worm_features.
 
-                    if end_frames[-1] == num_samples:
-                        remove_mask[start_frames[-1]:] = True
-                    
-                    # Remove all entries corresponding to True 
-                    # in the remove_mask
+
+        #JAH: This will fail in Python 2.7
+        #???? super(Specs).getData(worm_features)
+
+        parent_data = super().getData(worm_features)
+
+        #JAH: The Matlab code would use an empty structure.
+        #Rather than just having an empty class, all events have a property 'is_null' which
+        #indicates if the event class is fully populated or if there are no events for the video.
+
+        if parent_data is None or parent_data.is_null:
+            return None
+
+        if self.sub_field is not None:
+
+            data = getattr(parent_data, self.sub_field)
+
+            if self.is_signed:
+                negate_mask = getattr(parent_data, self.signed_field)
+                if len(negate_mask) == 1 and negate_mask == True:
+                    # Handle the case where data is just one value,
+                    # a scalar, rather than a numpy array
+                    data *= -1
+                elif len(negate_mask) == len(data):
+                    # Our mask size perfectly matches the data size
+                    # e.g. for event_durations
+                    data[negate_mask] *= -1
+                elif len(negate_mask) == len(data) + 1:
+                    # Our mask is one larger than the data size
+                    # e.g. for time_between_events
+                    # DEBUG: Are we masking the right entry here?
+                    #        should we perhaps be using
+                    #        negate_mask[:-1] instead?
+                    data[negate_mask[1:]] *= -1
+                else:
+                    raise Exception("For the signed_field " +
+                                    self.signed_field + " and the data " +
+                                    self.long_field + ", " +
+                                    "len(negate_mask) is not the same " +
+                                    "size or one smaller as len(data), " +
+                                    "as required.")
+
+            if self.remove_partial_events:
+                # Remove the starting and ending event if it's right
+                # up against the edge of the data, since we can't be
+                # sure that the video captured the full extent of the
+                # event
+                start_frames = parent_data.start_frames
+                end_frames   = parent_data.end_frames
+
+                remove_mask = np.empty(len(data), dtype=bool)*False
+
+                if start_frames[0] == 0:
+                    remove_mask[:end_frames[0]+1] = True
+
+                if end_frames[-1] == num_samples:
+                    remove_mask[start_frames[-1]:] = True
+
+                # Remove all entries corresponding to True
+                # in the remove_mask
+                try:
                     data = data[~remove_mask]
+                except:
+                    import pdb
+                    pdb.set_trace()
                 
         else:
+            import pdb
+            pdb.set_trace()
             raise Exception("The WormFeature contains no data for " + self.long_field)
         
         if data.size == 0 and self.make_zero_if_empty:

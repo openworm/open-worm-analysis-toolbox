@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 
+The current processing approach is to take a set of features from an experiment and to summarize each of these features
+as a binned data set (i.e. a histogram) where for each bin of a given width the # of values occupying each bin is
+logged.
+
+This class is meant to handle holding a set of histograms, rather than having the histogram objects try and hold
+themselves.
 
 Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / manager.m
 
@@ -319,11 +325,17 @@ class HistogramManager(object):
             # - On only the positive data, and 
             # - On only the negative data.
             if cur_specs.is_signed:
-                temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
-                positive_mask = cur_data > 0
-                negative_mask = cur_data < 0
-                temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
-                temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
+                if cur_data is None:
+                    #TODO: This is a bit opaque and should be clarified
+                    #The call to create_histograms() just returns None, so we put together a bunch of None's
+                    #in a list and append, rather than calling the function 3x
+                    temp_hists = temp_hists + [None, None, None]
+                else:
+                    temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
+                    positive_mask = cur_data > 0
+                    negative_mask = cur_data < 0
+                    temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
+                    temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
 
         return temp_hists
 
@@ -355,7 +367,7 @@ class HistogramManager(object):
                                                  data_type)
         
         """
-        if data == None or not isinstance(data, np.ndarray) or data.size == 0:
+        if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)

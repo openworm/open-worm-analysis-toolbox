@@ -1,5 +1,7 @@
 
 #Feature File Overview#
+
+From From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer, W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nat. Methods (2013). doi:10.1038/nmeth.2560
  
 The features are presented within four types of files available online at: 
 
