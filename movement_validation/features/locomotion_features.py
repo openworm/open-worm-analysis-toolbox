@@ -2,6 +2,11 @@
 """
 Locomotion features
 
+Contains Processing code for:
+-----------------------------
+locomotion.velocity
+locomotion.motion_events
+
 """
 
 import numpy as np
@@ -16,7 +21,21 @@ from . import velocity as velocity_module
 
 
 class LocomotionVelocityElement(object):
+    """
     
+    This class is a simple container class for a velocity element.    
+    
+    Attributes
+    ----------
+    name : string
+    speed : numpy array
+    direction : numpy array
+    
+    See Also
+    --------
+    LocomotionVelocity
+    
+    """
     def __init__(self,name,speed,direction):
         self.name = name
         self.speed = speed
@@ -45,40 +64,17 @@ class LocomotionVelocity(object):
     
     """
     This is for the 'velocity' locomotion feature. The helper function,
-    'compute_velocity' is used elsewhere  
+    'compute_velocity' is used elsewhere.  
 
-    Compute the worm velocity (speed & direction) at the
-    head-tip/head/midbody/tail/tail-tip
-
-
-    THIS IS OUT OF DATE
-
-    Parameters
+    Computes the worm velocity at various parts of the worm body.
+        
+    Attributes
     ----------
-    nw : a NormalizedWorm instance
-
-    ventral_mode: int
-      The ventral side mode:
-        0 = unknown
-        1 = clockwise
-        2 = anticlockwise
-
-    
-    
-    Returns
-    -------
-    dict
-    A two-tiered dictionary:
-        1st Tier:
-            headTip = the tip of the head (1/12 the worm at 0.25s)
-            head    = the head (1/6 the worm at 0.5s)
-            midbody = the midbody (2/6 the worm at 0.5s)
-            tail    = the tail (1/6 the worm at 0.5s)
-            tailTip = the tip of the tail (1/12 the worm at 0.25s)
-                and 'speed' and 'direction' in the second tier.
-        2nd Tier:
-            speed =
-            direction = 
+    head_tip : LocomotionVelocityElement
+    head : LocomotionVelocityElement
+    midbody : LocomotionVelocityElement
+    tail : LocomotionVelocityElement
+    tail_tip : LocomotionVelocityElement
 
     """
     
@@ -87,6 +83,16 @@ class LocomotionVelocity(object):
     attribute_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
     
     def __init__(self,features_ref,ventral_mode=0):
+        """
+            THIS IS OUT OF DATE
+            nw : a NormalizedWorm instance
+
+        ventral_mode: int
+        The ventral side mode:
+        0 = unknown
+        1 = clockwise
+        2 = anticlockwise
+        """
         #TODO: Ventral mode needs to be handled differently
         
         nw = features_ref.nw
@@ -169,7 +175,17 @@ class MotionEvents(object):
     
     """
     
-    TODO: Documentation
+    Attributes
+    ----------
+    forward :
+    paused :
+    backward :
+    mode : numpy array, [1 x num_frames]
+        The locomotion mode:
+        -  -1, backward locomotion
+        -  0 = no locomotion (the worm is paused)
+        - 1 = forward locomotion
+    
     """
     
     attribute_keys = ['forward','backward','paused']
@@ -191,17 +207,8 @@ class MotionEvents(object):
           from locomotion.velocity.midbody.speed / config.FPS
         skeleton_lengths: numpy array 1 x n_frames
     
-        Returns
-        -------
-        The locomotion events; a dict (called locally all_events_dict) 
-        with event fields:
-          forward  - (event) forward locomotion
-          paused   - (event) no locomotion (the worm is paused)
-          backward - (event) backward locomotion
-          mode     = [1 x num_frames] the locomotion mode:
-                     -1 = backward locomotion
-                      0 = no locomotion (the worm is paused)
-                      1 = forward locomotion
+
+
     
         Notes
         ---------------------------------------

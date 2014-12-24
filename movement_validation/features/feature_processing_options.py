@@ -17,7 +17,11 @@ class FeatureProcessingOptions(object):
         #in this list. If they are then they can display some sort of popup that
         #clarifies how they are working.
         #
-        #NOTE: No functions actually use this yet. It is just a place holder.
+        #No functions actually use this yet. It is just a place holder.
+        #   
+        #An example of this might be:
+        #   'morphology.length'
+        #   s
         self.functions_to_explain = []
         
         #This indicates that, where possible, code should attempt to replicate
@@ -30,6 +34,7 @@ class FeatureProcessingOptions(object):
         self.mimic_old_behaviour = True
     
         self.locomotion = LocomotionOptions(fps)
+        self.posture = PostureOptions(fps)
         
         #This is not yet implemented. The idea is to support not 
         #computing certain features. We might also allow disabling certain 
@@ -43,6 +48,11 @@ class FeatureProcessingOptions(object):
     def __repr__(self):
         return utils.print_object(self)
          
+
+class PostureOptions(object):
+    
+    def __init__(self,fps):
+        pass
 
 class LocomotionOptions(object):
     
