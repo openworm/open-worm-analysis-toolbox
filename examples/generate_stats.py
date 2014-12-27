@@ -156,11 +156,6 @@ def obtain_histograms(root_path, pickle_file_path):
         assert(len(control_files) >= 10)
 
         # Compute histograms on our files
-        # DEBUG: I've dialled this down to just 3 files each, for speed. 
-        #        Really this should be [:10] each
-        # DEBUG: [experiment_files[4]] and [experiment_files[5]] and possibly 
-        #        more have a problem: locomotion.turns.upsilons.upsilons has 
-        #        no attribute event_durations for some reason.
         experiment_histograms = mv.HistogramManager(experiment_files)
         control_histograms = mv.HistogramManager(control_files)
         with open(pickle_file_path, "wb") as pickle_file:
