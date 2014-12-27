@@ -21,6 +21,8 @@ import os
 import csv
 import numpy as np
 
+from .. import utils
+
 class Specs(object):
     """
     
@@ -37,6 +39,8 @@ class Specs(object):
         """
         pass
 
+    def __repr__(self):
+        return utils.print_object(self)
 
     @property
     def long_field(self):
@@ -85,6 +89,8 @@ class Specs(object):
         #      getattr twice, first on 'posture', and second on 'coils'.
         for cur_feature_field in self.feature_field.split('.'):
             if not hasattr(data, cur_feature_field):
+                import pdb
+                pdb.set_trace()
                 raise Exception("The WormFeatures instance passed does " + 
                                 "not have the feature: " + cur_feature_field + 
                                 ". Its full name is " + self.long_field)
@@ -246,7 +252,7 @@ class MovementSpecs(Specs):
         Formerly data = getData(obj,feature_obj)
         
         """
-        data = super().getData(worm_features)
+        data = super(MovementSpecs,self).getData(worm_features)
         
         # NOTE: We can't filter data here because the data is 
         #       filtered according to the value of the data, not 
@@ -258,8 +264,8 @@ class MovementSpecs(Specs):
             # In these cases the data is stored as a num_frames x 6 numpy 
             # array.  We use self.index to identify which of the 6 eigenworms
             # we are looking for projections of, for this particular feature.
-            data = data[:, self.index]
-            # So now our data has shape num_frames instead of (num_frames, 6)
+            data = data[self.index,:]
+            # So now our data has shape num_frames instead of [6, num_frames]
 
         return data
 
@@ -352,7 +358,7 @@ class EventSpecs(Specs):
         #JAH: This will fail in Python 2.7
         #???? super(Specs).getData(worm_features)
 
-        parent_data = super().getData(worm_features)
+        parent_data = super(EventSpecs,self).getData(worm_features)
 
         #JAH: The Matlab code would use an empty structure.
         #Rather than just having an empty class, all events have a property 'is_null' which

@@ -486,40 +486,31 @@ class EventList(object):
     """
     A list of events.
 
-    (An event is simply a contiguous subset of frame indices.)
+    An event is a contiguous subset of frame indices.
 
     You can ask for a representation of the event list as
-    1) a sequence of (start, stop) duples
+    1) a sequence of (start, stop) tuples
     2) a boolean array of length num_frames with True for all event frames
 
-    Properties
-    ---------------------------------------
-    start_frames: 1-d numpy array
-    end_frames: 1-d numpy array
-    starts_and_stops: 2-d numpy array
-    num_events: int
-    num_events_for_stats: int
-    last_frame: int
+    Attributes
+    ----------
+    start_frames : 1-d numpy array
+    end_frames : 1-d numpy array
+    starts_and_stops : 2-d numpy array
+    num_events : int
+    num_events_for_stats : int
+    last_frame : int
 
     Methods
-    ---------------------------------------
+    -------
     get_event_mask: returns 1-d boolean numpy array
     merge: returns an EventList instance
 
     Notes
-    ---------------------------------------  
+    -----
     Previous name:
     seg_worm.feature.event_ss ("ss" stands for "simple structure")
 
-    @MichaelCurrie: in @JimHokanson's original code there were lines
-    to change start_frames and end_frames from column to row vectors, if
-    necessary.  Because here we use numpy arrays, they are not 
-    treated as matrices so we don't need to care.
-
-
-    @JimHokanson: I was going to leave this class as just a Matlab 
-    structure but there is at least one function that would be better 
-    as a method of this class.
 
     @JimHokanson: This class is the encapsulation of the raw 
     substructure, or output from finding the event.
@@ -527,6 +518,12 @@ class EventList(object):
     """
 
     def __init__(self, event_starts_and_stops=None):
+        """
+        
+        Parameters
+        ----------
+        
+        """
         # self.start_frames and self.end_frames will be the internal representation
         # of the events within this class.
         self.start_frames = None

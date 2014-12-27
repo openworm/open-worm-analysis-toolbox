@@ -222,8 +222,12 @@ class HistogramManager(object):
             # (motion_types x data_types)
             
             for cur_motion_type in motion_types:
-                assert(good_data_mask.size == \
-                       indices_use_mask[cur_motion_type].size)
+                if (good_data_mask.size != indices_use_mask[cur_motion_type].size):
+                    import pdb
+                    pdb.set_trace()
+                
+                #assert(good_data_mask.size == \
+                 #      indices_use_mask[cur_motion_type].size)
 
                 cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
                 assert(isinstance(cur_data, np.ndarray))

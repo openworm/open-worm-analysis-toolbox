@@ -11,11 +11,25 @@ from .. import utils
 from . import feature_comparisons as fc
 
 class Widths(object):
+    """
+    Attributes
+    ----------    
+    head :
+    midbody :
+    tail :
+    """
     
     fields = ('head', 'midbody', 'tail')
     
     def __init__(self,features_ref):
+        """
+        Parameters
+        ----------
+        features_ref : WormFeatures
         
+        Note the current approach just computes the mean of the different 
+        body section widths. Eventually this should be computed in this class.
+        """
         nw = features_ref.nw
     
         for partition in self.fields:
