@@ -75,6 +75,8 @@ class LocomotionVelocity(object):
     midbody : LocomotionVelocityElement
     tail : LocomotionVelocityElement
     tail_tip : LocomotionVelocityElement
+    
+    fps : float
 
     """
     
@@ -97,11 +99,16 @@ class LocomotionVelocity(object):
         
         nw = features_ref.nw
 
+        timer = features_ref.timer
+        timer.tic()
+
         all_options = features_ref.options
     
         locomotion_options = all_options.locomotion
         
         fps = features_ref.video_info.fps
+    
+        self.fps = fps    
     
         data_keys = list(self.attribute_keys) #Make a copy. Data keys will 
         #correspond to sections of the skeleton. Attribute keys correspond to 
@@ -136,6 +143,21 @@ class LocomotionVelocity(object):
                                             ventral_mode)[0:2]
                                             
             setattr(self,attribute_key,LocomotionVelocityElement(attribute_key,speed,direction))                                
+
+        timer.toc('locomotion.velocity')
+
+    def get_midbody_distance(self):
+
+        """
+        The midbody distance is used by a lot of other functions.
+        
+        Returns
+        -------
+        numpy.array
+        
+        """        
+        
+        return abs(self.midbody.speed / self.fps)
 
     def __eq__(self, other):
         is_same = True
@@ -193,28 +215,30 @@ class MotionEvents(object):
     def __init__(self,features_ref,midbody_speed,skeleton_lengths):
         """ 
         Calculate motion codes of the locomotion events
-    
-        TODO: Documentation is out of date **************************   
-    
+        
         A locomotion feature.
     
         See feature description at 
           /documentation/Yemini%20Supplemental%20Data/Locomotion.md
     
         Parameters
-        ---------------------------------------
-        midbody_speed: numpy array 1 x n_frames
-          from locomotion.velocity.midbody.speed / config.FPS
-        skeleton_lengths: numpy array 1 x n_frames
+        ----------
+        midbody_speed: numpy.array
+            [n_frames]
+        skeleton_lengths: numpy.array
+            [n_frames]
     
 
 
     
         Notes
-        ---------------------------------------
-        Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
+        -----
+        Formerly +seg_worm/+features/@locomotion/getWormMotionCodes.m
     
         """
+
+        timer = features_ref.timer
+        timer.tic()
 
         fps = features_ref.video_info.fps        
         
@@ -314,10 +338,10 @@ class MotionEvents(object):
             self._mode[event_mask] = frame_values[motion_type]
             setattr(self,motion_type,m_event)    
 
+        timer.toc('locomotion.motion_events')
+
     def get_motion_mode(self):
         return self._mode
-    
-    
 
     @classmethod
     def from_disk(cls, parent_ref):

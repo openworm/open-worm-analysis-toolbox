@@ -9,6 +9,11 @@ I'd like to move things from "config" into here ...
 
 from .. import utils
 
+
+
+#Can't do this, would be circular
+#from .worm_features import WormFeatures
+
 class FeatureProcessingOptions(object):
     
     def __init__(self,fps):    
@@ -36,14 +41,65 @@ class FeatureProcessingOptions(object):
         self.locomotion = LocomotionOptions(fps)
         self.posture = PostureOptions(fps)
         
+        #TODO: Implement this
         #This is not yet implemented. The idea is to support not 
         #computing certain features. We might also allow disabling certain 
         #groups of feature.
         self.features_to_ignore = []
+    
+    def should_compute_feature(self,feature_name,worm_features):
+        """
         
+        """        
+        
+        #TODO: Implement this ...        
+        return True
+    
     def disable_contour_features(self):
+        """
+        Contour features:
+        
+        """
          #see self.features_to_ignore
-         pass
+        contour_dependent_features = [\
+            'morphology.width',
+            'morphology.area',
+            'morphology.area_per_length',
+            'morphology.width_per_length',
+            'posture.eccentricity']
+    
+        self.features_to_ignore = list(set(self.features_to_ignore + contour_dependent_features)) 
+     
+    def disable_feature_sections(self,section_names):
+        """
+        
+        This can be used to disable processing of features by section (see the
+        options available below)
+        
+        Modifies 'features_to_ignore'
+        
+        Parameters
+        ----------
+        section_names : list[str]
+            Options are:
+            - morphology
+            - locomotion
+            - posture
+            - path
+            
+        Examples
+        --------
+        fpo.disable_feature_sections(['morphology'])
+        
+        fpo.disable_feature_sections(['morphology','locomotion'])
+        
+        """
+        new_ignores = []
+        f = IgnorableFeatures()
+        for section in section_names:
+            new_ignores.extend(getattr(f,section))
+            
+        self.features_to_ignore = list(set(self.features_to_ignore + new_ignores))
 
     def __repr__(self):
         return utils.print_object(self)
@@ -52,7 +108,11 @@ class FeatureProcessingOptions(object):
 class PostureOptions(object):
     
     def __init__(self,fps):
-        pass
+        self.n_eccentricity_grid_points = 50 # Grid size for estimating eccentricity, this is the
+        # max # of points that will fill the wide dimension.
+        # (scalar) The # of points to place in the long dimension. More points
+        # gives a more accurate estimate of the ellipse but increases
+        # the calculation time.
 
 class LocomotionOptions(object):
     
@@ -139,4 +199,20 @@ class LocomotionCrawlingBends(object):
         
     def __repr__(self):
         return utils.print_object(self)        
+ 
+class IgnorableFeatures:
+    """
+    I'm not thrilled with where this is placed, but placing it in WormFeatures
+    creates a circular dependency
+    """
+    def __init__(self):
+
+        temp = ['length','width','area','area_per_length','width_per_length']
+        self.morphology =  ['morphology.' + s for s in temp]        
+
+        temp = ['velocity','motion_events','motion_mode','crawling_bends','foraging_bends','turns']      
+        self.locomotion = ['locomotion.' + s for s in temp]
+        
+        #temp = ['bends','ecce]
+        
         

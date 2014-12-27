@@ -26,6 +26,7 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
+import time #For FeatureTimer
 
 from .. import config
 
@@ -46,6 +47,8 @@ from . import locomotion_features
 from . import locomotion_bends
 from . import locomotion_turns
 from . import morphology_features
+
+
 
 
 """
@@ -119,9 +122,7 @@ class WormMorphology(object):
         self = cls.__new__(cls)
 
         self.length = utils._extract_time_from_disk(m_var, 'length')
-        
         self.width = morphology_features.Widths.from_disk(m_var['width'])
-
         self.area = utils._extract_time_from_disk(m_var, 'area')
         self.area_per_length = utils._extract_time_from_disk(m_var, 'areaPerLength')
         self.width_per_length = utils._extract_time_from_disk(m_var, 'widthPerLength')
@@ -129,12 +130,10 @@ class WormMorphology(object):
         return self
 
     def __eq__(self, other):
-        
-        # NOTE: Since all features are just attributes in this class we do
-        # the evaluation here rather than calling __eq__ on the classes
 
-        return self.width == other.width and \
+        return \
             fc.corr_value_high(self.length, other.length, 'morph.length')  and \
+            self.width == other.width and \
             fc.corr_value_high(self.area, other.area, 'morph.area')      and \
             fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
             fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
@@ -183,7 +182,6 @@ class WormLocomotion(object):
         print('Calculating Locomotion Features')    
 
         nw  = features_ref.nw
-        fps = features_ref.video_info.fps
 
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
 
@@ -203,14 +201,12 @@ class WormLocomotion(object):
         self.foraging_bends = locomotion_bends.LocomotionForagingBends(
             features_ref,nw.is_segmented,nw.ventral_mode)
 
-        #TODO: Should this be moved to a method of velocity?
-        midbody_distance  = abs(self.velocity.midbody.speed / fps)
         is_stage_movement = nw.segmentation_status == 'm'
 
         self.turns = locomotion_turns.LocomotionTurns(features_ref, 
                                                       nw.angles,
                                                       is_stage_movement,
-                                                      midbody_distance,
+                                                      self.velocity.get_midbody_distance(),
                                                       nw.skeleton_x,
                                                       nw.skeleton_y)
 
@@ -221,6 +217,7 @@ class WormLocomotion(object):
 
         # TODO: Allow for a global config that provides more info ...
         # in case anything fails ...
+        #
         #   JAH: I'm not sure how this will work. We might need to move
         #   away from the equality operator to a function that returns
         #   an equality result
@@ -238,13 +235,13 @@ class WormLocomotion(object):
         if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
             same_locomotion = False
 
-        #TODO: Define ne for all functions
-        if not (self.foraging_bends == other.foraging_bends):
-            print('Mismatch in locomotion.foraging events')
-            same_locomotion = False
-            
+        #TODO: Define ne for all functions (instead of needing not(eq))
         if not (self.crawling_bends == other.crawling_bends):
             print('Mismatch in locomotion.crawling_bends events')
+            same_locomotion = False
+            
+        if not (self.foraging_bends == other.foraging_bends):
+            print('Mismatch in locomotion.foraging events')
             same_locomotion = False
 
         #TODO: Make eq in events be an error - use test_equality instead        
@@ -256,6 +253,13 @@ class WormLocomotion(object):
 
     @classmethod
     def from_disk(cls, m_var):
+        """
+        Parameters
+        ----------
+        m_var : type???? h5py.Group???
+            ?? Why is this this called m_var????
+        """
+
 
         self = cls.__new__(cls)
 
@@ -266,9 +270,10 @@ class WormLocomotion(object):
         self.motion_mode = self.motion_events.get_motion_mode()
 
         bend_ref = m_var['bends']
-        self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
         self.crawling_bends = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
-
+        
+        self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        
         self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
         return self
@@ -286,13 +291,11 @@ class WormPosture(object):
     Worm posture feature class.
 
     Notes
-    ---------------------------------------    
-    Formerly SegwormMatlabClasses / 
-    +seg_worm / @feature_calculator / getPostureFeatures.m
+    -----
+    Formerly:
+    SegwormMatlabClasses/+seg_worm/@feature_calculator/getPostureFeatures.m
 
     Former usage: 
-
-    posture = seg_worm.feature_calculator.getPostureFeatures(nw)
 
     Prior to this, it was originally "schaferFeatures_process"
 
@@ -309,56 +312,30 @@ class WormPosture(object):
 
     """
 
-    def __init__(self, normalized_worm, midbody_distance):
+    def __init__(self, features_ref, midbody_distance):
         """
         Initialization method for WormPosture
 
         Parameters
-        ---------------------------------------    
+        ----------  
         normalized_worm: a NormalizedWorm instance
 
         """
         print('Calculating Posture Features')            
         
         # Let's use a shorthand
-        nw = normalized_worm
+        nw  = features_ref.nw
+        options = features_ref.options
+        
+        self.bends = posture_features.Bends.create(features_ref)
 
-        # *** 1. Bends *** DONE
-        self.bends = posture_features.Bends(nw)
+        self.eccentricity, orientation = \
+            posture_features.get_eccentricity_and_orientation(features_ref)
 
-        # *** 2. Eccentricity & Orientation *** 
-        if user_config.PERFORM_SLOW_ECCENTRICITY_CALC:
-            print('Starting slow eccentricity calculation')
-            self.eccentricity, self.orientation = \
-                posture_features.get_eccentricity_and_orientation(nw.contour_x,
-                                                                  nw.contour_y)
-            print('Finished slow eccentricity calculation')
-            
-            
-            
-            #TODO: Move amplitude and wavelength into here ...            
-            
-            
-            
-        else:
-            print('Skipping slow eccentricity calculation.  To enable it, ' +
-                  'change the PERFORM_SLOW_ECCENTRICITY_CALC variable in your ' +
-                  'user_config.py to be True\n')
-            # Since we didn't run the calculation, let's insert placeholder values
-            # so none of the remaining code breaks:
-            #
-            #Orientation is used below for amplitude and wavelength
-            #
-            #Eccentricity should really be set to None here
-            self.eccentricity = np.zeros(nw.skeleton_x.shape[1])
-            self.orientation = np.zeros(nw.skeleton_x.shape[1])
 
-        # *** 3. Amplitude, Wavelengths, TrackLength, Amplitude Ratio *** NOT DONE
+        
         amp_wave_track = posture_features.get_amplitude_and_wavelength(
-            self.orientation,
-            nw.skeleton_x,
-            nw.skeleton_y,
-            nw.lengths)
+            orientation, features_ref)
 
         self.amplitude_max = amp_wave_track.amplitude_max
         self.amplitude_ratio = amp_wave_track.amplitude_ratio
@@ -599,10 +576,10 @@ class WormFeatures(object):
     video_info : movement_validation.video_info
     options : movement_validation.features.feature_processing_options
     nw : movement_validation.NormalizedWorm
-    morphology :
-    locomotion :
-    posture :
-    path :
+    morphology : WormMorphology
+    locomotion : WormLocomotion
+    posture : WormPosture
+    path : WormPath
 
     """
 
@@ -626,17 +603,22 @@ class WormFeatures(object):
         self.video_info = video_info
         self.options = processing_options
         self.nw = nw
+        self.timer = FeatureTimer()
         
         self.morphology = WormMorphology(self)
         self.locomotion = WormLocomotion(self)
-        midbody_distance = np.abs(self.locomotion.velocity.midbody.speed
-                                  / video_info.fps)
-        self.posture = WormPosture(nw, midbody_distance)
+        self.posture = WormPosture(self, 
+                                   self.locomotion.velocity.get_midbody_distance())
         self.path = WormPath(self)
 
     @classmethod
     def from_disk(cls, file_path):
 
+        """
+        This from disk method is currently focused on loading the features
+        files as computed by the Schafer lab. Alternative loading methods
+        should be possible 
+        """
         h = h5py.File(file_path, 'r')
         worm = h['worm']
 
@@ -654,11 +636,38 @@ class WormFeatures(object):
 
     def __eq__(self, other):
         """
-          Compare two WormFeatures instances by value
+        Compare two WormFeatures instances by value
 
         """
         return \
-            self.path       == other.path       and \
             self.morphology == other.morphology and \
+            self.locomotion == other.locomotion and \
             self.posture    == other.posture    and \
-            self.locomotion == other.locomotion
+            self.path       == other.path          
+            
+        
+class FeatureTimer(object):
+
+    def __init__(self):    
+        self.names = []
+        self.times = []
+        
+    def tic(self):
+        self.start_time = time.time()
+    
+    def toc(self,name):
+        self.times.append(time.time() - self.start_time)
+        self.names.append(name)
+        
+    def __repr__(self):
+        return utils.print_object(self)
+        
+    def summarize(self):
+        """
+        This can be called to display each logged function and how long it
+        took to run
+        """
+        for (name,time) in zip(self.names,self.times):
+            print('%s: %0.3fs' %(name,time))
+
+            

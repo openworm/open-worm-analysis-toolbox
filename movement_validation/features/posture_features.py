@@ -31,9 +31,20 @@ class Skeleton(object):
 
 class Bends(object):
 
-    def __init__(self, nw):
+    """
+
+    Posture Bends    
+    
+    Attributes
+    ----------
+    
+    """
+    def __init__(self, features_ref):
 
         # TODO: I don't like this being in normalized worm
+
+        nw  = features_ref.nw
+
         p = nw.get_partition_subset('normal')
 
         for partition_key in p.keys():
@@ -41,22 +52,29 @@ class Bends(object):
             # retrieve the part of the worm we are currently looking at:
             bend_angles = nw.get_partition(partition_key, 'angles')
 
-            # TODO: Should probably merge all three below ...
-
             # shape = (n):
-            with warnings.catch_warnings(record=True):  # mean empty slice
-                temp_mean = np.nanmean(a=bend_angles, axis=0)
-
-            # degrees of freedom <= 0 for slice
             with warnings.catch_warnings(record=True):
+                
+                #Throws warning on taking the mean of an empty slice
+                temp_mean = np.nanmean(a=bend_angles, axis=0)
+                
+                #Throws warning when degrees of freedom <= 0 for slice
                 temp_std = np.nanstd(a=bend_angles, axis=0)
 
-            # Sign the standard deviation (to provide the bend's dorsal/ventral orientation):
-            #-------------------------------
-            with warnings.catch_warnings(record=True):
+                #Sign the standard deviation (to provide the bend's dorsal/ventral orientation)
                 temp_std[temp_mean < 0] *= -1
 
+                
+
             setattr(self, partition_key, BendSection(temp_mean, temp_std))
+
+    @classmethod
+    def create(self,features_ref):
+        options = features_ref.options
+        if options.should_compute_feature('locomotion.bends',features_ref):
+            return Bends(features_ref)
+        else:
+            return None
 
     def __repr__(self):
         return utils.print_object(self)
@@ -75,6 +93,15 @@ class Bends(object):
 
 class BendSection(object):
 
+    """
+    Attributes
+    ----------
+    
+    See Also
+    --------
+    Bends
+    
+    """
     def __init__(self, mean, std_dev):
         self.mean = mean
         self.std_dev = std_dev
@@ -93,7 +120,7 @@ class BendSection(object):
         return utils.print_object(self)
 
 
-def get_eccentricity_and_orientation(contour_x, contour_y):
+def get_eccentricity_and_orientation(features_ref):
     """
       get_eccentricity   
 
@@ -153,10 +180,21 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     +seg_worm / +utils / +posture / getEccentricity.m
     """
 
-    #t_obj = time.time()
+    nw  = features_ref.nw
+    options = features_ref.options
+    posture_options = options.posture
+    timer = features_ref.timer
+    timer.tic()
 
-    N_GRID_POINTS = config.N_ECCENTRICITY  # TODO: move to options
+    if not options.should_compute_feature('posture.eccentricity',features_ref):
+        return (None, None)
 
+    #Inputs:
+    #------
+    contour_x = nw.contour_x
+    contour_y = nw.contour_y    
+
+    N_GRID_POINTS = posture_options.n_eccentricity_grid_points
 
 
     xo,yo,rot_angle = h__centerAndRotateOutlines(contour_x, contour_y)
@@ -211,7 +249,7 @@ def get_eccentricity_and_orientation(contour_x, contour_y):
     orientation = orientation_fixed;
 
 
-
+    timer.toc('posture.eccentricity_and_orientation')
   
     return (eccentricity, orientation)
 
@@ -669,15 +707,11 @@ def h__centerAndRotateOutlines(x_outline, y_outline):
     We rotate the worm by the vector formed from going from the first point
     to the last point. This accomplishes two things.
 
-    1) For the brute force approach, this makes it so the worm is
-    encompassed better by a rectangle instead of a square, which means that
-    there are fewer grid points to test that are not in the worm (as
-    opposed to a worm that is on a 45 degree angle that would have many
-    points on the grid outside of the worm). In other words, the bounding
-    box is a better approximation of the worm when the worm is rotated then
-    when it is not. In the brute force case we place points in the bounding
-    box, so the smaller the bounding box, the faster the code will run.
-
+    1) This speeds up the brute force approach. For the brute force approach,
+    points are placed in the bounding box in an attempt to give "mass" to the 
+    worm, and from this mass, determine eccentricity. If the bounding box
+    is smaller (due to rotation), there are lesss points to test.
+    
     2) This allows us to hardcode only looking for "simple" worms 
     (see description below) that vary in the x-direction. Otherwise we
     might need to also look for simple worms in the y direction. Along
@@ -721,7 +755,31 @@ def h__centerAndRotateOutlines(x_outline, y_outline):
     return (xo,yo,rot_angle)
 
 
-def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
+def get_amplitude_and_wavelength(theta_d, features_ref):
+    """
+    Calculates amplitude of rotated worm (relies on orientation aka theta_d)
+    
+    Parameters
+    ----------
+    theta_d
+    sx
+    sy
+    worm_lengths
+    
+    """
+    #TODO: I think this would be better as a class
+    
+    timer = features_ref.timer;
+    timer.tic()
+    
+    #TODO: Check if we should even compute this code    
+    
+    nw = features_ref.nw    
+    sx = nw.skeleton_x
+    sy = nw.skeleton_y
+    worm_lengths = nw.lengths
+
+    #TODO: Move these into posture options
 
     # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
     N_POINTS_FFT = 512
@@ -736,9 +794,8 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
 
     theta_r = theta_d * (np.pi / 180)
 
-    # Unrotate worm
-    #------------------------------
-
+    #Rotate the worm so that it lies primarily along a single axis
+    #-------------------------------------------------------------
     wwx = sx * np.cos(theta_r) + sy * np.sin(theta_r)
     wwy = sx * -np.sin(theta_r) + sy * np.cos(theta_r)
 
@@ -887,6 +944,8 @@ def get_amplitude_and_wavelength(theta_d, sx, sy, worm_lengths):
     amp_wave_track.primary_wavelength = primary_wavelength
     amp_wave_track.secondary_wavelength = secondary_wavelength
     amp_wave_track.track_length = track_length
+
+    timer.toc('posture.amplitude_and_wavelength')
 
     return amp_wave_track
 
