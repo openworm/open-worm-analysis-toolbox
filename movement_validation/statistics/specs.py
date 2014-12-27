@@ -1,20 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-This is the Python port of 
+
+Instances of these classes define how a feature should be quantized into a
+histogram as well as some additional informaton (see csv files and class definitions)
+
+The raw information is actually located in csv files in:
+
+    movement_validation/statistics/feature_metadata
+
+These classes instantiate each row of these files as instances.
+
+This is the Python port of:
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/specs.m
-and its subclasses,
+and its subclasses:
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/movement_specs.m
-and
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/simple_specs.m
-and
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/event_specs.m
 
-In other words, this module defines the classes
-- Specs
-- MovementSpecs
-- SimpleSpecs
-- EventSpecs,
-the latter three of which are subclasses of the first.
+This module defines the following classes:
+Specs
+MovementSpecs(Specs)
+SimpleSpecs(Specs)
+EventSpecs(Specs)
 
 """
 import os
@@ -26,9 +33,15 @@ from .. import utils
 class Specs(object):
     """
     
+    Attributes
+    ----------
+    long_field : string
+        
+    
+    
     Notes
-    ------------------
-    Formerly seg_worm.stats.specs
+    -----
+    Formerly seg_worm.stats.specs in SegwormMatlabClasses
     
     """
     def __init__(self):
@@ -48,13 +61,10 @@ class Specs(object):
         Give the "long" version of the instance's name.
 
         Returns
-        ----------------------
-        A string, which is a .-delimited concatenation of 
-        feature_field and sub_field.
-        
-        Notes
-        ----------------------
-        Formerly function value = getLongField(obj)
+        -------
+        string
+        A '.' delimited concatenation of feature_field and sub_field.
+
         """
         value = self.feature_field
 
@@ -71,14 +81,14 @@ class Specs(object):
         the numpy array with the data specific to this specification.
 
         Parameters
-        ------------------------
+        ----------
         worm_features: A WormFeatures instance
             All the feature data calculated for a single worm video.
             Arranged heirarchically into categories:, posture, morphology, 
             path, locomotion, in an h5py group.
 
         Returns
-        ------------------------
+        -------
         A numpy array
 
         """
@@ -106,19 +116,20 @@ class Specs(object):
         in a CSV file
 
         Parameters
-        ----------------------
+        ----------
         csv_path: string
             The path to a CSV file that has a list of extended features
         class_function_handle: A class inheriting from Stats
 
         Returns
-        ----------------------
-        A list of instances of the Stats subclass provided by 
-        class_function_handle, with each item in the list corresponding 
-        to a row in the CSV file at the provided csv_path.
+        -------
+        list
+            A list of instances of the Stats subclass provided by 
+            class_function_handle, with each item in the list corresponding 
+            to a row in the CSV file at the provided csv_path.
 
         Notes
-        ---------------------
+        -----
         Formerly function objs = seg_worm.stats.specs.getObjectsHelper( ...
             csv_path,class_function_handle,prop_names,prop_types)
         
@@ -209,26 +220,34 @@ class SimpleSpecs(Specs):
                                 'feature_metadata',
                                 'simple_features.csv')
         
-        # Return a list of MovementSpecs instances, one instance for each
+        # Return a list of SimpleSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
         return Specs.specs_factory(csv_path, SimpleSpecs)
 
 
 class MovementSpecs(Specs):
     """
-    %
-    %   Class:
-    %   seg_worm.stats.movement_specs
-    %
-    %   This class specifies how to treat each movement related feature for
-    %   histogram processing.
-    %
-    %
-    %   Access via static method:
-    %   seg_worm.stats.movement_specs.getSpecs()
-    %
-    %   See Also:
-    %   seg_worm.stats.hist.createHistograms
+
+    This class specifies how to treat each movement related feature when doing
+    histogram processing.
+
+    Attributes
+    ----------
+    feature_field :
+    old_feature_field :
+    index : 
+    feature_category :
+    is_time_series :
+    bin_width :
+    is_zero_bin :
+    is_signed :
+    name :
+    short_name :
+    units : 
+
+    Created via static method, getSpecs()
+
+    %From Matlab comments:
     %
     %   TODO:
     %   - might need to incorporate seg_worm.w.stats.wormStatsInfo
@@ -242,11 +261,12 @@ class MovementSpecs(Specs):
     def getData(self, worm_features):
         """
         Parameters
-        -----------------------
-        worm_features: A WormFeatures instance
+        ----------
+        worm_features : movement_validation.features.WormFeatures
             All the feature data calculated for a single worm video.
             Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.        
+            path, locomotion.        
+            
         Notes
         -----------------------
         Formerly data = getData(obj,feature_obj)

@@ -8,12 +8,33 @@ https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bs
 """
 import numpy as np
 from .. import config
+from .. import utils
+import matplotlib.pyplot as plt
 
 class Histogram(object):
     """    
     Encapsulates the notion of a histogram for features.
     
     All bins in this histogram have an equal bin width.
+
+    Attributes
+    ----------
+    long_field :
+    name :
+    short_name :
+    units :
+    feature_category :
+    bin_width :
+    is_zero_bin :
+    is_signed :
+    hist_type :
+    motion_type :
+    data_type :
+    data :
+    num_samples :
+    
+    bin_boundaries, bin_midpoints
+
 
     TODO:  Missing Features:
     -----------------------------------------
@@ -26,7 +47,7 @@ class Histogram(object):
         """
         
         Parameters
-        ------------------
+        ----------
         data: numpy array
             The data to be counted for the histogram
         specs: instance of Specs class
@@ -64,6 +85,7 @@ class Histogram(object):
 
         # Find a set of bins that will cover the data
         self.compute_covering_bins()
+        
         # Compute the histogram counts using those bins we just found
         # i.e. populate self.counts and self.pdf
         #      (pdf = the probability density value for each bin)
@@ -76,6 +98,9 @@ class Histogram(object):
         # [~,cur_s.p_normal]  = seg_worm.fex.swtest(cur_h_e.mean, 0.05, 0);
         # q_normal - 
         # - @JimHokanson
+
+    def __repr__(self):
+        return utils.print_object(self)
 
     @property
     def description(self):
@@ -160,7 +185,7 @@ class Histogram(object):
         the given data
         
         Parameters
-        ---------------------
+        ----------
         None, but we will use member variables:
         self.data: numpy array
             This is the data for which we must have enough bins to cover
@@ -168,7 +193,7 @@ class Histogram(object):
             The width of the bins
 
         Returns
-        ---------------------
+        -------
         None
             However, two member variables are populated:
         (bin_boundaries, bin_midpoints): Two numpy arrays
@@ -186,7 +211,7 @@ class Histogram(object):
             we'd need that.
 
         Notes
-        ---------------------
+        -----
         This version may have an extra bin than the previous version but
         this one is MUCH simpler and merging should be much simpler as edges
         should always align ...
@@ -297,3 +322,49 @@ class Histogram(object):
                             )
 
 
+    def plot_versus(exp_hist, ctl_hist):
+        """
+        
+        TODO: The inputs should be renamed        
+        TODO: Add support for passing in labels
+        
+        Use matplotlib to plot a Histogram instance.
+        
+        Note: You must still call plt.show() after calling this function.
+        
+        Parameters
+        -----------------------
+        expt_hist : 
+        
+        """
+        # Verify that we are comparing the same feature
+        assert(exp_hist.long_field == ctl_hist.long_field)
+    
+        ctl_bins = ctl_hist.bin_midpoints
+        ctl_y_values = ctl_hist.pdf
+    
+        exp_bins = exp_hist.bin_midpoints
+        exp_y_values = exp_hist.pdf
+        min_x = min([h.bin_midpoints[0] for h in [ctl_hist, exp_hist]])
+        max_x = min([h.bin_midpoints[-1] for h in [ctl_hist, exp_hist]])
+    
+    
+        plt.figure(figsize=(12, 9))
+        plt.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
+        plt.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
+    
+        plt.xlabel(exp_hist.long_field, fontsize=16)
+        plt.ylabel('bin pdf', fontsize = 16)
+        plt.title(exp_hist.description, fontsize = 25)
+        plt.xlim(min_x, max_x)
+    
+    
+        ax = plt.gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        # ticks only needed at bottom and right
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.legend(loc='upper left')
+        
+        plt.show()
