@@ -1165,7 +1165,7 @@ class Directions(object):
         return utils.print_object(self)
 
 
-def load_eigen_worms(self):
+def load_eigen_worms():
     """ 
     Load the eigen_worms, which are stored in a Matlab data file
 
@@ -1173,32 +1173,36 @@ def load_eigen_worms(self):
 
     Returns
     ----------
-    eigen_worms: [48 x 7]
+    eigen_worms: [7 x 48]
 
     """
     #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
     package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     
     repo_path        = os.path.split(package_path)[0]
-    eigen_worm_file_path = os.path.join(repo_path, config.EIGENWORM_FILE)
+    eigen_worm_file_path = os.path.join(repo_path,'features','master_eigen_worms_N2.mat')
 
     h = h5py.File(eigen_worm_file_path,'r')
     eigen_worms = h['eigenWorms'].value
     
-    return eigen_worms
+    return np.transpose(eigen_worms)
 
 
-
-
-
-def get_eigenworms(sx, sy, eigen_worms, N_EIGENWORMS_USE):
+def get_eigenworms(sx, sy, N_EIGENWORMS_USE):
     """
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     eigen_worms: [7,48]  
+    
+    Returns
+    -------
+    eigen_projections: [N_EIGENWORMS_USE, n_frames]
 
     """
+    
+    eigen_worms = load_eigen_worms()    
+    
 
     angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
 

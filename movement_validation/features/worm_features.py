@@ -194,13 +194,13 @@ class WormLocomotion(object):
 
         self.motion_mode = self.motion_events.get_motion_mode()
 
-        self.bends = locomotion_bends.LocomotionCrawlingBends(
+        self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
             features_ref,
             nw.angles,
             self.motion_events.is_paused,
             nw.is_segmented)
 
-        self.foraging = locomotion_bends.LocomotionForagingBends(
+        self.foraging_bends = locomotion_bends.LocomotionForagingBends(
             features_ref,nw.is_segmented,nw.ventral_mode)
 
         #TODO: Should this be moved to a method of velocity?
@@ -239,12 +239,12 @@ class WormLocomotion(object):
             same_locomotion = False
 
         #TODO: Define ne for all functions
-        if not (self.foraging == other.foraging):
+        if not (self.foraging_bends == other.foraging_bends):
             print('Mismatch in locomotion.foraging events')
             same_locomotion = False
             
-        if not (self.bends == other.bends):
-            print('Mismatch in locomotion.bends events')
+        if not (self.crawling_bends == other.crawling_bends):
+            print('Mismatch in locomotion.crawling_bends events')
             same_locomotion = False
 
         #TODO: Make eq in events be an error - use test_equality instead        
@@ -266,8 +266,8 @@ class WormLocomotion(object):
         self.motion_mode = self.motion_events.get_motion_mode()
 
         bend_ref = m_var['bends']
-        self.foraging = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
-        self.bends    = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
+        self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        self.crawling_bends = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
 
         self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
@@ -333,12 +333,23 @@ class WormPosture(object):
                 posture_features.get_eccentricity_and_orientation(nw.contour_x,
                                                                   nw.contour_y)
             print('Finished slow eccentricity calculation')
+            
+            
+            
+            #TODO: Move amplitude and wavelength into here ...            
+            
+            
+            
         else:
             print('Skipping slow eccentricity calculation.  To enable it, ' +
                   'change the PERFORM_SLOW_ECCENTRICITY_CALC variable in your ' +
                   'user_config.py to be True\n')
             # Since we didn't run the calculation, let's insert placeholder values
             # so none of the remaining code breaks:
+            #
+            #Orientation is used below for amplitude and wavelength
+            #
+            #Eccentricity should really be set to None here
             self.eccentricity = np.zeros(nw.skeleton_x.shape[1])
             self.orientation = np.zeros(nw.skeleton_x.shape[1])
 
@@ -374,18 +385,16 @@ class WormPosture(object):
         self.skeleton = nt(nw.skeleton_x, nw.skeleton_y)
 
         # *** 8. EigenProjection *** DONE
-        eigen_worms = nw.eigen_worms
 
         self.eigen_projection = posture_features.get_eigenworms(
             nw.skeleton_x, nw.skeleton_y,
-            np.transpose(eigen_worms),
             config.N_EIGENWORMS_USE)
 
     @classmethod
     def from_disk(cls, p_var):
 
         self = cls.__new__(cls)
-        self.bend = posture_features.Bends.from_disk(p_var['bends'])
+        self.bends = posture_features.Bends.from_disk(p_var['bends'])
 
         # NOTE: This will be considerably different for old vs new format. Currently
         # only the old is implemented
@@ -403,7 +412,7 @@ class WormPosture(object):
         self.eccentricity = utils._extract_time_from_disk(p_var, 'eccentricity')
         self.kinks = utils._extract_time_from_disk(p_var, 'kinks')
 
-        events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
+        self.coils = events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
 
         self.directions = posture_features.Directions.from_disk(
             p_var['directions'])
@@ -426,6 +435,7 @@ class WormPosture(object):
 
     def __eq__(self, other):
 
+        # TODO: 
         # Missing:
         # primary_wavelength
         # directions
@@ -435,7 +445,7 @@ class WormPosture(object):
         #We might want to make a comparison class that handles these details 
         #and then prints the results
 
-        #NOTE: Doing all of these comparisons and then computing the results
+        #Doing all of these comparisons and then computing the results
         #allows any failures to be printed, which at this point is useful for 
         #getting the code to align
 
@@ -447,9 +457,7 @@ class WormPosture(object):
         eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')        
         eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
         eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
-        
-        #This is currently false because of a hardcoded None value where it is computed
-        #Fix that then remove these comments
+        eq_coils = fc.corr_value_high(self.coils,other.coils,'posture.coils')
         eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
         
         return \
@@ -461,7 +469,8 @@ class WormPosture(object):
             eq_amplitude_max and \
             eq_skeleton_x and \
             eq_skeleton_y and \
-            eq_eigen_projection
+            eq_eigen_projection and \
+            eq_coils
 
 
 
