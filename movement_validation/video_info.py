@@ -8,6 +8,6 @@ class VideoInfo(object):
     Encapsulates the metadata for a worm video
     
     """
-    def __init__(self, video_name=None, fps=None):
+    def __init__(self, video_name, fps):
         self.fps = fps
         self.video_name = video_name
