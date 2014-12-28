@@ -77,5 +77,6 @@ def corr_value_high(x, y, feature_name, high_corr_value=0.999, merge_nans=False)
             
         return return_value
     except:
+        print('Doh, something went wrong, this should never run')
         import pdb
         pdb.set_trace()

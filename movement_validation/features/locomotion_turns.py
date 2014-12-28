@@ -2,7 +2,9 @@
 """
 Calculate the "Turns" locomotion feature
 
-There are two kinds of turn: an omega and an upsilon.
+There are two kinds of turns:
+    - omega
+    - upsilon.
 
 The only external-facing item is LocomotionTurns.  The rest are internal 
 to this module.
@@ -52,10 +54,6 @@ from .. import utils
 
 from . import events
 
-
-
-
-
 class LocomotionTurns(object):
 
     """
@@ -97,9 +95,17 @@ class LocomotionTurns(object):
 
         nw = features_ref.nw
 
+        if not features_ref.options.should_compute_feature('locomotion.turns',features_ref):
+            self.omegas = None
+            self.upsilons = None
+            return
+
         options = features_ref.options.locomotion.locomotion_turns
 
         fps = features_ref.video_info.fps
+
+        timer = features_ref.timer
+        timer.tic()
 
         n_frames = bend_angles.shape[1]
 
@@ -197,16 +203,18 @@ class LocomotionTurns(object):
                                    values_to_assign[i])
 
         # Calculate the events from the frame values
-        self.omegas   = OmegaTurns(options,
+        self.omegas   = OmegaTurns.create(options,
                                    frames.omega_frames,
                                    nw,
                                    body_angles_for_ht_change,
                                    midbody_distance,
                                    fps)
 
-        self.upsilons = UpsilonTurns(frames.upsilon_frames,
+        self.upsilons = UpsilonTurns.create(frames.upsilon_frames,
                                      midbody_distance,
                                      fps)
+
+        timer.toc('locomotion.turns')
 
     @classmethod
     def from_disk(cls, turns_ref):
@@ -219,7 +227,9 @@ class LocomotionTurns(object):
         return self
 
     def __eq__(self, other):
-        return self.omegas == other.omegas and self.upsilons == other.upsilons
+        return \
+            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
+            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
 
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
@@ -462,23 +472,22 @@ class UpsilonTurns(object):
 
         """
 
-        # How to reference?????? - @JimHokanson
-        # I'm not sure what you mean. - @MichaelCurrie
-        # Jim: I'm referring to the fact that this is a class that only
-        #contains a single attribute. Should this be changed?
-        self.upsilons = getTurnEventsFromSignedFrames(upsilon_frames,
+        self.value = getTurnEventsFromSignedFrames(upsilon_frames,
                                                       midbody_distance,
                                                       fps)
+
+    @staticmethod
+    def create(upsilon_frames, midbody_distance, fps):
+
+        temp = UpsilonTurns(upsilon_frames, midbody_distance, fps)        
+        
+        return temp.value
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        self = cls.__new__(cls)
-        self.upsilons = events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')  
-        return self
+        return events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')
         
-    def __eq__(self, other):
-        return self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons')
         
 """
 ===============================================================================
@@ -571,21 +580,24 @@ class OmegaTurns(object):
                                         options.min_omega_event_length)
 
         # Convert frames to events ...
-        self.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
+        self.value = getTurnEventsFromSignedFrames(signed_omega_frames,
                                                     midbody_distance,
                                                     fps)
+
+
+    @staticmethod
+    def create(options, omega_frames_from_angles, nw, body_angles, midbody_distance, fps):
+        
+        temp = OmegaTurns(options, omega_frames_from_angles, nw, body_angles,
+                 midbody_distance, fps)
+
+        return temp.value
+
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        self = cls.__new__(cls)
-        self.omegas = events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
-        return self
-        
-        
-    def __eq__(self, other):
-        return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
-
+        return events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """
@@ -829,7 +841,8 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     [frames_merged, is_ventral] = events.EventList.merge(frames_ventral,
                                                          frames_dorsal)
 
-    turn_event_output = events.EventListWithFeatures(frames_merged,
+    turn_event_output = events.EventListWithFeatures(FPS,
+                                                     frames_merged,
                                                      midbody_distance)
 
     turn_event_output.is_ventral = is_ventral

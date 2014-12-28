@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 
-The current processing approach is to take a set of features from an experiment and to summarize each of these features
-as a binned data set (i.e. a histogram) where for each bin of a given width the # of values occupying each bin is
+The current processing approach is to take a set of features from an experiment
+and to summarize each of these features as a binned data set (i.e. a histogram) 
+where for each bin of a given width the # of values occupying each bin is
 logged.
 
-This class is meant to handle holding a set of histograms, rather than having the histogram objects try and hold
-themselves.
+The histogram manager holds histograms for all computed features. Besides
+helping to instantiate these histograms, it also holds any information
+that is common to all of the histograms (e.g. experiment sources). By holding
+the histograms it serves as a nice entry point for the histograms, rather than 
+just having a list of histograms.
 
-Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / manager.m
+Formerly SegwormMatlabClasses/+seg_worm/+stats/@hist/manager.m
 
 """
 import h5py
@@ -24,25 +28,27 @@ from ..features.worm_features import WormFeatures
 
 class HistogramManager(object):
     """
+    
     Equivalent to seg_worm.stats.hist.manager class
     
-    Member variables
-    ------------------------    
-    hists: a list of 
+    Attributes
+    ----------    
+    hists: list
     
     """
     def __init__(self, feature_path_or_object_list):
         """
         Parameters
-        -------------------------
+        ----------
         feature_path_or_object_list: list of strings or feature objects
             Full paths to all feature files making up this histogram, or
-            their in-memory object equivalents
+            their in-memory object equivalents.
         
         """
         #DEBUG: just for fun
-        print("Number of feature files passed:", len(feature_path_or_object_list))
+        print("Number of feature files passed into the hisotgram manager:", len(feature_path_or_object_list))
         
+        #For each ...
         hist_cell_array = []        
         
         # Loop over all feature files and get histogram objects for each
@@ -60,8 +66,8 @@ class HistogramManager(object):
                 # as an instance of WormFeatures (we hope)
                 worm_features = feature_path_or_object
 
-            # %TODO: Need to add on info to properties 
-            # %worm_features.info -> obj.info
+            #TODO: Need to add on info to properties 
+            #worm_features.info -> obj.info
 
             hist_cell_array.append(self.init_histograms(worm_features))
 
