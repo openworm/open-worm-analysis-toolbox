@@ -28,14 +28,6 @@ import numpy as np
 import collections  # For namedtuple
 import time #For FeatureTimer
 
-from .. import config
-
-#TODO: Can we do something differently ...????
-try:
-    from .. import user_config
-except ImportError:
-     raise Exception("user_config.py not found, copy the user_config_example.txt in the 'movement_validation' package to user_config.py in the same directory and edit the values")
-
 from .. import utils
 
 from . import feature_processing_options as fpo
@@ -48,7 +40,13 @@ from . import locomotion_bends
 from . import locomotion_turns
 from . import morphology_features
 
-
+#TODO: This is being used when importing movement_validation
+#This should probably be changed
+#TODO: Can we do something differently ...????
+try:
+    from .. import user_config
+except ImportError:
+     raise Exception("user_config.py not found, copy the user_config_example.txt in the 'movement_validation' package to user_config.py in the same directory and edit the values")
 
 
 """
@@ -161,12 +159,11 @@ class WormLocomotion(object):
     Attributes
     ----------    
     velocity :
-    motion :
+    motion_events :
     motion_mode : 
-    bends :
-    foraging :
-    omegas :
-    upsilons :
+    crawling_bends :
+    foraging_bends :
+    turns :
 
     """
 
@@ -332,7 +329,7 @@ class WormPosture(object):
         self.eccentricity, orientation = \
             posture_features.get_eccentricity_and_orientation(features_ref)
 
-        amp_wave_track = posture_features.get_amplitude_and_wavelength(
+        amp_wave_track = posture_features.AmplitudeAndWavelength(
             orientation, features_ref)
 
         self.amplitude_max = amp_wave_track.amplitude_max
@@ -417,7 +414,7 @@ class WormPosture(object):
         eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')        
         eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
         eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
-        eq_coils = fc.corr_value_high(self.coils,other.coils,'posture.coils')
+        eq_coils = self.coils.test_equality(other.coils,'posture.coils')        
         eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
         
         return \
@@ -472,27 +469,16 @@ class WormPath(object):
         print('Calculating Path Features')        
 
         nw = features_ref.nw
-        video_info = features_ref.video_info
 
         self.range = path_features.Range(nw.contour_x, nw.contour_y)
 
         # Duration (aka Dwelling)
-        #---------------------------------------------------
-        sx = nw.skeleton_x
-        sy = nw.skeleton_y
-        widths = nw.widths
-        self.duration = path_features.Duration(nw, sx, sy, widths, video_info.fps)
+        self.duration = path_features.Duration(features_ref)
 
-        #Coordinates (Done)
-        #---------------------------------------------------
-        self.coordinates = self._create_coordinates(nw.contour_x.mean(axis=0),
-                                                    nw.contour_y.mean(axis=0))
+        self.coordinates = path_features.Coordinates(features_ref)
 
-        #Curvature (Done)
-        #---------------------------------------------------
-        self.curvature = path_features.worm_path_curvature(sx, sy,
-                                                           video_info.fps,
-                                                           nw.ventral_mode)
+        #Curvature
+        self.curvature = path_features.worm_path_curvature(features_ref)
 
     # TODO: Move to class in path_features
     @classmethod
@@ -508,11 +494,9 @@ class WormPath(object):
         self.range = path_features.Range.from_disk(path_var)
         self.duration = path_features.Duration.from_disk(path_var['duration'])
 
-        # TODO: I'd like to have these also be objects with from_disk methods
-        self.coordinates = self._create_coordinates(
-            path_var['coordinates']['x'].value[:, 0],
-            path_var['coordinates']['y'].value[:, 0])
+        self.coordinates = path_features.Coordinates.from_disk(path_var['coordinates'])
 
+        #Make a call to utils loader
         self.curvature = path_var['curvature'].value[:, 0]
 
         return self
@@ -525,10 +509,7 @@ class WormPath(object):
         return \
             self.range == other.range and \
             self.duration == other.duration and \
-            fc.corr_value_high(self.coordinates.x, other.coordinates.x,
-                               'path.coordinates.x') and \
-            fc.corr_value_high(self.coordinates.y, other.coordinates.y,
-                               'path.coordinates.y') and \
+            self.coordinates == other.coordinates and \
             fc.corr_value_high(self.curvature, other.curvature,
                                'path.curvature',
                                high_corr_value=0.95,
@@ -623,11 +604,15 @@ class WormFeatures(object):
         Compare two WormFeatures instances by value
 
         """
-        return \
-            self.morphology == other.morphology and \
-            self.locomotion == other.locomotion and \
-            self.posture    == other.posture    and \
-            self.path       == other.path          
+        same_morphology = self.morphology == other.morphology
+        same_locomotion = self.locomotion == other.locomotion
+        same_posture = self.posture == other.posture
+        same_path = self.path == other.path
+        return same_morphology and \
+             same_locomotion and \
+             same_posture and \
+             same_path
+                      
             
         
 class FeatureTimer(object):

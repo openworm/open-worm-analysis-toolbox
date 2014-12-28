@@ -162,14 +162,27 @@ class LocomotionCrawlingBends(object):
         Compute the temporal bending frequency at the head, midbody, and tail.    
 
         Parameters:
-        -----------   
-        bend_angles       : [49 x n_frames]
-        is_paused         : [1 x n_frames]
+        -----------
+        features_ref : 
+        bend_angles : numpy.array
+            - [49 x n_frames]
+        is_paused : numpy.array
+            - [1 x n_frames]
+            Whether or not the worm is considered to be paused during the frame
         is_segmented_mask : [1 x n_frames]
 
         """
 
         options = features_ref.options.locomotion.crawling_bends
+        
+        if not features_ref.options.should_compute_feature('locomotion.crawling_bends',features_ref):
+            self.head = None
+            self.midbody = None
+            self.tail = None
+            return
+
+        timer = features_ref.timer
+        timer.tic()
 
         fps = features_ref.video_info.fps
 
@@ -210,17 +223,24 @@ class LocomotionCrawlingBends(object):
 
             setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
 
+        timer.toc('locomotion.crawling_bends')
+
     def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
         """
         Compute the bend amplitude and frequency.
 
         Parameters
-        ----------------------
-        avg_bend_angles : [1 x n_frames]
-        options         : LocomotionCrawlingBends in feature_processing_options
-            This is defined in the calling function
-        is_paused       : [1 x n_frames]
-            Whether or not the worm is considered to be paused during the frame
+        ----------
+        avg_bend_angles : numpy.array
+            - [1 x n_frames]
+        bound_info :
+        options : movement_validation.features.feature_processing_options.LocomotionCrawlingBends
+        cur_partition :
+        fps : 
+
+
+        Returns
+        -------
 
         """
         
@@ -459,12 +479,24 @@ class LocomotionForagingBends(object):
         ventral_mode: boolean numpy array [1 x n_frames]
 
         """
+        
+        options = features_ref.options.locomotion.foraging_bends        
+
+        if not features_ref.options.should_compute_feature('locomotion.foraging_bends',features_ref):
+            self.amplitude = None
+            self.angle_speed = None
+            return        
+        
+        timer = features_ref.timer
+        timer.tic()
+        
+        
         # self.amplitude  = None  # DEBUG
         # self.angleSpeed = None # DEBUG
 
         nw  = features_ref.nw
         
-        options = features_ref.options.locomotion.foraging_bends
+        
 
         fps = features_ref.video_info.fps
 
@@ -523,6 +555,9 @@ class LocomotionForagingBends(object):
 
         self.amplitude   = nose_amps
         self.angle_speed = nose_freqs
+
+        timer.toc('locomotion.foraging_bends')
+
 
     def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
         """

@@ -200,14 +200,15 @@ class MotionEvents(object):
     
     Attributes
     ----------
-    forward :
-    paused :
-    backward :
-    mode : numpy array, [1 x num_frames]
-        The locomotion mode:
-        -  -1, backward locomotion
-        -  0 = no locomotion (the worm is paused)
-        - 1 = forward locomotion
+    forward : movement_validation.features.events.EventListWithFeatures
+    paused : movement_validation.features.events.EventListWithFeatures
+    backward : movement_validation.features.events.EventListWithFeatures
+    mode : numpy.array
+        - shape num_frames
+        - Values are:
+            -1, backward locomotion
+            0, no locomotion (the worm is paused)
+            1, forward locomotion
     
     """
     
@@ -323,23 +324,24 @@ class MotionEvents(object):
             ef.max_inter_frames_threshold = max_interframes_threshold
     
             event_list = ef.get_events(midbody_speed, distance_per_frame)
-    
-            # Obtain only events entirely before the num_frames intervals
-            event_mask = event_list.get_event_mask(num_frames)
-    
+
             # Take the start and stop indices and convert them to the structure
             # used in the feature files
-            m_event = events.EventListWithFeatures(event_list,
+            m_event = events.EventListWithFeatures(fps,
+                                                   event_list,
                                                    distance_per_frame,
                                                    compute_distance_during_event=True)
     
-
-            # Record this motion_type to our all_events_dict!
-            # Assign event type to relevant frames of all_events_dict['mode']
+            setattr(self,motion_type,m_event)      
+    
+            #Assign motion modes
+            #------------------------------------------------------------------
+            event_mask = event_list.get_event_mask(num_frames)
             self._mode[event_mask] = frame_values[motion_type]
-            setattr(self,motion_type,m_event)    
+              
 
         timer.toc('locomotion.motion_events')
+
 
     def get_motion_mode(self):
         return self._mode

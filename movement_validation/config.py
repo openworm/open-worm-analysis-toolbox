@@ -27,7 +27,6 @@ from __future__ import division
 
 """ DEBUG MODE TO RESTORE OLD SCHAFER LAB ERRORS """
 
-MIMIC_OLD_BEHAVIOUR = True
 
 """ FEATURE CONFIGURATION SETTINGS """
 
@@ -39,34 +38,6 @@ MIMIC_OLD_BEHAVIOUR = True
 FPS = 25.8398
 # DEBUG: might not need to be here but used in Path code and Locomotion code
 DEFAULT_VENTRAL_MODE = 0
-
-
-""" 
----------------------------------------------
-----------    Posture Features     ----------
----------------------------------------------
-"""
-# posture_features.get_worm_kinks
-KINK_LENGTH_THRESHOLD_PCT = 1 / 12  # This the fraction of the worm length
-# that a bend must be in order to be counted. The # of worm points
-#(this_value*worm_length_in_samples) is rounded to an integer value.
-# The threshold value is inclusive.
-
-# posture_features.get_eccentricity_and_orientation
-N_ECCENTRICITY = 50  
-
-
-POSTURE_AMPLITURE_AND_WAVELENGTH = {
-    'N_POINTS_FFT': 512,
-    # NOTE: Unfortunately the distance is in normalized
-    # frequency units (indices really), not in real frequency units
-    'MIN_DIST_PEAKS': 5,
-    'WAVELENGTH_PCT_MAX_CUTOFF': 0.5,  # TODO: describe
-    'WAVELENGTH_PCT_CUTOFF': 2}        # TODO: describe
-
-POSTURE_AMPLITURE_AND_WAVELENGTH['HALF_N_FFT'] = \
-    POSTURE_AMPLITURE_AND_WAVELENGTH['N_POINTS_FFT'] / 2
-
 
 """ Locomotion Features """
 # used in get_velocity:
@@ -84,22 +55,10 @@ DATA_SUM_NAME = 'distance'
 # same as above but for BETWEEN events
 INTER_DATA_SUM_NAME = 'interDistance'
 
-# Whether to use >= or > as the comparison:
-INCLUDE_AT_SPEED_THRESHOLD = True
-INCLUDE_AT_DISTANCE_THRESHOLD = True
-INCLUDE_AT_FRAMES_THRESHOLD = False
-INCLUDE_AT_INTER_FRAMES_THRESHOLD = False
 
-
-# used in WormPosture
-N_EIGENWORMS_USE = 6
-EIGENWORM_FILE = 'master_eigen_worms_N2.mat'
-
-
-
-
-# STATISTICS
-
+#======================================================
+#                       STATISTICS
+#======================================================
 # Used in Histogram.h_computeMHists
 MAX_NUM_HIST_OBJECTS = 1000
 

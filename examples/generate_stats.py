@@ -31,7 +31,7 @@ def main():
     for i in range(1):
         experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
 
-    
+    print('Done with stats generation')
 
     # TODO: test this:
     #stats = mv.StatisticsManager(experiment_histograms, control_histograms)

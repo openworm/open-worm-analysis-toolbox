@@ -7,6 +7,8 @@ I'd like to move things from "config" into here ...
 
 """
 
+from __future__ import division
+
 from .. import utils
 
 
@@ -113,18 +115,48 @@ class PostureOptions(object):
         # (scalar) The # of points to place in the long dimension. More points
         # gives a more accurate estimate of the ellipse but increases
         # the calculation time.
+        #
+        #Used by: posture_features.get_eccentricity_and_orientation
         
         self.coiling_frame_threshold = round(1/5 * fps) #This is the # of 
         #frames that an epoch must exceed in order for it to be truly
         #considered a coiling event
         #Current value translation: 1/5 of a second
         #
-        #Use: posture_features.get_worm_coils
+        #Used by: posture_features.get_worm_coils
         
         self.n_eigenworms_use = 6        
         #The maximum # of available values is 7 although technically there
         #are generally 48 eigenvectors avaiable, we've just only precomputed
         #7 to use for the projections
+        #
+        #Used by: 
+        
+        self.kink_length_threshold_pct = 1/12 #This the fraction of the worm 
+        #length that a bend must be in order to be counted. The # of worm 
+        #points (this_value*worm_length_in_samples) is rounded to an integer 
+        #value. The threshold value is inclusive.  
+        #
+        #Use: posture_features.get_worm_kinks      
+        
+        self.wavelength = PostureWavelengthOptions() 
+
+class PostureWavelengthOptions(object):
+    
+    """
+    These options are all used in:
+    get_amplitude_and_wavelength
+    """
+    def __init__(self):
+        
+        self.n_points_fft = 512
+
+        self.min_dist_peaks = 5 #This value is in samples, not a 
+        #spatial frequency. The spatial frequency sampling also varies by 
+        #the worm length, so this resolution varies on a frame by frame basis.
+        
+        self.pct_max_cutoff = 0.5
+        self.pct_cutoff = 2
 
 class LocomotionOptions(object):
     
@@ -165,6 +197,11 @@ class LocomotionTurns(object):
     def __init__(self,fps):
         self.max_interpolation_gap_allowed = 9 #frames
         self.min_omega_event_length = round(fps/4)
+        
+        
+        #TODO: There is still a lot to put into here
+        
+        
 
 class LocomotionForagingBends(object):
     
@@ -220,11 +257,20 @@ class IgnorableFeatures:
     def __init__(self):
 
         temp = ['length','width','area','area_per_length','width_per_length']
-        self.morphology =  ['morphology.' + s for s in temp]        
+        self.morphology =  ['morphology.' + s for s in temp]
+        #None of these are implemented ...        
 
         temp = ['velocity','motion_events','motion_mode','crawling_bends','foraging_bends','turns']      
         self.locomotion = ['locomotion.' + s for s in temp]
+        #locomotion
+        #crawling_bends: Done
+        #turns: Done
+ 
+        temp = ['bends','eccentricity', 'amplitude_and_wavelength','kinks','coils','directions','eigen_projection'] 
+        self.posture = ['posture.' + s for s in temp]
+        #None of these are implemented ... 
+
         
-        #temp = ['bends','ecce]
+       
         
         
