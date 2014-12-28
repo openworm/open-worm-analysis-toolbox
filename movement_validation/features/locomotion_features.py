@@ -108,6 +108,7 @@ class LocomotionVelocity(object):
         
         fps = features_ref.video_info.fps
     
+        #We need this for the midbody_distance calculation
         self.fps = fps    
     
         data_keys = list(self.attribute_keys) #Make a copy. Data keys will 

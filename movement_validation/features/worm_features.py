@@ -207,8 +207,8 @@ class WormLocomotion(object):
                                                       nw.angles,
                                                       is_stage_movement,
                                                       self.velocity.get_midbody_distance(),
-                                                      nw.skeleton_x,
-                                                      nw.skeleton_y)
+                                                      nw.x,
+                                                      nw.y)
 
     def __repr__(self):
         return utils.print_object(self)
@@ -325,15 +325,13 @@ class WormPosture(object):
         
         # Let's use a shorthand
         nw  = features_ref.nw
-        options = features_ref.options
+        ##options = features_ref.options
         
         self.bends = posture_features.Bends.create(features_ref)
 
         self.eccentricity, orientation = \
             posture_features.get_eccentricity_and_orientation(features_ref)
 
-
-        
         amp_wave_track = posture_features.get_amplitude_and_wavelength(
             orientation, features_ref)
 
@@ -343,38 +341,25 @@ class WormPosture(object):
         self.secondary_wavelength = amp_wave_track.secondary_wavelength
         self.track_length = amp_wave_track.track_length
 
-        # *** 4. Kinks *** DONE
-        self.kinks = posture_features.get_worm_kinks(nw.angles)
+        self.kinks = posture_features.get_worm_kinks(features_ref)
 
-        # *** 5. Coils ***
-        frame_codes = nw.frame_codes
-        self.coils = posture_features.get_worm_coils(
-            frame_codes, midbody_distance)
+        self.coils = posture_features.get_worm_coils(features_ref, midbody_distance)
 
-        # *** 6. Directions *** DONE
-        self.directions = posture_features.Directions(nw.skeleton_x,
-                                                      nw.skeleton_y,
-                                                      nw.worm_partitions)
+        self.directions = posture_features.Directions(features_ref)
 
-        # *** 7. Skeleton *** DONE
-        # (already in morphology, but Schafer Lab put it here too)
+        #TODO: I'd rather this be a formal class
         nt = collections.namedtuple('skeleton', ['x', 'y'])
         self.skeleton = nt(nw.skeleton_x, nw.skeleton_y)
 
-        # *** 8. EigenProjection *** DONE
-
-        self.eigen_projection = posture_features.get_eigenworms(
-            nw.skeleton_x, nw.skeleton_y,
-            config.N_EIGENWORMS_USE)
+        self.eigen_projection = posture_features.get_eigenworms(features_ref)
 
     @classmethod
     def from_disk(cls, p_var):
 
         self = cls.__new__(cls)
+        
         self.bends = posture_features.Bends.from_disk(p_var['bends'])
 
-        # NOTE: This will be considerably different for old vs new format. Currently
-        # only the old is implemented
         temp_amp = p_var['amplitude']
 
         self.amplitude_max = utils._extract_time_from_disk(temp_amp, 'max')
@@ -382,8 +367,7 @@ class WormPosture(object):
 
         temp_wave = p_var['wavelength']
         self.primary_wavelength = utils._extract_time_from_disk(temp_wave, 'primary')
-        self.secondary_wavelength = utils._extract_time_from_disk(
-            temp_wave, 'secondary')
+        self.secondary_wavelength = utils._extract_time_from_disk(temp_wave, 'secondary')
 
         self.track_length = utils._extract_time_from_disk(p_var, 'tracklength')
         self.eccentricity = utils._extract_time_from_disk(p_var, 'eccentricity')
@@ -391,8 +375,7 @@ class WormPosture(object):
 
         self.coils = events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
 
-        self.directions = posture_features.Directions.from_disk(
-            p_var['directions'])
+        self.directions = posture_features.Directions.from_disk(p_var['directions'])
 
         # TODO: Add contours
         skeleton = p_var['skeleton']
@@ -414,7 +397,6 @@ class WormPosture(object):
 
         # TODO: 
         # Missing:
-        # primary_wavelength
         # directions
         # bend
 
@@ -430,6 +412,7 @@ class WormPosture(object):
         eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985) 
         eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
         eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks')
+        eq_primary_wavelength = fc.corr_value_high(self.primary_wavelength,other.primary_wavelength,'posture.primary_wavelength')
         eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength, other.secondary_wavelength, 'posture.secondary_wavelength')
         eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')        
         eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
@@ -442,6 +425,7 @@ class WormPosture(object):
             eq_amplitude_ratio and \
             eq_track_length and \
             eq_kinks and \
+            eq_primary_wavelength and \
             eq_secondary_wavelength and \
             eq_amplitude_max and \
             eq_skeleton_x and \
@@ -647,6 +631,17 @@ class WormFeatures(object):
             
         
 class FeatureTimer(object):
+
+    """
+    This class is meant to be called in the following way by code that is 
+    processing a feature.
+    
+    timer = features_ref.timer
+    timer.tic()
+    #Run the feature processing code
+    timer.toc('name of feature being processed')    
+        
+    """
 
     def __init__(self):    
         self.names = []

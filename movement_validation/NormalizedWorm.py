@@ -47,10 +47,11 @@ class NormalizedWorm(object):
       non_vulva_areas      
 
       n_frames
-      x
+      x - how does this differ from skeleton_x???
       y
       contour_x
       contour_y
+      skeleton_x
 
     static methods:
       getObject              load_normalized_data(self, data_path)

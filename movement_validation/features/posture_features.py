@@ -10,7 +10,6 @@ from __future__ import division
 import scipy.ndimage.filters as filters
 import numpy as np
 import warnings
-import time
 import os, inspect, h5py
 import collections
 
@@ -37,6 +36,11 @@ class Bends(object):
     
     Attributes
     ----------
+    head : BendSection
+    midbody : BendSection
+    tail : BendSection
+    hips : BendSection
+    neck : BendSection
     
     """
     def __init__(self, features_ref):
@@ -119,6 +123,15 @@ class BendSection(object):
     def __repr__(self):
         return utils.print_object(self)
 
+    """
+        TODO: Finish this    
+    
+    def __eq__(self, other):
+        return fc.corr_value_high(self.speed,other.speed,
+                                  'locomotion.velocity.' + self.name + '.speed') and \
+               fc.corr_value_high(self.direction,other.direction,
+                                  'locomotion.velocity.' + self.name + '.direction')
+    """
 
 def get_eccentricity_and_orientation(features_ref):
     """
@@ -961,8 +974,25 @@ Old Vs New Code:
 """
 
 
-def get_worm_kinks(bend_angles):
+def get_worm_kinks(features_ref):
+    """
+    Parameters
+    ----------
+    features_ref : movement_validation.features.worm_features.WormFeatures
+    
+    Returns
+    -------
+    numpy.array
+    
+    """
+    
     # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
+
+    nw = features_ref.nw
+    timer = features_ref.timer
+    timer.tic()
+
+    bend_angles = nw.angles
 
     # Determine the bend segment length threshold.
     n_angles = bend_angles.shape[0]
@@ -975,8 +1005,7 @@ def get_worm_kinks(bend_angles):
     #- see window code which tries to get an odd value ...
     #- I'd like to go back and fix that code ...
     half_length_thr = np.round(length_threshold / 2)
-    gauss_filter    = utils.gausswin(half_length_thr * 2 + 1) \
-        / half_length_thr
+    gauss_filter = utils.gausswin(half_length_thr * 2 + 1) / half_length_thr
 
     # Compute the kinks for the worms.
     n_frames = bend_angles.shape[1]
@@ -1046,19 +1075,41 @@ def get_worm_kinks(bend_angles):
 
         n_kinks_all[iFrame] = np.sum(lengths >= length_threshold)
 
+    timer.toc('posture.kinks')
+
     return n_kinks_all
 
 
-def get_worm_coils(frame_codes, midbody_distance):
+def get_worm_coils(features_ref, midbody_distance):
+    """
+    
+    
+    Parameters
+    ----------
+    features_ref : movement_validation.features.worm_features.WormFeatures    
+    
+    This function is currently very reliant on the MRC processor.
+    
+    Translated From:
+    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
+    """
 
-    # This function is very reliant on the MRC processor
+    
+    options = features_ref.options
+    posture_options = options.posture
+    timer = features_ref.timer
+    
+    timer.tic()    
+    
+    frame_codes = features_ref.nw.frame_codes
+    
 
-    # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
-
-    COIL_FRAME_THRESHOLD = np.round(1 / 5 * config.FPS)
+    COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold
+    
+    #These are values that are specific to the MRC processor
     COIL_START_CODES = [105, 106]
-    FRAME_SEGMENTED = 1  # Go back 1 frame, this is the end of the coil ...
-
+    FRAME_SEGMENTED = 1 #Code that indicates a frame was succsefully segmented
+    
     # Algorithm: Whenever a new start is found, find the first segmented frame,
     # that's the end.
 
@@ -1096,97 +1147,48 @@ def get_worm_coils(frame_codes, midbody_distance):
             in_coil = True
             coil_frame_start = iFrame
 
-    if config.MIMIC_OLD_BEHAVIOUR:
+    if options.mimic_old_behaviour:
         if (len(starts) > 0) & (ends[-1] == len(frame_codes) - 1):
             ends[-1] += -1
             starts[-1] += -1
 
     temp = events.EventList(np.transpose(np.vstack((starts, ends))))
 
+    timer.toc('posture.coils')  
+
     return events.EventListWithFeatures(temp, midbody_distance)
-
-    """
-  coiled_frames = h__getWormTouchFrames(frame_codes, config.FPS);
-
-  COIL_FRAME_THRESHOLD = np.round(1/5 * config.FPS);
-  """
-
-    # Algorithm: Whenever a new start is found, find the first segmented frame,
-    # that's the end.
-
-    # Add on a frame to allow closing a coil at the end ...
-
-# pdb.set_trace()    # DEBUG
-
-    """
-  coil_start_mask = [frameCodes == COIL_START_CODES(1) | frameCodes == COIL_START_CODES(2) false];
-  
-  #NOTE: These are not guaranteed ends, just possible ends ...
-  end_coil_mask   = [frameCodes == FRAME_SEGMENTED true];
-  
-  in_coil = false;
-  coil_frame_start = 0;
-  
-  n_coils = 0;
-  
-  n_frames_p1 = length(frameCodes) + 1;
-  
-  for iFrame = 1:n_frames_p1
-      if in_coil
-          if end_coil_mask(iFrame)
-              
-              n_coil_frames = iFrame - coil_frame_start;
-              if n_coil_frames >= COIL_FRAME_THRESHOLD
-                  n_coils = n_coils + 1;
-                  
-                  touchFrames(n_coils).start = coil_frame_start; 
-                  touchFrames(n_coils).end   = iFrame - 1;
-              end
-              in_coil = false;
-          end
-      elseif coil_start_mask(iFrame)
-          in_coil = true;
-          coil_frame_start = iFrame;
-      end
-  end
-  
-  
-  
-  
-  
-  if d_opts.mimic_old_behavior
-      if ~isempty(coiled_frames) && coiled_frames(end).end == length(frame_codes)
-         coiled_frames(end).end   = coiled_frames(end).end - 1;
-         coiled_frames(end).start = coiled_frames(end).start - 1;
-      end
-  end
-  
-  coiled_events = seg_worm.feature.event(coiled_frames,FPS,midbody_distance,DATA_NAME,INTER_DATA_NAME);
-  
-  return coiled_events.getFeatureStruct;
-   
-  """
-
-    return None
 
 
 class Directions(object):
 
     """
 
-    tail2head
-    head
-    tail
+    Attributes
+    ----------
+    tail2head : numpy.array
+    head : numpy.array
+    tail : numpy.array
 
     """
 
-    def __init__(self, sx, sy, wp):
+    def __init__(self, features_ref):
         """
 
-        wp : (worm paritions) from normalized worm, 
+        Parameters
+        ----------
+        features_ref : movement_validation.features.worm_features.WormFeatures
 
         """
 
+        timer = features_ref.timer
+        timer.tic()
+
+        nw = features_ref.nw
+        
+        sx = nw.x
+        sy = nw.y
+        wp = nw.worm_partitions
+                                                      
         # These are the names of the final fields
         NAMES = ['tail2head', 'head', 'tail']
 
@@ -1206,9 +1208,11 @@ class Directions(object):
             tail_x = np.mean(sx[TAIL_S[iVector], :], axis=0)
             tail_y = np.mean(sy[TAIL_S[iVector], :], axis=0)
 
-            dir_value = 180 / np.pi * \
-                np.arctan2(tip_y - tail_y, tip_x - tail_x)
+            dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, tip_x - tail_x)
             setattr(self, NAMES[iVector], dir_value)
+
+        timer.toc('posture.directions')
+
 
     @classmethod
     def from_disk(cls, data):
@@ -1247,12 +1251,12 @@ def load_eigen_worms():
     return np.transpose(eigen_worms)
 
 
-def get_eigenworms(sx, sy, N_EIGENWORMS_USE):
+def get_eigenworms(features_ref):
     """
 
     Parameters
     ----------
-    eigen_worms: [7,48]  
+    features_ref : movement_validation.features.worm_features.WormFeatures
     
     Returns
     -------
@@ -1260,9 +1264,19 @@ def get_eigenworms(sx, sy, N_EIGENWORMS_USE):
 
     """
     
+    nw = features_ref.nw
+    sx = nw.skeleton_x
+    sy = nw.skeleton_y
+    posture_options = features_ref.options.posture
+    N_EIGENWORMS_USE = posture_options.n_eigenworms_use    
+    
+    timer = features_ref.timer
+    timer.toc    
+    
+    #eigen_worms: [7,48]  
     eigen_worms = load_eigen_worms()    
     
-
+    #???? How does this differ from nw.angles???
     angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
 
     n_frames = sx.shape[1]
@@ -1305,4 +1319,7 @@ def get_eigenworms(sx, sy, N_EIGENWORMS_USE):
 
     angles = angles - np.mean(angles, axis=0)
 
-    return np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+    eigen_projections = np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+    timer.toc('posture.eigenworms')
+
+    return eigen_projections

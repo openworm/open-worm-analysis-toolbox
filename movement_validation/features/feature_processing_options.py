@@ -113,6 +113,18 @@ class PostureOptions(object):
         # (scalar) The # of points to place in the long dimension. More points
         # gives a more accurate estimate of the ellipse but increases
         # the calculation time.
+        
+        self.coiling_frame_threshold = round(1/5 * fps) #This is the # of 
+        #frames that an epoch must exceed in order for it to be truly
+        #considered a coiling event
+        #Current value translation: 1/5 of a second
+        #
+        #Use: posture_features.get_worm_coils
+        
+        self.n_eigenworms_use = 6        
+        #The maximum # of available values is 7 although technically there
+        #are generally 48 eigenvectors avaiable, we've just only precomputed
+        #7 to use for the projections
 
 class LocomotionOptions(object):
     
