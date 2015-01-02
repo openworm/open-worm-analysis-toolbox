@@ -1,5 +1,7 @@
 #movement_validation#
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/movement_validation?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true)
 
 <sub><sup><sup>Images: C. elegans by Bob Goldstein, UNC Chapel Hill http://bio.unc.edu/people/faculty/goldstein/  Freely licensed. Contour credit: MRC Schafer Lab.  Simulated worm: OpenWorm.</sup></sup></sup>
