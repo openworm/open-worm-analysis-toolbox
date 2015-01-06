@@ -21,11 +21,11 @@ import sys, os
 sys.path.append('..') 
 import movement_validation
 
-
 user_config = movement_validation.user_config
 NormalizedWorm = movement_validation.NormalizedWorm
 WormFeatures = movement_validation.WormFeatures
 VideoInfo = movement_validation.VideoInfo
+
 
 def main():
     """

@@ -5,16 +5,16 @@ posture.coils,time_between_events,Posture,5,,Inter Coil Time,Inter Time,seconds,
 posture.coils,distance_between_events,Posture,100,,Inter Coil Distance,Inter Distance,microns,0,1,0,0,posture.coils.frames,interDistance
 posture.coils,frequency,Posture,0.001,,Coils Frequency,Frequency,Hz,1,0,0,0,posture.coils.frequency,
 posture.coils,time_ratio,Posture,0.001,,Coils Time Ratio,Time Ratio,no units,1,0,0,0,posture.coils.timeRatio,
-locomotion.turns.omegas.omegas,event_durations,Locomotion,0.1,is_ventral,Omega Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1,locomotion.turns.omegas.frames,time
-locomotion.turns.omegas.omegas,time_between_events,Locomotion,5,is_ventral,Inter Omega Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1,locomotion.turns.omegas.frames,interTime
-locomotion.turns.omegas.omegas,distance_between_events,Locomotion,100,is_ventral,Inter Omega Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1,locomotion.turns.omegas.frames,interDistance
-locomotion.turns.omegas.omegas,frequency,Locomotion,0.001,,Omega Turns Frequency,Frequency,Hz,1,0,0,0,locomotion.turns.omegas.frequency,
-locomotion.turns.omegas.omegas,time_ratio,Locomotion,0.001,,Omega Turns Time Ratio,Time Ratio,no units,1,0,0,0,locomotion.turns.omegas.timeRatio,
-locomotion.turns.upsilons.upsilons,event_durations,Locomotion,0.1,is_ventral,Upsilon Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1,locomotion.turns.upsilons.frames,time
-locomotion.turns.upsilons.upsilons,time_between_events,Locomotion,5,is_ventral,Inter Upsilon Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1,locomotion.turns.upsilons.frames,interTime
-locomotion.turns.upsilons.upsilons,distance_between_events,Locomotion,100,is_ventral,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1,locomotion.turns.upsilons.frames,interDistance
-locomotion.turns.upsilons.upsilons,frequency,Locomotion,0.001,,Upsilon Turns Frequency,Frequency,Hz,1,0,0,0,locomotion.turns.upsilons.frequency,
-locomotion.turns.upsilons.upsilons,time_ratio,Locomotion,0.001,,Upsilon Turns Time Ratio,Time Ratio,no units,1,0,0,0,locomotion.turns.upsilons.timeRatio,
+locomotion.turns.omegas,event_durations,Locomotion,0.1,is_ventral,Omega Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1,locomotion.turns.omegas.frames,time
+locomotion.turns.omegas,time_between_events,Locomotion,5,is_ventral,Inter Omega Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1,locomotion.turns.omegas.frames,interTime
+locomotion.turns.omegas,distance_between_events,Locomotion,100,is_ventral,Inter Omega Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1,locomotion.turns.omegas.frames,interDistance
+locomotion.turns.omegas,frequency,Locomotion,0.001,,Omega Turns Frequency,Frequency,Hz,1,0,0,0,locomotion.turns.omegas.frequency,
+locomotion.turns.omegas,time_ratio,Locomotion,0.001,,Omega Turns Time Ratio,Time Ratio,no units,1,0,0,0,locomotion.turns.omegas.timeRatio,
+locomotion.turns.upsilons,event_durations,Locomotion,0.1,is_ventral,Upsilon Turn Time (+/- = D/V Inside),Time,seconds,0,1,0,1,locomotion.turns.upsilons.frames,time
+locomotion.turns.upsilons,time_between_events,Locomotion,5,is_ventral,Inter Upsilon Time (+/- = Previous D/V),Inter Time,seconds,0,1,0,1,locomotion.turns.upsilons.frames,interTime
+locomotion.turns.upsilons,distance_between_events,Locomotion,100,is_ventral,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,microns,0,1,0,1,locomotion.turns.upsilons.frames,interDistance
+locomotion.turns.upsilons,frequency,Locomotion,0.001,,Upsilon Turns Frequency,Frequency,Hz,1,0,0,0,locomotion.turns.upsilons.frequency,
+locomotion.turns.upsilons,time_ratio,Locomotion,0.001,,Upsilon Turns Time Ratio,Time Ratio,no units,1,0,0,0,locomotion.turns.upsilons.timeRatio,
 locomotion.motion_events.forward,event_durations,Locomotion,0.5,,Forward Time,Time,seconds,0,1,0,0,locomotion.motion.forward.frames,time
 locomotion.motion_events.forward,distance_during_events,Locomotion,10,,Forward Distance,Distance,microns,0,1,0,0,locomotion.motion.forward.frames,distance
 locomotion.motion_events.forward,time_between_events,Locomotion,5,,Inter Forward Time,Inter Time,seconds,0,1,0,0,locomotion.motion.forward.frames,interTime

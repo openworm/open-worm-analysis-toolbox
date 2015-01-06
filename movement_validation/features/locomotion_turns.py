@@ -2,7 +2,9 @@
 """
 Calculate the "Turns" locomotion feature
 
-There are two kinds of turn: an omega and an upsilon.
+There are two kinds of turns:
+    - omega
+    - upsilon.
 
 The only external-facing item is LocomotionTurns.  The rest are internal 
 to this module.
@@ -49,42 +51,41 @@ import operator
 import re
 
 from .. import utils
-from .. import config
 
 from . import events
-
-
-
-
 
 class LocomotionTurns(object):
 
     """
     LocomotionTurns
 
-    Properties
-    ---------------------------------------    
-    omegas
-    upsilons
+    Attributes
+    ----------    
+    omegas : OmegaTurns
+    upsilons : UpsilonTurns
 
     Methods
-    ---------------------------------------    
+    -------
     __init__
-
-
-    Notes
-    ---------------------------------------    
-    Formerly this was not implemented as a class.
 
     """
 
-    def __init__(self, nw, bend_angles, is_stage_movement, midbody_distance, sx, sy):
+    def __init__(self, features_ref, bend_angles, is_stage_movement, midbody_distance, sx, sy):
         """
         Initialiser for the LocomotionTurns class
 
+        Parameters
+        ----------
+        features_ref :
+        bend_angles :
+        is_stage_movement :
+        midbody_distance :
+        sx :
+        sy :
+
         Notes
         ---------------------------------------    
-        Formerly getOmegaAndUpsilonTurns(obj, bend_angles,is_stage_movement,midbody_distance,sx,sy,FPS)
+        Formerly getOmegaAndUpsilonTurns
 
         Old Name: 
         - featureProcess.m
@@ -92,7 +93,19 @@ class LocomotionTurns(object):
 
         """
 
-        MAX_INTERPOLATION_GAP_ALLOWED = 9
+        nw = features_ref.nw
+
+        if not features_ref.options.should_compute_feature('locomotion.turns',features_ref):
+            self.omegas = None
+            self.upsilons = None
+            return
+
+        options = features_ref.options.locomotion.locomotion_turns
+
+        fps = features_ref.video_info.fps
+
+        timer = features_ref.timer
+        timer.tic()
 
         n_frames = bend_angles.shape[1]
 
@@ -103,9 +116,9 @@ class LocomotionTurns(object):
                                          'body_angles_with_long_nans',
                                          'is_stage_movement'])
 
-        first_third = nw.get_subset_partition_mask('first_third')
+        first_third  = nw.get_subset_partition_mask('first_third')
         second_third = nw.get_subset_partition_mask('second_third')
-        last_third = nw.get_subset_partition_mask('last_third')
+        last_third   = nw.get_subset_partition_mask('last_third')
 
         # NOTE: For some reason the first and last few angles are NaN, so we use
         # nanmean instead of mean.  We could probably avoid this for the body.
@@ -127,18 +140,19 @@ class LocomotionTurns(object):
         # value in each angle vector
         if n_head < 2 or n_body < 2 or n_tail < 2:
             # Make omegas and upsilons into blank events lists and return
-            self.omegas = events.EventListWithFeatures(make_null=True)
+            self.omegas   = events.EventListWithFeatures(make_null=True)
             self.upsilons = events.EventListWithFeatures(make_null=True)
             return
 
         # Interpolate the angles.  angles is modified.
-        self.h__interpolateAngles(angles, MAX_INTERPOLATION_GAP_ALLOWED)
+        self.h__interpolateAngles(angles, options.max_interpolation_gap_allowed)
 
         # Get frames for each turn type
         #----------------------------------------------------------------------
         # This doesn't match was is written in the supplemental material ...
         # Am I working off of old code??????
 
+        #TODO: Move this all to options ...
         consts = collections.namedtuple('consts',
                                         ['head_angle_start_const',
                                          'tail_angle_start_const',
@@ -152,18 +166,18 @@ class LocomotionTurns(object):
                 [20, -20, 15, -15],
                 [20, -20, 15, -15]]
         """
-    OLD Matlab CODE:
+        OLD Matlab CODE:
     
-    consts = struct(...
-        'head_angle_start_const',{20 -20 15 -15}, ...
-        'tail_angle_start_const',{30  30 30  30}, ...
-        'head_angle_end_const',  {40  40 30  30}, ...
-        'tail_angle_end_const',  {20 -20 15 -15}, ...
-        'body_angle_const'   ,   {20 -20 15 -15})
-    """
+        consts = struct(...
+            'head_angle_start_const',{20 -20 15 -15}, ...
+            'tail_angle_start_const',{30  30 30  30}, ...
+            'head_angle_end_const',  {40  40 30  30}, ...
+            'tail_angle_end_const',  {20 -20 15 -15}, ...
+            'body_angle_const'   ,   {20 -20 15 -15})
+        """
 
-        # NOTE: We need to run omegas first (false values) since upsilons are more
-        # inclusive, but can not occur if an omega event occurs
+        #NOTE: We need to run omegas first (false values) since upsilons are 
+        #more inclusive, but can not occur if an omega event occurs
         is_upsilon = [False, False, True, True]
 
         # NOTE: We assign different values based on the sign of the angles
@@ -172,7 +186,7 @@ class LocomotionTurns(object):
         frames = collections.namedtuple('frames',
                                         ['omega_frames', 'upsilon_frames'])
 
-        frames.omega_frames = np.zeros(n_frames)
+        frames.omega_frames   = np.zeros(n_frames)
         frames.upsilon_frames = np.zeros(n_frames)
 
         for i in range(4):
@@ -180,7 +194,7 @@ class LocomotionTurns(object):
             consts.tail_angle_start_const = yuck[1][i]
             consts.head_angle_end_const = yuck[2][i]
             consts.tail_angle_end_const = yuck[3][i]
-            consts.body_angle_const = yuck[4][i]
+            consts.body_angle_const     = yuck[4][i]
             condition_indices = self.h__getConditionIndices(angles, consts)
             self.h__populateFrames(angles,
                                    condition_indices,
@@ -189,15 +203,18 @@ class LocomotionTurns(object):
                                    values_to_assign[i])
 
         # Calculate the events from the frame values
-        self.omegas = OmegaTurns(frames.omega_frames,
-                                 nw,
-                                 body_angles_for_ht_change,
-                                 midbody_distance,
-                                 config.FPS)
+        self.omegas   = OmegaTurns.create(options,
+                                   frames.omega_frames,
+                                   nw,
+                                   body_angles_for_ht_change,
+                                   midbody_distance,
+                                   fps)
 
-        self.upsilons = UpsilonTurns(frames.upsilon_frames,
+        self.upsilons = UpsilonTurns.create(frames.upsilon_frames,
                                      midbody_distance,
-                                     config.FPS)
+                                     fps)
+
+        timer.toc('locomotion.turns')
 
     @classmethod
     def from_disk(cls, turns_ref):
@@ -210,7 +227,9 @@ class LocomotionTurns(object):
         return self
 
     def __eq__(self, other):
-        return self.omegas == other.omegas and self.upsilons == other.upsilons
+        return \
+            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
+            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
 
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
@@ -435,9 +454,15 @@ class UpsilonTurns(object):
 
     """
 
-    def __init__(self, upsilon_frames, midbody_distance, FPS):
+    def __init__(self, upsilon_frames, midbody_distance, fps):
         """
         Initialiser for the UpsilonTurns class.
+
+        Parameters
+        ----------
+        upsilon_frames :
+        midbody_distance :
+        fps :
 
         Notes
         ---------------------------------------    
@@ -447,21 +472,22 @@ class UpsilonTurns(object):
 
         """
 
-        # How to reference?????? - @JimHokanson
-        # I'm not sure what you mean. - @MichaelCurrie
-        self.upsilons = getTurnEventsFromSignedFrames(upsilon_frames,
+        self.value = getTurnEventsFromSignedFrames(upsilon_frames,
                                                       midbody_distance,
-                                                      FPS)
+                                                      fps)
+
+    @staticmethod
+    def create(upsilon_frames, midbody_distance, fps):
+
+        temp = UpsilonTurns(upsilon_frames, midbody_distance, fps)        
+        
+        return temp.value
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        self = cls.__new__(cls)
-        self.upsilons = events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')  
-        return self
+        return events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')
         
-    def __eq__(self, other):
-        return self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons')
         
 """
 ===============================================================================
@@ -486,13 +512,13 @@ class OmegaTurns(object):
 
     """
 
-    def __init__(self, omega_frames_from_angles, nw, body_angles,
-                 midbody_distance, FPS):
+    def __init__(self, options, omega_frames_from_angles, nw, body_angles,
+                 midbody_distance, fps):
         """
         Initialiser for the OmegaTurns class.
 
         Parameters
-        ---------------------------------------    
+        ----------
         omega_frames_from_angles: [1 x n_frames]
           Each frame has the value 0, 1, or -1, 
 
@@ -529,55 +555,49 @@ class OmegaTurns(object):
 
         """
 
-        MIN_OMEGA_EVENT_LENGTH = round(FPS / 4)
-
-        body_angles_i = utils.\
-            interpolate_with_threshold(body_angles, extrapolate=True)
+        body_angles_i = \
+            utils.interpolate_with_threshold(body_angles, extrapolate=True)
 
         self.omegas = None  # DEBUG: remove once the below code is ready
 
-        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, config.FPS)
+        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, fps)
             
-
         # Filter:
         # This is to be consistent with the old code. We filter then merge, then
         # filter again :/
-        omega_frames_from_th_change = self.h__filterAndSignFrames(
-            body_angles_i, omega_frames_from_th_change, MIN_OMEGA_EVENT_LENGTH)
+        omega_frames_from_th_change = \
+            self.h__filterAndSignFrames(body_angles_i, 
+                                        omega_frames_from_th_change, 
+                                        options.min_omega_event_length)
 
-        #import pdb
-        #pdb.set_trace()
-
-        # DEBUG
-        # I'm not sure what this is supposed to do; these two arrays have
-        # values 0 or -1, so I just turned them into boolean
-        # arrays so they will work with the elementwise or (|) operator here.
-        # I don't know if that is going to be correct or not.
-        # - @MichaelCurrie
         is_omega_frame = (omega_frames_from_angles != 0) | \
                          (omega_frames_from_th_change != 0)
 
         # Refilter and sign
-        signed_omega_frames = self.h__filterAndSignFrames(body_angles_i,
-                                                          is_omega_frame,
-                                                          MIN_OMEGA_EVENT_LENGTH)
+        signed_omega_frames = \
+            self.h__filterAndSignFrames(body_angles_i,
+                                        is_omega_frame,
+                                        options.min_omega_event_length)
 
         # Convert frames to events ...
-        self.omegas = getTurnEventsFromSignedFrames(signed_omega_frames,
+        self.value = getTurnEventsFromSignedFrames(signed_omega_frames,
                                                     midbody_distance,
-                                                    FPS)
+                                                    fps)
+
+
+    @staticmethod
+    def create(options, omega_frames_from_angles, nw, body_angles, midbody_distance, fps):
+        
+        temp = OmegaTurns(options, omega_frames_from_angles, nw, body_angles,
+                 midbody_distance, fps)
+
+        return temp.value
+
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        self = cls.__new__(cls)
-        self.omegas = events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
-        return self
-        
-        
-    def __eq__(self, other):
-        return self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')    
-
+        return events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """
@@ -821,7 +841,8 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     [frames_merged, is_ventral] = events.EventList.merge(frames_ventral,
                                                          frames_dorsal)
 
-    turn_event_output = events.EventListWithFeatures(frames_merged,
+    turn_event_output = events.EventListWithFeatures(FPS,
+                                                     frames_merged,
                                                      midbody_distance)
 
     turn_event_output.is_ventral = is_ventral

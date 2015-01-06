@@ -7,12 +7,44 @@ path_features.py
 import numpy as np
 
 from .. import utils
-from .. import config
 
 from . import feature_comparisons as fc
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
+
+
+class Coordinates(object):
+    
+    """
+    Attributes
+    ----------
+    x :
+    y : 
+    """
+    def __init__(self,features_ref):
+        nw = features_ref.nw
+        self.x = nw.contour_x.mean(axis=0)
+        self.y = nw.contour_y.mean(axis=0) 
+
+    def __repr__(self):
+        return utils.print_object(self)
+    
+    @classmethod
+    def from_disk(cls, c_data):
+
+        self = cls.__new__(cls)
+
+        #Use utils loader
+        self.x = c_data['x'].value[:, 0]
+        self.y = c_data['y'].value[:, 0]
+
+        return self
+        
+    def __eq__(self, other):
+        return \
+            fc.corr_value_high(self.x, other.x, 'path.coordinates.x') and \
+            fc.corr_value_high(self.y, other.y, 'path.coordinates.y')      
 
 class Range(object):
 
@@ -23,10 +55,7 @@ class Range(object):
 
     """
 
-    def __init__(self, contour_x=None, contour_y=None):
-
-        if contour_x is None:
-            return
+    def __init__(self, contour_x, contour_y):
 
         # Get average per frame
         #------------------------------------------------
@@ -41,18 +70,15 @@ class Range(object):
         self.value = np.sqrt(
             (mean_cx - x_centroid_cx) ** 2 + (mean_cy - y_centroid_cy) ** 2)
 
-    @staticmethod
-    def from_disk(path_var):
+    @classmethod
+    def from_disk(cls,path_var):
 
-        # path_features.Range.from_disk(path_var)
-
-        temp = Range(None)
+        self = cls.__new__(cls)
 
         # NOTE: This is of size nx1 for Matlab versions, might want to fix on loading
-        #
-        temp.value = np.squeeze(path_var['range'].value)
+        self.value = np.squeeze(path_var['range'].value)
 
-        return temp
+        return self
 
     def __repr__(self):
         return utils.print_object(self)
@@ -75,10 +101,17 @@ class Duration(object):
 
     """
 
-    def __init__(self, nw=None, sx=None, sy=None, widths=None, fps=None):
+    def __init__(self, features_ref):
 
-        if nw is None:
-            return
+        options = features_ref.options
+        
+        #Inputs
+        #------
+        nw = features_ref.nw
+        sx = nw.skeleton_x
+        sy = nw.skeleton_y
+        widths = nw.widths
+        fps = features_ref.video_info.fps
 
         s_points = [nw.worm_partitions[x]
                     for x in ('all', 'head', 'body', 'tail')]
@@ -93,7 +126,7 @@ class Duration(object):
             #    obj.duration = h__buildOutput(arena,durations);
             #    return;
 
-        if config.MIMIC_OLD_BEHAVIOUR:
+        if options.mimic_old_behaviour:
             s_points_temp = [nw.worm_partitions[x]
                              for x in ('head', 'midbody', 'tail')]
             temp_widths   = [widths[x[0]:x[1], :] for x in s_points_temp]
@@ -201,6 +234,8 @@ class Duration(object):
 
     def __eq__(self, other):
 
+        return True
+        """
         if config.MIMIC_OLD_BEHAVIOUR:
             # JAH: I've looked at the results and they look right
             # Making them look the same would make things really ugly as it means
@@ -213,23 +248,23 @@ class Duration(object):
                 self.head    == other.head      and \
                 self.midbody == other.midbody   and \
                 self.tail == other.tail
+        """
 
     def __repr__(self):
         return utils.print_object(self)
 
-    @staticmethod
-    def from_disk(duration_group):
+    @classmethod
+    def from_disk(cls,duration_group):
 
-        # path_features.Duration.from_disk(path_var)
+        self = cls.__new__(cls)
 
-        temp = Duration(None)
-        temp.arena = Arena.from_disk(duration_group['arena'])
-        temp.worm = DurationElement.from_disk(duration_group['worm'])
-        temp.head = DurationElement.from_disk(duration_group['head'])
-        temp.midbody = DurationElement.from_disk(duration_group['midbody'])
-        temp.tail = DurationElement.from_disk(duration_group['tail'])
+        self.arena = Arena.from_disk(duration_group['arena'])
+        self.worm = DurationElement.from_disk(duration_group['worm'])
+        self.head = DurationElement.from_disk(duration_group['head'])
+        self.midbody = DurationElement.from_disk(duration_group['midbody'])
+        self.tail = DurationElement.from_disk(duration_group['tail'])
 
-        return temp
+        return self
 
 
 class DurationElement(object):
@@ -263,6 +298,7 @@ class DurationElement(object):
     def from_disk(cls, saved_duration_elem):
 
         self = cls.__new__(cls)
+        #TODO: Use utils loader 
         self.indices = saved_duration_elem['indices'].value[0]
         self.times = saved_duration_elem['times'].value[0]
 
@@ -321,7 +357,7 @@ class Arena(object):
         return self
 
 
-def worm_path_curvature(x, y, fps, ventral_mode):
+def worm_path_curvature(features_ref):
     """
     Parameters:
     -----------
@@ -329,6 +365,14 @@ def worm_path_curvature(x, y, fps, ventral_mode):
       Worm skeleton x coordinates, []
 
     """
+
+    BODY_DIFF = 0.5
+
+    nw = features_ref.nw
+    x = nw.x
+    y = nw.y
+    fps = features_ref.video_info.fps
+    ventral_mode = nw.ventral_mode    
 
     # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
 
@@ -343,10 +387,10 @@ def worm_path_curvature(x, y, fps, ventral_mode):
     # NOTE: This is what is in the MRC code, but differs from their description.
     # In this case I think the skeleton filtering makes sense so we'll keep it.
     speed, ignored_variable, motion_direction = \
-        velocity_module.compute_velocity(x[BODY_I, :], y[BODY_I,:], \
-                                         avg_body_angles_d, config.BODY_DIFF, ventral_mode)
+        velocity_module.compute_velocity(fps, x[BODY_I, :], y[BODY_I,:], \
+                                         avg_body_angles_d, BODY_DIFF, ventral_mode)
 
-    frame_scale = velocity_module.get_frames_per_sample(config.BODY_DIFF)
+    frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
     half_frame_scale = (frame_scale - 1) / 2
 
     # Compute the angle differentials and distances.
@@ -374,7 +418,7 @@ def worm_path_curvature(x, y, fps, ventral_mode):
     distance[:] = np.NaN
 
     distance[distance_I_base] = speed[distance_I_base] + \
-        speed[distance_I_shifted] * config.BODY_DIFF / 2
+        speed[distance_I_shifted] * BODY_DIFF / 2
 
     with np.errstate(invalid='ignore'):
         distance[distance < 1] = np.NAN

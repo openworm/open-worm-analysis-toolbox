@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Locomotion features.  Note that LocomotionFeatures is not defined here.
+Locomotion features
 
-Classes defined in this module:
-
-LocomotionVelocityElement
-LocomotionVelocity
-MotionCodes
+Contains Processing code for:
+-----------------------------
+locomotion.velocity
+locomotion.motion_events
 
 """
 
 import numpy as np
 
 from .. import utils
-from .. import config
 
 from . import events
 from . import feature_comparisons as fc
@@ -23,7 +21,21 @@ from . import velocity as velocity_module
 
 
 class LocomotionVelocityElement(object):
+    """
     
+    This class is a simple container class for a velocity element.    
+    
+    Attributes
+    ----------
+    name : string
+    speed : numpy array
+    direction : numpy array
+    
+    See Also
+    --------
+    LocomotionVelocity
+    
+    """
     def __init__(self,name,speed,direction):
         self.name = name
         self.speed = speed
@@ -41,11 +53,7 @@ class LocomotionVelocityElement(object):
     def from_disk(cls, parent_ref, name):
         
         self = cls.__new__(cls)        
-    
-             #   velocity['head_tip'] = velocity.pop('headTip')
-        #velocity['tail_tip'] = velocity.pop('tailTip')
-        #head_tip        
-        
+
         self.name = name
         self.speed = utils._extract_time_from_disk(parent_ref, 'speed')
         self.direction = utils._extract_time_from_disk(parent_ref, 'direction')
@@ -56,40 +64,19 @@ class LocomotionVelocity(object):
     
     """
     This is for the 'velocity' locomotion feature. The helper function,
-    'compute_velocity' is used elsewhere  
+    'compute_velocity' is used elsewhere.  
 
-    Compute the worm velocity (speed & direction) at the
-    head-tip/head/midbody/tail/tail-tip
-
-
-    THIS IS OUT OF DATE
-
-    Parameters
+    Computes the worm velocity at various parts of the worm body.
+        
+    Attributes
     ----------
-    nw : a NormalizedWorm instance
-
-    ventral_mode: int
-      The ventral side mode:
-        0 = unknown
-        1 = clockwise
-        2 = anticlockwise
-
+    head_tip : LocomotionVelocityElement
+    head : LocomotionVelocityElement
+    midbody : LocomotionVelocityElement
+    tail : LocomotionVelocityElement
+    tail_tip : LocomotionVelocityElement
     
-    
-    Returns
-    -------
-    dict
-    A two-tiered dictionary:
-        1st Tier:
-            headTip = the tip of the head (1/12 the worm at 0.25s)
-            head    = the head (1/6 the worm at 0.5s)
-            midbody = the midbody (2/6 the worm at 0.5s)
-            tail    = the tail (1/6 the worm at 0.5s)
-            tailTip = the tip of the tail (1/12 the worm at 0.25s)
-                and 'speed' and 'direction' in the second tier.
-        2nd Tier:
-            speed =
-            direction = 
+    fps : float
 
     """
     
@@ -98,12 +85,31 @@ class LocomotionVelocity(object):
     attribute_keys = ['head_tip', 'head', 'midbody', 'tail', 'tail_tip']
     
     def __init__(self,features_ref,ventral_mode=0):
+        """
+            THIS IS OUT OF DATE
+            nw : a NormalizedWorm instance
+
+        ventral_mode: int
+        The ventral side mode:
+        0 = unknown
+        1 = clockwise
+        2 = anticlockwise
+        """
         #TODO: Ventral mode needs to be handled differently
+        
         nw = features_ref.nw
+
+        timer = features_ref.timer
+        timer.tic()
 
         all_options = features_ref.options
     
         locomotion_options = all_options.locomotion
+        
+        fps = features_ref.video_info.fps
+    
+        #We need this for the midbody_distance calculation
+        self.fps = fps    
     
         data_keys = list(self.attribute_keys) #Make a copy. Data keys will 
         #correspond to sections of the skeleton. Attribute keys correspond to 
@@ -112,7 +118,8 @@ class LocomotionVelocity(object):
         if(all_options.mimic_old_behaviour):
             data_keys[2] = 'old_midbody_velocity'
 
-
+        #Step 1: Compute the average body angle
+        #---------------------------------------------------------
         avg_body_angle = velocity_module.get_partition_angles(nw, 
                                           partition_key='body',
                                           data_key='skeletons',
@@ -126,15 +133,32 @@ class LocomotionVelocity(object):
             'tail_tip': locomotion_options.velocity_tip_diff
         }
 
+        #Step 2: Run the compute_velocity function on the different parts of
+        #the body, 
         for attribute_key, data_key in zip(self.attribute_keys, data_keys):
             x, y = nw.get_partition(data_key, 'skeletons', True)
 
-            speed, direction = velocity_module.compute_velocity(x, y,
+            speed, direction = velocity_module.compute_velocity(fps, x, y,
                                             avg_body_angle,
                                             sample_time_values[attribute_key],
                                             ventral_mode)[0:2]
                                             
             setattr(self,attribute_key,LocomotionVelocityElement(attribute_key,speed,direction))                                
+
+        timer.toc('locomotion.velocity')
+
+    def get_midbody_distance(self):
+
+        """
+        The midbody distance is used by a lot of other functions.
+        
+        Returns
+        -------
+        numpy.array
+        
+        """        
+        
+        return abs(self.midbody.speed / self.fps)
 
     def __eq__(self, other):
         is_same = True
@@ -158,6 +182,7 @@ class LocomotionVelocity(object):
         for key in self.attribute_keys:
             
             #NOTE: We'll eventually need to check for old or new data ...
+            #These changes are only valid for MRC features
             if key is 'head_tip':
                 old_key = 'headTip'
             elif key is 'tail_tip':
@@ -168,90 +193,78 @@ class LocomotionVelocity(object):
             setattr(self,key,
                     LocomotionVelocityElement.from_disk(local_ref,key))      
         return self
-        
-        """
-        velocity_ref = m_var['velocity']
-        for key in velocity_ref:
-            value = velocity_ref[key]
-            temp_speed = utils._extract_time_from_disk(value, 'speed')
-            temp_direc = utils._extract_time_from_disk(value, 'direction')
-            velocity[key] = {'speed': temp_speed, 'direction': temp_direc}
 
-        # NOTE: This only valid for MRC
-
-        velocity['head_tip'] = velocity.pop('headTip')
-        velocity['tail_tip'] = velocity.pop('tailTip')
-
-        self.velocity = velocity
-        """
-
-class MotionCodes(object):
-    """
-    Encapsulates the events associated with midbody_speed and skeleton_lengths
-    (Actually can be used on more general data.)
-    
-    Once initialized it contains four member variables:
-    
-    mode: numpy array
-        For each frame, contains either -1, 0, or 1, depending on:
-        {'forward': 1, 'backward': -1, 'paused': 0}
-    forward: an EventListWithFeatures instance
-    backward: an EventListWithFeatures instance
-    paused: an EventListWithFeatures instance
+class MotionEvents(object):
     
     """
-    def __init__(self, midbody_speed, skeleton_lengths):
+    
+    Attributes
+    ----------
+    forward : movement_validation.features.events.EventListWithFeatures
+    paused : movement_validation.features.events.EventListWithFeatures
+    backward : movement_validation.features.events.EventListWithFeatures
+    mode : numpy.array
+        - shape num_frames
+        - Values are:
+            -1, backward locomotion
+            0, no locomotion (the worm is paused)
+            1, forward locomotion
+    
+    """
+    
+    attribute_keys = ['forward','backward','paused']
+    
+    def __init__(self,features_ref,midbody_speed,skeleton_lengths):
         """ 
-        Calculate and store motion codes of the locomotion events
-    
+        Calculate motion codes of the locomotion events
+        
         A locomotion feature.
     
         See feature description at 
           /documentation/Yemini%20Supplemental%20Data/Locomotion.md
     
         Parameters
-        ---------------------------------------
-        midbody_speed: numpy array 1 x n_frames
-          from locomotion.velocity.midbody.speed / config.FPS
-        skeleton_lengths: numpy array 1 x n_frames
+        ----------
+        midbody_speed: numpy.array
+            [n_frames]
+        skeleton_lengths: numpy.array
+            [n_frames]
     
-        Returns
-        ---------------------------------------
-        The locomotion events; a dict (called locally all_events_dict) 
-        with event fields:
-          forward  - (event) forward locomotion
-          paused   - (event) no locomotion (the worm is paused)
-          backward - (event) backward locomotion
-          mode     = [1 x num_frames] the locomotion mode:
-                     -1 = backward locomotion
-                      0 = no locomotion (the worm is paused)
-                      1 = forward locomotion
+
+
     
         Notes
-        ---------------------------------------
-        Formerly +seg_worm / +features / @locomotion / getWormMotionCodes.m
+        -----
+        Formerly +seg_worm/+features/@locomotion/getWormMotionCodes.m
     
         """
+
+        timer = features_ref.timer
+        timer.tic()
+
+        fps = features_ref.video_info.fps        
+        
+        locomotion_options = features_ref.options.locomotion        
+        
         # Initialize the worm speed and video frames.
         num_frames = len(midbody_speed)
     
-        # Compute the midbody's "instantaneous" distance travelled at 
-        # each frame,
+        # Compute the midbody's "instantaneous" distance travelled at each frame,
         # distance per second / (frames per second) = distance per frame
-        distance_per_frame = abs(midbody_speed / config.FPS)
+        distance_per_frame = abs(midbody_speed / fps)
     
         #  Interpolate the missing lengths.
         skeleton_lengths = utils.interpolate_with_threshold(
-              skeleton_lengths,
-              config.MOTION_CODES_LONGEST_NAN_RUN_TO_INTERPOLATE)
+                               skeleton_lengths,
+                               locomotion_options.motion_codes_longest_nan_run_to_interpolate)
     
         #===================================
         # SPACE CONSTRAINTS
         # Make the speed and distance thresholds a fixed proportion of the
         # worm's length at the given frame:
-        worm_speed_threshold = skeleton_lengths * config.SPEED_THRESHOLD_PCT
-        worm_distance_threshold = skeleton_lengths * config.DISTANCE_THRSHOLD_PCT
-        worm_pause_threshold = skeleton_lengths * config.PAUSE_THRESHOLD_PCT
+        worm_speed_threshold = skeleton_lengths * locomotion_options.motion_codes_speed_threshold_pct
+        worm_distance_threshold = skeleton_lengths * locomotion_options.motion_codes_distance_threshold_pct
+        worm_pause_threshold = skeleton_lengths * locomotion_options.motion_codes_pause_threshold_pct
     
         # Minimum speed and distance required for movement to
         # be considered "forward"
@@ -267,9 +280,10 @@ class MotionCodes(object):
         min_paused_speed = -worm_pause_threshold
         max_paused_speed = worm_pause_threshold
     
-        # Note that there is no maximum forward speed nor 
-        #                       minimum backward speed.
+        # Note that there is no maximum forward speed nor minimum backward speed.
+        #TODO: This might be better as a class attribute
         frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+        
         min_speeds = {'forward': min_forward_speed,
                       'backward': None,
                       'paused': min_paused_speed}
@@ -285,14 +299,14 @@ class MotionCodes(object):
         # The minimum number of frames an event had to be taking place for
         # to be considered a legitimate event
         min_frames_threshold = \
-            config.FPS * config.EVENT_MIN_FRAMES_THRESHOLD
+            fps * locomotion_options.motion_codes_min_frames_threshold
         # Maximum number of contiguous contradicting frames within the event
         # before the event is considered to be over.
         max_interframes_threshold = \
-            config.FPS * config.EVENT_MAX_INTER_FRAMES_THRESHOLD
-
-        # For mode, start with a blank numpy array, full of NaNs:
-        self.mode = np.empty(num_frames, dtype='float') * np.NaN
+            fps * locomotion_options.motion_codes_max_interframes_threshold
+        
+        # Start with a blank numpy array, full of NaNs:
+        self._mode = np.empty(num_frames, dtype='float') * np.NaN
     
         for motion_type in frame_values:
             # We will use EventFinder to determine when the
@@ -301,7 +315,7 @@ class MotionCodes(object):
     
             # "Space and time" constraints
             ef.min_distance_threshold = min_distance[motion_type]
-            ef.max_distance_threshold = None  # We are not constraining max dist
+            ef.max_distance_threshold = None  # we are not constraining max dist
             ef.min_speed_threshold = min_speeds[motion_type]
             ef.max_speed_threshold = max_speeds[motion_type]
     
@@ -310,45 +324,51 @@ class MotionCodes(object):
             ef.max_inter_frames_threshold = max_interframes_threshold
     
             event_list = ef.get_events(midbody_speed, distance_per_frame)
-    
-            # Start at 1, not 7 for forward
-            # What happens from 1900 to 1907
-    
-            # Obtain only events entirely before the num_frames intervals
-            event_mask = event_list.get_event_mask(num_frames)
-    
+
             # Take the start and stop indices and convert them to the structure
             # used in the feature files
-            m_event = events.EventListWithFeatures(event_list,
+            m_event = events.EventListWithFeatures(fps,
+                                                   event_list,
                                                    distance_per_frame,
                                                    compute_distance_during_event=True)
     
-            # Assign this event type to relevant frames of self.mode
-            self.mode[event_mask] = frame_values[motion_type]
-            
-            # Record this motion_type to the variable self.[motion_type],
-            # where [motion_type] is forward, backward, or paused.
-            setattr(self, motion_type, m_event)
+            setattr(self,motion_type,m_event)      
+    
+            #Assign motion modes
+            #------------------------------------------------------------------
+            event_mask = event_list.get_event_mask(num_frames)
+            self._mode[event_mask] = frame_values[motion_type]
+              
 
-    def __repr__(self):
-        return utils.print_object(self)
+        timer.toc('locomotion.motion_events')
+
+
+    def get_motion_mode(self):
+        return self._mode
 
     @classmethod
-    def from_disk(cls, m_var):
-        self = cls.__new__(cls)        
-        
-        if 'motion' in m_var.keys():
-            # Old MRC Format:
-            # - forward, backward, paused, mode
-            motion_ref = m_var['motion']
-            for key in ['forward', 'backward', 'paused']:
-                setattr(self, key,
-                    events.EventListWithFeatures.from_disk(motion_ref[key], 
-                                                           'MRC'))
+    def from_disk(cls, parent_ref):
 
-            self.mode = utils._extract_time_from_disk(motion_ref, 'mode')
-        else:
-			#This would indicate loading a new version
-            raise Exception('Not yet implemented')        
+        self = cls.__new__(cls)
         
+        motion_ref = parent_ref['motion']
+
+        for key in self.attribute_keys:
+            setattr(self,key,events.EventListWithFeatures.from_disk(motion_ref[key], 'MRC'))
+            
+        self._mode = utils._extract_time_from_disk(motion_ref, 'mode')
+
         return self
+
+    def __eq__(self, other):
+        motion_events_same = [self.__dict__[x].test_equality(
+            other.__dict__[x], 'locomotion.motion_events.' + x)
+            for x in self.attribute_keys]
+        return all(motion_events_same)
+    
+    def __repr__(self):
+        return utils.print_object(self)     
+     
+    @property   
+    def is_paused(self):
+        return self._mode == 0

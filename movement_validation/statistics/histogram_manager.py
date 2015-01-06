@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 
+The current processing approach is to take a set of features from an experiment
+and to summarize each of these features as a binned data set (i.e. a histogram) 
+where for each bin of a given width the # of values occupying each bin is
+logged.
 
-Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / manager.m
+The histogram manager holds histograms for all computed features. Besides
+helping to instantiate these histograms, it also holds any information
+that is common to all of the histograms (e.g. experiment sources). By holding
+the histograms it serves as a nice entry point for the histograms, rather than 
+just having a list of histograms.
+
+Formerly SegwormMatlabClasses/+seg_worm/+stats/@hist/manager.m
 
 """
 import h5py
@@ -18,25 +28,27 @@ from ..features.worm_features import WormFeatures
 
 class HistogramManager(object):
     """
+    
     Equivalent to seg_worm.stats.hist.manager class
     
-    Member variables
-    ------------------------    
-    hists: a list of 
+    Attributes
+    ----------    
+    hists: list
     
     """
     def __init__(self, feature_path_or_object_list):
         """
         Parameters
-        -------------------------
+        ----------
         feature_path_or_object_list: list of strings or feature objects
             Full paths to all feature files making up this histogram, or
-            their in-memory object equivalents
+            their in-memory object equivalents.
         
         """
         #DEBUG: just for fun
-        print("Number of feature files passed:", len(feature_path_or_object_list))
+        print("Number of feature files passed into the hisotgram manager:", len(feature_path_or_object_list))
         
+        #For each ...
         hist_cell_array = []        
         
         # Loop over all feature files and get histogram objects for each
@@ -54,8 +66,8 @@ class HistogramManager(object):
                 # as an instance of WormFeatures (we hope)
                 worm_features = feature_path_or_object
 
-            # %TODO: Need to add on info to properties 
-            # %worm_features.info -> obj.info
+            #TODO: Need to add on info to properties 
+            #worm_features.info -> obj.info
 
             hist_cell_array.append(self.init_histograms(worm_features))
 
@@ -216,8 +228,12 @@ class HistogramManager(object):
             # (motion_types x data_types)
             
             for cur_motion_type in motion_types:
-                assert(good_data_mask.size == \
-                       indices_use_mask[cur_motion_type].size)
+                if (good_data_mask.size != indices_use_mask[cur_motion_type].size):
+                    import pdb
+                    pdb.set_trace()
+                
+                #assert(good_data_mask.size == \
+                 #      indices_use_mask[cur_motion_type].size)
 
                 cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
                 assert(isinstance(cur_data, np.ndarray))
@@ -319,11 +335,17 @@ class HistogramManager(object):
             # - On only the positive data, and 
             # - On only the negative data.
             if cur_specs.is_signed:
-                temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
-                positive_mask = cur_data > 0
-                negative_mask = cur_data < 0
-                temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
-                temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
+                if cur_data is None:
+                    #TODO: This is a bit opaque and should be clarified
+                    #The call to create_histograms() just returns None, so we put together a bunch of None's
+                    #in a list and append, rather than calling the function 3x
+                    temp_hists = temp_hists + [None, None, None]
+                else:
+                    temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
+                    positive_mask = cur_data > 0
+                    negative_mask = cur_data < 0
+                    temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
+                    temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
 
         return temp_hists
 
@@ -355,7 +377,7 @@ class HistogramManager(object):
                                                  data_type)
         
         """
-        if data == None or not isinstance(data, np.ndarray) or data.size == 0:
+        if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)

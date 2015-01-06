@@ -16,7 +16,6 @@ from . import config
 from . import utils
 
 class NormalizedWorm(object):
-
     """ 
     NormalizedWorm encapsulates the normalized measures data, loaded
     from the two files, one for the eigenworm data and the other for 
@@ -33,13 +32,10 @@ class NormalizedWorm(object):
 
     Properties:
     -----------
-      eigen_worms      
-
-      EIGENWORM_PATH
       segmentation_status   
       frame_codes
-      vulva_contours        [49,2,4642]
-      non_vulva_contours    [49,2,4642]
+      vulva_contours        49 x 2 x n_frames
+      non_vulva_contours    49 x 2 x n_frames
       skeletons
       angles
       in_out_touches
@@ -50,28 +46,24 @@ class NormalizedWorm(object):
       vulva_areas
       non_vulva_areas      
 
-      n_frames               num_frames
-      x                      skeletons_x
-      y                      skeletons_y
-      contour_x              
-      contour_y       
+      n_frames
+      x - how does this differ from skeleton_x???
+      y
+      contour_x
+      contour_y
+      skeleton_x
 
     static methods:
       getObject              load_normalized_data(self, data_path)
-      createObjectFromFiles  load_normalized_blocks(self, blocks_path)
-                             * this last one not actually implemented yet *
-                             * since I believe it is deprecated in Jim's *
-                             * code *
+
+    """
 
 
     """
 
-    """
-  translated from:
-  seg_worm.skeleton_indices
-  
-  This was originally created for feature processing. @JimHokanson 
-  found a lot of off-by-1 errors in the feature processing.
+    Notes
+    ----------------------
+    Originally translated from seg_worm.skeleton_indices
   
   Used in: (list is not comprehensive)
   --------------------------------------------------------
@@ -94,31 +86,20 @@ class NormalizedWorm(object):
 
     data_dict = None  # A dictionary of all data in norm_obj.mat
 
-    # shape = (7, 48)
-    # NOTE: It is one less than 49 because
-    #       the values are calculated from paired values,
-    # and the # of pairs is one less than the # of samples
-    eigen_worms = None
 
     def __init__(self, data_file_path=None):
         """ 
-        Initialize this instance by loading both the worm and 
-        the eigen_worm data
-
+        Initialize this instance by loading both the worm data
+        
         Parameters
         ---------------------------------------
         data_file_path: string  (optional)
           if None is specified, no data is loaded      
 
-        eigen_worm_file_path: string  (optional)
-          if None is specified, no eigen worm data is loaded
-
         """
         #TODO: Michael, why are these optional????
         if data_file_path:
             self.load_normalized_data(data_file_path)
-
-        self.load_eigen_worms()
 
 
         # These are RANGE values, so the last value is not inclusive
@@ -151,10 +132,12 @@ class NormalizedWorm(object):
         # the ventral mode to a default value as a stopgap measure
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
 
+
     @classmethod
     def load_from_matlab_data(self):
         pass
         #TODO: Merge the constructor and load_normalized_data into here...
+
 
     def load_normalized_data(self, data_file_path):
         """ 
@@ -191,7 +174,11 @@ class NormalizedWorm(object):
             # these will be the keys of the dictionary data_dict
             data_keys = [
                 # this just contains a string for where to find the
-                # eigenworm file.
+                # eigenworm file.  we do not use this, however, since
+                # the eigenworm postures are universal to all worm files,
+                # so the file is just stored in the /features directory
+                # of the source code, and is loaded at the features 
+                # calculation step
                 'EIGENWORM_PATH',
                 # a string of length n, showing, for each frame of the video:
                 # s = segmented
@@ -207,9 +194,8 @@ class NormalizedWorm(object):
                 'vulva_contours',     # shape is (49, 2, n) integer
                 'non_vulva_contours',  # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
-                'angles',             # shape is (49, 2, n) integer
-                # shape is (49, n) integer (degrees)
-                'in_out_touches',
+                'angles',             # shape is (49, n) integer (degrees)
+                'in_out_touches',     # shpe is (49, n)
                 'lengths',            # shape is (n) integer
                 'widths',             # shape is (49, n) integer
                 'head_areas',         # shape is (n) integer
@@ -226,7 +212,7 @@ class NormalizedWorm(object):
             # this is to build up a nice dictionary containing the data in s
             
             for key in data_keys:
-                setattr(self,key,getattr(staging_data, key))
+                setattr(self, key, getattr(staging_data, key))
             
             #self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
 
@@ -236,6 +222,7 @@ class NormalizedWorm(object):
             self.segmentation_status = np.array(list(self.segmentation_status))
 
             self.load_frame_code_descriptions()
+
 
     def load_frame_code_descriptions(self):
         """
@@ -305,9 +292,11 @@ class NormalizedWorm(object):
         # subset of interest, p.
         return {k: self.worm_partitions[k] for k in p}
 
+
     def get_subset_partition_mask(self, name):
         """
         Returns a boolean mask - for working with arrays given a partition.
+        
         """
         keys = self.worm_partition_subsets[name]
         mask = np.zeros(49, dtype=bool)
@@ -315,6 +304,7 @@ class NormalizedWorm(object):
             mask = mask | self.partition_mask(key)
 
         return mask
+
 
     def partition_mask(self, partition_key):
         """
@@ -325,6 +315,7 @@ class NormalizedWorm(object):
         slice_val = self.worm_partitions[partition_key]
         mask[slice(*slice_val)] = True
         return mask
+
 
     def get_partition(self, partition_key, data_key='skeletons',
                       split_spatial_dimensions=False):
@@ -408,6 +399,7 @@ class NormalizedWorm(object):
         # TODO
         return self
 
+
     @property
     def centre(self):
         """
@@ -424,6 +416,7 @@ class NormalizedWorm(object):
             temp = np.nanmean(s, 0, keepdims=False)
 
         return temp
+
 
     @property
     def angle(self):
@@ -442,6 +435,7 @@ class NormalizedWorm(object):
         # find the angle of this vector
         return np.arctan(v[1, :]/v[0,:])*(180/np.pi)
 
+
     def translate_to_centre(self):
         """ 
         Return a NormalizedWorm instance with each frame moved so the 
@@ -459,6 +453,7 @@ class NormalizedWorm(object):
 
         # TODO
         return s - s_mean
+
 
     def rotate_and_translate(self):
         """
@@ -518,27 +513,6 @@ class NormalizedWorm(object):
 
         # fix the axis settings
         return np.rollaxis(np.rollaxis(s1_rotated, 0, 3), 1)
-
-    def load_eigen_worms(self):
-        """ 
-        Load the eigen_worms, which are stored in a Matlab data file
-
-        The eigenworms were computed by the Schafer lab based on N2 worms
-
-        Populates:
-        ----------
-        self.eigen_worms: [48 x 7]
-
-        """
-        
-        #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
-        package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        
-        repo_path        = os.path.split(package_path)[0]
-        eigen_worm_file_path = os.path.join(repo_path, 'data', 'masterEigenWorms_N2.mat')
-
-        h = h5py.File(eigen_worm_file_path,'r')
-        self.eigen_worms = h['eigenWorms'].value
 
 
     @property
@@ -615,6 +589,7 @@ class NormalizedWorm(object):
     def __repr__(self):
         #TODO: This omits the properties above ...
         return utils.print_object(self)
+
 
 class SkeletonPartitions(object):
     #TODO: This needs to be implemented
