@@ -31,3 +31,5 @@
 10. Hopefully it runs successfully!  If not:
 
 Please contact the [OpenWorm-discuss mailing list](https://groups.google.com/forum/#!forum/openworm-discuss) if you encounter issues with the above steps.
+
+You can also try running `test_setup.py` in the `/tools` folder to check if your setup is correctly configured.  Note that this tool is not complete.

@@ -31,9 +31,25 @@ Replace all values in the this file with their appropriate values.
 #TODO: This file should look for all package dependencies and setup issues
 #and provide detailed information as to how to handle things when there are problems
 
+import sys, os
+
+
+"""
+=====================     Python version testing    ===========================
+"""
+
+print("Python version: " + sys.version)
+
+if sys.version_info[:2] < (2,7):
+    raise Exception("movement_validation requires Python version 2.7 or greater")
+else:
+    print("The version used is acceptable, since it is >=2.7")
+
+
 """
 =====================     Package Testing      ================================
 """
+
 
 """
 Shapely
@@ -43,15 +59,11 @@ specifically, it is only used for solving the point-in-polygon problem.
 
     http://en.wikipedia.org/wiki/Point_in_polygon
 """
-
-#TODO: Print out version of python being used ...
-
-
 try:
     import shapely
-except ImportError, e:
-    print('Unable to import shapely')
-        
+except ImportError as e:
+    print("'Unable to import shapely")
+
     
 
 """
@@ -62,7 +74,7 @@ old feature files from disk
 """
 try:
     import h5py
-except ImportError, e:
+except ImportError as e:
     print('Unable to import h5py')    
 
 
@@ -76,7 +88,7 @@ We use numpy for everything ...
 
 try:
     import numpy as np
-except ImportError, e:
+except ImportError as e:
     print('Unable to import numpy')   
     
 #TODO: test nan functionality
@@ -91,7 +103,7 @@ scipy
 
 try:
     import scipy
-except ImportError, e:
+except ImportError as e:
     print('Unable to import scipy')   
 
 """
@@ -99,18 +111,19 @@ except ImportError, e:
 """
 
 try:
+    # We must add .. to the path so that we can perform the 
+    # import of movement_validation while running this as 
+    # a top-level script (i.e. with __name__ = '__main__')
+    sys.path.append('..') 
     from movement_validation import user_config
-except ImportError, e:
+except ImportError as e:
     print('Unable to import movement_validation/user_config.py module')
     
 if not hasattr(user_config,'EXAMPLE_DATA_PATH'):
     print("user_config.py module is missing the 'EXAMPLE_DATA_PATH' attribute")
 else:
-    import os
     if not os.path.isdir(user_config.EXAMPLE_DATA_PATH):
        print("user_config.EXAMPLE_DATA_PATH doesn't point to a valid directory")
        
        
-    
-
 print('Finished running test_setup.py')
