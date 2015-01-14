@@ -1,0 +1,13 @@
+Supplementary Figure 4: Phenotypic summaries
+--------------------------------------------
+
+.. figure:: Supplementary%20Figure%204.gif
+   :alt: 
+
+Phenotypic summaries using selected features for subsets of strains.
+Colors in the heat maps are used to indicate the q-value for each
+feature for the comparison between each of the mutant strains listed on
+the right and the N2 reference data. Red values indicate features that
+have a significantly higher value in the mutant while blue indicates
+significantly lower values. These data have not been clustered to
+facilitate finding a gene of interest.

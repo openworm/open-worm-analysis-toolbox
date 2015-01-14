@@ -1,0 +1,32 @@
+Supplementary Figure 6: New locomotion phenotypes for three TRP channels
+------------------------------------------------------------------------
+
+.. figure:: Supplementary%20Figure%206.gif
+   :alt: 
+
+New locomotion phenotypes for three TRP channels. Both trpa-2 and ocr-4
+have no characterized phenotypes despite previous experimental
+publications. We used Wilcoxon rank-sum tests and False-Discovery Rate
+(FDR) to determine q-values for each comparison. Corrections were
+performed for 329 groups (strains and time-based collections of N2s) by
+702 features. Significance was set at q = 0.05. Each experimental mean
+is plotted as a black dot and the mean of means is shown in yellow, SEM
+in magenta, and standard deviation in cyan. For each allele, the
+experiments are brighter and shown on left, whereas the controls are
+darker and shown on right. (a) All three trpa-2 alleles (ok3189, tm3085,
+and tm3092; trpa-2 N = 19, 35, 38; control N = 41, 133, 93) show
+significantly more bends when reversing (q = 6x10-3, 7x10-3, 2x10-5). In
+further support, all three alleles show a decrease in their second
+eigenworm projection when reversing (q = 7x10-3, 2x10-7, 4x10-5), a
+measure of sinusoidal posture. (b) Both trp-2 alleles (gk298 and sy691;
+trp-2 N = 18, 21; control N = 49, 55) display significantly altered
+activity during reversals as well. Their waveform, when reversing, is
+more compact (q = 1x10-4, 4x10-5). Their foraging speed, when reversing,
+is faster (q = 4x10-6, 9x10-3). Interestingly, omega turns, which happen
+infrequently, also showed up as significant. The two trp-2 strains spend
+even less time in omega turns than their wild-type controls (q = 1x10-2,
+2x10-2). (c) The ocr-4 alleles (tm2173 and vs137; ocr-4 N = 22, 22;
+control N = 55, 49) also display significant differences when
+subdividing by motion state. Both alleles move their tail more when
+paused (q = 9x10-5 , 3x10-3). Furthermore, both ocr-4 alleles display
+smaller amplitudes when crawling (q = 2x10­3, 5x10-3).

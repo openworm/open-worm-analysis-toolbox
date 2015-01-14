@@ -1,0 +1,29 @@
+Supplementary Figure 2: WT2 sensitivity
+---------------------------------------
+
+.. figure:: Supplementary%20Figure%202.gif
+   :alt: 
+
+(a-c) The habituation and growth are shown for 25 young-adult,
+hermaphrodite N2s averaged in 1 minute bins. (a) The habituation of the
+crawling-wave amplitude is fit with an exponential with time constant t
+= 48 minutes (R2 = 0.59). (b) The habituation of the crawling-wave
+frequency is fit with an exponential with a time constant t = 19 minutes
+(R2 = 0.71). (c) Both length and width are fit with a 1% linear growth
+per hour (R2 = 0.92 and 0.76 respectively). (d-e) The means are shown as
+vertical lines for positive (solid line) and negative (dashed line)
+portions of the histogram. Wilcoxon rank-sum tests were performed with
+Bonferroni correction for the 12 tests performed across both panels. (d)
+21 N2s from CGC stock (green) are compared to 27 N2s from our lab stock
+(gray). The mean and SEM, for the CGC and lab respectively, are: length
+= 1162 ± 13µm, 1183 ± 19µm (p = 1); forward speed = 137 ± 14µm/s, 104 ±
+12µm/s (p = 0.5); backward speed = 142 ± 15µm/s, 98 ± 11µm/s (p = 0.3);
+dorsal foraging = 42 ± 0.6°, 38 ± 0.6° (p = 6x10-3 **); ventral foraging
+= 41 ± 0.8°, 39 ± 0.6° (p = 1); exploratory range = 2.7 ± 0.3mm, 1.8 ±
+0.2mm (p = 0.2). (e) 43 LSJ1s (orange) are compared to 107 N2s from our
+lab stock (gray). The mean and SEM, for the LSJ1 and lab respectively,
+are: length = 1049 ± 9µm, 1166 ± 7µm (p = 2x10-13 ); forward speed = 213
+± 6µm/s, 106 ± 6µm/s (p = 6x10-14 ); backward speed = 221 ± 6µm/s, 97 ±
+10µm/s (p = 2x10-14 ); dorsal foraging = 37 ± 0.5°, 36.9 ± 0.4° (p = 1);
+ventral foraging = 36.5 ± 0.3°, 36.5 ± 0.3° (p = 1); exploratory range =
+3.3 ± 0.1mm, 2.1 ± 0.1mm (p = 2x10-12 **\ \*\*).
