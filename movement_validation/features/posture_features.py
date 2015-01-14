@@ -1274,7 +1274,9 @@ def load_eigen_worms():
     package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     
     repo_path        = os.path.split(package_path)[0]
-    eigen_worm_file_path = os.path.join(repo_path,'features','master_eigen_worms_N2.mat')
+    eigen_worm_file_path = os.path.join(repo_path,
+                                        'features',
+                                        config.EIGENWORM_FILE)
 
     h = h5py.File(eigen_worm_file_path,'r')
     eigen_worms = h['eigenWorms'].value
