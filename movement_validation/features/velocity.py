@@ -492,5 +492,5 @@ def get_frames_per_sample(fps, sample_time):
     #        else:
     #            sampling_scale = sampling_scale_high
 
-    assert(sampling_scale.is_integer())
+    assert(type(sampling_scale) == int or sampling_scale.is_integer())
     return int(sampling_scale)
