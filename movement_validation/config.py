@@ -69,3 +69,8 @@ MAX_NUM_HIST_OBJECTS = 1000
 # allocate a few hundred gigabytes of data. If this does ever end up a
 # problem we'll need a better solution (or really A solution)
 MAX_NUMBER_BINS = 10**6
+
+
+
+EIGENWORM_FILE = 'master_eigen_worms_N2.mat'
+
