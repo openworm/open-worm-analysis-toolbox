@@ -41,7 +41,7 @@ Installing and running the movement\_validation repository
        `nanfunctions.py <https://github.com/numpy/numpy/blob/0cfa4ed4ee39aaa94e4059c6394a4ed75a8e3d6c/numpy/lib/nanfunctions.py>`__
        to your Python library directory, in the ``numpy/lib/``
        directory, and
-    2. Append the lines   ``__all__ += nanfunctions.__all__`` and
+    2. Append the lines ``__all__ += nanfunctions.__all__`` and
        ``from .nanfunctions import *`` at the relevant places to
        ``numpy/lib/__init__.py``.
 
@@ -71,3 +71,7 @@ Installing and running the movement\_validation repository
 Please contact the `OpenWorm-discuss mailing
 list <https://groups.google.com/forum/#!forum/openworm-discuss>`__ if
 you encounter issues with the above steps.
+
+You can also try running ``test_setup.py`` in the ``/tools`` folder to
+check if your setup is correctly configured. Note that this tool is not
+complete.
