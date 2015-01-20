@@ -4,7 +4,7 @@
 
 **Plotting:** matplotlib is a plotting library for the Python programming language and its NumPy numerical mathematics extension.  FFMPEG is used for video processing.
 
-**File processing:** The Schafer Lab chose to structure their experiment files using the  “Heirarchical Data Format, Version 5” (HDF5) format , ending with the extension .MAT.  We are using the Python module H5PY to extract the information from the Schafer Lab files.
+**File processing:** The Schafer Lab chose to structure their experiment files using the [HDF5](http://en.wikipedia.org/wiki/Hierarchical_Data_Format#HDF5) format, ending with the extension .MAT.  We are using the Python module H5PY to extract the information from these files.
 
 **Data storage:** Google Drive.  To store examples of worm videos and HDF5 (.mat) feature files so the movement_validation package can be put through its paces.
 
