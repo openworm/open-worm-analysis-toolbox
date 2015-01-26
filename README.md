@@ -21,3 +21,5 @@ It is only about 50% complete.  Please see:
 - [Current Code Progress](https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit?usp=sharing)
 
 - [Kanban Board with current GitHub Issues](https://waffle.io/openworm/movement_validation)   [![Stories in Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
+
+- [Movement Validation Cloud](https://github.com/joebowen/movement_validation_cloud) - An AWS Elastic Beanstalk instance for running this package on a server.
