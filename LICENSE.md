@@ -1,8 +1,8 @@
 ###License###
 
-Copyright (c) 2014 OpenWorm
+Copyright (c) 2015 OpenWorm
 
-**movement_validation**, and indeed all of **[OpenWorm](https://github.com/openworm/)**, is free software under the [MIT license](http://opensource.org/licenses/MIT).
+**movement_validation**, and indeed all software written as part of the **[OpenWorm](https://github.com/openworm/)** project, is free software under the [MIT license](http://opensource.org/licenses/MIT).
 
 Original code written in Matlab by Dr. Eviatar Yemini, at the Schafer Lab at Cambridge University's MRC.
 
