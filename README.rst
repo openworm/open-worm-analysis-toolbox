@@ -37,7 +37,7 @@ It is only about 50% complete. Please see:
    Issues <https://waffle.io/openworm/movement_validation>`__ |Stories
    in Ready|
    
--  `Movement Validation Cloud<https://github.com/joebowen/movement_validation_cloud>`__ - An AWS Elastic Beanstalk instance for running this package on a server.
+-  `Movement Validation Cloud <https://github.com/joebowen/movement_validation_cloud>`__ - An AWS Elastic Beanstalk instance for running this package on a server.
 
 .. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
    :target: https://gitter.im/openworm/movement_validation?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
