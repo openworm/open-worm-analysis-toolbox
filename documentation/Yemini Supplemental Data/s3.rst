@@ -1,0 +1,37 @@
+Supplementary Figure 3: Wild type variability
+---------------------------------------------
+
+.. figure:: Supplementary%20Figure%203.gif
+   :alt: 
+
+1,218 young-adult N2 hermaphrodites were recorded over 3 years
+spontaneously behaving on food. (a) Our lab-stock wild type show
+significant differences in hourly and monthly measures at p = 0.05, but
+none daily. Kruskal-Wallis, one-way analysis of variance, tests were
+performed with Bonferroni correction for 18 tests of 3 groups (hour,
+day, and month) by six common measures: length (p-value hour = 4x10-2 *,
+day = 0.6, month = 4x10-9 *\ ***), forward speed (p-value hour = 5x10-8
+***\ *, day = 1, month = 1x10-4, *\ **), foraging amplitude ignoring the
+dorsal-ventral orientation (p-value hour = 2x10-7 , day = 0.5, month =
+3x10-8 ), reversal frequency (p-value hour = 8x10-3 **, day = 0.3, month
+= 1x10-4 ***), coiling frequency (p-value hour = 1, day = 1, month = 1),
+and exploratory range (p-value hour = 2x10-23 ***\ *, day = 0.3, month =
+5x10-14 *\ \*\*\*). Each experimental mean is plotted as a black dot and
+the mean of means is shown in yellow, SEM in magenta, and standard
+deviation in cyan. (b) ß (the probability that a false null hypothesis
+will not be rejected, equal to 1 – statistical power) as a function of
+the number of worms observed in an experiment. ß is plotted for cases
+where the mean difference between the test case and the lab N2 is 2
+(red), 1 (orange), 0.5 (green), 0.25 (cyan), and 0.125 (blue) standard
+deviations (SD) from the collective N2 data. Approximately, 10 worms
+discriminate a displacement of 2 SD with over 90% power (gray, dotted
+lines parallel to the axes) and 20 worms discriminate 1 SD at over 80%
+power (black, dashed lines parallel to the axes). Corresponding feature
+labels are presented on the far left, in panel a. Each plotted value was
+computed using 10,000 bootstrapped Wilcoxon rank-sum tests.
+
+Since all tracked animals were identified as fourth-stage larvae the
+night before, the small but significant increase in length during the
+day is most likely simply due to age. The monthly variation may be due
+to differences in lab temperature or humidity, which can both change
+seasonally.

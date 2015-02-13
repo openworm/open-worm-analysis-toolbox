@@ -1,0 +1,21 @@
+Supplementary Figure 5: Clustering for all 305 strains against N2 controls
+--------------------------------------------------------------------------
+
+.. figure:: Supplementary%20Figure%205.gif
+   :alt: 
+
+The clustering is shown for all 305 strains alongside the Schafer Lab
+N2. 213 features were eliminated due to poor statistical discrimination.
+Principal Components Analysis (PCA) was used to convert the remaining
+489 features to eigenfeatures, discarding those accounting for the last
+1% of variance. Hierarchical clustering was performed using uncentered
+correlation and complete linkage. Multiscale resampling was run with
+10,000 bootstraps to generate approximately unbiased (AU) p values,
+measuring the confidence of tree selection for each branch. For easier
+viewing, the dendrogram has been divided into four sections arranged
+vertically. The arrangement of each part is indicated by boxes on the
+total dendrogram at the top of the page. The horizontal length of each
+branch in each partial dendrogram is scaled to its correlation value.
+The horizontal branches are color coded to show the AU of the clusters
+below them. AU = 99.9% is colored red, AU = 99% orange, AU = 95% yellow,
+and all else is black.

@@ -1,0 +1,47 @@
+Supplementary Figure 1: Feature computation
+-------------------------------------------
+
+.. figure:: Supplementary%20Figure%201.gif
+   :alt: 
+
+(a) The locations of the body parts used for feature computation: head,
+    neck, midbody, hips, and tail. Each body part encompasses 1/6 of the
+    worm (measured along the contour and skeleton, independently), save
+    for the midbody which is 1/3. The head and tail are further split in
+    half to create the head and tail tips, each 1/12 long. (b) The bend
+    angle (a) is the difference in tangent angles at each point; or,
+    alternatively phrased, the supplementary angle (a) with respect to
+    the angle formed by any three consecutive points (ß). The bend angle
+    is signed negatively whenever the ventral side is concave within the
+    bend (as is the case for the bend shown). (c-f) Methods of
+    quantifying worm motion. (c) A simple diagram represents worm
+    velocity and the crawling wave. (d) The velocity vector of a body
+    part is measured relative to the head-tail axis. The velocity, per
+    body part, is the vector of its respective centroid. (e) A crawling
+    wave is represented as the sinusoidal wave of the bend angle at its
+    associated body part. Note the dorsal-ventral asymmetry both in the
+    amplitude and in the wavelength itself. The dotted window encloses a
+    waveform used to measure an instantaneous crawling wave. The Fourier
+    transform of the waveform reveals a strong peak. This peak defines
+    the instantaneous crawling amplitude and frequency. (f) A 25 second
+    window of worm motion reveals 2 forward, 3 backward, and roughly 5
+    paused events. A short, small peak (between the second and third
+    pauses) that may have been forward motion, remains unclassified due
+    to ambiguity. (g) Worm foraging is measured from the bend angle
+    between the two sections of the head (panel a). The noisy signal
+    (black) is smoothed (red) by convolving with a Gaussian. The
+    foraging amplitude is defined as the largest foraging bend angle
+    measured, prior to crossing 0°. Foraging speed is simply the angular
+    speed. Ventral and dorsal foraging is present within the first 1
+    second of the trace. The latter half of the trace displays the
+    difficulties associated with measuring signal above the noise. At
+    nearly 1 second in, the nose appears to quickly cross ventrally
+    before rebounding dorsally. Smoothing eliminated the associated sign
+    change in amplitude; although, a small, nearly 0° ventral amplitude
+    may well be considered noise. (h) The range is defined, per frame,
+    as the distance of the worm’s midbody from its final path centroid.
+    The central dot displays the final path centroid. The two arrows
+    display the range at early and late times within the experiment. (i)
+    The locations of worm dwelling are shown as a heatmap. A single
+    location of dwelling dominates faint traces of the worm’s path
+    during motion.
