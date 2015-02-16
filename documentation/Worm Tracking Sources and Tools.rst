@@ -30,9 +30,7 @@ trackers <http://www.wormbook.org/chapters/www_tracking/tracking.html>`__
 	-  From Sijie Jason Wang, the son of Dr. Wang: "Here's a link to my current version, which is capable of resolving omega bends. I'm still tweaking the algorithm so things will continue to change. It's a pretty significant improvement over the version posted on the website. Please let me know if you need any help getting it to run, or if you have any suggestions at all. I'm working alone so a second set of eyes would be very much appreciated!" https://www.dropbox.com/sh/33v65ofzs7m66n8/vVB7DiVp_v
 	-  Note that this code is under a restrictive license that prevents it being used in our codebase, since it does not permit commercial reuse, which the MIT license requires. See `a June 2014 discussion <https://groups.google.com/forum/#!topic/openworm-discuss/Ab0MrGRCwoY>`__ on the boards about this.
 	
-4. Ho “Audrey” Cheung, BioImage Analytics Laboratory, Department of Electrical and Computer Engineering, University of Houston, “Farsight Toolkit”
-http://www.farsight-toolkit.org/wiki/The_Worm_Project
-https://github.com/hocheung20/farsight
+4. Ho “Audrey” Cheung, BioImage Analytics Laboratory, Department of Electrical and Computer Engineering, University of Houston, “Farsight Toolkit”  http://www.farsight-toolkit.org/wiki/The_Worm_Project  https://github.com/hocheung20/farsight
 
 5. Roussel himself working for WormLab to implement his model-based algorithm.
 
