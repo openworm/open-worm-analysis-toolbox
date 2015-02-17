@@ -18,6 +18,50 @@ channels. <s6.md>`__
 Details of feature files and algorithms for feature measurement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Four feature categories:
+- Morphology
+- Locomotion
+- Path
+- Posture
+
+Features can be one of three "types":
+- Simple (one scalar for the whole video)
+- Movement-based (a value for each frame of the video)
+- Event-based (an integer for the whole video)
+
+22 fundamental features:
+
+- Simple:
+   - duration
+- Movement-based:
+   - length
+   - width
+   - area
+   - area_per_length
+   - width_per_length
+   - bends
+   - amplitude
+   - wavelength
+   - track_length
+   - eccentricity
+   - kinks
+   - directions
+   - eigen_projection
+   - velocity
+   - foraging_bends
+   - crawling_bends
+   - range
+   - curvature
+- Event-based:
+   - coils
+   - omegas
+   - upsilons
+   - motion_events
+
+These are calculated for specific body parts, and specific statistical values are taken, like mean and standard deviation, etc.  This expands the list of 22 to 93.
+Then the 93 features are dumped into histograms, with extra histograms calculated for movement features (forward, backward, paused in addition to all), and extra histograms calculated for the signed features (with some in both movement and event features): (data that is negative, positive, and the absolute), giving a TOTAL histogram count of 726. 
+(Sometimes there might not be any data though, like if a worm only moves forward, its histogram for all movement features isolated to just backward data will contain no data.)
+
 -  `Morphology <Morphology.md>`__ - `MatLab
    Code <https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology>`__
    - `Python
