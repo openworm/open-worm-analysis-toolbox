@@ -19,12 +19,14 @@ Details of feature files and algorithms for feature measurement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Four feature categories:
+
 - Morphology
 - Locomotion
 - Path
 - Posture
 
 Features can be one of three "types":
+
 - Simple (one scalar for the whole video)
 - Movement-based (a value for each frame of the video)
 - Event-based (an integer for the whole video)
