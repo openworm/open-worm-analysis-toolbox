@@ -4,13 +4,18 @@
 
 """
 import sys, warnings
+import numpy as np
 
 class MinimalWormSpecification(object):
     """
     A time-series of contour and segmentation_status.  Also the vulva side.
     
     """
-    def __init__(self, worm_frame_iterator):
+    def __init__(self):
+        contour = np.array()
+        pass
+    
+    def __init__DEPRECATED(self, worm_frame_iterator):
         """
         Prepare a minimal worm specification from an iterator of segmented 
         frames
@@ -27,7 +32,6 @@ class MinimalWormSpecification(object):
             setattr(self, attribute) = \
                 np.array([getattr(frame, attribute) for 
                           frame in worm_frame_list])
-
 
     def pre_features(self):
         """
