@@ -25,10 +25,10 @@ sub-project of the `OpenWorm project <https://github.com/openworm>`__.
 It is only about 50% complete. Please see:
 
 -  `Installation
-   Guide <https://github.com/openworm/movement_validation/blob/master/INSTALL.md>`__
+   Guide <https://github.com/openworm/movement_validation/blob/master/INSTALL.rst>`__
 
 -  `Guide for
-   Contributors <https://github.com/openworm/movement_validation/blob/master/documentation/Guide%20for%20contributors.md>`__
+   Contributors <https://github.com/openworm/movement_validation/blob/master/documentation/Guide%20for%20contributors.rst>`__
 
 -  `Current Code
    Progress <https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit?usp=sharing>`__
