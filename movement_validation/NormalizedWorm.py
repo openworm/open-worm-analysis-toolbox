@@ -11,6 +11,7 @@ import warnings
 import os
 import inspect
 import h5py
+import simplejson as json
 
 from . import config
 from . import utils
@@ -131,6 +132,35 @@ class NormalizedWorm(object):
         # vulva so the ventral mode can be determined.  Here we just set
         # the ventral mode to a default value as a stopgap measure
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+
+
+    def load_from_JSON(self, data_file_path):
+        """
+        Load from JSON.  The format is:
+        
+        contour  (mx2xn numpy array, where m is the number of contour points)
+        head     (2xn numpy array, must be a point in the contour)
+        tail     (2xn numpy array, must be a point in the contour)
+        
+        OPTIONAL:
+        segmentation_status  (if None, will assume all frames are "s")
+        frame_codes          (if None, will assume all frames are 1)
+        skeleton             (if None, this will be calculated in the next step)
+
+        """
+        pass
+    
+    def save_to_JSON(self, data_file_path):
+        """
+        Save to JSON
+
+        """
+        data = json.dumps(self.contour_x.tolist())
+        with open(data_file_path, 'w') as outfile:
+            json.dump(data, outfile, ensure_ascii=False)
+
+        print("saved to JSON")
+        pass
 
 
     @classmethod

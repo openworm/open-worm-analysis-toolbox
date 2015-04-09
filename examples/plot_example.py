@@ -126,12 +126,20 @@ def main():
     #-------------------------------------------------------------------
     nw = example_nw()  # movement_validation.NormalizedWorm
 
+    # Let's save this example as a JSON file
+    norm_folder = os.path.join(user_config.EXAMPLE_DATA_PATH)
+
+    json_file_path = os.path.join(os.path.abspath(norm_folder),
+                                  "norm_example.json")
+
+    nw.save_to_JSON(json_file_path)
+
     # Placeholder for video metadata
-    v = movement_validation.VideoInfo(video_name="Example name", fps=25)
+    #v = movement_validation.VideoInfo(video_name="Example name", fps=25)
 
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
-    wf = movement_validation.WormFeatures(nw, v)
+    #wf = movement_validation.WormFeatures(nw, v)
 
     # Plotting demonstration
     # movement_validation.plot_frame_codes(nw)
