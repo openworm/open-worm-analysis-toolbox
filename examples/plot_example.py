@@ -5,6 +5,7 @@
 """
 
 import sys, os
+import warnings
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -12,6 +13,7 @@ import sys, os
 sys.path.append('..') 
 import movement_validation
 user_config = movement_validation.user_config
+from movement_validation.WormPlotter import plot_frame_codes
 
 def example_WormExperimentFile():
     """
@@ -121,6 +123,7 @@ def example_virtual_worm_pipeline(data_file_path):
 
 """
 def main():
+    warnings.simplefilter("error")
     # Create a normalized worm from a hardcoded example location
 
     #-------------------------------------------------------------------
@@ -129,21 +132,19 @@ def main():
     # Let's save this example as a JSON file
     norm_folder = os.path.join(user_config.EXAMPLE_DATA_PATH)
 
-    json_file_path = os.path.join(os.path.abspath(norm_folder),
-                                  "norm_example.json")
+    json_file_path = os.path.join(os.path.abspath(norm_folder), "norm_example.json")
 
     nw.save_to_JSON(json_file_path)
 
     # Placeholder for video metadata
-    #v = movement_validation.VideoInfo(video_name="Example name", fps=25)
+    v = movement_validation.VideoInfo(video_name="Example name", fps=25)
 
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
     #wf = movement_validation.WormFeatures(nw, v)
 
     # Plotting demonstration
-    # movement_validation.plot_frame_codes(nw)
-    # plt.tight_layout()
+    plot_frame_codes(nw)
 
     # I just saved a plaintext file with the motioncodes extracted from
     # the features result file, by viewing the results file using HDFView
