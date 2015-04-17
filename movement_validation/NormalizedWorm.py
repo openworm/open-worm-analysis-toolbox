@@ -7,7 +7,6 @@ This module defines the NormalizedWorm class
 import numpy as np
 import scipy.io
 
-from exceptions import RuntimeWarning
 import warnings
 import os
 import inspect
@@ -392,13 +391,19 @@ class NormalizedWorm(object):
 
         # Taking the second element of the resulting list of arrays, i.e. [1],
         # gives the partitioned component we were looking for.
-        partition = np.split(getattr(self,data_key),
-                             self.worm_partitions[partition_key])[1]
+        part = self.worm_partitions[partition_key]
 
-        if(split_spatial_dimensions):
-            return partition[:, 0, :], partition[:, 1,:]
+        # PROBLEM IS WHEN partition_key = 'tail'!  'head' works fine.
+        worm_attribute_values = getattr(self, data_key)        
+        if(worm_attribute_values.size != 0):
+            partition = np.split(worm_attribute_values,
+                                 part)[1]
+            if(split_spatial_dimensions):
+                return partition[:, 0, :], partition[:, 1,:]
+            else:
+                return partition
         else:
-            return partition
+            return None
 
 
     def rotate(self, theta_d):

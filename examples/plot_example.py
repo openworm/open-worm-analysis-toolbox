@@ -123,7 +123,9 @@ def example_virtual_worm_pipeline(data_file_path):
 
 """
 def main():
+    # Force warnings to be errors
     warnings.simplefilter("error")
+
     # Create a normalized worm from a hardcoded example location
 
     #-------------------------------------------------------------------
