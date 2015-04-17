@@ -7,6 +7,7 @@ This module defines the NormalizedWorm class
 import numpy as np
 import scipy.io
 
+from exceptions import RuntimeWarning
 import warnings
 import os
 import inspect
@@ -442,11 +443,13 @@ class NormalizedWorm(object):
 
         """
         s = self.skeletons
+
+        # We do this to avoid a RuntimeWarning taking the nanmean of frames
+        # with nothing BUT nan entries: for those frames nanmean returns nan
+        # (correctly) but still raises a RuntimeWarning.
         with warnings.catch_warnings():
-            temp = np.nanmean(s, 0, keepdims=False)
-
-        return temp
-
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            return np.nanmean(s, 0, keepdims=False)
 
     @property
     def angle(self):
@@ -477,12 +480,12 @@ class NormalizedWorm(object):
 
         """
         s = self.skeletons
-        s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
-
-        #nw2 = NormalizedWorm()
-
-        # TODO
-        return s - s_mean
+        
+        if(s.size == 0):
+            s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
+            return s - s_mean
+        else:
+            return s
 
 
     def rotate_and_translate(self):
