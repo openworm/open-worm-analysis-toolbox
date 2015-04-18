@@ -204,7 +204,11 @@ class LocomotionCrawlingBends(object):
             # frames
         
             s = slice(*options.bends_partitions[cur_partition_name])
-            avg_bend_angles = np.nanmean(bend_angles[s, :],axis=0)
+
+            # Suppress RuntimeWarning: Mean of empty slice
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=RuntimeWarning)
+                avg_bend_angles = np.nanmean(bend_angles[s, :], axis=0)
 
             # Ensure there are both data and gaps if we are going to
             # interpolate - i.e.:
@@ -224,6 +228,7 @@ class LocomotionCrawlingBends(object):
             setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
 
         timer.toc('locomotion.crawling_bends')
+
 
     def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
         """
@@ -246,7 +251,7 @@ class LocomotionCrawlingBends(object):
         
         # Compute the short-time Fourier transforms (STFT).
         #--------------------------------------------------
-        #Unpack options ...
+        # Unpack options ...
         max_freq = options.max_frequency
         min_freq = options.min_frequency
         fft_n_samples = options.fft_n_samples
@@ -254,9 +259,9 @@ class LocomotionCrawlingBends(object):
         peak_energy_threshold = options.peak_energy_threshold
 
         # Maximum index to keep for frequency analysis:
-        fft_max_I   = fft_n_samples / 2
+        fft_max_I   = int(fft_n_samples / 2)
 
-        #This gets multiplied by an index to compute the frequency at that index
+        # This gets multiplied by an index to compute the frequency at that index
         freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
 
         n_frames = len(avg_bend_angles)
@@ -267,9 +272,15 @@ class LocomotionCrawlingBends(object):
         right_bounds = bound_info.right_bounds
         is_bad_mask  = bound_info.is_bad_mask
         
-        #This is a processing optimization that in general will speed things up
-        max_freq_I = max_freq/freq_scalar        
-        INIT_MAX_I_FOR_BANDWIDTH = round(options.initial_max_I_pct * max_freq_I)        
+        # This is a processing optimization that in general will speed 
+        # things up
+        max_freq_I = max_freq/freq_scalar
+        INIT_MAX_I_FOR_BANDWIDTH = \
+            round(options.initial_max_I_pct * max_freq_I)        
+        
+        # Convert each element from float to int
+        right_bounds = right_bounds.astype(int)
+        left_bounds = left_bounds.astype(int)
         
         for iFrame in np.flatnonzero(~is_bad_mask):
             windowed_data   = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
@@ -620,8 +631,11 @@ class LocomotionForagingBends(object):
         Simple helper for h__computeNoseBends
 
         """
-        avg_diff_x = np.nanmean(np.diff(x, n=1, axis=0), axis=0)
-        avg_diff_y = np.nanmean(np.diff(y, n=1, axis=0), axis=0)
+        # Suppress RuntimeWarning: Mean of empty slice
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            avg_diff_x = np.nanmean(np.diff(x, n=1, axis=0), axis=0)
+            avg_diff_y = np.nanmean(np.diff(y, n=1, axis=0), axis=0)
 
         angles = np.arctan2(avg_diff_y, avg_diff_x)
 
@@ -989,6 +1003,10 @@ class CrawlingBendsBoundInfo(object):
             if cur_left_index == BAD_INDEX_VALUE or cur_right_index == BAD_INDEX_VALUE:
                 continue
 
+            # Convert from float to int
+            cur_left_index = int(cur_left_index)
+            cur_right_index = int(cur_right_index)
+
             back_zero_I = left_values[cur_left_index]
             front_zero_I = right_values[cur_right_index]
 
@@ -1061,3 +1079,4 @@ class CrawlingBendsBoundInfo(object):
                 front_zeros_I[iFrame] = front_zero_I
 
         return [back_zeros_I, front_zeros_I]
+

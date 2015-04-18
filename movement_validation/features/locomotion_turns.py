@@ -122,10 +122,14 @@ class LocomotionTurns(object):
 
         # NOTE: For some reason the first and last few angles are NaN, so we use
         # nanmean instead of mean.  We could probably avoid this for the body.
-        angles.head_angles = np.nanmean(bend_angles[first_third, :], axis=0)
-        angles.body_angles = np.nanmean(bend_angles[second_third, :], axis=0)
-        angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
-        angles.is_stage_movement = is_stage_movement
+        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # that are ALL NaN.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            angles.head_angles = np.nanmean(bend_angles[first_third, :], axis=0)
+            angles.body_angles = np.nanmean(bend_angles[second_third, :], axis=0)
+            angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
+            angles.is_stage_movement = is_stage_movement
 
         # Deep copy.
         # To @JimHokanson from @MichaelCurrie: what does "ht" stand for?
@@ -651,10 +655,14 @@ class OmegaTurns(object):
 
         # Take the mean across the partition, so that we are left with a single
         # value for each frame (i.e. 1-d an array of length n_frames)
-        head_x = np.nanmean(head_x, axis=0)
-        head_y = np.nanmean(head_y, axis=0)
-        tail_x = np.nanmean(tail_x, axis=0)
-        tail_y = np.nanmean(tail_y, axis=0)
+        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # that are ALL NaN.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            head_x = np.nanmean(head_x, axis=0)
+            head_y = np.nanmean(head_y, axis=0)
+            tail_x = np.nanmean(tail_x, axis=0)
+            tail_y = np.nanmean(tail_y, axis=0)
 
         th_angle = np.arctan2(head_y - tail_y, head_x - tail_x) * (180 / np.pi)
 

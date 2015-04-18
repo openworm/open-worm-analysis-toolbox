@@ -44,7 +44,6 @@ class Bends(object):
     
     """
     def __init__(self, features_ref):
-
         # TODO: I don't like this being in normalized worm
 
         nw  = features_ref.nw
@@ -52,20 +51,24 @@ class Bends(object):
         p = nw.get_partition_subset('normal')
 
         for partition_key in p.keys():
-
-            # retrieve the part of the worm we are currently looking at:
+            # Retrieve the part of the worm we are currently looking at:
             bend_angles = nw.get_partition(partition_key, 'angles')
 
             # shape = (n):
-            with warnings.catch_warnings(record=True):
-                
-                #Throws warning on taking the mean of an empty slice
+
+            # Suppress RuntimeWarning: Mean of empty slice for those frames 
+            # that are ALL NaN.
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=RuntimeWarning)                
+
+                # Throws warning on taking the mean of an empty slice
                 temp_mean = np.nanmean(a=bend_angles, axis=0)
                 
-                #Throws warning when degrees of freedom <= 0 for slice
+                # Throws warning when degrees of freedom <= 0 for slice
                 temp_std = np.nanstd(a=bend_angles, axis=0)
 
-                #Sign the standard deviation (to provide the bend's dorsal/ventral orientation)
+                # Sign the standard deviation (to provide the bend's 
+                # dorsal/ventral orientation)
                 temp_std[temp_mean < 0] *= -1
 
                 
@@ -822,7 +825,7 @@ class AmplitudeAndWavelength(object):
     
         # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
         N_POINTS_FFT = wave_options.n_points_fft
-        HALF_N_FFT = N_POINTS_FFT / 2
+        HALF_N_FFT = int(N_POINTS_FFT / 2)
         MIN_DIST_PEAKS = wave_options.min_dist_peaks
         WAVELENGTH_PCT_MAX_CUTOFF = wave_options.pct_max_cutoff
         WAVELENGTH_PCT_CUTOFF = wave_options.pct_cutoff

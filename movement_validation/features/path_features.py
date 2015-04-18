@@ -160,6 +160,9 @@ class Duration(object):
         arena_size = [
             y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]
         ar = Arena(sx, sy, arena_size)
+        # Arena_size must be a list of whole numbers or else we'll get an
+        # error when calling np.zeroes(arena_size) later on
+        arena_size = np.array(arena_size, dtype=int)
 
         #----------------------------------------------------------------------
         def h__populateArenas(arena_size, sys, sxs, s_points, isnan_mask):
@@ -391,7 +394,7 @@ def worm_path_curvature(features_ref):
                                          avg_body_angles_d, BODY_DIFF, ventral_mode)
 
     frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
-    half_frame_scale = (frame_scale - 1) / 2
+    half_frame_scale = int((frame_scale - 1) / 2)
 
     # Compute the angle differentials and distances.
     speed = np.abs(speed)

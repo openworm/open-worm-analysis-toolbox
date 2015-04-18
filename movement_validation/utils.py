@@ -221,16 +221,24 @@ def colon(r1, inc, r2):
     s = np.sign(inc)
 
     if s == 0:
-        return np.zeros(1)
+        return_value = np.zeros(1)
     elif s == 1:
         n = ((r2 - r1) + 2 * np.spacing(r2 - r1)) // inc
-        return np.linspace(r1, r1 + inc * n, n + 1)
+        return_value = np.linspace(r1, r1 + inc * n, n + 1)
     else:  # s == -1:
         # NOTE: I think this is slightly off as we start on the wrong end
         # r1 should be exact, not r2
         n = ((r1 - r2) + 2 * np.spacing(r1 - r2)) // np.abs(inc)
         temp = np.linspace(r2, r2 + np.abs(inc) * n, n + 1)
-        return temp[::-1]
+        return_value = temp[::-1]
+    
+    # If the start and steps are whole numbers, we should cast as int
+    if(np.equal(np.mod(r1,1),0) and 
+       np.equal(np.mod(s,1),0) and
+       np.equal(np.mod(r2,1),0)):
+        return return_value.astype(int)
+    else:
+        return return_value
 
 
 def print_object(obj):

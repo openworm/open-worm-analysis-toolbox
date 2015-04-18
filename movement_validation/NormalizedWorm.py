@@ -394,9 +394,14 @@ class NormalizedWorm(object):
         part = self.worm_partitions[partition_key]
 
         # PROBLEM IS WHEN partition_key = 'tail'!  'head' works fine.
-        worm_attribute_values = getattr(self, data_key)        
+        worm_attribute_values = getattr(self, data_key)
         if(worm_attribute_values.size != 0):
-            partition = np.split(worm_attribute_values,
+            # Let's suppress the warning about zero arrays being reshaped
+            # since that's irrelevant since we are only looking at the 
+            # non-zero array in the middle i.e. the 2nd element i.e. [1]
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=FutureWarning)
+                partition = np.split(worm_attribute_values,
                                  part)[1]
             if(split_spatial_dimensions):
                 return partition[:, 0, :], partition[:, 1,:]
