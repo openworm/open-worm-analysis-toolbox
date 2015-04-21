@@ -40,8 +40,8 @@ def main():
     
     openworm_features.timer.summarize()
     
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
 
 if __name__ == '__main__':
     main()

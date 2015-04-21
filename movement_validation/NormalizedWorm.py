@@ -148,6 +148,11 @@ class NormalizedWorm(object):
         skeleton             (if None, this will be calculated in the next step)
 
         """
+        with open(data_file_path, 'r') as infile:
+            obj = json.loads(infile)
+        
+        # TODO: extract skeleton, etc. from obj
+        
         pass
     
     def save_to_JSON(self, data_file_path):
@@ -160,7 +165,6 @@ class NormalizedWorm(object):
             json.dump(data, outfile, ensure_ascii=False)
 
         print("saved to JSON")
-        pass
 
 
     @classmethod
