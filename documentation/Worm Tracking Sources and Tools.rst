@@ -34,6 +34,8 @@ trackers <http://www.wormbook.org/chapters/www_tracking/tracking.html>`__
 	
 5. Ho “Audrey” Cheung, BioImage Analytics Laboratory, Department of Electrical and Computer Engineering, University of Houston, “Farsight Toolkit”  http://www.farsight-toolkit.org/wiki/The_Worm_Project  https://github.com/hocheung20/farsight
 
+	- On 2 March 2015 I (@MichaelCurrie) tracked down [Badri Roysam](broysam@central.uh.edu), of the University of Houston, who had the following to say about this project: "The worm tracking project is currently in hiatus. The wiki page and the code are not being actively worked on. Roussel has moved to a company MBF Biosciences, and developed a commercial product there. Yu Wang has also moved to a career in California. If you see collaboration potential we are happy to engage."
+
 6. Roussel himself working for WormLab to implement his model-based algorithm.
 
 7. Brown Lab is working on a new tracker.  Since André Brown worked on WT2.0, this new tracker is basically WT3.0 and will have multi-worm tracking capabilities. They are working closely with OpenWorm; viz. [this meeting 16 Feb 2015](https://docs.google.com/document/d/1VRMnNHoLQ2oHD3wgGOQrE8KzyCSrEoMwChWPOhVNTj0/edit?usp=sharing)
