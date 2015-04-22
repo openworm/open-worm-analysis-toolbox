@@ -67,7 +67,7 @@ worked on.
 
 An overview of the current status of the work on the
 movement\_validation repository is available at `Code
-Progress.pdf <https://github.com/openworm/movement_validation/blob/master/documentation/Code%20Progress.pdf>`__.
+Progress <https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit#gid=9274694>`__.
 
 Best practices for contributing to this repo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
