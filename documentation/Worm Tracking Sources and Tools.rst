@@ -34,7 +34,7 @@ trackers <http://www.wormbook.org/chapters/www_tracking/tracking.html>`__
 	
 5. Ho “Audrey” Cheung, BioImage Analytics Laboratory, Department of Electrical and Computer Engineering, University of Houston, “Farsight Toolkit”  http://www.farsight-toolkit.org/wiki/The_Worm_Project  https://github.com/hocheung20/farsight
 
-	- On 2 March 2015 I (@MichaelCurrie) tracked down `Badri Roysam<broysam@central.uh.edu/>`__, of the University of Houston, who had the following to say about this project: "The worm tracking project is currently in hiatus. The wiki page and the code are not being actively worked on. Roussel has moved to a company MBF Biosciences, and developed a commercial product there. Yu Wang has also moved to a career in California. If you see collaboration potential we are happy to engage."
+	- On 2 March 2015 I (@MichaelCurrie) tracked down `Badri Roysam <broysam@central.uh.edu/>`__, of the University of Houston, who had the following to say about this project: "The worm tracking project is currently in hiatus. The wiki page and the code are not being actively worked on. Roussel has moved to a company MBF Biosciences, and developed a commercial product there. Yu Wang has also moved to a career in California. If you see collaboration potential we are happy to engage."
 
 6. Roussel himself working for WormLab to implement his model-based algorithm.
 
