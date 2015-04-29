@@ -4,7 +4,7 @@ License
 Copyright © 2015 OpenWorm
 
 **movement\_validation**, and indeed all software written as part of the
-`OpenWorm <https://github.com/openworm/>`__, project is free software under
+`OpenWorm <https://github.com/openworm/>`__ project is free software under
 the `MIT license <http://opensource.org/licenses/MIT>`__.
 
 Original code written in Matlab by Dr. Eviatar Yemini, at the Schafer
