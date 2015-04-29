@@ -52,7 +52,7 @@ def main():
 
     #The frame rate is somewhere in the video info. Ideally this would all come
     #from the video parser eventually
-    vi = VideoInfo('Example Video File',25.8398)
+    vi = VideoInfo('Example Video File', 25.8398)
 
     # Generate the OpenWorm movement validation repo version of the features
     openworm_features = WormFeatures(nw,vi)

@@ -11,10 +11,19 @@ import warnings
 import os
 import inspect
 import h5py
-import simplejson as json
 
 from . import config
 from . import utils
+
+
+
+
+
+
+class Partition(object):
+    pass
+
+
 
 class NormalizedWorm(object):
     """ 
@@ -134,39 +143,6 @@ class NormalizedWorm(object):
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
 
 
-    def load_from_JSON(self, data_file_path):
-        """
-        Load from JSON.  The format is:
-        
-        contour  (mx2xn numpy array, where m is the number of contour points)
-        head     (2xn numpy array, must be a point in the contour)
-        tail     (2xn numpy array, must be a point in the contour)
-        
-        OPTIONAL:
-        segmentation_status  (if None, will assume all frames are "s")
-        frame_codes          (if None, will assume all frames are 1)
-        skeleton             (if None, this will be calculated in the next step)
-
-        """
-        with open(data_file_path, 'r') as infile:
-            obj = json.loads(infile)
-        
-        # TODO: extract skeleton, etc. from obj
-        
-        pass
-    
-    def save_to_JSON(self, data_file_path):
-        """
-        Save to JSON
-
-        """
-        data = json.dumps(self.contour_x.tolist())
-        with open(data_file_path, 'w') as outfile:
-            json.dump(data, outfile, ensure_ascii=False)
-
-        print("saved to JSON")
-
-
     @classmethod
     def load_from_matlab_data(self):
         pass
@@ -256,30 +232,6 @@ class NormalizedWorm(object):
             self.segmentation_status = np.array(list(self.segmentation_status))
 
             self.load_frame_code_descriptions()
-
-
-    def load_frame_code_descriptions(self):
-        """
-        Load the frame_codes descriptions, which are stored in a .csv file
-
-        """
-        # Here we assume the CSV is located in the same directory 
-        # as this current module's directory.
-        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'frame_codes.csv')
-        f = open(file_path, 'r')
-
-        self.frame_codes_descriptions = []
-
-        for line in f:
-            # split along ';' but ignore any newlines or quotes
-            a = line.replace("\n", "").replace("'", "").split(';')
-            # the actual frame codes (the first entry on each line)
-            # can be treated as integers
-            a[0] = int(a[0])
-            self.frame_codes_descriptions.append(a)
-
-        f.close()
 
 
     def get_partition_subset(self, partition_type):
@@ -397,7 +349,6 @@ class NormalizedWorm(object):
         # gives the partitioned component we were looking for.
         part = self.worm_partitions[partition_key]
 
-        # PROBLEM IS WHEN partition_key = 'tail'!  'head' works fine.
         worm_attribute_values = getattr(self, data_key)
         if(worm_attribute_values.size != 0):
             # Let's suppress the warning about zero arrays being reshaped
@@ -480,7 +431,7 @@ class NormalizedWorm(object):
         # obtain vector between first and last skeleton point
         v = s[48, :,:]-s[0,:,:]  
         # find the angle of this vector
-        return np.arctan(v[1, :]/v[0,:])*(180/np.pi)
+        return np.arctan(v[1,:]/v[0,:])*(180/np.pi)
 
 
     def translate_to_centre(self):
