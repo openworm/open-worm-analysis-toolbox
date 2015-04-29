@@ -77,7 +77,7 @@ from itertools import groupby
 from .. import config
 from .. import utils
 
-from . import feature_comparisons as fc
+from . import feature_comparisons
 
 
 class EventFinder:
@@ -894,9 +894,15 @@ class EventListWithFeatures(EventList):
         # Distance moved between events
         self.distance_between_events = np.zeros(self.__len__ - 1)
         for i in range(self.__len__ - 1):
-            self.distance_between_events[i] = \
-                np.nansum(
-                    self.distance_per_frame[self.end_frames[i] + 1:self.start_frames[i + 1]])
+            # Suppress "FutureWarning: In Numpy 1.9 the sum along empty 
+            # slices will be zero."
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=FutureWarning)
+                self.distance_between_events[i] = \
+                    np.nansum(
+                        self.distance_per_frame[self.end_frames[i] + 1:
+                                                self.start_frames[i+1]])
+
         #self.distance_between_events[-1] = np.NaN
 
         self.total_time = self.num_video_frames / fps
@@ -1053,6 +1059,8 @@ class EventListWithFeatures(EventList):
                 return False
         except:
             raise Exception("Problem while testing inequality")
+
+        fc = feature_comparisons
 
         # TODO: Add an integer equality comparison with name printing
         return \

@@ -16,102 +16,8 @@ from . import config
 from . import utils
 
 
-
-
-
-
-class Partition(object):
-    pass
-
-
-
-class NormalizedWorm(object):
-    """ 
-    NormalizedWorm encapsulates the normalized measures data, loaded
-    from the two files, one for the eigenworm data and the other for 
-    the rest.
-
-    This will be an intermediate representation, between the parsed,
-    normalized worms, and the "feature" sets. The goal is to take in the
-    code from normWorms and to have a well described set of properties
-    for rewriting the feature code.
-
-    PROPERTIES / METHODS FROM JIM'S MATLAB CODE:
-    * first column is original name
-    * second column is renamed name, if renamed.
-
-    Properties:
-    -----------
-      segmentation_status   
-      frame_codes
-      vulva_contours        49 x 2 x n_frames
-      non_vulva_contours    49 x 2 x n_frames
-      skeletons
-      angles
-      in_out_touches
-      lengths
-      widths
-      head_areas
-      tail_areas
-      vulva_areas
-      non_vulva_areas      
-
-      n_frames
-      x - how does this differ from skeleton_x???
-      y
-      contour_x
-      contour_y
-      skeleton_x
-
-    static methods:
-      getObject              load_normalized_data(self, data_path)
-
-    """
-
-
-    """
-
-    Notes
-    ----------------------
-    Originally translated from seg_worm.skeleton_indices
-  
-  Used in: (list is not comprehensive)
-  --------------------------------------------------------
-  - posture bends
-  - posture directions
-  
-  NOTE: These are hardcoded for now. I didn't find much use in trying
-  to make this dynamic based on some maximum value.
-  
-  Typical Usage:
-  --------------------------------------------------------
-  SI = seg_worm.skeleton_indices;
-
-  """
-    # The normalized worm contains precisely 49 points per frame.  Here
-    # we list in a dictionary various partitions of the worm.
-    worm_partitions = None
-    # this stores a dictionary of various ways of organizing the partitions
-    worm_parititon_subsets = None
-
-    data_dict = None  # A dictionary of all data in norm_obj.mat
-
-
-    def __init__(self, data_file_path=None):
-        """ 
-        Initialize this instance by loading both the worm data
-        
-        Parameters
-        ---------------------------------------
-        data_file_path: string  (optional)
-          if None is specified, no data is loaded      
-
-        """
-        #TODO: Michael, why are these optional????
-        if data_file_path:
-            self.load_normalized_data(data_file_path)
-
-
+class Partition():
+    def __init__(self):
         # These are RANGE values, so the last value is not inclusive
         self.worm_partitions = {'head': (0, 8),
                                 'neck': (8, 16),
@@ -134,105 +40,6 @@ class NormalizedWorm(object):
                                        'second_third': ('midbody',),
                                        'last_third': ('hips', 'tail'),
                                        'all': ('all',)}
-
-        # DEBUG: (Note from @MichaelCurrie:)
-        # This should be set by the normalized worm file, since each
-        # worm subjected to an experiment is manually examined to find the
-        # vulva so the ventral mode can be determined.  Here we just set
-        # the ventral mode to a default value as a stopgap measure
-        self.ventral_mode = config.DEFAULT_VENTRAL_MODE
-
-
-    @classmethod
-    def load_from_matlab_data(self):
-        pass
-        #TODO: Merge the constructor and load_normalized_data into here...
-
-
-    def load_normalized_data(self, data_file_path):
-        """ 
-        Load the norm_obj.mat file into this class
-
-        Notes
-        ---------------------------------------    
-        Translated from getObject in SegwormMatlabClasses
-
-        """
-
-        if(not os.path.isfile(data_file_path)):
-            raise Exception("Data file not found: " + data_file_path)
-        else:
-            self.data_file = scipy.io.loadmat(data_file_path,
-                                              # squeeze unit matrix dimensions:
-                                              squeeze_me=True,
-                                              # force return numpy object
-                                              # array:
-                                              struct_as_record=False)
-
-            # self.data_file is a dictionary, with keys:
-            # self.data_file.keys() =
-            # dict_keys(['__header__', 's', '__version__', '__globals__'])
-
-            # All the action is in data_file['s'], which is a numpy.ndarray where
-            # data_file['s'].dtype is an array showing how the data is structured.
-            # it is structured in precisely the order specified in data_keys
-            # below
-
-            staging_data = self.data_file['s']
-
-            # NOTE: These are aligned to the order in the files.
-            # these will be the keys of the dictionary data_dict
-            data_keys = [
-                # this just contains a string for where to find the
-                # eigenworm file.  we do not use this, however, since
-                # the eigenworm postures are universal to all worm files,
-                # so the file is just stored in the /features directory
-                # of the source code, and is loaded at the features 
-                # calculation step
-                'EIGENWORM_PATH',
-                # a string of length n, showing, for each frame of the video:
-                # s = segmented
-                # f = segmentation failed
-                # m = stage movement
-                # d = dropped frame
-                # n??? - there is reference tin some old code to this
-                # after loading this we convert it to a numpy array.
-                'segmentation_status',
-                # shape is (1 n), see comments in
-                # seg_worm.parsing.frame_errors
-                'frame_codes',
-                'vulva_contours',     # shape is (49, 2, n) integer
-                'non_vulva_contours',  # shape is (49, 2, n) integer
-                'skeletons',          # shape is (49, 2, n) integer
-                'angles',             # shape is (49, n) integer (degrees)
-                'in_out_touches',     # shpe is (49, n)
-                'lengths',            # shape is (n) integer
-                'widths',             # shape is (49, n) integer
-                'head_areas',         # shape is (n) integer
-                'tail_areas',         # shape is (n) integer
-                'vulva_areas',        # shape is (n) integer
-                'non_vulva_areas',    # shape is (n) integer
-                'x',                  # shape is (49, n) integer
-                'y']                  # shape is (49, n) integer
-
-            # Here I use powerful python syntax to reference data elements of s
-            # dynamically through built-in method getattr
-            # that is, getattr(s, x)  works syntactically just like s.x,
-            # only x is a variable, so we can do a list comprehension with it!
-            # this is to build up a nice dictionary containing the data in s
-            
-            for key in data_keys:
-                setattr(self, key, getattr(staging_data, key))
-            
-            #self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
-
-            # Let's change the string of length n to a numpy array of single
-            # characters of length n, to be consistent with the other data
-            # structures
-            self.segmentation_status = np.array(list(self.segmentation_status))
-
-            self.load_frame_code_descriptions()
-
 
     def get_partition_subset(self, partition_type):
         """ 
@@ -366,7 +173,194 @@ class NormalizedWorm(object):
             return None
 
 
-    def rotate(self, theta_d):
+
+class NormalizedWorm(Partition):
+    """ 
+    NormalizedWorm encapsulates the normalized measures data, loaded
+    from the two files, one for the eigenworm data and the other for 
+    the rest.
+
+    This will be an intermediate representation, between the parsed,
+    normalized worms, and the "feature" sets. The goal is to take in the
+    code from normWorms and to have a well described set of properties
+    for rewriting the feature code.
+
+    PROPERTIES / METHODS FROM JIM'S MATLAB CODE:
+    * first column is original name
+    * second column is renamed name, if renamed.
+
+    Properties:
+    -----------
+      segmentation_status   
+      frame_codes
+      vulva_contours        49 x 2 x n_frames
+      non_vulva_contours    49 x 2 x n_frames
+      skeletons
+      angles
+      in_out_touches
+      lengths
+      widths
+      head_areas
+      tail_areas
+      vulva_areas
+      non_vulva_areas      
+
+      n_frames
+      x - how does this differ from skeleton_x???
+      y
+      contour_x
+      contour_y
+      skeleton_x
+
+    static methods:
+      getObject              load_normalized_data(self, data_path)
+
+    """
+
+
+    """
+
+    Notes
+    ----------------------
+    Originally translated from seg_worm.skeleton_indices
+  
+  Used in: (list is not comprehensive)
+  --------------------------------------------------------
+  - posture bends
+  - posture directions
+  
+  NOTE: These are hardcoded for now. I didn't find much use in trying
+  to make this dynamic based on some maximum value.
+  
+  Typical Usage:
+  --------------------------------------------------------
+  SI = seg_worm.skeleton_indices;
+
+  """
+    # The normalized worm contains precisely 49 points per frame.  Here
+    # we list in a dictionary various partitions of the worm.
+    worm_partitions = None
+    # this stores a dictionary of various ways of organizing the partitions
+    worm_parititon_subsets = None
+
+    data_dict = None  # A dictionary of all data in norm_obj.mat
+
+
+    def __init__(self, data_file_path=None):
+        """ 
+        Initialize this instance by loading both the worm data
+        
+        Parameters
+        ---------------------------------------
+        data_file_path: string  (optional)
+          if None is specified, no data is loaded      
+
+        """
+        super(NormalizedWorm, self).__init__()
+        # If data_file_path is None, then we are effectively creating an
+        # empty normalized worm.  This is a use case needed when 
+        # instantiating NormalizedWorm from a factory method
+        if data_file_path:
+            self.load_normalized_data(data_file_path)
+
+        # DEBUG: (Note from @MichaelCurrie:)
+        # This should be set by the normalized worm file, since each
+        # worm subjected to an experiment is manually examined to find the
+        # vulva so the ventral mode can be determined.  Here we just set
+        # the ventral mode to a default value as a stopgap measure
+        self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+
+
+    @classmethod
+    def load_from_matlab_data(self):
+        pass
+        #TODO: Merge the constructor and load_normalized_data into here...
+
+
+    def load_normalized_data(self, data_file_path):
+        """ 
+        Load the norm_obj.mat file into this class
+
+        Notes
+        ---------------------------------------    
+        Translated from getObject in SegwormMatlabClasses
+
+        """
+
+        if(not os.path.isfile(data_file_path)):
+            raise Exception("Data file not found: " + data_file_path)
+        else:
+            self.data_file = scipy.io.loadmat(data_file_path,
+                                              # squeeze unit matrix dimensions:
+                                              squeeze_me=True,
+                                              # force return numpy object
+                                              # array:
+                                              struct_as_record=False)
+
+            # self.data_file is a dictionary, with keys:
+            # self.data_file.keys() =
+            # dict_keys(['__header__', 's', '__version__', '__globals__'])
+
+            # All the action is in data_file['s'], which is a numpy.ndarray where
+            # data_file['s'].dtype is an array showing how the data is structured.
+            # it is structured in precisely the order specified in data_keys
+            # below
+
+            staging_data = self.data_file['s']
+
+            # NOTE: These are aligned to the order in the files.
+            # these will be the keys of the dictionary data_dict
+            data_keys = [
+                # this just contains a string for where to find the
+                # eigenworm file.  we do not use this, however, since
+                # the eigenworm postures are universal to all worm files,
+                # so the file is just stored in the /features directory
+                # of the source code, and is loaded at the features 
+                # calculation step
+                'EIGENWORM_PATH',
+                # a string of length n, showing, for each frame of the video:
+                # s = segmented
+                # f = segmentation failed
+                # m = stage movement
+                # d = dropped frame
+                # n??? - there is reference tin some old code to this
+                # after loading this we convert it to a numpy array.
+                'segmentation_status',
+                # shape is (1 n), see comments in
+                # seg_worm.parsing.frame_errors
+                'frame_codes',
+                'vulva_contours',     # shape is (49, 2, n) integer
+                'non_vulva_contours',  # shape is (49, 2, n) integer
+                'skeletons',          # shape is (49, 2, n) integer
+                'angles',             # shape is (49, n) integer (degrees)
+                'in_out_touches',     # shpe is (49, n)
+                'lengths',            # shape is (n) integer
+                'widths',             # shape is (49, n) integer
+                'head_areas',         # shape is (n) integer
+                'tail_areas',         # shape is (n) integer
+                'vulva_areas',        # shape is (n) integer
+                'non_vulva_areas',    # shape is (n) integer
+                'x',                  # shape is (49, n) integer
+                'y']                  # shape is (49, n) integer
+
+            # Here I use powerful python syntax to reference data elements of s
+            # dynamically through built-in method getattr
+            # that is, getattr(s, x)  works syntactically just like s.x,
+            # only x is a variable, so we can do a list comprehension with it!
+            # this is to build up a nice dictionary containing the data in s
+            
+            for key in data_keys:
+                setattr(self, key, getattr(staging_data, key))
+            
+            #self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
+
+            # Let's change the string of length n to a numpy array of single
+            # characters of length n, to be consistent with the other data
+            # structures
+            self.segmentation_status = np.array(list(self.segmentation_status))
+
+
+    def rotated(self, theta_d):
         """   
         Returns a NormalizedWorm instance with each frame rotated by 
         the amount given in the per-frame theta_d array.
@@ -433,15 +427,15 @@ class NormalizedWorm(object):
         # find the angle of this vector
         return np.arctan(v[1,:]/v[0,:])*(180/np.pi)
 
-
-    def translate_to_centre(self):
+    @property
+    def centred_skeleton(self):
         """ 
-        Return a NormalizedWorm instance with each frame moved so the 
+        Return a skeleton numpy array with each frame moved so the 
         centroid of the worm is 0,0
 
         Returns
         ---------------------------------------    
-        A NormalizedWorm instance with the above properties.
+        A numpy array with the above properties.
 
         """
         s = self.skeletons
@@ -452,8 +446,8 @@ class NormalizedWorm(object):
         else:
             return s
 
-
-    def rotate_and_translate(self):
+    @property
+    def orientation_free_skeleton(self):
         """
         Perform both a rotation and a translation of the skeleton
 
@@ -482,7 +476,7 @@ class NormalizedWorm(object):
 
         """
 
-        skeletons_centred = self.translate_to_centre()
+        centred_skeleton = self.centred_skeleton()
         orientation = self.angle
 
         a = -orientation * (np.pi / 180)
@@ -491,7 +485,7 @@ class NormalizedWorm(object):
                                [np.sin(a),  np.cos(a)]])
 
         # we need the x,y listed in the first dimension
-        s1 = np.rollaxis(skeletons_centred, 1)
+        s1 = np.rollaxis(centred_skeleton, 1)
 
         # for example, here is the first point of the first frame rotated:
         # rot_matrix[:,:,0].dot(s1[:,0,0])
@@ -552,7 +546,7 @@ class NormalizedWorm(object):
         nanmin returns the min ignoring such NaNs.
 
         """
-        d = getattr(self,measurement)
+        d = getattr(self, measurement)
         if(len(np.shape(d)) < 3):
             raise Exception("Position Limits Is Only Implemented for 2D data")
         return (np.nanmin(d[dimension, 0, :]), 
@@ -588,7 +582,3 @@ class NormalizedWorm(object):
         #TODO: This omits the properties above ...
         return utils.print_object(self)
 
-
-class SkeletonPartitions(object):
-    #TODO: This needs to be implemented
-    pass

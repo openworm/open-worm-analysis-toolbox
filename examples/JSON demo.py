@@ -26,7 +26,7 @@ import warnings
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-from movement_validation import user_config
+from movement_validation import config, user_config
  
  
 class JSON_Serializer():
@@ -159,12 +159,12 @@ class BasicWorm(JSON_Serializer):
         return bw
     
 
-class Partitionable():
+class WormPartition():
     def __init__(self):
         pass
 
 
-class NormalizedWorm(BasicWorm, Partitionable):
+class NormalizedWorm(BasicWorm, WormPartition):
     """
     Encapsulates the notion of a worm's elementary measurements, scaled
     (i.e. "normalized") to 49 points along the length of the worm.
@@ -202,9 +202,18 @@ class NormalizedWorm(BasicWorm, Partitionable):
         if not normalized_worm:
             super(NormalizedWorm, self).__init__()
             self.angles = np.array([], dtype=float)
+
+            # DEBUG: (Note from @MichaelCurrie:)
+            # This should be set by the normalized worm file, since each
+            # worm subjected to an experiment is manually examined to find the
+            # vulva so the ventral mode can be determined.  Here we just set
+            # the ventral mode to a default value as a stopgap measure
+            self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+
         else:
             super(NormalizedWorm, self).__init__(normalized_worm)
             self.angles = copy.deepcopy(normalized_worm.angles)
+
 
     @classmethod
     def from_BasicWorm_factory(cls, basic_worm):

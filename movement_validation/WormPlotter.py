@@ -105,10 +105,11 @@ class WormPlotter(animation.TimedAnimation):
         self.vulva_contours = self.normalized_worm.vulva_contours
         self.non_vulva_contours = self.normalized_worm.non_vulva_contours
         self.skeletons = self.normalized_worm.skeletons
-        self.skeletons_centred = self.normalized_worm.translate_to_centre()
+        self.centred_skeleton = self.normalized_worm.centred_skeleton
         self.skeleton_centres = self.normalized_worm.centre
         self.orientation = self.normalized_worm.angle
-        self.skeletons_rotated = self.normalized_worm.rotate_and_translate()
+        self.orientation_free_skeleton = \
+            self.normalized_worm.orientation_free_skeleton
 
         # 2. create the figure
         fig = plt.figure(figsize=(5, 5))
@@ -310,21 +311,21 @@ class WormPlotter(animation.TimedAnimation):
 
         self.annotation1b.set_text("Frame {} of {}".format(i, self.num_frames))
 
-        self.line2W.set_data(self.skeletons_centred[:, 0, i],
-                             self.skeletons_centred[:, 1, i])
-        self.line2W_head.set_data(self.skeletons_centred[0, 0, i],
-                                  self.skeletons_centred[0, 1, i])
-        self.line2C.set_data(self.skeletons_centred[:, 0, i] + (self.vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
-                             self.skeletons_centred[:, 1, i] + (self.vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
-        self.line2C2.set_data(self.skeletons_centred[:, 0, i] + (self.non_vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
-                              self.skeletons_centred[:, 1, i] + (self.non_vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
-        self.annotation2.xy = (self.skeletons_centred[0, 0, i],
-                               self.skeletons_centred[0, 1, i])
+        self.line2W.set_data(self.centred_skeleton[:, 0, i],
+                             self.centred_skeleton[:, 1, i])
+        self.line2W_head.set_data(self.centred_skeleton[0, 0, i],
+                                  self.centred_skeleton[0, 1, i])
+        self.line2C.set_data(self.centred_skeleton[:, 0, i] + (self.vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
+                             self.centred_skeleton[:, 1, i] + (self.vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
+        self.line2C2.set_data(self.centred_skeleton[:, 0, i] + (self.non_vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
+                              self.centred_skeleton[:, 1, i] + (self.non_vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
+        self.annotation2.xy = (self.centred_skeleton[0, 0, i],
+                               self.centred_skeleton[0, 1, i])
 
-        self.line3W.set_data(self.skeletons_rotated[:, 0, i],
-                             self.skeletons_rotated[:, 1, i])
-        self.line3W_head.set_data(self.skeletons_rotated[0, 0, i],
-                                  self.skeletons_rotated[0, 1, i])
+        self.line3W.set_data(self.orientation_free_skeleton[:, 0, i],
+                             self.orientation_free_skeleton[:, 1, i])
+        self.line3W_head.set_data(self.orientation_free_skeleton[0, 0, i],
+                                  self.orientation_free_skeleton[0, 1, i])
 
         self._drawn_artists = self.artists_to_be_drawn
 
