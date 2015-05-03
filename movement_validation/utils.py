@@ -262,7 +262,7 @@ def print_object(obj):
 
     dict_local = obj.__dict__
 
-    key_names = [x for x in dict_local]
+    key_names = [k for k in dict_local]
     key_lengths = [len(x) for x in key_names]
 
     if len(key_lengths) == 0:
@@ -285,21 +285,36 @@ def print_object(obj):
     value_strings = []
     for key in dict_local:
         value = dict_local[key]
-        try:  # Not sure how to test for classes :/
-            class_name = value.__class__.__name__
-            module_name = inspect.getmodule(value).__name__
-            temp_str = 'Class::' + module_name + '.' + class_name
-        except:
-            temp_str = repr(value)
-            if len(temp_str) > max_value_length:
-                #type_str = str(type(value))
-                #type_str = type_str[7:-2]
-                try:
-                    len_value = len(value)
-                except:
-                    len_value = 1
-                temp_str = str.format(
-                    'Type::{}, Len: {}', type(value).__name__, len_value)
+        run_extra_code = False
+        if hasattr(value,'__dict__'):
+            try:  # Not sure how to test for classes :/
+                class_name = value.__class__.__name__
+                module_name = inspect.getmodule(value).__name__
+                temp_str = 'Class::' + module_name + '.' + class_name
+            except:
+                run_extra_code = True
+        else:
+            run_extra_code = True
+            
+        if run_extra_code:
+            #TODO: Change length to shape if available
+            if type(value) is list and len(value) > max_value_length:
+                len_value = len(value)
+                temp_str = 'Type::List, Len %d'%len_value
+            else:
+                #Perhaps we want str instead?
+                #Changed from repr to str because things Python was not
+                #happy with lists of numpy arrays
+                temp_str = str(value)
+                if len(temp_str) > max_value_length:
+                    #type_str = str(type(value))
+                    #type_str = type_str[7:-2]
+                    try:
+                        len_value = len(value)
+                    except:
+                        len_value = 1
+                    temp_str = str.format(
+                    'Type::{}, Len: {}', type(value).__name__, len_value)        
 
         value_strings.append(temp_str)
 

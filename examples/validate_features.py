@@ -14,7 +14,6 @@ movement_validation package based on the user_config_example.txt
 """
 
 import sys, os
-import warnings
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -33,9 +32,6 @@ def main():
     Compare Schafer-generated features with our new code's generated features
 
     """
-    # Force warnings to be errors
-    warnings.simplefilter("error")
-
     # Set up the necessary file paths for file loading
     #----------------------
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
@@ -48,7 +44,7 @@ def main():
     # OPENWORM
     #----------------------
     # Load the normalized worm from file
-    nw = NormalizedWorm(data_file_path)
+    nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
 
     #The frame rate is somewhere in the video info. Ideally this would all come
     #from the video parser eventually
@@ -79,7 +75,7 @@ def main():
     print("Path: " +
         str(matlab_worm_features.path == openworm_features.path))
 
+    print("Done validating features")
 
 if __name__ == '__main__':
     main()
-    

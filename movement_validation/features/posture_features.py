@@ -11,22 +11,48 @@ import scipy.ndimage.filters as filters
 import numpy as np
 import warnings
 import os, inspect, h5py
-import collections
 
 # http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
 
-from .. import utils
+from . import feature_comparisons as fc
 from .. import config
+
+from .. import utils
 
 from . import events
 
 class Skeleton(object):
     def __init__(self,features_ref):
-        pass
-        #TODO: Implement this
         
+        nw  = features_ref.nw         
+        
+        self.x = nw.skeleton_x
+        self.y = nw.skeleton_y
+        
+    @classmethod
+    def from_disk(cls, skeleton_ref):
+
+        self = cls.__new__(cls)      
+        
+        x_temp = utils._extract_time_from_disk(skeleton_ref,'x',is_matrix=True)
+        y_temp = utils._extract_time_from_disk(skeleton_ref,'y',is_matrix=True)
+        self.x = x_temp.transpose()
+        self.y = y_temp.transpose()
+        
+        return self
+     
+    def __repr__(self):
+        return utils.print_object(self) 
+    
+    
+    def __eq__(self, other):
+
+        eq_skeleton_x = fc.corr_value_high(np.ravel(self.x), np.ravel(other.x), 'posture.skeleton.x')
+        eq_skeleton_y = fc.corr_value_high(np.ravel(self.y), np.ravel(other.y), 'posture.skeleton.y')
+
+        return eq_skeleton_x and eq_skeleton_y
 
 class Bends(object):
 
@@ -73,7 +99,8 @@ class Bends(object):
 
                 
 
-            setattr(self, partition_key, BendSection(temp_mean, temp_std))
+            setattr(self, partition_key, 
+                    BendSection(temp_mean, temp_std, partition_key))
 
     @classmethod
     def create(self,features_ref):
@@ -86,14 +113,26 @@ class Bends(object):
     def __repr__(self):
         return utils.print_object(self)
 
+
+    def __eq__(self, other):
+        pass
+        """
+        same_values = True
+        for partition_key in self.posture_bend_keys:
+            same_values = same_values and (getattr(self,partition_key) == getattr(other,partition_key))
+            
+        return same_values    
+	   """
+
     @classmethod
     def from_disk(cls, saved_bend_data):
 
         self = cls.__new__(cls)
 
         for partition_key in saved_bend_data.keys():
-            setattr(self, partition_key, BendSection.from_disk(
-                saved_bend_data[partition_key]))
+            setattr(self, partition_key, 
+                    BendSection.from_disk(saved_bend_data[partition_key], 
+                                          partition_key))
 
         return self
 
@@ -109,32 +148,40 @@ class BendSection(object):
     Bends
     
     """
-    def __init__(self, mean, std_dev):
+    def __init__(self, mean, std_dev, name):
         self.mean = mean
         self.std_dev = std_dev
+        self.name = name
 
     @classmethod
-    def from_disk(cls, saved_bend_data):
+    def from_disk(cls, saved_bend_data, name):
 
         self = cls.__new__(cls)
 
-        self.mean = saved_bend_data['mean'].value
-        self.std_dev = saved_bend_data['stdDev'].value
+        self.mean = utils._extract_time_from_disk(saved_bend_data, 'mean')
+
+        try:        
+            self.std_dev = utils._extract_time_from_disk(saved_bend_data, 'std_dev')
+        except KeyError:
+            self.std_dev = utils._extract_time_from_disk(saved_bend_data, 'stdDev')
+
+        self.name = name
 
         return self
 
     def __repr__(self):
         return utils.print_object(self)
 
-    """
-        TODO: Finish this    
     
     def __eq__(self, other):
-        return fc.corr_value_high(self.speed,other.speed,
-                                  'locomotion.velocity.' + self.name + '.speed') and \
-               fc.corr_value_high(self.direction,other.direction,
-                                  'locomotion.velocity.' + self.name + '.direction')
-    """
+        #TODO: Why is the head.std_dev so low???
+        #Are we not mimicing some old error properly???
+        return fc.corr_value_high(self.mean,other.mean,
+                                  'posture.bends.' + self.name + '.mean',
+                                  high_corr_value=0.99) and \
+               fc.corr_value_high(self.std_dev,other.std_dev,
+                                  'posture.bends.' + self.name + '.std_dev')
+
 
 def get_eccentricity_and_orientation(features_ref):
     """
@@ -817,7 +864,7 @@ class AmplitudeAndWavelength(object):
         nw = features_ref.nw    
         sx = nw.skeleton_x
         sy = nw.skeleton_y
-        worm_lengths = nw.lengths
+        worm_lengths = nw.length
     
         #TODO: Move these into posture options
     
@@ -1135,7 +1182,7 @@ def get_worm_coils(features_ref, midbody_distance):
     
     timer.tic()    
     
-    frame_codes = features_ref.nw.frame_codes
+    frame_code = features_ref.nw.frame_code
     
 
     COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold
@@ -1148,20 +1195,20 @@ def get_worm_coils(features_ref, midbody_distance):
     # that's the end.
 
     # Add on a frame to allow closing a coil at the end ...
-    coil_start_mask = (frame_codes == COIL_START_CODES[0]) | (
-        frame_codes == COIL_START_CODES[1])
+    coil_start_mask = (frame_code == COIL_START_CODES[0]) | (
+        frame_code == COIL_START_CODES[1])
     np_false = np.zeros((1,), dtype=bool)
     coil_start_mask = np.concatenate((coil_start_mask, np_false))
 
     # NOTE: These are not guaranteed ends, just possible ends ...
-    end_coil_mask = frame_codes == FRAME_SEGMENTED
+    end_coil_mask = frame_code == FRAME_SEGMENTED
     np_true = ~np_false
     end_coil_mask = np.concatenate((end_coil_mask, np_true))
 
     in_coil = False
     coil_frame_start = -1
     n_coils = 0
-    n_frames_plus1 = len(frame_codes) + 1
+    n_frames_plus1 = len(frame_code) + 1
 
     starts = []
     ends = []
@@ -1182,7 +1229,7 @@ def get_worm_coils(features_ref, midbody_distance):
             coil_frame_start = iFrame
 
     if options.mimic_old_behaviour:
-        if (len(starts) > 0) & (ends[-1] == len(frame_codes) - 1):
+        if (len(starts) > 0) & (ends[-1] == len(frame_code) - 1):
             ends[-1] += -1
             starts[-1] += -1
 
@@ -1205,6 +1252,9 @@ class Directions(object):
 
     """
 
+    # These are the names of the final fields
+    direction_keys = ['tail2head', 'head', 'tail']
+
     def __init__(self, features_ref):
         """
 
@@ -1219,12 +1269,9 @@ class Directions(object):
 
         nw = features_ref.nw
         
-        sx = nw.x
-        sy = nw.y
+        sx = nw.skeleton_x
+        sy = nw.skeleton_y
         wp = nw.worm_partitions
-                                                      
-        # These are the names of the final fields
-        NAMES = ['tail2head', 'head', 'tail']
 
         # For each set of indices, compute the centroids of the tip and tail then
         # compute a direction vector between them (tip - tail)
@@ -1236,14 +1283,14 @@ class Directions(object):
         TIP_S = [slice(*x) for x in TIP_I]  # S - slice
         TAIL_S = [slice(*x) for x in TAIL_I]
 
-        for iVector in range(3):
+        for iVector, attribute_name in enumerate(self.direction_keys):
             tip_x = np.mean(sx[TIP_S[iVector], :], axis=0)
             tip_y = np.mean(sy[TIP_S[iVector], :], axis=0)
             tail_x = np.mean(sx[TAIL_S[iVector], :], axis=0)
             tail_y = np.mean(sy[TAIL_S[iVector], :], axis=0)
 
             dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, tip_x - tail_x)
-            setattr(self, NAMES[iVector], dir_value)
+            setattr(self, attribute_name, dir_value)
 
         timer.toc('posture.directions')
 
@@ -1253,13 +1300,27 @@ class Directions(object):
 
         self = cls.__new__(cls)
 
-        for key in data:
-            setattr(self, key, data[key].value)
+        for key in self.direction_keys:            
+            temp_value = utils._extract_time_from_disk(data, key)
+            setattr(self, key, temp_value)
 
         return self
 
     def __repr__(self):
         return utils.print_object(self)
+
+    def __eq__(self, other):
+        
+        same_values = True
+        for partition_key in self.direction_keys:
+            value1 = getattr(self,partition_key)
+            value2 = getattr(self,partition_key)
+            same_values = same_values and \
+                fc.corr_value_high(value1, value2, 
+                                   'posture.directions.' + partition_key,
+                                   high_corr_value=0.99)
+            
+        return same_values    
 
 
 def load_eigen_worms():

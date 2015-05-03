@@ -39,6 +39,10 @@ FPS = 25.8398
 # DEBUG: might not need to be here but used in Path code and Locomotion code
 DEFAULT_VENTRAL_MODE = 0
 
+
+N_POINTS_NORMALIZED = 49
+
+
 """ Locomotion Features """
 # used in get_velocity:
 TIP_DIFF = 0.25

@@ -647,10 +647,10 @@ class OmegaTurns(object):
         # Compute tail direction
         #----------------------------------------------------
         head_x, head_y = nw.get_partition('head',
-                                          data_key='skeletons',
+                                          data_key='skeleton',
                                           split_spatial_dimensions=True)
         tail_x, tail_y = nw.get_partition('tail',
-                                          data_key='skeletons',
+                                          data_key='skeleton',
                                           split_spatial_dimensions=True)
 
         # Take the mean across the partition, so that we are left with a single

@@ -122,7 +122,7 @@ class LocomotionVelocity(object):
         #---------------------------------------------------------
         avg_body_angle = velocity_module.get_partition_angles(nw, 
                                           partition_key='body',
-                                          data_key='skeletons',
+                                          data_key='skeleton',
                                           head_to_tail=False)
 
         sample_time_values = {
@@ -136,7 +136,7 @@ class LocomotionVelocity(object):
         #Step 2: Run the compute_velocity function on the different parts of
         #the body, 
         for attribute_key, data_key in zip(self.attribute_keys, data_keys):
-            x, y = nw.get_partition(data_key, 'skeletons', True)
+            x, y = nw.get_partition(data_key, 'skeleton', True)
 
             speed, direction = velocity_module.compute_velocity(fps, x, y,
                                             avg_body_angle,

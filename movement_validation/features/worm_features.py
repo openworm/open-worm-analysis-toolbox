@@ -101,15 +101,19 @@ class WormMorphology(object):
 
         nw = features_ref.nw
 
-        self.length = nw.lengths
+        self.length = nw.length
         
         self.width = morphology_features.Widths(features_ref)
 
         #TODO: This should eventually be calculated from the contour and skeleton
-        self.area = nw.tail_areas + \
-            nw.head_areas + \
-            nw.vulva_areas + \
-            nw.non_vulva_areas
+        #
+        #This work is currently ongoing in the constructor for NormalizedWorm
+        #
+        #Eventually those methods will probably move to here ...
+        self.area = nw.tail_area + \
+            nw.head_area + \
+            nw.vulva_area + \
+            nw.non_vulva_area
 
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
@@ -185,7 +189,7 @@ class WormLocomotion(object):
         self.motion_events = \
             locomotion_features.MotionEvents(features_ref,
                                              self.velocity.midbody.speed,
-                                             nw.lengths)
+                                             nw.length)
 
         self.motion_mode = self.motion_events.get_motion_mode()
 
@@ -204,8 +208,8 @@ class WormLocomotion(object):
                                                       nw.angles,
                                                       is_stage_movement,
                                                       self.velocity.get_midbody_distance(),
-                                                      nw.x,
-                                                      nw.y)
+                                                      nw.skeleton_x,
+                                                      nw.skeleton_y)
 
     def __repr__(self):
         return utils.print_object(self)
@@ -219,7 +223,8 @@ class WormLocomotion(object):
         #   away from the equality operator to a function that returns
         #   an equality result
 
-        #NOTE: We'll test everything instead of short-circuiting
+        #The order here matches the order the properties are populated
+        #in the constructor
         same_locomotion = True
 
         if not (self.velocity == other.velocity):
@@ -241,7 +246,9 @@ class WormLocomotion(object):
             print('Mismatch in locomotion.foraging events')
             same_locomotion = False
 
-        #TODO: Make eq in events be an error - use test_equality instead        
+        #TODO: Make eq in events be an error - use test_equality instead    
+        #NOTE: turns is a container class that implements eq, and is not
+        #an EventList    
         if not (self.turns == other.turns):
             print('Mismatch in locomotion.turns events')
             same_locomotion = False
@@ -345,8 +352,7 @@ class WormPosture(object):
         self.directions = posture_features.Directions(features_ref)
 
         #TODO: I'd rather this be a formal class
-        nt = collections.namedtuple('skeleton', ['x', 'y'])
-        self.skeleton = nt(nw.skeleton_x, nw.skeleton_y)
+        self.skeleton = posture_features.Skeleton(features_ref)
 
         self.eigen_projection = posture_features.get_eigenworms(features_ref)
 
@@ -375,11 +381,8 @@ class WormPosture(object):
         self.directions = posture_features.Directions.from_disk(p_var['directions'])
 
         # TODO: Add contours
-        skeleton = p_var['skeleton']
-        nt = collections.namedtuple('skeleton', ['x', 'y'])
-        x_temp = utils._extract_time_from_disk(skeleton,'x',is_matrix=True)
-        y_temp = utils._extract_time_from_disk(skeleton,'y',is_matrix=True)
-        self.skeleton = nt(x_temp.transpose(), y_temp.transpose())
+
+        self.skeleton = posture_features.Skeleton.from_disk(p_var['skeleton'])
         
         temp_eigen_projection = utils._extract_time_from_disk(p_var,'eigenProjection',is_matrix=True)        
         
@@ -392,11 +395,6 @@ class WormPosture(object):
 
     def __eq__(self, other):
 
-        # TODO: 
-        # Missing:
-        # directions
-        # bend
-
         #TODO: It would be nice to see all failures before returning false
         #We might want to make a comparison class that handles these details 
         #and then prints the results
@@ -405,19 +403,42 @@ class WormPosture(object):
         #allows any failures to be printed, which at this point is useful for 
         #getting the code to align
 
-        eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
-        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985) 
+        #Note that the order of these matches the order in which they are 
+        #populated in the constructor
+        eq_bends = self.bends == other.bends
+        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')    
+        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985)
+        
+        eq_primary_wavelength = fc.corr_value_high(self.primary_wavelength,
+                                                   other.primary_wavelength,
+                                                   'posture.primary_wavelength',
+                                                   merge_nans=True,
+                                                   high_corr_value=0.97)   
+                                                   
+        eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength,
+                                                     other.secondary_wavelength,
+                                                     'posture.secondary_wavelength',
+                                                     merge_nans=True,
+                                                     high_corr_value=0.985)
+        
+        
+        #TODO: We need a more lazy evaluation for these since they don't match
+        #Are they even close?
+        #We could provide a switch for exactly equal vs mimicing the old setup
+        #in which our goal could be to shoot for close
         eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
+        eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
         eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks')
-        eq_primary_wavelength = fc.corr_value_high(self.primary_wavelength,other.primary_wavelength,'posture.primary_wavelength')
-        eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength, other.secondary_wavelength, 'posture.secondary_wavelength')
-        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')        
-        eq_skeleton_x = fc.corr_value_high(np.ravel(self.skeleton.x), np.ravel(other.skeleton.x), 'posture.skeleton.x')
-        eq_skeleton_y = fc.corr_value_high(np.ravel(self.skeleton.y), np.ravel(other.skeleton.y), 'posture.skeleton.y')
-        eq_coils = self.coils.test_equality(other.coils,'posture.coils')        
+        
+        eq_coils = self.coils.test_equality(other.coils,'posture.coils')       
+        eq_directions = self.directions == other.directions
+        eq_skeleton = self.skeleton == other.skeleton
         eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
         
+        
+        #TODO: Reorder these as they appear above
         return \
+            eq_bends and \
             eq_eccentricity and \
             eq_amplitude_ratio and \
             eq_track_length and \
@@ -425,11 +446,11 @@ class WormPosture(object):
             eq_primary_wavelength and \
             eq_secondary_wavelength and \
             eq_amplitude_max and \
-            eq_skeleton_x and \
-            eq_skeleton_y and \
-            eq_eigen_projection and \
-            eq_coils
-
+            eq_skeleton and \
+            eq_coils and \
+            eq_directions and \
+            eq_eigen_projection
+            
 
 
 

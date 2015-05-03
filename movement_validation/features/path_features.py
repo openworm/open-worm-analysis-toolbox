@@ -160,6 +160,7 @@ class Duration(object):
         arena_size = [
             y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]
         ar = Arena(sx, sy, arena_size)
+
         # Arena_size must be a list of whole numbers or else we'll get an
         # error when calling np.zeroes(arena_size) later on
         arena_size = np.array(arena_size, dtype=int)
@@ -372,8 +373,8 @@ def worm_path_curvature(features_ref):
     BODY_DIFF = 0.5
 
     nw = features_ref.nw
-    x = nw.x
-    y = nw.y
+    x = nw.skeleton_x
+    y = nw.skeleton_y
     fps = features_ref.video_info.fps
     ventral_mode = nw.ventral_mode    
 

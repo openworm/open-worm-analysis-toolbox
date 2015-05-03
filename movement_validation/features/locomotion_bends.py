@@ -511,10 +511,10 @@ class LocomotionForagingBends(object):
 
         fps = features_ref.video_info.fps
 
-        nose_x, nose_y = nw.get_partition('head_tip', data_key='skeletons',
+        nose_x, nose_y = nw.get_partition('head_tip', data_key='skeleton',
                                           split_spatial_dimensions=True)
 
-        neck_x, neck_y = nw.get_partition('head_base', data_key='skeletons',
+        neck_x, neck_y = nw.get_partition('head_base', data_key='skeleton',
                                           split_spatial_dimensions=True)
 
         # TODO: Add "reversed" and "interpolated" options to the get_partition

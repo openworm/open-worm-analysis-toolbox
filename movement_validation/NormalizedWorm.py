@@ -7,306 +7,120 @@ This module defines the NormalizedWorm class
 import numpy as np
 import scipy.io
 
+import copy
 import warnings
 import os
-import inspect
-import h5py
+import time
 
 from . import config
 from . import utils
+from .basic_worm import WormPartition, BasicWorm
+from .pre_features import WormParsing
+
+# TODO: remove this dependency by moving feature_comparisons to utils and 
+#       renaming it to something more general.
+from .features import feature_comparisons as fc
 
 
-class Partition():
-    def __init__(self):
-        # These are RANGE values, so the last value is not inclusive
-        self.worm_partitions = {'head': (0, 8),
-                                'neck': (8, 16),
-                                'midbody':  (16, 33),
-                                'old_midbody_velocity': (20, 29),
-                                'hips':  (33, 41),
-                                'tail': (41, 49),
-                                # refinements of ['head']
-                                'head_tip': (0, 4),
-                                'head_base': (4, 8),    # ""
-                                # refinements of ['tail']
-                                'tail_base': (40, 45),
-                                'tail_tip': (45, 49),   # ""
-                                'all': (0, 49),
-                                # neck, midbody, and hips
-                                'body': (8, 41)}
+class NormalizedWorm(BasicWorm, WormPartition):
+    """
+    Encapsulates the notion of a worm's elementary measurements, scaled
+    (i.e. "normalized") to 49 points along the length of the worm.
 
-        self.worm_partition_subsets = {'normal': ('head', 'neck', 'midbody', 'hips', 'tail'),
-                                       'first_third': ('head', 'neck'),
-                                       'second_third': ('midbody',),
-                                       'last_third': ('hips', 'tail'),
-                                       'all': ('all',)}
+    The data consists of 13 Numpy arrays (where n is the number of frames):
+    - Of shape (49,2,n):
+        vulva_contour
+        non_vulva_contour
+        skeleton
+    - Of shape (49,n):
+        angles        
+        in_out_touches
+        widths
+    - Of shape (n):
+        length
+        head_area
+        tail_area
+        vulva_area
+        non_vulva_area
+        segmentation_status   (not used in further processing)
+        frame_code            (not used in further processing)
 
-    def get_partition_subset(self, partition_type):
-        """ 
-        There are various ways of partitioning the worm's 49 points.
-        this method returns a subset of the worm partition dictionary
+    Also, some metadata:
+        plate_wireframe_video_key
+        
+    """
 
-        TODO: This method still is not obvious to me. Also, we should move
-        these things to a separate class.
-
-        Parameters
-        ---------------------------------------
-        partition_type: string
-          e.g. 'head'
-
-        Usage
-        ---------------------------------------
-        For example, to see the mean of the head and the mean of the neck, 
-        use the partition subset, 'first_third', like this:
-
-        nw = NormalizedWorm(....)
-
-        width_dict = {k: np.mean(nw.get_partition(k), 0) for k in ('head', 'neck')}
-
-        OR, using self.worm_partition_subsets,
-
-        s = nw.get_paritition_subset('first_third')
-        # i.e. s = {'head':(0,8), 'neck':(8,16)}
-
-        width_dict = {k: np.mean(nw.get_partition(k), 0) for k in s.keys()}
-
-        Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
-        +seg_worm / @skeleton_indices / skeleton_indices.m
-
+    def __init__(self, normalized_worm=None):
         """
-
-        # parition_type is assumed to be a key for the dictionary
-        # worm_partition_subsets
-        p = self.worm_partition_subsets[partition_type]
-
-        # return only the subset of partitions contained in the particular
-        # subset of interest, p.
-        return {k: self.worm_partitions[k] for k in p}
-
-
-    def get_subset_partition_mask(self, name):
-        """
-        Returns a boolean mask - for working with arrays given a partition.
+        Populates an empty normalized worm.
+        If copy is specified, this becomes a copy constructor.
         
         """
-        keys = self.worm_partition_subsets[name]
-        mask = np.zeros(49, dtype=bool)
-        for key in keys:
-            mask = mask | self.partition_mask(key)
+        print("in NormalizedWorm consructor")
+        if not normalized_worm:
+            BasicWorm.__init__(self)
+            WormPartition.__init__(self)
+            self.angles = np.array([], dtype=float)
 
-        return mask
+            # DEBUG: (Note from @MichaelCurrie:)
+            # This should be set by the normalized worm file, since each
+            # worm subjected to an experiment is manually examined to find the
+            # vulva so the ventral mode can be determined.  Here we just set
+            # the ventral mode to a default value as a stopgap measure
+            self.ventral_mode = config.DEFAULT_VENTRAL_MODE
 
-
-    def partition_mask(self, partition_key):
-        """
-        Returns a boolean numpy array corresponding to the partition requested.
-
-        """
-        mask = np.zeros(49, dtype=bool)
-        slice_val = self.worm_partitions[partition_key]
-        mask[slice(*slice_val)] = True
-        return mask
-
-
-    def get_partition(self, partition_key, data_key='skeletons',
-                      split_spatial_dimensions=False):
-        """    
-        Retrieve partition of a measurement of the worm, that is, across all
-        available frames but across only a subset of the 49 points.
-
-        Parameters
-        ---------------------------------------    
-        partition_key: string
-          The desired partition.  e.g. 'head', 'tail', etc.
-
-          #TODO: This should be documented better 
-
-          INPUT: a partition key, and an optional data key.
-            If split_spatial_dimensions is True, the partition is returned 
-            separated into x and y
-          OUTPUT: a numpy array containing the data requested, cropped to just
-                  the partition requested.
-                  (so the shape might be, say, 4xn if data is 'angles')
-
-        data_key: string  (optional)
-          The desired measurement (default is 'skeletons')
-
-        split_spatial_dimensions: bool    (optional)
-          If True, the partition is returned separated into x and y
-
-        Returns
-        ---------------------------------------    
-        A numpy array containing the data requested, cropped to just
-        the partition requested.
-        (so the shape might be, say, 4xn if data is 'angles')
-
-        Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
-        +seg_worm / @skeleton_indices / skeleton_indices.m
-
-        """
-        # We use numpy.split to split a data_dict element into three, cleaved
-        # first by the first entry in the duple worm_partitions[partition_key],
-        # and second by the second entry in that duple.
-
-        # Taking the second element of the resulting list of arrays, i.e. [1],
-        # gives the partitioned component we were looking for.
-        part = self.worm_partitions[partition_key]
-
-        worm_attribute_values = getattr(self, data_key)
-        if(worm_attribute_values.size != 0):
-            # Let's suppress the warning about zero arrays being reshaped
-            # since that's irrelevant since we are only looking at the 
-            # non-zero array in the middle i.e. the 2nd element i.e. [1]
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', category=FutureWarning)
-                partition = np.split(worm_attribute_values,
-                                 part)[1]
-            if(split_spatial_dimensions):
-                return partition[:, 0, :], partition[:, 1,:]
-            else:
-                return partition
         else:
-            return None
-
-
-
-class NormalizedWorm(Partition):
-    """ 
-    NormalizedWorm encapsulates the normalized measures data, loaded
-    from the two files, one for the eigenworm data and the other for 
-    the rest.
-
-    This will be an intermediate representation, between the parsed,
-    normalized worms, and the "feature" sets. The goal is to take in the
-    code from normWorms and to have a well described set of properties
-    for rewriting the feature code.
-
-    PROPERTIES / METHODS FROM JIM'S MATLAB CODE:
-    * first column is original name
-    * second column is renamed name, if renamed.
-
-    Properties:
-    -----------
-      segmentation_status   
-      frame_codes
-      vulva_contours        49 x 2 x n_frames
-      non_vulva_contours    49 x 2 x n_frames
-      skeletons
-      angles
-      in_out_touches
-      lengths
-      widths
-      head_areas
-      tail_areas
-      vulva_areas
-      non_vulva_areas      
-
-      n_frames
-      x - how does this differ from skeleton_x???
-      y
-      contour_x
-      contour_y
-      skeleton_x
-
-    static methods:
-      getObject              load_normalized_data(self, data_path)
-
-    """
-
-
-    """
-
-    Notes
-    ----------------------
-    Originally translated from seg_worm.skeleton_indices
-  
-  Used in: (list is not comprehensive)
-  --------------------------------------------------------
-  - posture bends
-  - posture directions
-  
-  NOTE: These are hardcoded for now. I didn't find much use in trying
-  to make this dynamic based on some maximum value.
-  
-  Typical Usage:
-  --------------------------------------------------------
-  SI = seg_worm.skeleton_indices;
-
-  """
-    # The normalized worm contains precisely 49 points per frame.  Here
-    # we list in a dictionary various partitions of the worm.
-    worm_partitions = None
-    # this stores a dictionary of various ways of organizing the partitions
-    worm_parititon_subsets = None
-
-    data_dict = None  # A dictionary of all data in norm_obj.mat
-
-
-    def __init__(self, data_file_path=None):
-        """ 
-        Initialize this instance by loading both the worm data
-        
-        Parameters
-        ---------------------------------------
-        data_file_path: string  (optional)
-          if None is specified, no data is loaded      
-
-        """
-        super(NormalizedWorm, self).__init__()
-        # If data_file_path is None, then we are effectively creating an
-        # empty normalized worm.  This is a use case needed when 
-        # instantiating NormalizedWorm from a factory method
-        if data_file_path:
-            self.load_normalized_data(data_file_path)
-
-        # DEBUG: (Note from @MichaelCurrie:)
-        # This should be set by the normalized worm file, since each
-        # worm subjected to an experiment is manually examined to find the
-        # vulva so the ventral mode can be determined.  Here we just set
-        # the ventral mode to a default value as a stopgap measure
-        self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+            # TODO: not sure if this will work correctly..
+            super(NormalizedWorm, self).__init__(normalized_worm)
+            self.angles = copy.deepcopy(normalized_worm.angles)
 
 
     @classmethod
-    def load_from_matlab_data(self):
-        pass
-        #TODO: Merge the constructor and load_normalized_data into here...
+    def from_BasicWorm_factory(cls, basic_worm):
+        nw = NormalizedWorm()        
+        
+        # Call BasicWorm's copy constructor:
+        super(NormalizedWorm, nw).__init__(basic_worm)
+
+        # TODO: We should probably validate that the worm is valid before
+        #       calculating pre-features.
+        
+        nw.calculate_pre_features()
+        
+        return nw
 
 
-    def load_normalized_data(self, data_file_path):
-        """ 
-        Load the norm_obj.mat file into this class
+    @classmethod
+    def from_schafer_file_factory(cls, data_file_path):
+        """
+        Load full Normalized Worm data from the Schafer File
 
-        Notes
-        ---------------------------------------    
-        Translated from getObject in SegwormMatlabClasses
+        data_file_path: the path to the MATLAB file
+        
+        These files were created at the Schafer Lab in a format used 
+        prior to MATLAB's switch to HDF5, which they did in MATLAB version 7.3.
+
 
         """
-
+        nw = cls()
+        nw.plate_wireframe_video_key = 'Schafer'
+        
         if(not os.path.isfile(data_file_path)):
             raise Exception("Data file not found: " + data_file_path)
         else:
-            self.data_file = scipy.io.loadmat(data_file_path,
-                                              # squeeze unit matrix dimensions:
-                                              squeeze_me=True,
-                                              # force return numpy object
-                                              # array:
-                                              struct_as_record=False)
-
-            # self.data_file is a dictionary, with keys:
-            # self.data_file.keys() =
-            # dict_keys(['__header__', 's', '__version__', '__globals__'])
+            data_file = scipy.io.loadmat(data_file_path,
+                                         # squeeze unit matrix dimensions:
+                                         squeeze_me=True,
+                                         # force return numpy object
+                                         # array:
+                                         struct_as_record=False)
 
             # All the action is in data_file['s'], which is a numpy.ndarray where
             # data_file['s'].dtype is an array showing how the data is structured.
             # it is structured in precisely the order specified in data_keys
             # below
 
-            staging_data = self.data_file['s']
+            staging_data = data_file['s']
 
             # NOTE: These are aligned to the order in the files.
             # these will be the keys of the dictionary data_dict
@@ -323,7 +137,7 @@ class NormalizedWorm(Partition):
                 # f = segmentation failed
                 # m = stage movement
                 # d = dropped frame
-                # n??? - there is reference tin some old code to this
+                # n??? - there is reference in some old code to this
                 # after loading this we convert it to a numpy array.
                 'segmentation_status',
                 # shape is (1 n), see comments in
@@ -347,18 +161,203 @@ class NormalizedWorm(Partition):
             # dynamically through built-in method getattr
             # that is, getattr(s, x)  works syntactically just like s.x,
             # only x is a variable, so we can do a list comprehension with it!
-            # this is to build up a nice dictionary containing the data in s
-            
             for key in data_keys:
-                setattr(self, key, getattr(staging_data, key))
+                setattr(nw, key, getattr(staging_data, key))
+
+            # We don't need the eigenworm path here, as it's the same
+            # for all worm files.
+            del(nw.EIGENWORM_PATH)
+            # x and y are redundant since that information is already 
+            # in "skeletons"
+            del(nw.x)
+            del(nw.y)
             
-            #self.data_dict = {x: getattr(staging_data, x) for x in data_keys}
+            # Now for something pedantic: only use plural nouns for
+            # those measurements taken along multiple points per frame
+            # for those with just one data point per frame, it should be 
+            # singular.
+            # i.e. plural for numpy arrays of shape (49, n)
+            #     singular for numpy arrays of shape (n)
+            # and singular for numpy arrays of shape (49, 2, n)
+            # (where n is the number of frames)
+
+            nw.skeleton = nw.skeletons
+            nw.vulva_contour = nw.vulva_contours
+            nw.non_vulva_contour = nw.non_vulva_contours
+            del(nw.skeletons)
+            del(nw.vulva_contours)
+            del(nw.non_vulva_contours)
+            nw.length = nw.lengths
+            nw.head_area = nw.head_areas
+            nw.tail_area = nw.tail_areas
+            nw.vulva_area = nw.vulva_areas
+            nw.non_vulva_area = nw.non_vulva_areas
+            nw.frame_code = nw.frame_codes
+            del(nw.lengths)
+            del(nw.head_areas)
+            del(nw.tail_areas)
+            del(nw.vulva_areas)
+            del(nw.non_vulva_areas)
+            del(nw.frame_codes)
 
             # Let's change the string of length n to a numpy array of single
             # characters of length n, to be consistent with the other data
             # structures
-            self.segmentation_status = np.array(list(self.segmentation_status))
+            nw.segmentation_status = np.array(list(nw.segmentation_status))
+            
+            return nw
 
+    def get_BasicWorm(self):
+        """
+        Return an instance of BasicWorm containing this instance of 
+        NormalizedWorm's basic data.
+
+        """
+        bw = BasicWorm()
+        bw.head = np.copy(self.skeleton[0,:,:])
+        bw.tail = np.copy(self.skeleton[-1,:,:])
+        bw.skeleton = np.copy(self.skeleton)
+        # We have to reverse the contour points of the non_vulva_contour
+        # so that the tail end picks up where the tail end of vulva_contour
+        # left off:
+        bw.contour = np.copy(np.concatenate((self.vulva_contour, 
+                                             self.non_vulva_contour[::-1,:,:]), 
+                                            axis=0))
+        bw.ventral_mode = 'CW'
+        
+        return bw
+    
+    def calculate_pre_features(self):
+        """
+        Calculate "pre-features" given basic information about the worm.
+        
+        1. If contour is specified, normalize it to 98 points evenly split 
+           between head and tail
+        2. If skeleton is specified, normalize it to 49 points
+        3. Calculate vulva_contour and non_vulva_contour from contour 
+           (preferably) or that's not available, skeleton 
+           (use an approximation in this case)
+        4. Calculate angles, in_out_touches, widths for each skeleton point
+           and each frame
+        5. Calculate length, head_area, tail_area, vulva_area, non_vulva area
+           for each frame 
+
+        """
+        print("Calculating pre-features")
+        # TODO
+        
+        # 1. If contour is specified, normalize it to 98 points evenly split 
+        #   between head and tail        
+        # calculating the "hemiworms" requires stepping through frame-by-frame
+        # since we cannot assume that the number of points between head
+        # and tail and between tail and head remains constant between frames.
+        pass
+
+
+    def jim_pre_features_algorithm(self, skeleton, 
+                                   vulva_contour, non_vulva_contour, 
+                                   is_valid):
+        """ 
+        Create an instance from skeleton and contour data
+        
+        
+        TODO: We need to clarify the value for a missing frame
+        I think currently it is [] but perhaps it should be None        
+        
+        Parameters
+        --------------------------------------- 
+        skeleton : list
+            Each element in the list may be empty (bad frame) or be of size
+            2 x n, where n varies depending on the # of pixels the worm occupied
+            in the given frame
+            
+        vulva_contour and non_vulva_contour should start and end at the same locations, from head to tail
+
+        """     
+        
+        # TODO: Skeleton is optional, but at some point we'll probably need
+        # to make contour optional as well        
+        
+        # TODO: Do I want to grab the skeleton from here????
+        t = time.time()
+
+        # The # of points in the skeleton changes on a per frame basis. If we use
+        # any old parameters based on the passed in skeleton and the new widths,
+        # we will have a length mismatch        
+        
+        widths, skeleton = WormParsing.computeWidths(self, vulva_contour, non_vulva_contour)
+        self.widths = WormParsing.normalizeAllFrames(self, widths, skeleton)
+        elapsed = time.time() - t
+        print('Elapsed time: %g'%(elapsed))        
+
+        
+        self.angles = WormParsing.calculateAngles(self, skeleton)
+        
+        #t = time.time()
+        self.skeleton = WormParsing.normalizeAllFramesXY(self, skeleton)
+        self.vulva_contour = WormParsing.normalizeAllFramesXY(self, vulva_contour)
+        self.non_vulva_contour = WormParsing.normalizeAllFramesXY(self, non_vulva_contour)
+        #elapsed = time.time() - t
+        
+        self.length = WormParsing.computeSkeletonLengths(self, skeleton)
+  
+          
+        
+    
+        
+        
+        """
+        From Ev's Thesis:
+        3.3.1.6 - page 126 (or 110 as labeled in document)
+        For each section, we begin at its center on both sides of the contour. We then
+        walk, pixel by pixel, in either direction until we hit the end of the section on
+        opposite sides, for both directions. The midpoint, between each opposing pixel
+        pair, is considered the skeleton and the distance between these pixel pairs is
+        considered the width for each skeleton point.
+        3) Food tracks, noise, and other disturbances can form spikes on the worm
+        contour. When no spikes are present, our walk attempts to minimize the width
+        between opposing pairs of pixels. When a spike is present, this strategy may
+        cause one side to get stuck in the spike while the opposing side walks.
+        Therefore, when a spike is present, the spiked side walks while the other side
+        remains still.
+        """
+        
+        #Areas:
+        #------------------------------------
+            
+        """
+        Final needed attributes:
+        ------------------------
+        #1) ??? segmentation_status   
+        #2) ??? frame_codes
+        #3) DONE vulva_contours        49 x 2 x n_frames
+        #4) DONE non_vulva_contours    49 x 2 x n_frames
+        #5) DONE skeletons : numpy.array
+          - (49,2,n_frames)
+        #6) DONE angles : numpy.array
+          - (49,n_frames)
+        #7) in_out_touches ????? 49 x n_frames
+        #8) DONE lengths : numpy.array
+          - (nframes,)
+        #9) DONE widths : numpy.array
+          - (49,n_frames)
+        #10) head_areas
+        #11) tail_areas
+        #12) vulva_areas
+        #13) non_vulva_areas 
+        
+        
+        """
+
+    
+    def validate(self):
+        """
+        Checks array lengths, etc. to ensure that this is a valid instance
+        and no further problems will arise if further processing is attempted
+        on this instance
+
+        """
+        return True
 
     def rotated(self, theta_d):
         """   
@@ -401,14 +400,12 @@ class NormalizedWorm(Partition):
         frames, giving for each frame the mean of the skeleton points.
 
         """
-        s = self.skeletons
-
         # We do this to avoid a RuntimeWarning taking the nanmean of frames
         # with nothing BUT nan entries: for those frames nanmean returns nan
         # (correctly) but still raises a RuntimeWarning.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            return np.nanmean(s, 0, keepdims=False)
+            return np.nanmean(self.skeleton, 0, keepdims=False)
 
     @property
     def angle(self):
@@ -521,7 +518,7 @@ class NormalizedWorm(Partition):
 
         # ndarray.shape returns a tuple of array dimensions.
         # the frames are along the first dimension i.e. [0].
-        return self.skeletons.shape[2]
+        return self.skeleton.shape[2]
 
     @property
     def is_segmented(self):
@@ -560,23 +557,44 @@ class NormalizedWorm(Partition):
                 those on the second set. We also reverse the contour so that
                 it encompasses an "out and back" contour
         """
-        vc = self.vulva_contours
-        nvc = self.non_vulva_contours
+        vc = self.vulva_contour
+        nvc = self.non_vulva_contour
         return np.concatenate((vc[:, 0, :], nvc[-2:0:-1, 0,:]))    
 
     @property
     def contour_y(self):
-        vc = self.vulva_contours
-        nvc = self.non_vulva_contours
+        vc = self.vulva_contour
+        nvc = self.non_vulva_contour
         return np.concatenate((vc[:, 1, :], nvc[-2:0:-1, 1,:]))    
 
     @property
     def skeleton_x(self):
-        return self.skeletons[:, 0, :]
+        return self.skeleton[:, 0, :]
 
     @property
     def skeleton_y(self):
-        return self.skeletons[:, 1, :]
+        return self.skeleton[:, 1, :]
+
+
+    def __eq__(self,other):
+        x1 = self.skeleton_x.flatten()
+        x2 = other.skeleton_x.flatten()
+        y1 = self.skeleton_y.flatten()
+        y2 = other.skeleton_y.flatten()
+        
+        #TODO: Do this on a frame by frame basis, do some sort of distance 
+        #computation rather than all together. This might hide bad frames        
+        
+        fc.corr_value_high(x1,x2,'asdf')
+        fc.corr_value_high(y1,y2,'asdf')
+
+        #return \
+            #fc.corr_value_high(self.length, other.length, 'morph.length')  and \
+            #self.width == other.width and \
+            #fc.corr_value_high(self.area, other.area, 'morph.area')      and \
+            #fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
+            #fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
+
 
     def __repr__(self):
         #TODO: This omits the properties above ...

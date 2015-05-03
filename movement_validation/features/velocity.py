@@ -63,7 +63,7 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
     return angles
 
 
-def get_partition_angles(nw, partition_key, data_key='skeletons',
+def get_partition_angles(nw, partition_key, data_key='skeleton',
                          head_to_tail=False):
     """ 
     
@@ -77,7 +77,7 @@ def get_partition_angles(nw, partition_key, data_key='skeletons',
     nw : Normalized Worm (class name???)
     partition_key :
     data_key : str
-        ???? - what is this ?????
+        The attribute used
     head_to_tail : bool
     =True means the worm points are order head to tail.
 
