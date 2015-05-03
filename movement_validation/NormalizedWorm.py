@@ -245,6 +245,8 @@ class NormalizedWorm(BasicWorm, WormPartition):
         """
         print("Calculating pre-features")
         # TODO
+        # Much of what needs to be done here is accomplished in the 
+        # below jim_pre_features_algorithm so pull that into here!
         
         # 1. If contour is specified, normalize it to 98 points evenly split 
         #   between head and tail        
