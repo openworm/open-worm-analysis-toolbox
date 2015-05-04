@@ -2,6 +2,16 @@
 """
 BasicWorm, WormPartition, JSON_Serializer
 
+Credit to Christopher R. Wagner at 
+http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html    
+for the following six functions:
+isnamedtuple
+serialize
+restore
+data_to_json
+json_to_data
+nested_equal
+
 """
 
 import numpy as np
