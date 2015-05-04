@@ -16,6 +16,7 @@ nested_equal
 
 import numpy as np
 import warnings
+import copy
 
 import json
 from collections import namedtuple, Iterable, OrderedDict

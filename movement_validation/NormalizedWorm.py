@@ -237,13 +237,39 @@ class NormalizedWorm(BasicWorm, WormPartition):
         3. Calculate vulva_contour and non_vulva_contour from contour 
            (preferably) or that's not available, skeleton 
            (use an approximation in this case)
-        4. Calculate angles, in_out_touches, widths for each skeleton point
+        4. Calculate widths, angles, and in_out_touches for each skeleton point
            and each frame
         5. Calculate length, head_area, tail_area, vulva_area, non_vulva area
            for each frame 
 
         """
         print("Calculating pre-features")
+        start_time = time.time()
+
+        # 1. Normalize contour (if available)
+        # TODO.  This code is wrong, it just assigns skeleton to the contour.
+        self.vulva_contour = self.skeleton
+        self.non_vulva_contour = self.skeleton        
+        # 2. Normalize skeleton (if available)
+        # TODO
+        # 3. Calculate contour (if contour isn't available)
+        # or Calculate skeleton (if skeleton isn't available)
+        # TODO
+
+        # 4. Calculate widths, angles, in_out_touches
+        widths, skeleton = WormParsing.computeWidths(self.vulva_contour, 
+                                                     self.non_vulva_contour)
+        self.widths = WormParsing.normalizeAllFrames(self, widths, skeleton)
+        
+        self.angles = WormParsing.calculateAngles(self, skeleton)
+
+        elapsed = time.time() - start_time
+        print('Elapsed time:', elapsed)
+
+        # 5. Calculate length, head_area, tail_area, vulva_area, non_vulva area
+        #    for each frame 
+        
+
         # TODO
         # Much of what needs to be done here is accomplished in the 
         # below jim_pre_features_algorithm so pull that into here!
@@ -290,7 +316,7 @@ class NormalizedWorm(BasicWorm, WormPartition):
         widths, skeleton = WormParsing.computeWidths(self, vulva_contour, non_vulva_contour)
         self.widths = WormParsing.normalizeAllFrames(self, widths, skeleton)
         elapsed = time.time() - t
-        print('Elapsed time: %g'%(elapsed))        
+        print('Elapsed time: %g'%(elapsed))
 
         
         self.angles = WormParsing.calculateAngles(self, skeleton)

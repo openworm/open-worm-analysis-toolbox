@@ -344,7 +344,7 @@ class WormParsing(object):
 
 
     @staticmethod
-    def computeWidths(nw,vulva_contours,non_vulva_contours):
+    def computeWidths(vulva_contours, non_vulva_contours):
         """
         
         """        

@@ -31,8 +31,17 @@ from movement_validation import NormalizedWorm
 
 
 
-       
+
 def main():
+    nw = get_nw()
+    
+    bw = nw.get_BasicWorm()
+    
+    nw_calculated = NormalizedWorm.from_BasicWorm_factory(bw)
+
+
+       
+def main1():
     warnings.filterwarnings('error')
     
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
@@ -48,7 +57,6 @@ def main():
     c.load_from_JSON(JSON_path)
     print(c.contour)
 
-    dat = get_nw()
     dat.save_to_JSON(JSON_path)
 
     
@@ -94,7 +102,7 @@ def main2():
     print("x==y:", np.array_equal(x,y))
         
 
-    b = BasicWorm()    
+    b = BasicWorm()
     b_as_list = list(b.__dict__.items())
     serialized_data = data_to_json(b_as_list)
     print(serialized_data)
