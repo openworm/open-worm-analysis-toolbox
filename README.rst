@@ -1,8 +1,6 @@
 movement\_validation
 ====================
 
-|Travis CI|
-
 .. figure:: https://travis-ci.org/openworm/movement_validation.svg?branch=master
    :alt: 
 
