@@ -1,7 +1,10 @@
 movement\_validation
 ====================
 
-https://travis-ci.org/openworm/movement_validation.svg?branch=master
+|Travis CI|
+
+.. figure:: https://travis-ci.org/openworm/movement_validation.svg?branch=master
+   :alt: 
 
 |Gitter|
 
