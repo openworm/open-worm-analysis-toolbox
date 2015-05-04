@@ -1,6 +1,8 @@
 movement\_validation
 ====================
 
+https://travis-ci.org/openworm/movement_validation.svg?branch=master
+
 |Gitter|
 
 .. figure:: https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true
