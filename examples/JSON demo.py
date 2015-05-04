@@ -14,9 +14,8 @@ json_to_data
 nested_equal
 
 """
-import sys, os, copy
+import sys, os
 import numpy as np
-import scipy
 
 import warnings
 
@@ -24,9 +23,9 @@ import warnings
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-from movement_validation import config, user_config
+from movement_validation import user_config
 
-from movement_validation.basic_worm import BasicWorm, WormPartition
+from movement_validation.basic_worm import BasicWorm
 from movement_validation import NormalizedWorm
 
 
@@ -57,7 +56,7 @@ def main1():
     c.load_from_JSON(JSON_path)
     print(c.contour)
 
-    dat.save_to_JSON(JSON_path)
+    #dat.save_to_JSON(JSON_path)
 
     
 
