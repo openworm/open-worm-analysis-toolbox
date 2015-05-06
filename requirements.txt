@@ -1,1 +1,2 @@
 shapely
+h5py
