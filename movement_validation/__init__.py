@@ -14,7 +14,6 @@ License
 https://github.com/openworm/movement_validation/LICENSE.md
 
 """
-from .SchaferExperimentFile import SchaferExperimentFile
 from .NormalizedWorm import NormalizedWorm
 from .video_info import VideoInfo
 from .features.worm_features import WormFeatures
@@ -26,9 +25,8 @@ from .statistics.histogram_manager import HistogramManager
 from .statistics.manager import StatisticsManager
 
 
-__all__ = ['SchaferExperimentFile',
-           'NormalizedWorm',
-		   'VideoInfo',
+__all__ = ['NormalizedWorm',
+		'VideoInfo',
            'WormFeatures',
            'FeatureProcessingOptions',
            'WormPlotter']
