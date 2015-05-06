@@ -7,7 +7,7 @@ before_install:
   - echo "BEFORE_INSTALL"
   - echo $VIRTUAL_ENV
   - sudo apt-get build-dep python3-scipy
-  - sudo apt-get install libhdf5-dev
+  - sudo apt-get install python-h5py
 
 # command to install dependencies
 install:
