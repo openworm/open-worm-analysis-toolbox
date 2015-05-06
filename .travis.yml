@@ -1,0 +1,21 @@
+language: python
+python:
+  - "3.3"
+install: 
+  - pip install --use-mirrors pyparsing
+  - pip install --use-mirrors matplotlib
+script: nosetests
+virtualenv:
+  system_site_packages: true
+before_install:
+  - pip install numpy
+  - pip install python-dateutil
+  - pip install pytz
+  - pip install scipy
+  - pip install h5py
+  - pip install shapely
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran
+notifications: 
+  email: false
+  
