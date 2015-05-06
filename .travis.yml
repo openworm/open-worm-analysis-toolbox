@@ -6,14 +6,21 @@ python:
 before_install:
   - echo "BEFORE_INSTALL"
   - echo $VIRTUAL_ENV
-  - sudo apt-get build-dep python3-scipy
-  - sudo apt-get install python-h5py
+#  - sudo apt-get build-dep python3-scipy
+#  - sudo apt-get install python-h5py
+
+virtualenv:
+  system_site_packages: true
 
 # command to install dependencies
 install:
   - echo "INSTALL"
   - pip install --upgrade pip
-  - pip install -r requirements.txt
+  - pip install numpy
+  - pip install scipy
+  - pip install h5py
+  - pip install shapely
+#  - pip install -r requirements.txt
 
 # command to run tests
 script:
