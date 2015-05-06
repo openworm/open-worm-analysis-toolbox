@@ -3,8 +3,14 @@ language: python
 python:
   - "3.4"
 
+before_install:
+  - echo "BEFORE_INSTALL"
+  - echo $VIRTUAL_ENV
+  - sudo apt-get build-dep python3-scipy
+
 # command to install dependencies
 install:
+  - echo "INSTALL"
   - pip install --upgrade pip
   - pip install -r requirements.txt
 
