@@ -1,24 +1,33 @@
+# Courtesy https://gist.github.com/dan-blanchard/7045057
+
 language: python
-
 python:
-  - "3.3"
-
-before_install:
-  - pip install numpy
-  - pip install python-dateutil
-  - pip install pytz
-  - pip install scipy
-  - pip install h5py
-  - pip install shapely
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran
-
-install: 
-  - pip install --use-mirrors pyparsing
-  - pip install --use-mirrors matplotlib
-
-script: nosetests
-
-notifications: 
+  - 2.7
+  - 3.3
+notifications:
   email: false
-  
+ 
+# Setup anaconda
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+# Install packages
+install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  # Coverage packages are on my binstar channel
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - python setup.py install
+ 
+# Run test
+#script:
+#  - nosetests --with-cov --cov YOUR_PACKAGE_NAME_HERE --cov-config .coveragerc --logging-level=INFO
+ 
+# Calculate coverage
+#after_success:
+#  - coveralls --config_file .coveragerc
