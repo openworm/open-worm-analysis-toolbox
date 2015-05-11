@@ -1,8 +1,8 @@
 movement\_validation
 ====================
 
-.. figure:: https://travis-ci.org/openworm/movement_validation.svg?branch=master
-   :alt: 
+.. image:: https://travis-ci.org/openworm/movement_validation.svg?branch=master
+    :target: https://travis-ci.org/openworm/movement_validation
 
 |Gitter|
 
