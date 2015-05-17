@@ -21,7 +21,6 @@ def test_simply():
 
 def test_empty_nw():
     # Test edge cases when our normalized worm is empty
-    pass
-    #nw = NormalizedWorm()
-    #nw.validate()
+    nw = NormalizedWorm()
+    nw.validate()
     #centred_skeleton = nw.centre()
