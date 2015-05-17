@@ -28,25 +28,25 @@ class NormalizedWorm(BasicWorm, WormPartition):
     (i.e. "normalized") to 49 points along the length of the worm.
 
     The data consists of 13 Numpy arrays (where n is the number of frames):
-    - Of shape (49,2,n):
+   - Of shape (49,2,n):   (Inherited from BasicWorm)
         vulva_contour
         non_vulva_contour
         skeleton
-    - Of shape (49,n):
+    - Of shape (49,n):    (Not inherited)
         angles        
         in_out_touches
         widths
-    - Of shape (n):
+    - Of shape (n):       (Not inherited)
         length
         head_area
         tail_area
         vulva_area
         non_vulva_area
-        segmentation_status   (not used in further processing)
-        frame_code            (not used in further processing)
+        segmentation_status   (not used in further processing)   (inherited)
+        frame_code            (not used in further processing)   (inherited)
 
     Also, some metadata:
-        plate_wireframe_video_key
+        plate_wireframe_video_key                                (inherited)
         
     """
 
@@ -56,7 +56,6 @@ class NormalizedWorm(BasicWorm, WormPartition):
         If copy is specified, this becomes a copy constructor.
         
         """
-        print("in NormalizedWorm consructor")
         if not normalized_worm:
             BasicWorm.__init__(self)
             WormPartition.__init__(self)
@@ -261,7 +260,7 @@ class NormalizedWorm(BasicWorm, WormPartition):
                                                      self.non_vulva_contour)
         self.widths = WormParsing.normalizeAllFrames(self, widths, skeleton)
         
-        self.angles = WormParsing.calculateAngles(self, skeleton)
+        #self.angles = WormParsing.calculateAngles(self, skeleton)
 
         elapsed = time.time() - start_time
         print('Elapsed time:', elapsed)
@@ -329,11 +328,6 @@ class NormalizedWorm(BasicWorm, WormPartition):
         
         self.length = WormParsing.computeSkeletonLengths(self, skeleton)
   
-          
-        
-    
-        
-        
         """
         From Ev's Thesis:
         3.3.1.6 - page 126 (or 110 as labeled in document)
@@ -376,8 +370,7 @@ class NormalizedWorm(BasicWorm, WormPartition):
         
         
         """
-
-    
+  
     def validate(self):
         """
         Checks array lengths, etc. to ensure that this is a valid instance

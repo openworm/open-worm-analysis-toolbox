@@ -32,6 +32,9 @@ from movement_validation import NormalizedWorm
 
 
 def main():
+    warnings.filterwarnings('error')
+    
+    
     nw = get_nw()
     
     bw = nw.get_BasicWorm()

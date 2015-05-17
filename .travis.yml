@@ -27,6 +27,10 @@ install:
 # Run test
 #script:
 #  - nosetests --with-cov --cov YOUR_PACKAGE_NAME_HERE --cov-config .coveragerc --logging-level=INFO
+
+script:
+  - nosetests
+
  
 # Calculate coverage
 #after_success:
