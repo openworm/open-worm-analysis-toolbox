@@ -280,6 +280,16 @@ class NormalizedWorm(BasicWorm, WormPartition):
         # and tail and between tail and head remains constant between frames.
         pass
 
+    @classmethod
+    def from_jim_temp(cls, vulva_contour, non_vulva_contour, is_valid, skeleton = None):
+        """ 
+        This is a temporary hook into the code for Jim's work. I (Jim) can't
+        use calculate_pre_features because of conflicting definitions of the
+        "Basic Worm" between myself and Michael.
+        """
+        
+        self = cls()
+        return self.jim_pre_features_algorithm(skeleton, vulva_contour, non_vulva_contour, is_valid)
 
     def jim_pre_features_algorithm(self, skeleton, 
                                    vulva_contour, non_vulva_contour, 
