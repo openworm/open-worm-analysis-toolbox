@@ -2,6 +2,8 @@
 """
 Created on Thu Apr 23 22:29:15 2015
 
+#TODO: document what this code does ...
+
 Credit to Christopher R. Wagner at 
 http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html    
 for the following six functions:

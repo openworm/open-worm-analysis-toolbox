@@ -53,6 +53,32 @@ class BasicWorm(JSON_Serializer):
     Encapsulates the notion of a worm contour data that might have
     been obtained from a computer vision operation 
     
+    * Skeleton or contour can be None but not both.
+    * We don't assume the contour or skeleton points are evenly spaced,
+    but we do assume they are in order as you walk along the skeleton
+    or contour.   
+    
+    Attributes
+    ----------
+    skeleton : [ndarray] or ndarray 
+        This input can either be a list, composed of skeletons for each 
+            frame or a singular ndarray. Shapes for these would be:
+                - [n_frames] list with elements [2,n_points] OR
+                - [n_points,2,n_frames]
+            In the first case n_points is variable (for MRC around 200) and
+            in the second case n_points is obviously fixed, and currently
+            should be at 49.
+            Missing frames in the first case should be identified by None.    
+    
+    
+    Metadata Attributes
+    -------------------    
+    plate_wireframe_video_key : string
+        ???? What is this ???    
+    
+    
+    
+    #TODO: Rewrite as attributes following skeleton above
     The data consists of 4 numpy arrays:
     - Of shape (k,2,n):
         skeleton    
@@ -65,15 +91,7 @@ class BasicWorm(JSON_Serializer):
         k is the number of skeleton points per frame
         m is the number of contour points per frame
         n is the number of frames
-    
-    Note: skeleton or contour can be None but not both.
-    Note: we don't assume the contour or skeleton points are evenly spaced,
-          but we do assume they are in order as you walk along the skeleton
-          or contour.
-    
-    Also, some metadata:
-        - PlateWireframeVideoKey
-    
+        
     """
 
     def __init__(self, basic_worm=None):
@@ -108,6 +126,8 @@ class BasicWorm(JSON_Serializer):
         on this instance
         
         """
+        
+        #TODO: Make num_frames an attribute
         if self.contour is not None:
             num_frames = np.shape(self.contour)[2]
         else:
@@ -139,18 +159,41 @@ class BasicWorm(JSON_Serializer):
         A factory method taking the simplest possible input: just a skeleton.
         Assumes 0th point is head, n-1th point is tail. No contour.
         
+        Parameters
+        ----------
+        skeleton : [ndarray] or ndarray 
+            See definition in class documentation.
+        
         """
-        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
-            raise Exception("Provided skeleton must have shape (m,2,n)")
-
+        
         bw = cls()
-        bw.skeleton = skeleton
+        bw.load_skeleton(skeleton) 
         bw.contour = None
-        bw.tail = skeleton[0,:,:]
-        bw.head = skeleton[-1,:,:]
-        bw.plate_wireframe_video_key = 'Simple Skeleton'
 
+        bw.plate_wireframe_video_key = 'Simple Skeleton'        
+        
         return bw
+    
+    @classmethod
+    def from_schafer_file_factory(cls):
+        pass
+    
+    def load_skeleton(self,skeleton):    
+        """
+        
+        See Also
+        --------
+        from_skeleton_factory
+        
+        """
+        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
+        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
+            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
+
+        #TODO: We need to handle the list case
+        self.skeleton = skeleton
+        self.tail = skeleton[0,:,:]
+        self.head = skeleton[-1,:,:]
     
     
     
