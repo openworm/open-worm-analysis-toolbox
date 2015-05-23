@@ -17,10 +17,12 @@ nested_equal
 import numpy as np
 import warnings
 import copy
+import h5py
 
 import json
 from collections import namedtuple, Iterable, OrderedDict
 
+from . import utils
 
 
 class JSON_Serializer():
@@ -70,6 +72,10 @@ class BasicWorm(JSON_Serializer):
             should be at 49.
             Missing frames in the first case should be identified by None.    
     
+    is_stage_movement :
+    is_valid : 
+
+
     
     Metadata Attributes
     -------------------    
@@ -84,6 +90,8 @@ class BasicWorm(JSON_Serializer):
         skeleton    
     - Of shape (m,2,n):
         contour
+        
+    ???? - why are we holding onto these????
     - Of shape (2,n):
         head
         tail
@@ -97,26 +105,32 @@ class BasicWorm(JSON_Serializer):
     def __init__(self, basic_worm=None):
         """
         Populates an empty basic worm.
-        If copy is specified, this becomes a copy constructor.
+        
+        If copy is specified, this becomes a copy constructor. This was
+        implemented for the NormalizedWorm constructor.
         
         """
         print("in BasicWorm constructor")
-        if not basic_worm:
-            self.contour = np.empty([], dtype=float)
-            self.skeleton = None
-            self.head = np.empty([], dtype=float)
-            self.tail = np.empty([], dtype=float)
-            self.ventral_mode = None
-            self.plate_wireframe_video_key = None
-        else:
+        if basic_worm is not None:
+#            self.contour = np.empty([], dtype=float)
+#            self.skeleton = None
+#            self.head = np.empty([], dtype=float)
+#            self.tail = np.empty([], dtype=float)
+#            self.ventral_mode = None
+#            self.plate_wireframe_video_key = None
+#        else:
             # Copy constructor
-            self.contour = copy.deepcopy(basic_worm.contour)
+            #self.contour = copy.deepcopy(basic_worm.contour)
             self.skeleton = copy.deepcopy(basic_worm.skeleton)
-            self.head = copy.deepcopy(basic_worm.head)
-            self.tail = copy.deepcopy(basic_worm.tail)
-            self.ventral_mode = basic_worm.ventral_mode
-            self.plate_wireframe_video_key = \
-                basic_worm.plate_wireframe_video_key
+            self.vulva_contour = copy.deepcopy(basic_worm.vulva_contour)
+            self.non_vulva_contour = copy.deepcopy(basic_worm.non_vulva_contour)
+            
+            #self.head = copy.deepcopy(basic_worm.head)
+            #self.tail = copy.deepcopy(basic_worm.tail)
+            
+            #TODO: We need to work this out            
+            #self.ventral_mode = basic_worm.ventral_mode
+            self.plate_wireframe_video_key = basic_worm.plate_wireframe_video_key
 
 
     def validate(self):
@@ -126,6 +140,8 @@ class BasicWorm(JSON_Serializer):
         on this instance
         
         """
+        
+        #TODO: This needs to be rewritten ...
         
         #TODO: Make num_frames an attribute
         if self.contour is not None:
@@ -168,33 +184,85 @@ class BasicWorm(JSON_Serializer):
         
         bw = cls()
         bw.load_skeleton(skeleton) 
-        bw.contour = None
+        bw.vulva_contour = None
+        bw.non_vulva_contour = None
+
+        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
+            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
+
+        bw.skeleton = skeleton
 
         bw.plate_wireframe_video_key = 'Simple Skeleton'        
         
         return bw
     
-    @classmethod
-    def from_schafer_file_factory(cls):
-        pass
-    
-    def load_skeleton(self,skeleton):    
-        """
-        
-        See Also
-        --------
-        from_skeleton_factory
-        
-        """
-        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
-        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
-            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
 
-        #TODO: We need to handle the list case
-        self.skeleton = skeleton
-        self.tail = skeleton[0,:,:]
-        self.head = skeleton[-1,:,:]
     
+#    def load_skeleton(self,skeleton):    
+#        """
+#        
+#        See Also
+#        --------
+#        from_skeleton_factory
+#        
+#        """
+#        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
+#        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
+#            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
+#
+#        #TODO: We need to handle the list case
+#        
+#        
+#        #Why do we have this????
+#        self.tail = skeleton[0,:,:]
+#        self.head = skeleton[-1,:,:]
+
+
+    
+    @classmethod
+    def from_schafer_file_factory(cls,data_file_path):
+
+        self = cls()        
+    
+        #Would 'with()' be more appropriate here ???
+        h = h5py.File(data_file_path, 'r')
+
+        #These are all HDF5 'references'
+        all_vulva_contours_refs = h['all_vulva_contours'].value
+        all_non_vulva_contours_refs = h['all_non_vulva_contours'].value
+        all_skeletons_refs = h['all_skeletons'].value
+                
+        is_stage_movement = utils._extract_time_from_disk(h,'is_stage_movement')
+        is_valid = utils._extract_time_from_disk(h,'is_valid')
+
+        all_skeletons = []
+        all_vulva_contours = []
+        all_non_vulva_contours = []
+
+        for valid_frame,iFrame in zip(is_valid,range(is_valid.size)):
+            if valid_frame:
+                all_skeletons.append(h[all_skeletons_refs[iFrame][0]].value) 
+                all_vulva_contours.append(h[all_vulva_contours_refs[iFrame][0]].value)
+                all_non_vulva_contours.append(h[all_non_vulva_contours_refs[iFrame][0]].value)
+            else:
+                all_skeletons.append(None) 
+                all_vulva_contours.append(None) 
+                all_non_vulva_contours.append(None)           
+                
+        self.is_stage_movement = is_stage_movement
+        self.is_valid = is_valid
+        self.skeleton = None
+        #self.all_skeletons = all_skeletons
+        self.vulva_contour = all_vulva_contours
+        self.non_vulva_contour = all_non_vulva_contours 
+        self.plate_wireframe_video_key = 'Cheeseburger? WTF is this?'
+        h.close()   
+        
+        return self
+        
+    
+    def __repr__(self):
+        return utils.print_object(self)    
     
     
     

@@ -347,7 +347,31 @@ class WormParsing(object):
     def computeWidths(vulva_contours, non_vulva_contours):
         """
         
+        Returns
+        -------
+        (widths_all,s_all) tuple
+        widths_all :
+        s_all : 
+        
         """        
+
+
+        """
+        From Ev's Thesis:
+        3.3.1.6 - page 126 (or 110 as labeled in document)
+        For each section, we begin at its center on both sides of the contour. We then
+        walk, pixel by pixel, in either direction until we hit the end of the section on
+        opposite sides, for both directions. The midpoint, between each opposing pixel
+        pair, is considered the skeleton and the distance between these pixel pairs is
+        considered the width for each skeleton point.
+        3) Food tracks, noise, and other disturbances can form spikes on the worm
+        contour. When no spikes are present, our walk attempts to minimize the width
+        between opposing pairs of pixels. When a spike is present, this strategy may
+        cause one side to get stuck in the spike while the opposing side walks.
+        Therefore, when a spike is present, the spiked side walks while the other side
+        remains still.
+        """
+
 
         #Widths:
         #------------------------------------
@@ -380,9 +404,9 @@ class WormParsing(object):
             # * I'm writing the code based on awesome_contours_oh_yeah_v2
             #   in Jim's testing folder            
             
-            if len(s1) == 0:
-                s_all.append([])
-                widths_all.append([])
+            if s1 is None:
+                s_all.append(None)
+                widths_all.append(None)
                 continue
             
             #Step 1: filter
@@ -464,7 +488,7 @@ class WormParsing(object):
 
 
     @staticmethod
-    def computeSkeletonLengths(nw,xy_all):
+    def computeSkeletonLengths(xy_all):
         """
 
         Computes the running length (cumulative distance from start - head?) 
@@ -482,11 +506,11 @@ class WormParsing(object):
         n_frames = len(xy_all)
         data = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
         for iFrame, cur_xy in enumerate(xy_all):
-            if len(cur_xy) is not 0:
+            if cur_xy is not None:
                 sx = cur_xy[0,:]
                 sy = cur_xy[1,:]
                 cc = WormParsing.computeChainCodeLengths(sx,sy)
-                data[:,iFrame] = WormParsing.normalizeParameter(nw,cc,cc)
+                data[:,iFrame] = WormParsing.normalizeParameter(cc,cc)
                 
         return data
 
@@ -511,36 +535,36 @@ class WormParsing(object):
         return np.cumsum(distances)
 
     @staticmethod
-    def normalizeAllFramesXY(nw,prop_to_normalize):
+    def normalizeAllFramesXY(prop_to_normalize):
             
         n_frames = len(prop_to_normalize)
         norm_data = np.full([config.N_POINTS_NORMALIZED,2,n_frames],np.NaN)
         for iFrame, cur_frame_value in enumerate(prop_to_normalize):
-            if len(cur_frame_value) is not 0:
+            if cur_frame_value is not None:
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
                 cc = WormParsing.computeChainCodeLengths(sx,sy)
-                norm_data[:,0,iFrame] = WormParsing.normalizeParameter(nw,sx,cc)
-                norm_data[:,1,iFrame] = WormParsing.normalizeParameter(nw,sy,cc)
+                norm_data[:,0,iFrame] = WormParsing.normalizeParameter(sx,cc)
+                norm_data[:,1,iFrame] = WormParsing.normalizeParameter(sy,cc)
         
         return norm_data            
     
     @staticmethod
-    def normalizeAllFrames(nw,prop_to_normalize,xy_data):
+    def normalizeAllFrames(prop_to_normalize,xy_data):
             
         n_frames = len(prop_to_normalize)
         norm_data = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
         for iFrame, (cur_frame_value,cur_xy) in enumerate(zip(prop_to_normalize,xy_data)):
-            if len(cur_frame_value) is not 0:
+            if cur_xy is not None:
                 sx = cur_xy[0,:]
                 sy = cur_xy[1,:]
                 cc = WormParsing.computeChainCodeLengths(sx,sy)
-                norm_data[:,iFrame] = WormParsing.normalizeParameter(nw,cur_frame_value,cc)
+                norm_data[:,iFrame] = WormParsing.normalizeParameter(cur_frame_value,cc)
         
         return norm_data 
 
     @staticmethod
-    def calculateAngles(self,skeletons):
+    def calculateAngles(skeletons):
     
         """
         #Angles
@@ -571,7 +595,7 @@ class WormParsing(object):
         temp_angle_list = []
                       
         for iFrame, cur_frame_value in enumerate(skeletons):
-            if len(cur_frame_value) is 0:
+            if cur_frame_value is None:
                 temp_angle_list.append([])
             else:
                 sx = cur_frame_value[0,:]
@@ -616,10 +640,10 @@ class WormParsing(object):
                 
                 temp_angle_list.append(all_frame_angles)
                 
-        return WormParsing.normalizeAllFrames(self,temp_angle_list,skeletons)
+        return WormParsing.normalizeAllFrames(temp_angle_list,skeletons)
     
     @staticmethod
-    def normalizeParameter(self,orig_data,old_lengths):
+    def normalizeParameter(orig_data,old_lengths):
         """
         
         This function finds where all of the new points will be when evenly
@@ -650,6 +674,8 @@ class WormParsing(object):
         norm_data = np.interp(evaluation_I,I,orig_data)
         #TODO: Might just replace all of this with an interpolation call
         
+        
+        #TODO: Rewrite this ...
         
         
         #For each point, get the bordering points
