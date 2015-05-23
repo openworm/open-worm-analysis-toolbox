@@ -665,51 +665,7 @@ class WormParsing(object):
         non_normalizied_data :
             - ()
         """
-        n_old = len(old_lengths)
-        I = np.array(range(n_old))
-        
+
         new_lengths = np.linspace(old_lengths[0],old_lengths[-1],config.N_POINTS_NORMALIZED)
-        evaluation_I = np.interp(new_lengths,old_lengths,I)
-        
-        norm_data = np.interp(evaluation_I,I,orig_data)
-        #TODO: Might just replace all of this with an interpolation call
-        
-        
-        #TODO: Rewrite this ...
-        
-        
-        #For each point, get the bordering points
-        #Sort, with old coming before new
-        I = np.argsort(np.concatenate([old_lengths, new_lengths]), kind='mergesort')
-        #Find new points, an old point will be to the left
-        new_I = utils.find(I >= len(old_lengths)) #indices 0 to n-1, look for >= not >
-        
-        norm_data = np.empty_like(new_lengths)        
-        
-        #Can we do this without a loop (YES!)
-        #find those that are equal
-        #those that are not equal (at an old point) then do vector math        
-
-        for iSeg,cur_new_I in enumerate(new_I):
-            cur_left_I = I[cur_new_I-1]
-            cur_right_I = cur_left_I + 1
-            try:
-                if iSeg == 0 or (iSeg == len(new_lengths) - 1) or (new_lengths[iSeg] == old_lengths[cur_left_I]):
-                    norm_data[iSeg] = orig_data[cur_left_I]
-                else:
-                    new_position = new_lengths[iSeg]
-                    left_position = old_lengths[cur_left_I]
-                    right_position = old_lengths[cur_right_I]                    
-                    total_length = right_position - left_position
-                    #NOTE: If we are really close to left, then we want mostly
-                    #left, which means right_position - new_position will almost
-                    #be equal to the total length, and left_pct will be close to 1
-                    left_pct = (right_position - new_position)/total_length
-                    right_pct = (new_position - left_position)/total_length
-                    norm_data[iSeg] = left_pct*orig_data[cur_left_I] + right_pct*orig_data[cur_right_I]
-            except:
-                import pdb
-                pdb.set_trace()
-
-
-        return norm_data        
+                
+        return np.interp(new_lengths,old_lengths,orig_data)
