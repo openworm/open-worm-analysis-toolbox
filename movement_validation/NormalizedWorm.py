@@ -256,40 +256,40 @@ class NormalizedWorm(BasicWorm, WormPartition):
             self.skeleton = WormParsing.normalizeAllFramesXY(skeleton)
             self.vulva_contour = WormParsing.normalizeAllFramesXY(self.vulva_contour)
             self.non_vulva_contour = WormParsing.normalizeAllFramesXY(self.non_vulva_contour)
+            
+            #TODO: Calculate area 
+            #The old method was:
+            #Using known transition regions, count the # of 'on' pixels in
+            #the image. Presumably we would use something more akin
+            #to the eccentricity feature code
+            
+            #TODO:
+            #Still missing:
+            #- segmentation_status
+            #- frame codes
+            #- in_out_touches
+            #I think these things would best be handled by first identifying
+            #the feature code that uses them, then determing what if anything
+            #we really need to calculate. Perhaps we need to modify the feature
+            #code instead.
         else:
             #Skeleton input should be good
             self.angles = WormParsing.calculateAngles(self.skeleton)
             self.skeleton = WormParsing.normalizeAllFramesXY(self.skeleton)
             self.vulva_contour = None
             self.non_vulva_contour = None
+            self.head_area = None
+            self.tail_area = None
+            self.vulva_area = None
+            self.non_vulva_area = None
+            
+            
         
         self.length = WormParsing.computeSkeletonLengths(self.skeleton)
         
-        """
-        Final needed attributes:
-        ------------------------
-        #1) ??? segmentation_status   
-        #2) ??? frame_codes
-        #3) DONE vulva_contours        49 x 2 x n_frames
-        #4) DONE non_vulva_contours    49 x 2 x n_frames
-        #5) DONE skeletons : numpy.array
-          - (49,2,n_frames)
-        #6) DONE angles : numpy.array
-          - (49,n_frames)
-        #7) in_out_touches ????? 49 x n_frames
-        #8) DONE lengths : numpy.array
-          - (nframes,)
-        #9) DONE widths : numpy.array
-          - (49,n_frames)
-        #10) head_areas
-        #11) tail_areas
-        #12) vulva_areas
-        #13) non_vulva_areas 
-        
-        
-        """
-
-        # TODO
+                
+        #Old MC comments below ...
+        # TODO 
         # Much of what needs to be done here is accomplished in the 
         # below jim_pre_features_algorithm so pull that into here!
         
@@ -299,60 +299,6 @@ class NormalizedWorm(BasicWorm, WormPartition):
         # since we cannot assume that the number of points between head
         # and tail and between tail and head remains constant between frames.
         pass
-
-    def jim_pre_features_algorithm(self, skeleton, 
-                                   vulva_contour, non_vulva_contour, 
-                                   is_valid):
-        """ 
-        Create an instance from skeleton and contour data
-        
-        
-        TODO: We need to clarify the value for a missing frame
-        I think currently it is [] but perhaps it should be None        
-        
-        Parameters
-        --------------------------------------- 
-        skeleton : list
-            Each element in the list may be empty (bad frame) or be of size
-            2 x n, where n varies depending on the # of pixels the worm occupied
-            in the given frame
-            
-        vulva_contour and non_vulva_contour should start and end at the same locations, from head to tail
-
-        """     
-        
-        # TODO: Skeleton is optional, but at some point we'll probably need
-        # to make contour optional as well        
-        
-        # TODO: Do I want to grab the skeleton from here????
-        t = time.time()
-
-        # The # of points in the skeleton changes on a per frame basis. If we use
-        # any old parameters based on the passed in skeleton and the new widths,
-        # we will have a length mismatch        
-        
-        widths, skeleton = WormParsing.computeWidths(self, vulva_contour, non_vulva_contour)
-        self.widths = WormParsing.normalizeAllFrames(self, widths, skeleton)
-        elapsed = time.time() - t
-        print('Elapsed time: %g'%(elapsed))
-
-        
-        self.angles = WormParsing.calculateAngles(self, skeleton)
-        
-        #t = time.time()
-        self.skeleton = WormParsing.normalizeAllFramesXY(self, skeleton)
-        self.vulva_contour = WormParsing.normalizeAllFramesXY(self, vulva_contour)
-        self.non_vulva_contour = WormParsing.normalizeAllFramesXY(self, non_vulva_contour)
-        #elapsed = time.time() - t
-        
-        self.length = WormParsing.computeSkeletonLengths(self, skeleton)
-  
-
-        
-        #Areas:
-        #------------------------------------
-            
-
   
     def validate(self):
         """
