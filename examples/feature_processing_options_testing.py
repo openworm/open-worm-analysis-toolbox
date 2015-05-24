@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Insert description here
+This example examines only processing a subset of features. This may be useful 
+for users that are only concerned about trying to match specific features. It can
+also save time.
 """
 
 import sys, os
 
-
+#TODO: This seems like a bold move. Do we really want to do this. My guess is
+#that we shouldn't . We need to decide how we want to handle this for all examples
 sys.path.append('..') 
+
 import movement_validation
 
 user_config = movement_validation.user_config
@@ -28,7 +32,7 @@ def main():
     # OPENWORM
     #----------------------
     # Load the normalized worm from file
-    nw = NormalizedWorm(data_file_path)
+    nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
 
     #The frame rate is somewhere in the video info. Ideally this would all come
     #from the video parser eventually
