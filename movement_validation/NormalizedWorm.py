@@ -14,7 +14,9 @@ import time
 
 from . import config
 from . import utils
-from .basic_worm import WormPartition, BasicWorm
+from .basic_worm import WormPartition
+from .basic_worm import NormalizedSkeletonAndContour
+from .basic_worm import GeneralizedSkeletonAndContour
 from .pre_features import WormParsing
 
 # TODO: remove this dependency by moving feature_comparisons to utils and 
@@ -22,13 +24,13 @@ from .pre_features import WormParsing
 from .features import feature_comparisons as fc
 
 
-class NormalizedWorm(BasicWorm, WormPartition):
+class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
     """
     Encapsulates the notion of a worm's elementary measurements, scaled
     (i.e. "normalized") to 49 points along the length of the worm.
 
     The data consists of 13 Numpy arrays (where n is the number of frames):
-   - Of shape (49,2,n):   (Inherited from BasicWorm)
+   - Of shape (49,2,n):   (Inherited from NormalizedSkeletonAndContour)
         vulva_contour
         non_vulva_contour
         skeleton
@@ -57,7 +59,7 @@ class NormalizedWorm(BasicWorm, WormPartition):
         
         """
         if not normalized_worm:
-            BasicWorm.__init__(self)
+            NormalizedSkeletonAndContour.__init__(self)
             WormPartition.__init__(self)
             self.angles = np.array([], dtype=float)
 
@@ -75,12 +77,15 @@ class NormalizedWorm(BasicWorm, WormPartition):
 
 
     @classmethod
-    def from_BasicWorm_factory(cls, basic_worm):
-        nw = NormalizedWorm()        
+    def from_GeneralizedSkeletonAndContour_factory(cls, 
+                                         generalized_skeleton_and_contour):
+        nw = NormalizedWorm()
+
+        # First we must normalize the skeleton and contour, if necessary:        
+        nsc = generalized_skeleton_and_contour.get_normalized_skeleton_and_contour()
         
-        
-        # Call BasicWorm's copy constructor:
-        super(NormalizedWorm, nw).__init__(basic_worm)
+        # Call NormalizedSkeletonAndContour's copy constructor:
+        super(NormalizedWorm, nw).__init__(nsc)
 
         # TODO: We should probably validate that the worm is valid before
         #       calculating pre-features.
@@ -209,20 +214,20 @@ class NormalizedWorm(BasicWorm, WormPartition):
 
     def get_BasicWorm(self):
         """
-        Return an instance of BasicWorm containing this instance of 
-        NormalizedWorm's basic data.
+        Return an instance of NormalizedSkeletonAndContour containing this 
+        instance of NormalizedWorm's basic data.
 
         """
-        bw = BasicWorm()
-        bw.head = np.copy(self.skeleton[0,:,:])
-        bw.tail = np.copy(self.skeleton[-1,:,:])
+        bw = NormalizedSkeletonAndContour()
+        #bw.head = np.copy(self.skeleton[0,:,:])
+        #bw.tail = np.copy(self.skeleton[-1,:,:])
         bw.skeleton = np.copy(self.skeleton)
         # We have to reverse the contour points of the non_vulva_contour
         # so that the tail end picks up where the tail end of vulva_contour
         # left off:
-        bw.contour = np.copy(np.concatenate((self.vulva_contour, 
-                                             self.non_vulva_contour[::-1,:,:]), 
-                                            axis=0))
+        #bw.contour = np.copy(np.concatenate((self.vulva_contour, 
+        #                                     self.non_vulva_contour[::-1,:,:]), 
+        #                                    axis=0))
         bw.ventral_mode = 'CW'
         
         return bw

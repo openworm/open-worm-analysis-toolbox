@@ -18,7 +18,7 @@ from .NormalizedWorm import NormalizedWorm
 from .video_info import VideoInfo
 from .features.worm_features import WormFeatures
 from .WormPlotter import WormPlotter
-from .basic_worm import BasicWorm
+from .basic_worm import GeneralizedSkeletonAndContour
 
 from .features.feature_processing_options import FeatureProcessingOptions
 
@@ -26,8 +26,8 @@ from .statistics.histogram_manager import HistogramManager
 from .statistics.manager import StatisticsManager
 
 
-__all__ = ['BasicWorm'
-            'NormalizedWorm',
+__all__ = ['GeneralizedSkeletonAndContour'
+           'NormalizedWorm',
 		'VideoInfo',
            'WormFeatures',
            'FeatureProcessingOptions',
