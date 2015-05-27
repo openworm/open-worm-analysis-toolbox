@@ -23,17 +23,7 @@ Another plotting function is the number of dropped frames in a given
 normalized worm's segmented video. To show a pie chart breaking down this 
 information, you could run the following:
 
-plot_frame_codes(nw)
-
-Creating such an instance nw of the NormalizedWorm class requires access 
-to worm data files. The easiest way to obtain such data files is to sync
-with the Google Drive folder example_movement_validation_data, which is 
-discussed in the installation instructions: 
-https://github.com/openworm/movement_validation/blob/master/INSTALL.md
-
-Once you've joined the worm_data shared folder, you'll need to clone and 
-configure the movement_validation repository for yourself. Here is an 
-installation guide for you.
+    plot_frame_codes(nw)
 
 I note in the code for WormPlotter that the visualization module follows 
 the animated subplots example in inheriting from TimedAnimation rather 
@@ -98,13 +88,13 @@ class WormPlotter(animation.TimedAnimation):
                                     1: 'forward'}
         self.motion_mode_colours = {-1: 'b',      # blue
                                     0: 'r',       # red
-                                    1: 'g'}      # green
+                                    1: 'g'}       # green
 
         self.normalized_worm = normalized_worm
         # TODO: eventually we'll put this in a nicer place
-        self.vulva_contours = self.normalized_worm.vulva_contours
-        self.non_vulva_contours = self.normalized_worm.non_vulva_contours
-        self.skeletons = self.normalized_worm.skeletons
+        self.vulva_contour = self.normalized_worm.vulva_contour
+        self.non_vulva_contour = self.normalized_worm.non_vulva_contour
+        self.skeleton = self.normalized_worm.skeleton
         self.centred_skeleton = self.normalized_worm.centred_skeleton
         self.skeleton_centres = self.normalized_worm.centre
         self.orientation = self.normalized_worm.angle
@@ -285,12 +275,12 @@ class WormPlotter(animation.TimedAnimation):
         for l in self.artists_to_be_drawn:
             l.set_visible(True)
 
-        self.line1W.set_data(self.skeletons[:, 0, i],
-                             self.skeletons[:, 1, i])
-        self.line1W_head.set_data(self.skeletons[0, 0, i],
-                                  self.skeletons[0, 1, i])
-        self.line1C.set_data(self.vulva_contours[:, 0, i],
-                             self.vulva_contours[:, 1, i])
+        self.line1W.set_data(self.skeleton[:, 0, i],
+                             self.skeleton[:, 1, i])
+        self.line1W_head.set_data(self.skeleton[0, 0, i],
+                                  self.skeleton[0, 1, i])
+        self.line1C.set_data(self.vulva_contour[:, 0, i],
+                             self.vulva_contour[:, 1, i])
         self.patch1E.center = (self.skeleton_centres[:, i])
         self.patch1E.angle = self.orientation[i]
 
@@ -315,10 +305,10 @@ class WormPlotter(animation.TimedAnimation):
                              self.centred_skeleton[:, 1, i])
         self.line2W_head.set_data(self.centred_skeleton[0, 0, i],
                                   self.centred_skeleton[0, 1, i])
-        self.line2C.set_data(self.centred_skeleton[:, 0, i] + (self.vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
-                             self.centred_skeleton[:, 1, i] + (self.vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
-        self.line2C2.set_data(self.centred_skeleton[:, 0, i] + (self.non_vulva_contours[:, 0, i] - self.skeletons[:, 0, i]),
-                              self.centred_skeleton[:, 1, i] + (self.non_vulva_contours[:, 1, i] - self.skeletons[:, 1, i]))
+        self.line2C.set_data(self.centred_skeleton[:, 0, i] + (self.vulva_contour[:, 0, i] - self.skeleton[:, 0, i]),
+                             self.centred_skeleton[:, 1, i] + (self.vulva_contour[:, 1, i] - self.skeleton[:, 1, i]))
+        self.line2C2.set_data(self.centred_skeleton[:, 0, i] + (self.non_vulva_contour[:, 0, i] - self.skeleton[:, 0, i]),
+                              self.centred_skeleton[:, 1, i] + (self.non_vulva_contour[:, 1, i] - self.skeleton[:, 1, i]))
         self.annotation2.xy = (self.centred_skeleton[0, 0, i],
                                self.centred_skeleton[0, 1, i])
 
@@ -413,21 +403,24 @@ def plot_frame_codes(normalized_worm):
     # http://nxn.se/post/46440196846/
 
     nw = normalized_worm
-    fc = nw.frame_codes
+    fc = nw.frame_code
 
     # Create a dictionary of    frame code : frame code title   pairs
-    fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}
+    # TODO: this currently doesn't work since I no longer load frame_codes
+    # into NormalizedWorm.  The data is at documentation/frame_codes.csv though
+    #fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}
 
     # A dictionary with the count for each frame code type
     counts = {i: np.bincount(fc)[i] for i in np.unique(fc)}
 
     # Display the pie chart
     patches, texts, autotexts = plt.pie(x=list(counts.values()),
-                                        labels=list(fc_desc[d]
-                                                    for d in np.unique(fc)),
+                                        #labels=list(fc_desc[d]
+                                        #            for d in np.unique(fc)),
                                         autopct='%1.1f%%',
                                         startangle=90,
-                                        colors=['g', 'r', 'c', 'y', 'm'], labeldistance=1.2)
+                                        colors=['g', 'r', 'c', 'y', 'm'], 
+                                        labeldistance=1.2)
     plt.suptitle("Proportion of frames segmented")
 
     for t in texts:

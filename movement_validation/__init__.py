@@ -17,7 +17,7 @@ https://github.com/openworm/movement_validation/LICENSE.md
 from .NormalizedWorm import NormalizedWorm
 from .video_info import VideoInfo
 from .features.worm_features import WormFeatures
-from .WormPlotter import WormPlotter
+from .worm_plotter import WormPlotter
 from .basic_worm import GeneralizedSkeletonAndContour
 
 from .features.feature_processing_options import FeatureProcessingOptions

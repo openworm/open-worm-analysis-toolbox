@@ -373,7 +373,7 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         the angle formed by the first and last skeleton point.
 
         """
-        s = self.skeletons
+        s = self.skeleton
         # obtain vector between first and last skeleton point
         v = s[48, :,:]-s[0,:,:]  
         # find the angle of this vector
@@ -390,10 +390,10 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         A numpy array with the above properties.
 
         """
-        s = self.skeletons
+        s = self.skeleton
         
-        if(s.size == 0):
-            s_mean = np.ones(np.shape(s)) * np.nanmean(s, 0, keepdims=False)
+        if s.size != 0:
+            s_mean = np.ones(np.shape(s)) * self.centre
             return s - s_mean
         else:
             return s
@@ -420,26 +420,26 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         To make this work I believe we need to pre-broadcast rot_matrix into
         the skeleton points dimension (the one with 49 points) so that we have
           2 x 2 x 49 x n, times 2 x 49 x n
-        #s1 = np.rollaxis(self.skeletons, 1)
+        #s1 = np.rollaxis(self.skeleton, 1)
 
         #rot_matrix = np.ones(np.shape(s1)) * rot_matrix
 
-        #self.skeletons_rotated = rot_matrix.dot(self.skeletons)    
+        #self.skeleton_rotated = rot_matrix.dot(self.skeleton)
 
         """
 
-        centred_skeleton = self.centred_skeleton()
         orientation = self.angle
 
+        # Flip and convert to radians
         a = -orientation * (np.pi / 180)
 
         rot_matrix = np.array([[np.cos(a), -np.sin(a)],
                                [np.sin(a),  np.cos(a)]])
 
-        # we need the x,y listed in the first dimension
-        s1 = np.rollaxis(centred_skeleton, 1)
+        # We need the x,y listed in the first dimension
+        s1 = np.rollaxis(self.centred_skeleton, 1)
 
-        # for example, here is the first point of the first frame rotated:
+        # For example, here is the first point of the first frame rotated:
         # rot_matrix[:,:,0].dot(s1[:,0,0])
 
         # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
@@ -447,15 +447,15 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
 
         s1_rotated = []
 
-        # rotate the worm frame-by-frame and add these skeletons to a list
+        # Rotate the worm frame-by-frame and add these skeletons to a list
         for frame_index in range(self.num_frames):
             s1_rotated.append(rot_matrix[:, :, frame_index].dot(s1[:,:, frame_index]))
         # print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
 
-        # save the list as a numpy array
+        # Save the list as a numpy array
         s1_rotated = np.array(s1_rotated)
 
-        # fix the axis settings
+        # Fix the axis settings
         return np.rollaxis(np.rollaxis(s1_rotated, 0, 3), 1)
 
 
@@ -484,7 +484,7 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         """
         return self.segmentation_status == 's'
 
-    def position_limits(self, dimension, measurement='skeletons'):
+    def position_limits(self, dimension, measurement='skeleton'):
         """ 
         Maximum extent of worm's travels projected onto a given axis
 

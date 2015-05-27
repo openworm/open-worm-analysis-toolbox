@@ -7,17 +7,18 @@ Show how to go from BasicWorm to NormalizedWorm
 import sys, os
 
 sys.path.append('..') 
-import movement_validation
 
-from movement_validation import utils
-#from movement_validation import pre_features
+from movement_validation import user_config, NormalizedWorm, VideoInfo
+from movement_validation import WormFeatures, GeneralizedSkeletonAndContour
+from movement_validation import WormPlotter
 
+"""
 user_config = movement_validation.user_config
 NormalizedWorm = movement_validation.NormalizedWorm
 VideoInfo = movement_validation.VideoInfo
 WormFeatures = movement_validation.WormFeatures
 GeneralizedSkeletonAndContour = movement_validation.GeneralizedSkeletonAndContour
-
+"""
 
 def main():
     # Load from file a normalized worm, as calculated by Schafer Lab code
@@ -40,9 +41,16 @@ def main():
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
 
+    wp1 = WormPlotter(nw, interactive=False)
+    wp2 = WormPlotter(nw_calculated, interactive=False)
+    
+    wp1.show()
+    wp2.show()
+
+
     # Jim: not sure what this is all about.  Can you document it?
     # - Michael
-    other_stuff_jim(nw)
+    #other_stuff_jim(nw)
 
 
 def other_stuff_jim(nw):

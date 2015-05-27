@@ -308,7 +308,6 @@ class NormalizedSkeletonAndContour(JSON_Serializer):
     
 class WormPartition():
     def __init__(self):
-        print("In WormPartition initializer")
         # These are RANGE values, so the last value is not inclusive
         self.worm_partitions = {'head': (0, 8),
                                 'neck': (8, 16),
