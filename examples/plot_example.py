@@ -19,7 +19,8 @@ def main():
     """
     Load the skeleton and other basic data from a worm HDF5 file,
     optionally animate it using matplotlib, and also    
-    re-create the features information by deriving them from the basic data.
+    create the features information by deriving them from the basic data, to
+    annotate the animation with.
     
     """
 
@@ -32,26 +33,22 @@ def main():
     nw = example_nw()  # movement_validation.NormalizedWorm
 
     # Placeholder for video metadata
-    #v = movement_validation.VideoInfo(video_name="Example name", fps=25)
+    v = movement_validation.VideoInfo(video_name="Example name", fps=25)
 
     # From the basic information in normalized_worm,
     # create an instance of WormFeatures, which contains all our features data.
-    #wf = movement_validation.WormFeatures(nw, v)
+    wf = movement_validation.WormFeatures(nw, v)
+    motion_codes = wf.locomotion.motion_mode
 
     # Let's show a pie chart of how many frames were segmented
     movement_validation.worm_plotter.plot_frame_codes(nw)
 
-    # I just saved a plaintext file with the motioncodes extracted from
-    # the features result file, by viewing the results file using HDFView
-    #motion_codes = np.genfromtxt('motion_codes.txt', delimiter='\n')
-    #wp = movement_validation.WormPlotter(nw, motion_codes, interactive=False)
-    wp = movement_validation.WormPlotter(nw, interactive=False)
+    # Plot an animation of the worm and its motion codes
+    wp = movement_validation.WormPlotter(nw, motion_codes, interactive=False)
     wp.show()
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')
-
-    #movement_validation.utils.write_to_CSV({'mode': wf.locomotion.motion_mode, 'midbody speed':wf.locomotion.velocity['midbody']['speed']}, 'michael_latest')
 
 
 def example_nw():
