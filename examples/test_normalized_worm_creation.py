@@ -42,8 +42,8 @@ def main():
     nw == nw_calculated
 
     # OPTIONAL: show how the worms are identical by plotting them!
-    #wp1 = WormPlotter(nw, interactive=False)
-    #wp2 = WormPlotter(nw_calculated, interactive=False)
+    #wp1 = NormalizedWormPlottable(nw, interactive=False)
+    #wp2 = NormalizedWormPlottable(nw_calculated, interactive=False)
     #wp1.show()
     #wp2.show()
 

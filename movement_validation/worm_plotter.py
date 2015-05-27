@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-A class that renders matplotlib plots of worm measurement and feature data.
-  
-This follows the [animated subplots example]
-(http://matplotlib.org/1.3.0/examples/animation/subplots.html)
-in inheriting from TimedAnimation rather than 
-using PyLab-shell-type calls to construct the animation.
+Plotting some of the calculated values of movement_validation for 
+illustrative purposes.
 
 Usage
 ----------------------------
@@ -40,10 +36,19 @@ from matplotlib.patches import Ellipse
 import matplotlib.animation as animation
 
 from . import config
+from . import NormalizedWorm
 
 
-class WormPlotter(animation.TimedAnimation):
+class NormalizedWormPlottable(animation.TimedAnimation):
+    """
+    A class that renders matplotlib plots of worm measurement and feature data.
+      
+    This follows the [animated subplots example]
+    (http://matplotlib.org/1.3.0/examples/animation/subplots.html)
+    in inheriting from TimedAnimation rather than 
+    using PyLab-shell-type calls to construct the animation.
 
+    """
     def __init__(self, normalized_worm, motion_mode=None, interactive=False):
         """ 
         Initialize the animation of the worm's attributes.
@@ -81,7 +86,7 @@ class WormPlotter(animation.TimedAnimation):
         plt.interactive(interactive)
 
         # 1. set up the data to be used
-
+        self.nw = normalized_worm
         self.motion_mode = motion_mode
         self.motion_mode_options = {-1: 'backward',
                                     0: 'paused',
@@ -90,24 +95,14 @@ class WormPlotter(animation.TimedAnimation):
                                     0: 'r',       # red
                                     1: 'g'}       # green
 
-        self.normalized_worm = normalized_worm
-        # TODO: eventually we'll put this in a nicer place
-        self.vulva_contour = self.normalized_worm.vulva_contour
-        self.non_vulva_contour = self.normalized_worm.non_vulva_contour
-        self.skeleton = self.normalized_worm.skeleton
-        self.centred_skeleton = self.normalized_worm.centred_skeleton
-        self.skeleton_centres = self.normalized_worm.centre
-        self.orientation = self.normalized_worm.angle
-        self.orientation_free_skeleton = \
-            self.normalized_worm.orientation_free_skeleton
 
         # 2. create the figure
         fig = plt.figure(figsize=(5, 5))
 
-        # We have blit=True, so the animation only redraws the elements that have
-        # changed.  This means that if the window is resized, everything other
-        # than the plot area will be black.  To fix this, here we have matplotlib
-        # explicitly redraw everything if a resizing event occurs.
+        # We have blit=True, so the animation only redraws the elements that 
+        # have changed.  This means that if the window is resized, everything 
+        # other than the plot area will be black.  To fix this, here we have 
+        # matplotlib explicitly redraw everything if a resizing event occurs.
         # DEBUG: this actually doesn't appear to work.
         def refresh_plot(event):
             fig.canvas.draw()
@@ -122,8 +117,8 @@ class WormPlotter(animation.TimedAnimation):
         ax1.set_title('Position')
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
-        ax1.set_xlim(self.normalized_worm.position_limits(0))
-        ax1.set_ylim(self.normalized_worm.position_limits(1))
+        ax1.set_xlim(self.nw.position_limits(0))
+        ax1.set_ylim(self.nw.position_limits(1))
         #ax1.set_aspect(aspect='equal', adjustable='datalim')
         # ax1.set_autoscale_on()
 
@@ -150,10 +145,10 @@ class WormPlotter(animation.TimedAnimation):
         ax2.set_ylim((-500, 500))
         ax2.set_aspect(aspect='equal', adjustable='datalim')
         self.annotation2 = ax2.annotate("Worm head",
-                                        xy=(0, 0), xycoords='data',
-                                        xytext=(10, 10), textcoords='data',
-                                        arrowprops=dict(arrowstyle="fancy",
-                                                        connectionstyle="arc3,rad=.2"))
+                            xy=(0, 0), xycoords='data',
+                            xytext=(10, 10), textcoords='data',
+                            arrowprops=dict(arrowstyle="fancy",
+                                            connectionstyle="arc3,rad=.2"))
 
         ax3 = plt.subplot2grid((3, 3), (2, 1))
         ax3.set_title('Orientation-free')
@@ -162,37 +157,39 @@ class WormPlotter(animation.TimedAnimation):
         ax3.set_ylim((-500, 500))
         ax3.set_aspect(aspect='equal', adjustable='datalim')
 
-        ax4 = plt.subplot2grid((3, 3), (2, 2))
-        # self.annotation4 = ax4.annotate("Segmentation status: ",
-        #                                xy=(0,0), xycoords='data',
-        #                                xytext=(10, 10), textcoords='data',
-        #                                arrowprops=dict(arrowstyle="fancy",
-        #                                                connectionstyle="arc3,rad=.2"))
 
         # 4. create Artist objects
-        self.line1W = Line2D([], [], color='green', linestyle='point marker',
+        self.line1W = Line2D([], [], color='green', 
+                             linestyle='point marker',
                              marker='o', markersize=5)
-        self.line1W_head = Line2D([], [], color='red', linestyle='point marker',
+        self.line1W_head = Line2D([], [], color='red', 
+                                  linestyle='point marker',
                                   marker='o', markersize=7)
-        self.line1C = Line2D([], [], color='yellow', linestyle='point marker',
+        self.line1C = Line2D([], [], color='yellow', 
+                             linestyle='point marker',
                              marker='o', markersize=5)
         self.patch1E = Ellipse(
             xy=(0, 0), width=1000, height=500, angle=0, alpha=0.3)
 
         self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
-        self.line2W_head = Line2D([], [], color='red', linestyle='point marker',
+        self.line2W_head = Line2D([], [], color='red',
+                                  linestyle='point marker',
                                   marker='o', markersize=7)
         self.line2C = Line2D([], [], color='blue')
         self.line2C2 = Line2D([], [], color='orange')
 
         self.line3W = Line2D([], [], color='black', marker='o', markersize=5)
-        self.line3W_head = Line2D([], [], color='red', linestyle='point marker',
+        self.line3W_head = Line2D([], [], color='red',
+                                  linestyle='point marker',
                                   marker='o', markersize=7)
 
-        self.artists_to_be_drawn = \
-            [self.line1W, self.line1C, self.line1W_head, self.patch1E, self.annotation1a, self.annotation1b,
-             self.line2W, self.line2C, self.line2C2, self.line2W_head, self.annotation2,
-             self.line3W, self.line3W_head]
+        self.artists_with_data = [self.line1W, self.line1W_head, self.line1C,
+                                  self.line2W, self.line2W_head, self.line2C, 
+                                  self.line2C2, self.line3W, self.line3W_head]
+
+        self.artists_to_be_drawn = [self.patch1E, self.annotation1a, 
+                                    self.annotation1b, self.annotation2] + \
+                                   self.artists_with_data
 
         # 5. assign Artist objects to the relevant subplot
         ax1.add_line(self.line1W)
@@ -222,30 +219,58 @@ class WormPlotter(animation.TimedAnimation):
                                                  interval=interval,
                                                  blit=True)
 
+    def set_frame_data(self, frame_number):
+        i = frame_number
+
+        self.line1W.set_data(self.nw.skeleton[:, 0, i],
+                             self.nw.skeleton[:, 1, i])
+        self.line1W_head.set_data(self.nw.skeleton[0, 0, i],
+                                  self.nw.skeleton[0, 1, i])
+        self.line1C.set_data(self.nw.vulva_contour[:, 0, i],
+                             self.nw.vulva_contour[:, 1, i])
+        self.patch1E.center = (self.nw.centre[:, i])  # skeleton centre
+        self.patch1E.angle = self.nw.angle[i]    # orientation
+
+        # Set the values of our annotation text in the main subplot:
+
+        if self.motion_mode is not None:
+            if np.isnan(self.motion_mode[i]):
+                self.patch1E.set_facecolor('w')
+                self.annotation1a.set_text("Motion mode: {}".format('NaN'))
+            else:
+                # Set the colour of the ellipse surrounding the worm to a colour
+                # corresponding to the current motion mode of the worm
+                self.patch1E.set_facecolor(self.motion_mode_colours[
+                    self.motion_mode[i]])
+                # Annotate the current motion mode of the worm in text
+                self.annotation1a.set_text("Motion mode: {}".format(
+                    self.motion_mode_options[self.motion_mode[i]]))
+
+        self.annotation1b.set_text("Frame {} of {}".format(i, self.num_frames))
+
+        self.line2W.set_data(self.nw.centred_skeleton[:, 0, i],
+                             self.nw.centred_skeleton[:, 1, i])
+        self.line2W_head.set_data(self.nw.centred_skeleton[0, 0, i],
+                                  self.nw.centred_skeleton[0, 1, i])
+        self.line2C.set_data(self.nw.centred_skeleton[:, 0, i] + (self.nw.vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+                             self.nw.centred_skeleton[:, 1, i] + (self.nw.vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+        self.line2C2.set_data(self.nw.centred_skeleton[:, 0, i] + (self.nw.non_vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+                              self.nw.centred_skeleton[:, 1, i] + (self.nw.non_vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+        self.annotation2.xy = (self.nw.centred_skeleton[0, 0, i],
+                               self.nw.centred_skeleton[0, 1, i])
+
+        self.line3W.set_data(self.nw.orientation_free_skeleton[:, 0, i],
+                             self.nw.orientation_free_skeleton[:, 1, i])
+        self.line3W_head.set_data(self.nw.orientation_free_skeleton[0, 0, i],
+                                  self.nw.orientation_free_skeleton[0, 1, i])
+
     @property
     def num_frames(self):
         """
           Return the total number of frames in the animation
 
         """
-        return self.normalized_worm.num_frames
-
-    """
-    motion_mode is a numpy array of length num_frames giving the motion
-    type over time.  it must be loaded from features data as it is not
-    a property of the NormalizedWorm.
-  """
-    @property
-    def motion_mode(self):
-        return self._motion_mode
-
-    @motion_mode.setter
-    def motion_mode(self, m):
-        self._motion_mode = m
-
-    @motion_mode.deleter
-    def motion_mode(self):
-        del self._motion_mode
+        return self.nw.num_frames
 
     def show(self):
         """ 
@@ -266,56 +291,13 @@ class WormPlotter(animation.TimedAnimation):
           the current frame.
 
         """
-
-        i = framedata
-
         # Make the canvas elements visible now
         # (We made them invisible in _init_draw() so that the first
         # frame of the animation wouldn't remain stuck on the canvas)
         for l in self.artists_to_be_drawn:
             l.set_visible(True)
 
-        self.line1W.set_data(self.skeleton[:, 0, i],
-                             self.skeleton[:, 1, i])
-        self.line1W_head.set_data(self.skeleton[0, 0, i],
-                                  self.skeleton[0, 1, i])
-        self.line1C.set_data(self.vulva_contour[:, 0, i],
-                             self.vulva_contour[:, 1, i])
-        self.patch1E.center = (self.skeleton_centres[:, i])
-        self.patch1E.angle = self.orientation[i]
-
-        # Set the values of our annotation text in the main subplot:
-
-        if self.motion_mode is not None:
-            if np.isnan(self.motion_mode[i]):
-                self.patch1E.set_facecolor('w')
-                self.annotation1a.set_text("Motion mode: {}".format('NaN'))
-            else:
-                # Set the colour of the ellipse surrounding the worm to a colour
-                # corresponding to the current motion mode of the worm
-                self.patch1E.set_facecolor(self.motion_mode_colours[
-                    self.motion_mode[i]])
-                # Annotate the current motion mode of the worm in text
-                self.annotation1a.set_text("Motion mode: {}".format(
-                    self.motion_mode_options[self.motion_mode[i]]))
-
-        self.annotation1b.set_text("Frame {} of {}".format(i, self.num_frames))
-
-        self.line2W.set_data(self.centred_skeleton[:, 0, i],
-                             self.centred_skeleton[:, 1, i])
-        self.line2W_head.set_data(self.centred_skeleton[0, 0, i],
-                                  self.centred_skeleton[0, 1, i])
-        self.line2C.set_data(self.centred_skeleton[:, 0, i] + (self.vulva_contour[:, 0, i] - self.skeleton[:, 0, i]),
-                             self.centred_skeleton[:, 1, i] + (self.vulva_contour[:, 1, i] - self.skeleton[:, 1, i]))
-        self.line2C2.set_data(self.centred_skeleton[:, 0, i] + (self.non_vulva_contour[:, 0, i] - self.skeleton[:, 0, i]),
-                              self.centred_skeleton[:, 1, i] + (self.non_vulva_contour[:, 1, i] - self.skeleton[:, 1, i]))
-        self.annotation2.xy = (self.centred_skeleton[0, 0, i],
-                               self.centred_skeleton[0, 1, i])
-
-        self.line3W.set_data(self.orientation_free_skeleton[:, 0, i],
-                             self.orientation_free_skeleton[:, 1, i])
-        self.line3W_head.set_data(self.orientation_free_skeleton[0, 0, i],
-                                  self.orientation_free_skeleton[0, 1, i])
+        self.set_frame_data(framedata)
 
         self._drawn_artists = self.artists_to_be_drawn
 
@@ -325,7 +307,7 @@ class WormPlotter(animation.TimedAnimation):
         in the animation
 
         """
-        return iter(range(self.normalized_worm.num_frames))
+        return iter(range(self.num_frames))
 
     def _init_draw(self):
         """ 
@@ -334,20 +316,13 @@ class WormPlotter(animation.TimedAnimation):
         the first time.
 
         """
-        artists = [self.line1W, self.line1W_head, self.line1C,
-                   self.line2W, self.line2W_head, self.line2C, self.line2C2,
-                   self.line3W, self.line3W_head]
-
-        for l in artists:
+        for l in self.artists_with_data:
             l.set_data([], [])
 
         # Keep the drawing elements invisible for the first frame to avoid
         # the first frame remaining on the canvas
         for l in self.artists_to_be_drawn:
             l.set_visible(False)
-
-        # TODO: figure out how to clear the non-line elements
-        #artists.extend([self.annotation2, self.patch1E])
 
     def save(self, filename,
              file_title='C. elegans movement video',

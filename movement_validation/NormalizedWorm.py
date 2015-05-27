@@ -355,12 +355,17 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         frames, giving for each frame the mean of the skeleton points.
 
         """
-        # We do this to avoid a RuntimeWarning taking the nanmean of frames
-        # with nothing BUT nan entries: for those frames nanmean returns nan
-        # (correctly) but still raises a RuntimeWarning.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', category=RuntimeWarning)
-            return np.nanmean(self.skeleton, 0, keepdims=False)
+        try:
+            return self._centre
+        except AttributeError:
+            # We do this to avoid a RuntimeWarning taking the nanmean of 
+            # frames with nothing BUT nan entries: for those frames nanmean 
+            # returns nan (correctly) but still raises a RuntimeWarning.
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', category=RuntimeWarning)
+                self._centre = np.nanmean(self.skeleton, 0, keepdims=False)
+
+            return self._centre
 
     @property
     def angle(self):
@@ -373,11 +378,16 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         the angle formed by the first and last skeleton point.
 
         """
-        s = self.skeleton
-        # obtain vector between first and last skeleton point
-        v = s[48, :,:]-s[0,:,:]  
-        # find the angle of this vector
-        return np.arctan(v[1,:]/v[0,:])*(180/np.pi)
+        try:
+            return self._angle
+        except AttributeError:            
+            s = self.skeleton
+            # obtain vector between first and last skeleton point
+            v = s[48, :,:]-s[0,:,:]  
+            # find the angle of this vector
+            self._angle = np.arctan(v[1,:]/v[0,:])*(180/np.pi)
+
+            return self._angle
 
     @property
     def centred_skeleton(self):
@@ -390,13 +400,18 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         A numpy array with the above properties.
 
         """
-        s = self.skeleton
+        try:
+            return self._centred_skeleton
+        except AttributeError:
+            s = self.skeleton
+            
+            if s.size != 0:
+                s_mean = np.ones(np.shape(s)) * self.centre
+                self._centred_skeleton = s - s_mean
+            else:
+                self._centred_skeleton = s
         
-        if s.size != 0:
-            s_mean = np.ones(np.shape(s)) * self.centre
-            return s - s_mean
-        else:
-            return s
+            return self._centred_skeleton
 
     @property
     def orientation_free_skeleton(self):
@@ -427,36 +442,41 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         #self.skeleton_rotated = rot_matrix.dot(self.skeleton)
 
         """
-
-        orientation = self.angle
-
-        # Flip and convert to radians
-        a = -orientation * (np.pi / 180)
-
-        rot_matrix = np.array([[np.cos(a), -np.sin(a)],
-                               [np.sin(a),  np.cos(a)]])
-
-        # We need the x,y listed in the first dimension
-        s1 = np.rollaxis(self.centred_skeleton, 1)
-
-        # For example, here is the first point of the first frame rotated:
-        # rot_matrix[:,:,0].dot(s1[:,0,0])
-
-        # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
-        # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], np.shape(s1)[2])) * rot_matrix
-
-        s1_rotated = []
-
-        # Rotate the worm frame-by-frame and add these skeletons to a list
-        for frame_index in range(self.num_frames):
-            s1_rotated.append(rot_matrix[:, :, frame_index].dot(s1[:,:, frame_index]))
-        # print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
-
-        # Save the list as a numpy array
-        s1_rotated = np.array(s1_rotated)
-
-        # Fix the axis settings
-        return np.rollaxis(np.rollaxis(s1_rotated, 0, 3), 1)
+        try:
+            return self._orientation_free_skeleton
+        except AttributeError:
+            orientation = self.angle
+    
+            # Flip and convert to radians
+            a = -orientation * (np.pi / 180)
+    
+            rot_matrix = np.array([[np.cos(a), -np.sin(a)],
+                                   [np.sin(a),  np.cos(a)]])
+    
+            # We need the x,y listed in the first dimension
+            s1 = np.rollaxis(self.centred_skeleton, 1)
+    
+            # For example, here is the first point of the first frame rotated:
+            # rot_matrix[:,:,0].dot(s1[:,0,0])
+    
+            # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
+            # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], np.shape(s1)[2])) * rot_matrix
+    
+            s1_rotated = []
+    
+            # Rotate the worm frame-by-frame and add these skeletons to a list
+            for frame_index in range(self.num_frames):
+                s1_rotated.append(rot_matrix[:, :, frame_index].dot(s1[:,:, frame_index]))
+            # print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
+    
+            # Save the list as a numpy array
+            s1_rotated = np.array(s1_rotated)
+    
+            # Fix the axis settings
+            self._orientation_free_skeleton = \
+                np.rollaxis(np.rollaxis(s1_rotated, 0, 3), 1)
+        
+            return self._orientation_free_skeleton
 
 
     @property
@@ -470,10 +490,12 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
           number of frames in the video
 
         """
-
-        # ndarray.shape returns a tuple of array dimensions.
-        # the frames are along the first dimension i.e. [0].
-        return self.skeleton.shape[2]
+        try:
+            return self._num_frames
+        except AttributeError:
+            self._num_frames = self.skeleton.shape[2]
+    
+            return self._num_frames
 
     @property
     def is_segmented(self):

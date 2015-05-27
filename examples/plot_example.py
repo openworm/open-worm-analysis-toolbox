@@ -44,7 +44,7 @@ def main():
     movement_validation.worm_plotter.plot_frame_codes(nw)
 
     # Plot an animation of the worm and its motion codes
-    wp = movement_validation.WormPlotter(nw, motion_codes, interactive=False)
+    wp = movement_validation.NormalizedWormPlottable(nw, motion_codes)
     wp.show()
 
     # At this point we could save the plot to a file:
