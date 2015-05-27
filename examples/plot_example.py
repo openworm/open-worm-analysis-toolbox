@@ -23,25 +23,20 @@ def main():
     annotate the animation with.
     
     """
-
     # Force warnings to be errors
     warnings.simplefilter("error")
 
-    # Create a normalized worm from a hardcoded example location
-
-    #-------------------------------------------------------------------
-    nw = example_nw()  # movement_validation.NormalizedWorm
+    # Create a NormalizedWorm instance from a hardcoded example location
+    nw = example_nw()
 
     # Placeholder for video metadata
     v = movement_validation.VideoInfo(video_name="Example name", fps=25)
 
-    # From the basic information in normalized_worm,
-    # create an instance of WormFeatures, which contains all our features data.
+    # We need to create WormFeatures to get the motion codes
+    # (telling us in each frame if the worm is moving forward, backward, etc,
+    #  which is nice to have so we can annotate the plot with that info)
     wf = movement_validation.WormFeatures(nw, v)
     motion_codes = wf.locomotion.motion_mode
-
-    # Let's show a pie chart of how many frames were segmented
-    movement_validation.worm_plotter.plot_frame_codes(nw)
 
     # Plot an animation of the worm and its motion codes
     wp = movement_validation.NormalizedWormPlottable(nw, motion_codes)
@@ -49,6 +44,9 @@ def main():
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')
+
+    # Finally, for fun, show a pie chart of how many frames were segmented
+    movement_validation.worm_plotter.plot_frame_codes(nw)
 
 
 def example_nw():
