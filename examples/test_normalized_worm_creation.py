@@ -41,16 +41,15 @@ def main():
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
 
-    wp1 = WormPlotter(nw, interactive=False)
-    wp2 = WormPlotter(nw_calculated, interactive=False)
-    
-    wp1.show()
-    wp2.show()
-
+    # OPTIONAL: show how the worms are identical by plotting them!
+    #wp1 = WormPlotter(nw, interactive=False)
+    #wp2 = WormPlotter(nw_calculated, interactive=False)
+    #wp1.show()
+    #wp2.show()
 
     # Jim: not sure what this is all about.  Can you document it?
     # - Michael
-    #other_stuff_jim(nw)
+    other_stuff_jim(nw)
 
 
 def other_stuff_jim(nw):
