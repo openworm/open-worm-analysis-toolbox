@@ -40,23 +40,11 @@ from . import locomotion_bends
 from . import locomotion_turns
 from . import morphology_features
 
-#TODO: This is being used when importing movement_validation
-#This should probably be changed
-#TODO: Can we do something differently ...????
-#try:
-#    from .. import user_config
-#except ImportError:
-#     raise Exception("user_config.py not found. Copy the "
-#                     "user_config_example.txt in the 'movement_validation' "
-#                     "package to user_config.py in the same directory and "
-#                     "edit the values")
-
 
 """
 ===============================================================================
 ===============================================================================
 """
-
 
 class WormMorphology(object):
 
@@ -329,10 +317,6 @@ class WormPosture(object):
 
         """
         print('Calculating Posture Features')            
-        
-        # Let's use a shorthand
-        nw  = features_ref.nw
-        ##options = features_ref.options
         
         self.bends = posture_features.Bends.create(features_ref)
 
@@ -671,7 +655,7 @@ class FeatureTimer(object):
         This can be called to display each logged function and how long it
         took to run
         """
-        for (name,time) in zip(self.names,self.times):
-            print('%s: %0.3fs' %(name,time))
+        for (name, time) in zip(self.names, self.times):
+            print('%s: %0.3fs' %(name, time))
 
             

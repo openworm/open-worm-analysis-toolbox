@@ -225,7 +225,7 @@ class GeneralizedSkeletonAndContour(JSON_Serializer):
         #self.all_skeletons = all_skeletons
         self.vulva_contour = all_vulva_contours
         self.non_vulva_contour = all_non_vulva_contours 
-        self.plate_wireframe_video_key = 'Cheeseburger? WTF is this?'
+        self.plate_wireframe_video_key = 'Loaded from Schafer File'
         h.close()   
         
         return self
