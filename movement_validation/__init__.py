@@ -25,8 +25,16 @@ from .features.feature_processing_options import FeatureProcessingOptions
 from .statistics.histogram_manager import HistogramManager
 from .statistics.manager import StatisticsManager
 
+try:
+    from . import user_config
+except ImportError:
+     raise Exception("user_config.py not found. Copy the "
+                     "user_config_example.txt in the 'movement_validation' "
+                     "package to user_config.py in the same directory and "
+                     "edit the values")
 
-__all__ = ['GeneralizedSkeletonAndContour'
+
+__all__ = ['GeneralizedSkeletonAndContour',
            'NormalizedWorm',
 		'VideoInfo',
            'WormFeatures',

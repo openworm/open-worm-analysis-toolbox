@@ -13,18 +13,14 @@ movement_validation package based on the user_config_example.txt
 
 """
 
-import sys, os
+import sys, os, time
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-import movement_validation
-
-user_config = movement_validation.user_config
-NormalizedWorm = movement_validation.NormalizedWorm
-WormFeatures = movement_validation.WormFeatures
-VideoInfo = movement_validation.VideoInfo
+from movement_validation import user_config, NormalizedWorm
+from movement_validation import WormFeatures, VideoInfo, config
 
 
 def main():
@@ -32,6 +28,8 @@ def main():
     Compare Schafer-generated features with our new code's generated features
 
     """
+    start_time = time.monotonic()    
+    
     # Set up the necessary file paths for file loading
     #----------------------
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
@@ -46,12 +44,12 @@ def main():
     # Load the normalized worm from file
     nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
 
-    #The frame rate is somewhere in the video info. Ideally this would all come
-    #from the video parser eventually
-    vi = VideoInfo('Example Video File', 25.8398)
+    # The frame rate is somewhere in the video info. Ideally this would all
+    # come from the video parser eventually
+    vi = VideoInfo('Example Video File', config.FPS)
 
     # Generate the OpenWorm movement validation repo version of the features
-    openworm_features = WormFeatures(nw,vi)
+    openworm_features = WormFeatures(nw, vi)
 
     # SCHAFER LAB
     #----------------------
@@ -61,7 +59,8 @@ def main():
     # COMPARISON
     #----------------------
     # Show the results of the comparison
-    print("\nComparison of computed features to those computed with old Matlab code")
+    print("\nComparison of computed features to those computed with "
+          "old Matlab code")
 
     print("Locomotion: " + 
         str(matlab_worm_features.locomotion == openworm_features.locomotion))
@@ -75,7 +74,9 @@ def main():
     print("Path: " +
         str(matlab_worm_features.path == openworm_features.path))
 
-    print("Done validating features")
+    print("\nDone validating features")
+    print("Time elapsed: %.2f seconds" % (time.monotonic() - start_time))
+
 
 if __name__ == '__main__':
     main()

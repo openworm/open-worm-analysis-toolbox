@@ -7,19 +7,16 @@ Written by @JimHokanson
 """
 import numpy as np
 
-from . import config
+from . import config, utils
 
+# If you are interested to know why the following line didn't work:
+# import scipy.signal.savgol_filter as sgolay
+# check out this: http://stackoverflow.com/questions/29324814/
+# Instead we use the following statement:
 from scipy.signal import savgol_filter as sgolay
-#Why didn't this work?
-#import scipy.signal.savgol_filter as sgolay
-#http://stackoverflow.com/questions/29324814/what-are-the-rules-for-importing-with-as-in-python-without-using-from
-
-from . import utils
-
 
 
 class WormParsing(object):
-
     """
     This might eventually move somewhere else, but at least it is contained within
     the class. It was originally in the Normalized Worm code which was making things

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Show how to go from BasicWorm to NormalizedWorm
+Show how to go from a basic worm to a NormalizedWorm
 
 """
 
