@@ -6,19 +6,13 @@ Show how to go from BasicWorm to NormalizedWorm
 
 import sys, os
 
-sys.path.append('..') 
+sys.path.append('..')
 
-from movement_validation import user_config, NormalizedWorm, VideoInfo
+from movement_validation import user_config, config, VideoInfo
 from movement_validation import WormFeatures, GeneralizedSkeletonAndContour
-from movement_validation import WormPlotter
+from movement_validation import NormalizedWorm
+from movement_validation import FeatureProcessingOptions
 
-"""
-user_config = movement_validation.user_config
-NormalizedWorm = movement_validation.NormalizedWorm
-VideoInfo = movement_validation.VideoInfo
-WormFeatures = movement_validation.WormFeatures
-GeneralizedSkeletonAndContour = movement_validation.GeneralizedSkeletonAndContour
-"""
 
 def main():
     # Load from file a normalized worm, as calculated by Schafer Lab code
@@ -41,33 +35,16 @@ def main():
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
 
-    # OPTIONAL: show how the worms are identical by plotting them!
-    #wp1 = NormalizedWormPlottable(nw, interactive=False)
-    #wp2 = NormalizedWormPlottable(nw_calculated, interactive=False)
-    #wp1.show()
-    #wp2.show()
-
-    # Jim: not sure what this is all about.  Can you document it?
-    # - Michael
-    other_stuff_jim(nw)
-
-
-def other_stuff_jim(nw):
-    # Now the goal is to go from the example_input_data to the normalized
-    # worm data.
-    min_worm = pre_features.MinimalWormSpecification()
-
     # The frame rate is somewhere in the video info. Ideally this would 
     # all come from the video parser eventually
-
-    fps = 25.8398
-    fpo = movement_validation.FeatureProcessingOptions(fps)
-    video_info = VideoInfo('Example Video File', fps)
+    fpo = FeatureProcessingOptions(config.FPS)
+    video_info = VideoInfo('Example Video File', config.FPS)
 
     # Generate the OpenWorm movement validation repo version of the features
     fpo.disable_feature_sections(['morphology']) 
     wf = WormFeatures(nw, video_info, fpo)
     
+    # Display how long it took to generate each of the features
     wf.timer.summarize()
 
 

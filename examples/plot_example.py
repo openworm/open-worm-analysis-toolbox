@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-  An example of plotting a worm's features.
+An example of plotting an animation of a worm's skeleton and contour
 
 """
 
@@ -26,8 +26,11 @@ def main():
     # Force warnings to be errors
     warnings.simplefilter("error")
 
-    # Create a NormalizedWorm instance from a hardcoded example location
-    nw = example_nw()
+    # Load from file a normalized worm, as calculated by Schafer Lab code
+    base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+    schafer_nw_file_path = os.path.join(base_path, 
+                                     "example_video_norm_worm.mat")
+    nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
     # Placeholder for video metadata
     v = movement_validation.VideoInfo(video_name="Example name", fps=25)
@@ -47,23 +50,6 @@ def main():
 
     # Finally, for fun, show a pie chart of how many frames were segmented
     movement_validation.worm_plotter.plot_frame_codes(nw)
-
-
-def example_nw():
-    """
-    Return a normalized worm loaded from a hardcoded file location
-
-    """
-    # Let's take one example worm from our user_config.py file
-    nw_folder = os.path.join(movement_validation.user_config.EXAMPLE_DATA_PATH)
-    data_file_path = os.path.join(os.path.abspath(nw_folder),
-                                  "example_video_norm_worm.mat")
-
-    NormalizedWorm = movement_validation.NormalizedWorm
-    # Load the NormalizedWorm into memory from the file.
-    normalized_worm = NormalizedWorm.from_schafer_file_factory(data_file_path)
-
-    return normalized_worm
 
 
 if __name__ == '__main__':
