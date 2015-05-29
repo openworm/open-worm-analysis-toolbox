@@ -50,90 +50,128 @@ class JSON_Serializer():
             setattr(self, member[0], member[1])
 
 
-class GeneralizedContour(JSON_Serializer):
+class UnorderedWorm(JSON_Serializer):
     """
-    Encapsulates the notion of worm contour data that might have
+    Encapsulates the notion of worm contour or skeleton data that might have
     been obtained from a computer vision operation
 
-    * We don't assume the contour points are evenly spaced,
-    but we do assume they are in order as you walk along the contour.   
+    * We don't assume the contour or skeleton points are evenly spaced,
+    but we do assume they are in order as you walk along the skeleton.
+
+    * We DON'T assume that the head and the tail are at points 0 and -1, 
+    respectively - hence the use of the word "unordered" in the name of this 
+    class.
     
     * We don't assume that there is the same number of contour points 
     in each frame.  This means we can't use a simple ndarray representation
     for the contour.  Instead, we use a list of single-dimension numpy 
     arrays.
 
-    """    
-    def __init__(self):
-        pass
-
-
-class GeneralizedSkeleton(JSON_Serializer):
-    """
-    Encapsulates the notion of worm contour data that might have
-    been obtained from a computer vision operation
-
-    * We don't assume the skeleton points are evenly spaced,
-    but we do assume they are in order as you walk along the skeleton.   
     
     """
+    def __init__(self, other):
+        attributes = ['unordered_contour', 'unordered_skeleton', 
+                      'head', 'tail']
+        
+        if other is None:
+            for a in attributes:
+                setattr(self, a, None)
+                
+            self.plate_wireframe_video_key = "Unordered Worm"           
+        else:
+            # Copy constructor
+            for a in attributes:
+                setattr(self, a, copy.deepcopy(getattr(other, a)))
 
-    def __init__(self):
-        pass
+            self.plate_wireframe_video_key = other.plate_wireframe_video_key
     
     
     @classmethod
-    def from_skeleton_factory(cls, skeleton):
+    def from_skeleton_factory(cls, skeleton, head=None, tail=None):
         """
         A factory method taking the simplest possible input: just a skeleton.
         Assumes 0th point is head, n-1th point is tail. No contour.
         
-        This makes the simplifying assumption of a constant number of points
-        in each frame.  This method could eventually be generalized if the 
-        need arises, since GeneralizedSkeleton does not necessarily have
-        to have a constant number of points in each frame.
-        
         Parameters
         ----------
-        skeleton : [ndarray] or ndarray 
-            See definition in class documentation.
+        skeleton : list of ndarray or ndarray 
+            If ndarray, we are in the simpler "homocardinal" case
+            If list of ndarray, each frame can have a varying number of points
+        head: ndarray containing the position of the head.
+        tail: ndarray containing the position of the tail.
         
         """
+        uow = cls()
+
+
+        #if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:        
+        #   raise Exception("Provided skeleton must have "
+        #                   "shape (n_points,2,n_frames)")
+        uow.skeleton = skeleton
+
+        uow.plate_wireframe_video_key = 'Simple Skeleton'
+        if tail is None:
+            uow.tail = skeleton[0,:,:]
+        else:
+            uow.tail = tail
+
+        if head is None:
+            uow.head = skeleton[-1,:,:]
+        else:
+            uow.head = head
+
+        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
+        #if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
+        #   raise Exception("Provided skeleton must have "
+        #                   "shape (n_points,2,n_frames)")
+
+        #TODO: We need to handle the list case
         
-        bw = cls()
-        bw.load_skeleton(skeleton) 
-        bw.vulva_contour = None
-        bw.non_vulva_contour = None
+        return uow
 
-        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
-            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
-
-        bw.skeleton = skeleton
-
-        bw.plate_wireframe_video_key = 'Simple Skeleton'        
-
-        bw.tail = skeleton[0,:,:]
-        bw.head = skeleton[-1,:,:]
-
-#        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
-#        if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
-#            raise Exception("Provided skeleton must have shape (n_points,2,n_frames)")
-#
-#        #TODO: We need to handle the list case
+    @classmethod
+    def from_contour_factory(cls, contour, head=None, tail=None):
+        pass
 
 
+    def ordered_vulva_contour(self):
+        """
+        Return the vulva side of the ordered heterocardinal contour.
         
-        return bw    
+        i.e. with tail at position -1 and head at position 0.
+        
+        """
+        pass
 
 
+    def ordered_non_vulva_contour(self):
+        """
+        Return the non-vulva side of the ordered heterocardinal contour.
+        
+        i.e. with tail at position -1 and head at position 0.
+        
+        """
+        pass
 
-class GeneralizedSkeletonAndContour(JSON_Serializer):
+    def ordered_skeleton(self):
+        """
+        Return the ordered skeleton.
+        
+        i.e. with tail at position -1 and head at position 0.
+        
+        """
+        pass
+
+
+class BasicWorm(JSON_Serializer):
     """
-    Skeleton and worm data, not necessarily normalized.
+    A worm's skeleton and contour, not necessarily "normalized" to 49 points,
+    and possibly heterocardinal (i.e. possibly with a varying number of 
+    points per frame).
 
     Attributes
     ----------
-    skeleton : [ndarray] or ndarray 
+    h_skeleton : [ndarray] or ndarray 
         This input can either be a list, composed of skeletons for each 
             frame or a singular ndarray. Shapes for these would be:
                 - [n_frames] list with elements [2,n_points] OR
@@ -142,14 +180,13 @@ class GeneralizedSkeletonAndContour(JSON_Serializer):
             in the second case n_points is obviously fixed, and currently
             should be at 49.
             Missing frames in the first case should be identified by None.    
-    
+    h_vulva_contour : The vulva side of the contour.  See skeleton.
+    h_non_vulva_contour : The vulva side of the contour.  See skeleton.
+
+    ?????    
     is_stage_movement :
     is_valid : 
-
-    Numpy array of shape (2,n):
-        head               (required because we do not assume head at pos 0)
-        tail               (required because we do not assume tail at pos -1)
-
+    ????
 
     Metadata Attributes
     -------------------    
@@ -157,153 +194,75 @@ class GeneralizedSkeletonAndContour(JSON_Serializer):
         This is the foreign key to the metadata table in the database
         giving plate information like lab name, time of recording, etc.
 
-
-    
     """
     def __init__(self, other=None):
-        """
-        Populates an empty generalized skeleton and contour.
+        attributes = ['h_skeleton', 'h_vulva_contour', 'h_non_vulva_contour']
         
-        If other is specified, this becomes a copy constructor.
-        
-        """
-
         if other is None:
-            self.skeleton = None
-            self.vulva_contour = None
-            self.non_vulva_contour = None
+            for a in attributes:
+                setattr(self, a, None)
+                
+            self.plate_wireframe_video_key = "Basic Worm"
         else:
-            #TODO: We need to work this out            
-            #self.ventral_mode = other.ventral_mode
-            #self.plate_wireframe_video_key = other.plate_wireframe_video_key
-            
-            self.skeleton = copy.deepcopy(other.skeleton)
-            self.vulva_contour = copy.deepcopy(other.vulva_contour)
-            self.non_vulva_contour = copy.deepcopy(other.non_vulva_contour)
+            # Copy constructor
+            for a in attributes:
+                setattr(self, a, copy.deepcopy(getattr(other, a)))
 
+            self.plate_wireframe_video_key = other.plate_wireframe_video_key
 
-    def get_normalized_skeleton_and_contour(self):
-        """
-        Here we must normalize the skeleton and contour, if necessary
-        
-        """
-        # TODO
-        return self
     
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):
-        self = cls()        
+        bw = cls()
     
         # Would 'with()' be more appropriate here ???
         h = h5py.File(data_file_path, 'r')
 
         # These are all HDF5 'references'
-        all_vulva_contours_refs = h['all_vulva_contours'].value
+        all_vulva_contours_refs     = h['all_vulva_contours'].value
         all_non_vulva_contours_refs = h['all_non_vulva_contours'].value
-        all_skeletons_refs = h['all_skeletons'].value
+        all_skeletons_refs          = h['all_skeletons'].value
                 
-        is_stage_movement = utils._extract_time_from_disk(h,'is_stage_movement')
-        is_valid = utils._extract_time_from_disk(h,'is_valid')
+        is_stage_movement = utils._extract_time_from_disk(h,
+                                                          'is_stage_movement')
+        is_valid = utils._extract_time_from_disk(h, 'is_valid')
 
         all_skeletons = []
         all_vulva_contours = []
         all_non_vulva_contours = []
 
-        for valid_frame,iFrame in zip(is_valid,range(is_valid.size)):
+        for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
             if valid_frame:
-                all_skeletons.append(h[all_skeletons_refs[iFrame][0]].value) 
-                all_vulva_contours.append(h[all_vulva_contours_refs[iFrame][0]].value)
-                all_non_vulva_contours.append(h[all_non_vulva_contours_refs[iFrame][0]].value)
+                all_skeletons.append(
+                            h[all_skeletons_refs[iFrame][0]].value) 
+                all_vulva_contours.append(
+                            h[all_vulva_contours_refs[iFrame][0]].value)
+                all_non_vulva_contours.append(
+                            h[all_non_vulva_contours_refs[iFrame][0]].value)
             else:
                 all_skeletons.append(None) 
                 all_vulva_contours.append(None) 
                 all_non_vulva_contours.append(None)           
                 
-        self.is_stage_movement = is_stage_movement
-        self.is_valid = is_valid
-        self.skeleton = None
-        #self.all_skeletons = all_skeletons
-        self.vulva_contour = all_vulva_contours
-        self.non_vulva_contour = all_non_vulva_contours 
-        self.plate_wireframe_video_key = 'Loaded from Schafer File'
+        bw.is_stage_movement = is_stage_movement
+        bw.is_valid = is_valid
+        
+        # We purposely ignore the saved skeleton information contained
+        # in the BasicWorm, preferring to derive it ourselves.        
+        bw.h_skeleton = None  
+        #bw.h_skeleton = all_skeletons
+
+        bw.h_vulva_contour = all_vulva_contours
+        bw.h_non_vulva_contour = all_non_vulva_contours 
+        bw.plate_wireframe_video_key = 'Loaded from Schafer File'
         h.close()   
         
-        return self
-        
+        return bw
+
     
     def __repr__(self):
         return utils.print_object(self)    
     
-  
-
-class NormalizedSkeletonAndContour(JSON_Serializer):
-    """
-    
-
-    The data consists of 3 numpy arrays, of shape (k,2,n):
-        skeleton
-        vulva_contour: points along the contour on the vulva side
-        non_vulva_contour: non-vulva side
-    where:
-        k is the number of skeleton/contour points per frame
-        n is the number of frames
-
-    """
-
-    def __init__(self, other=None):
-        """
-        Populates an empty generalized skeleton and contour.
-        
-        If other is specified, this becomes a copy constructor.
-        
-        """
-        if other is None:
-            self.vulva_contour = None
-            self.non_vulva_contour = None
-            self.skeleton = None
-        else:
-            self.vulva_contour = other.vulva_contour
-            self.non_vulva_contour = other.non_vulva_contour
-            self.skeleton = other.skeleton
-
-
-    def validate(self):
-        """
-        Checks array lengths, etc. to ensure that this is a valid instance
-        and no further problems will arise if further processing is attempted
-        on this instance
-        
-        """
-        
-        #TODO: This needs to be rewritten ...
-        
-        #TODO: Make num_frames an attribute
-        if self.contour is not None:
-            num_frames = np.shape(self.contour)[2]
-        else:
-            num_frames = np.shape(self.skeleton)[2]
-
-        if self.contour is not None:
-            if np.shape(self.contour)[2] != num_frames:
-                return False
-            
-        if self.skeleton is not None:
-            if np.shape(self.skeleton)[2] != num_frames:
-                return False
-
-        if np.shape(self.head)[1] != num_frames:
-            return False
-
-        if np.shape(self.tail)[1] != num_frames:
-            return False
-
-        if self.ventral_mode not in ('CW', 'CCW', 'X'):
-            return False
-
-        return True
-
-    
-
     
     
 class WormPartition():

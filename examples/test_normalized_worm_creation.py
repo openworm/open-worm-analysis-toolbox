@@ -9,7 +9,7 @@ import sys, os
 sys.path.append('..')
 
 from movement_validation import user_config, config, VideoInfo
-from movement_validation import WormFeatures, GeneralizedSkeletonAndContour
+from movement_validation import WormFeatures, BasicWorm
 from movement_validation import NormalizedWorm
 from movement_validation import FeatureProcessingOptions
 
@@ -27,12 +27,11 @@ def main():
     # and contains more "primitive", non-normalized contour and skeleton data
     schafer_bw_file_path = os.path.join(base_path, 
                                     "example_contour_and_skeleton_info.mat")  
-    bw = GeneralizedSkeletonAndContour.from_schafer_file_factory(
-                                                schafer_bw_file_path)
-    nw_calculated = NormalizedWorm.from_GeneralizedSkeletonAndContour_factory(bw)
+    bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
+    nw_calculated = NormalizedWorm.from_BasicWorm_factory(bw)
     nw == nw_calculated
 
     # The frame rate is somewhere in the video info. Ideally this would 

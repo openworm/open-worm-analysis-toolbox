@@ -15,8 +15,7 @@ import time
 from . import config
 from . import utils
 from .basic_worm import WormPartition
-from .basic_worm import NormalizedSkeletonAndContour
-from .basic_worm import GeneralizedSkeletonAndContour
+from .basic_worm import BasicWorm
 from .pre_features import WormParsing
 
 # TODO: remove this dependency by moving feature_comparisons to utils and 
@@ -24,7 +23,7 @@ from .pre_features import WormParsing
 from .features import feature_comparisons as fc
 
 
-class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
+class NormalizedWorm(WormPartition):
     """
     Encapsulates the notion of a worm's elementary measurements, scaled
     (i.e. "normalized") to 49 points along the length of the worm.
@@ -48,52 +47,108 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         frame_code            (not used in further processing)   (inherited)
 
     Also, some metadata:
+        ventral_mode
         plate_wireframe_video_key                                (inherited)
         
     """
 
-    def __init__(self, normalized_worm=None):
+    def __init__(self, other=None):
         """
         Populates an empty normalized worm.
-        If copy is specified, this becomes a copy constructor.
+        If other is specified, this becomes a copy constructor.
         
         """
-        if not normalized_worm:
-            NormalizedSkeletonAndContour.__init__(self)
-            WormPartition.__init__(self)
-            self.angles = np.array([], dtype=float)
+        WormPartition.__init__(self)
 
+        if other is None:
             # DEBUG: (Note from @MichaelCurrie:)
             # This should be set by the normalized worm file, since each
             # worm subjected to an experiment is manually examined to find the
             # vulva so the ventral mode can be determined.  Here we just set
             # the ventral mode to a default value as a stopgap measure
             self.ventral_mode = config.DEFAULT_VENTRAL_MODE
-
         else:
-            # TODO: not sure if this will work correctly..
-            super(NormalizedWorm, self).__init__(normalized_worm)
-            self.angles = copy.deepcopy(normalized_worm.angles)
+            # Copy constructor
+            attributes = [skeleton, vulva_contour, non_vulva_contour,
+                          angles, in_out_touches, widths, length,
+                          head_area, tail_area, vulva_area, non_vulva_area,
+                          segmentation_status, frame_code,
+                          plate_wireframe_video_key, ventral_mode]
+            for a in attributes:
+                setattr(self, a, copy.deepcopy(getattr(other, a)))
 
 
     @classmethod
-    def from_GeneralizedSkeletonAndContour_factory(cls, 
-                                         generalized_skeleton_and_contour):
-        nw = NormalizedWorm()
-
-        # First we must normalize the skeleton and contour, if necessary:        
-        nsc = generalized_skeleton_and_contour.get_normalized_skeleton_and_contour()
+    def from_BasicWorm_factory(cls, basic_worm):
+        """
+        Factory classmethod for creating a normalized worm with a basic_worm
+        as input.  This requires calculating all the "pre-features" of 
+        the worm.
         
-        # Call NormalizedSkeletonAndContour's copy constructor:
-        super(NormalizedWorm, nw).__init__(nsc)
-
-        # TODO: We should probably validate that the worm is valid before
-        #       calculating pre-features.
+        Parameters
+        -----------
+        basic_worm: Instance of BasicWorm.  Contains either:
+            h_skeleton AND/OR
+            h_vulva_contour and h_non_vulva_contour
+            
+        Returns
+        -----------
+        An instance of NormalizedWorm
         
-        nw.calculate_pre_features()
+        """
+        nw = cls()
+        
+        #TODO: Need to add on testing for normalized data as an input
+        #TODO: This could be simplified, although order may matter somewhat
+        if basic_worm.h_vulva_contour is not None:
+            # 1. Derive skeleton and widths from contour
+            nw.widths, h_skeleton = \
+                WormParsing.computeWidths(basic_worm.h_vulva_contour, 
+                                          basic_worm.h_non_vulva_contour)
+
+            # 2. Calculate angles            
+            nw.angles = WormParsing.calculateAngles(h_skeleton)
+
+            # 3. Normalize the skeleton and contour to 49 points per frame
+            nw.skeleton = WormParsing.normalizeAllFramesXY(h_skeleton)
+            nw.vulva_contour = WormParsing.normalizeAllFramesXY(
+                                            basic_worm.h_vulva_contour)
+            nw.non_vulva_contour = WormParsing.normalizeAllFramesXY(
+                                            basic_worm.h_non_vulva_contour)            
+
+            # 4. TODO: Calculate area 
+            # The old method was:
+            # Using known transition regions, count the # of 'on' pixels in
+            # the image. Presumably we would use something more akin
+            # to the eccentricity feature code
+            
+            # 5. TODO:
+            # Still missing:
+            # - segmentation_status
+            # - frame codes
+            # - in_out_touches
+            # I think these things would best be handled by first identifying
+            # the feature code that uses them, then determing what if anything
+            # we really need to calculate. Perhaps we need to modify the
+            # feature code instead.
+        else:
+            # With no contour, let's assume we have a skeleton.
+            # Measurements that cannot be calculated (e.g. areas) are simply
+            # marked None.
+            nw.angles = WormParsing.calculateAngles(basic_worm.skeleton)
+            nw.skeleton = WormParsing.normalizeAllFramesXY(basic_worm.skeleton)
+            nw.vulva_contour = None
+            nw.non_vulva_contour = None
+            nw.head_area = None
+            nw.tail_area = None
+            nw.vulva_area = None
+            nw.non_vulva_area = None           
+        
+        # 6. Calculate length
+        nw.length = WormParsing.computeSkeletonLengths(nw.skeleton)
         
         return nw
-
+            
 
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):
@@ -103,8 +158,8 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         data_file_path: the path to the MATLAB file
         
         These files were created at the Schafer Lab in a format used 
-        prior to MATLAB's switch to HDF5, which they did in MATLAB version 7.3.
-
+        prior to MATLAB's switch to HDF5, which they did in 
+        MATLAB version 7.3.
 
         """
         nw = cls()
@@ -120,10 +175,10 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
                                          # array:
                                          struct_as_record=False)
 
-            # All the action is in data_file['s'], which is a numpy.ndarray where
-            # data_file['s'].dtype is an array showing how the data is structured.
-            # it is structured in precisely the order specified in data_keys
-            # below
+            # All the action is in data_file['s'], which is a numpy.ndarray
+            # where data_file['s'].dtype is an array showing how the data is 
+            # structured.  It is structured in precisely the order specified 
+            # in data_keys below:
 
             staging_data = data_file['s']
 
@@ -216,94 +271,27 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         """
         Return an instance of NormalizedSkeletonAndContour containing this 
         instance of NormalizedWorm's basic data.
+        
+        There is no purpose for this within the standard pipeline - going
+        back to a BasicWorm from a NormalizedWorm would only be done
+        for verification of code integrity purposes.
+        
+        Note that we can't "de-normalize" the worm so if the original
+        BasicWorm from which this NormalizedWorm was derived was properly
+        heterocardinal, that information is lost.  All frames in our
+        generated BasicWorm here will have 49 points and thus will remain
+        normalized.
 
         """
-        bw = NormalizedSkeletonAndContour()
-        #bw.head = np.copy(self.skeleton[0,:,:])
-        #bw.tail = np.copy(self.skeleton[-1,:,:])
+        bw = BasicWorm()
+
         bw.skeleton = np.copy(self.skeleton)
-        # We have to reverse the contour points of the non_vulva_contour
-        # so that the tail end picks up where the tail end of vulva_contour
-        # left off:
-        #bw.contour = np.copy(np.concatenate((self.vulva_contour, 
-        #                                     self.non_vulva_contour[::-1,:,:]), 
-        #                                    axis=0))
-        bw.ventral_mode = 'CW'
+        bw.h_vulva_contour = np.copy(self.vulva_contour)
+        bw.h_non_vulva_contour = np.copy(self.non_vulva_contour)
+        bw.ventral_mode = self.ventral_mode
         
         return bw
-    
-    def calculate_pre_features(self):
-        """
-        Calculate "pre-features" given basic information about the worm.
-        
-        1. If contour is specified, normalize it to 98 points evenly split 
-           between head and tail
-        2. If skeleton is specified, normalize it to 49 points
-        3. Calculate vulva_contour and non_vulva_contour from contour 
-           (preferably) or that's not available, skeleton 
-           (use an approximation in this case)
-        4. Calculate widths, angles, and in_out_touches for each skeleton point
-           and each frame
-        5. Calculate length, head_area, tail_area, vulva_area, non_vulva area
-           for each frame 
 
-        """
-        print("Calculating pre-features")
-
-        #t = time.time()
-        #elapsed = time.time() - t
-        
-        #TODO: Need to add on testing for normalized data as an input
-        #TODO: This could be simplified, although order may matter somewhat
-        if self.vulva_contour is not None:
-            widths, skeleton = WormParsing.computeWidths(self.vulva_contour, self.non_vulva_contour)
-            self.angles = WormParsing.calculateAngles(skeleton)
-            self.skeleton = WormParsing.normalizeAllFramesXY(skeleton)
-            self.vulva_contour = WormParsing.normalizeAllFramesXY(self.vulva_contour)
-            self.non_vulva_contour = WormParsing.normalizeAllFramesXY(self.non_vulva_contour)
-            
-            #TODO: Calculate area 
-            #The old method was:
-            #Using known transition regions, count the # of 'on' pixels in
-            #the image. Presumably we would use something more akin
-            #to the eccentricity feature code
-            
-            #TODO:
-            #Still missing:
-            #- segmentation_status
-            #- frame codes
-            #- in_out_touches
-            #I think these things would best be handled by first identifying
-            #the feature code that uses them, then determing what if anything
-            #we really need to calculate. Perhaps we need to modify the feature
-            #code instead.
-        else:
-            #Skeleton input should be good
-            self.angles = WormParsing.calculateAngles(self.skeleton)
-            self.skeleton = WormParsing.normalizeAllFramesXY(self.skeleton)
-            self.vulva_contour = None
-            self.non_vulva_contour = None
-            self.head_area = None
-            self.tail_area = None
-            self.vulva_area = None
-            self.non_vulva_area = None
-            
-            
-        
-        self.length = WormParsing.computeSkeletonLengths(self.skeleton)
-        
-                
-        #Old MC comments below ...
-        # TODO 
-        # Much of what needs to be done here is accomplished in the 
-        # below jim_pre_features_algorithm so pull that into here!
-        
-        # 1. If contour is specified, normalize it to 98 points evenly split 
-        #   between head and tail        
-        # calculating the "hemiworms" requires stepping through frame-by-frame
-        # since we cannot assume that the number of points between head
-        # and tail and between tail and head remains constant between frames.
-        pass
   
     def validate(self):
         """
@@ -312,6 +300,7 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
         on this instance
 
         """
+        # TODO
         return True
 
     def rotated(self, theta_d):
@@ -336,7 +325,8 @@ class NormalizedWorm(NormalizedSkeletonAndContour, WormPartition):
 
         #%Unrotate worm
         #%-----------------------------------------------------------------
-        # wwx = bsxfun(@times,sx,cos(theta_r)) + bsxfun(@times,sy,sin(theta_r));
+        # wwx = bsxfun(@times,sx,cos(theta_r)) + \
+        #       bsxfun(@times,sy,sin(theta_r));
         # wwy = bsxfun(@times,sx,-sin(theta_r)) +
         # bsxfun(@times,sy,cos(theta_r));
 
