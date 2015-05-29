@@ -23,7 +23,7 @@ import json
 from collections import namedtuple, Iterable, OrderedDict
 
 from . import utils
-
+from .pre_features import WormParsing
 
 class JSON_Serializer():
     """
@@ -141,6 +141,7 @@ class UnorderedWorm(JSON_Serializer):
         i.e. with tail at position -1 and head at position 0.
         
         """
+        # TODO
         pass
 
 
@@ -151,6 +152,7 @@ class UnorderedWorm(JSON_Serializer):
         i.e. with tail at position -1 and head at position 0.
         
         """
+        # TODO
         pass
 
     def ordered_skeleton(self):
@@ -160,6 +162,7 @@ class UnorderedWorm(JSON_Serializer):
         i.e. with tail at position -1 and head at position 0.
         
         """
+        # TODO
         pass
 
 
@@ -259,6 +262,40 @@ class BasicWorm(JSON_Serializer):
         
         return bw
 
+    @classmethod
+    def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):
+        """
+        Factory method         
+        
+        Optionally tries to extrapolate a contour from just the skeleton data.
+        
+        """
+        
+
+
+    @property
+    def h_skeleton(self):
+        """
+        If self._h_skeleton has been defined, then return it.
+
+        Otherwise, try to extrapolate it from the contour.
+        
+        Note: This method does not have an obvious use case.  The normal 
+        pipeline is to call NormalizedWorm.from_BasicWorm_factory, which will
+        calculate a skeleton.
+
+        """
+        try:
+            return self._h_skeleton
+        except AttributeError:
+            # Extrapolate skeleton from contour
+            # TODO: improve this: for now
+            self.h_skeleton = \
+                WormParsing.computeWidths(self.h_vulva_contour, 
+                                          self.h_non_vulva_contour)[1]
+            
+            return self._h_skeleton            
+    
     
     def __repr__(self):
         return utils.print_object(self)    
