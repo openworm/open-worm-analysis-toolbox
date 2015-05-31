@@ -56,7 +56,7 @@ class WormParsing(object):
         return value
 
     @staticmethod
-    def h__getBounds(n1,n2,p_left,p_right):
+    def h__getBounds(n1, n2, p_left, p_right):
         """
         
         Returns slice starts and stops
@@ -73,8 +73,15 @@ class WormParsing(object):
         return left_I,right_I
     
     @staticmethod
-    def h__getMatches(s1,s2,norm_x,norm_y,dx_across,dy_across,d_across,left_I,right_I):
+    def h__getMatches(s1, s2, 
+                      norm_x, norm_y, 
+                      dx_across, dy_across, 
+                      d_across, 
+                      left_I, right_I):
+        """
+        getMatches
         
+        """
         n_s1 = s1.shape[1]
         match_I = np.zeros(n_s1,dtype=np.int)
         match_I[0] = 0
@@ -169,7 +176,7 @@ class WormParsing(object):
         return (dp_value,I,sign_used)
     
     @staticmethod
-    def h__updateEndsByWalking(d_across,match_I1,s1,s2,END_S1_WALK_PCT):
+    def h__updateEndsByWalking(d_across, match_I1, s1, s2, END_S1_WALK_PCT):
         
         """
         
@@ -228,20 +235,23 @@ class WormParsing(object):
         return (I_1,I_2)
         
     @staticmethod
-    def h__getPartnersViaWalk(s1,e1,s2,e2,d,xy1,xy2):
-    #%
-    #%   s1: start index for side 1
-    #%   e1: end index for side 1
-    #%
-    #%   d :
-    #%       distance from I1 to I2 is d(I1,I2)
-    #%
-    #%   d1 : [n x 2]
-    #%       x,y pairs for side 1
-    #%
-    #%
-    #%
+    def h__getPartnersViaWalk(s1, e1, s2, e2, d, xy1, xy2):
+        """
+        Helper function.
 
+        Parameters
+        --------------------------------
+        s1: start index for side 1
+        e1: end index for side 1
+        s2: start index for side 2
+        e2: end index for side 2
+        d: distance from I1 to I2 is d(I1,I2)
+
+        # TODO: Jim: ???  This is not a parameter.
+        d1: [n x 2]
+            x, y pairs for side 1
+    
+        """
 
         #TODO: remove hardcode
         p1_I = np.zeros(200,dtype=np.int)
@@ -335,38 +345,46 @@ class WormParsing(object):
         p1_I = p1_I[:cur_p_I]
         p2_I = p2_I[:cur_p_I]
         
-        return (p1_I,p2_I)
+        return (p1_I, p2_I)
         #p1_I[cur_p_I+1:] = []
         #p2_I[cur_p_I+1:] = []
 
 
     @staticmethod
-    def computeWidths(vulva_contours, non_vulva_contours):
+    def computeWidths(vulva_contour, non_vulva_contour):
         """
+        Compute widths and a heterocardinal skeleton from a heterocardinal 
+        contour.
         
+        Parameters
+        -------------------------
+        vulva_contour: a list of numpy arrays.  The list is of the frames.
+        non_vulva_contour: same
+
         Returns
-        -------
-        (widths_all,s_all) tuple
-        widths_all :
-        s_all : 
+        -------------------------
+        (widths_all, s_all): tuple
+            widths_all : the heterocardinal widths, frame by frame
+            s_all : the heterocardinal skeleton, frame by frame.
+
+        From Ev's Thesis: 3.3.1.6 - page 126 (or 110 as labeled in document)
+        -------------------------        
+        For each section, we begin at its center on both sides of the contour.
+        We then walk, pixel by pixel, in either direction until we hit the end 
+        of the section on opposite sides, for both directions. The midpoint, 
+        between each opposing pixel pair, is considered the skeleton and the 
+        distance between these pixel pairs is considered the width for each 
+        skeleton point.
         
-        """        
-
-
-        """
-        From Ev's Thesis:
-        3.3.1.6 - page 126 (or 110 as labeled in document)
-        For each section, we begin at its center on both sides of the contour. We then
-        walk, pixel by pixel, in either direction until we hit the end of the section on
-        opposite sides, for both directions. The midpoint, between each opposing pixel
-        pair, is considered the skeleton and the distance between these pixel pairs is
-        considered the width for each skeleton point.
-        3) Food tracks, noise, and other disturbances can form spikes on the worm
-        contour. When no spikes are present, our walk attempts to minimize the width
-        between opposing pairs of pixels. When a spike is present, this strategy may
-        cause one side to get stuck in the spike while the opposing side walks.
-        Therefore, when a spike is present, the spiked side walks while the other side
-        remains still.
+        Food tracks, noise, and other disturbances can form spikes on the 
+        worm contour. When no spikes are present, our walk attempts to 
+        minimize the width between opposing pairs of pixels. When a spike 
+        is present, this strategy may cause one side to get stuck in the 
+        spike while the opposing side walks.
+        
+        Therefore, when a spike is present, the spiked side walks while the 
+        other sideremains still.
+        
         """
 
 
@@ -396,7 +414,8 @@ class WormParsing(object):
         s_all = []
         widths_all = []
 
-        for iFrame, (s1,s2) in enumerate(zip(vulva_contours,non_vulva_contours)):
+        for iFrame, (s1, s2) in \
+                        enumerate(zip(vulva_contour, non_vulva_contour)):
             
             # * I'm writing the code based on awesome_contours_oh_yeah_v2
             #   in Jim's testing folder            
@@ -406,43 +425,59 @@ class WormParsing(object):
                 widths_all.append(None)
                 continue
             
-            #Step 1: filter
-            filter_width_s1 = WormParsing.h__roundToOdd(s1.shape[1]*FRACTION_WORM_SMOOTH)    
-            s1[0,:] = sgolay(s1[0,:],filter_width_s1,SMOOTHING_ORDER)
-            s1[1,:] = sgolay(s1[1,:],filter_width_s1,SMOOTHING_ORDER)
+            # Step 1: filter
+            filter_width_s1 = \
+                WormParsing.h__roundToOdd(s1.shape[1] * FRACTION_WORM_SMOOTH)    
+            s1[0,:] = sgolay(s1[0,:], filter_width_s1, SMOOTHING_ORDER)
+            s1[1,:] = sgolay(s1[1,:], filter_width_s1, SMOOTHING_ORDER)
 
-            filter_width_s2 = WormParsing.h__roundToOdd(s2.shape[1]*FRACTION_WORM_SMOOTH)    
-            s2[0,:] = sgolay(s2[0,:],filter_width_s2,SMOOTHING_ORDER)
-            s2[1,:] = sgolay(s2[1,:],filter_width_s2,SMOOTHING_ORDER)
+            filter_width_s2 = \
+                WormParsing.h__roundToOdd(s2.shape[1] * FRACTION_WORM_SMOOTH)    
+            s2[0,:] = sgolay(s2[0,:], filter_width_s2, SMOOTHING_ORDER)
+            s2[1,:] = sgolay(s2[1,:], filter_width_s2, SMOOTHING_ORDER)
 
-            #TODO: Allow downsampling if the # of points is rediculous
-            #200 points seems to be a good #
-            #This operation gives us a matrix that is len(s1) x len(s2)
+            # TODO: Allow downsampling if the # of points is ridiculous
+            # 200 points seems to be a good #
+            # This operation gives us a matrix that is len(s1) x len(s2)
             dx_across = np.transpose(s1[0:1,:]) - s2[0,:]
             dy_across = np.transpose(s1[1:2,:]) - s2[1,:]
             d_across = np.sqrt(dx_across**2 + dy_across**2)
-            dx_across = dx_across/d_across
-            dy_across = dy_across/d_across
+            dx_across = dx_across / d_across
+            dy_across = dy_across / d_across
             
-            #All s1 matching to s2
-            #---------------------------------------
-            left_I,right_I = WormParsing.h__getBounds(s1.shape[1],s2.shape[1],PERCENT_BACK_SEARCH,PERCENT_FORWARD_SEARCH)
+            # All s1 matching to s2
+            # ---------------------------------------
+            left_I, right_I = WormParsing.h__getBounds(s1.shape[1],
+                                                       s2.shape[1],
+                                                       PERCENT_BACK_SEARCH,
+                                                       PERCENT_FORWARD_SEARCH)
             
-            #%For each point on side 1, calculate normalized orthogonal values
+            # For each point on side 1, calculate normalized orthogonal values
             norm_x,norm_y = WormParsing.h__computeNormalVectors(s1)
                    
-            #%For each point on side 1, find which side 2 the point pairs with
-            dp_values1,match_I1 = WormParsing.h__getMatches(s1,s2,norm_x,norm_y,dx_across,dy_across,d_across,left_I,right_I)
+            # For each point on side 1, find which side 2 the point pairs with
+            dp_values1, match_I1 = \
+                            WormParsing.h__getMatches(s1, s2,
+                                                      norm_x, norm_y,
+                                                      dx_across, dy_across,
+                                                      d_across,
+                                                      left_I, right_I)
 
-            I_1,I_2 = WormParsing.h__updateEndsByWalking(d_across,match_I1,s1,s2,END_S1_WALK_PCT)
+            I_1,I_2 = WormParsing.h__updateEndsByWalking(d_across,
+                                                         match_I1,
+                                                         s1, s2,
+                                                         END_S1_WALK_PCT)
 
-            #TODO: Make this a function
-            #------------------------------------
-            #We're looking to the left and to the right to ensure that things are ordered
-            #                           current is before next    current after previous
-            is_good = np.hstack((True, np.array((I_2[1:-1] <= I_2[2:]) & (I_2[1:-1] >= I_2[:-2])), True))
-            
-            #is_good = [true; ((I_2(2:end-1) <= I_2(3:end)) & (I_2(2:end-1) >= I_2(1:end-2))); true];
+            # TODO: Make this a function
+            # ------------------------------------
+            # We're looking to the left and to the right to ensure that
+            # things are ordered
+
+            #                                    current is before next    
+            is_good = np.hstack((True, np.array((I_2[1:-1] <= I_2[2:]) & \
+            #                                    current after previous            
+                                                (I_2[1:-1] >= I_2[:-2])), 
+                                                 True))
             
             I_1 = I_1[is_good]
             I_2 = I_2[is_good]
@@ -455,17 +490,18 @@ class WormParsing(object):
             #Final calculations
             #-----------------------
             #TODO: Allow smoothing on x & y
-            widths1 = np.sqrt((s1_px-s1_x)**2 + (s1_py - s1_y)**2); #widths
+            widths1 = np.sqrt((s1_px-s1_x)**2 + (s1_py - s1_y)**2) # Widths
             widths_all.append(widths1)
             
-            skeleton_x = 0.5*(s1_x + s1_px)
-            skeleton_y = 0.5*(s1_y + s1_py)
-            s_all.append(np.vstack((skeleton_x,skeleton_y)));
+            skeleton_x = 0.5 * (s1_x + s1_px)
+            skeleton_y = 0.5 * (s1_y + s1_py)
+            s_all.append(np.vstack((skeleton_x, skeleton_y)))
             
 
-        return (widths_all,s_all)
+        return (widths_all, s_all)
                 
         """
+        PLOTTING CODE
             import matplotlib.pyplot as plt
             plt.scatter(vc[0,:],vc[1,:])
             plt.scatter(nvc[0,:],nvc[1,:])
@@ -487,10 +523,8 @@ class WormParsing(object):
     @staticmethod
     def computeSkeletonLengths(xy_all):
         """
-
         Computes the running length (cumulative distance from start - head?) 
         for each skeleton.
-        
         
         Parameters
         ----------
@@ -499,15 +533,21 @@ class WormParsing(object):
             List length: # of frames
             Each element contains a numpy array of size [n_points x 2]
             Skeleton 
+
+        Returns
+        -----------
+        lengths
+            
         """
         n_frames = len(xy_all)
-        data = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
+        data = np.full([config.N_POINTS_NORMALIZED, n_frames], 
+                       np.NaN)
         for iFrame, cur_xy in enumerate(xy_all):
             if cur_xy is not None:
                 sx = cur_xy[0,:]
                 sy = cur_xy[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx,sy)
-                data[:,iFrame] = WormParsing.normalizeParameter(cc,cc)
+                cc = WormParsing.computeChainCodeLengths(sx, sy)
+                data[:,iFrame] = WormParsing.normalizeParameter(cc, cc)
                 
         return data
 
@@ -518,8 +558,8 @@ class WormParsing(object):
         their cumulative distance from the first point.
         
         The first value returned has a value of 0 by definition.
+
         """
-        
         #TODO: Should handle empty set - remove adding 0 as first element        
         
         #TODO: We need this for lengths as well, but the matrix vs vector 
@@ -533,16 +573,24 @@ class WormParsing(object):
 
     @staticmethod
     def normalizeAllFramesXY(prop_to_normalize):
-            
+        """
+        Normalize a "heterocardinal" skeleton or contour into a "homocardinal"
+        one, where each frame has the same number of points.
+        
+        We always normalize to config.N_POINTS_NORMALIZED points per frame.
+        
+        """
         n_frames = len(prop_to_normalize)
-        norm_data = np.full([config.N_POINTS_NORMALIZED,2,n_frames],np.NaN)
+        norm_data = np.full([config.N_POINTS_NORMALIZED, 2, n_frames],
+                            np.NaN)
+
         for iFrame, cur_frame_value in enumerate(prop_to_normalize):
             if cur_frame_value is not None:
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
                 cc = WormParsing.computeChainCodeLengths(sx,sy)
-                norm_data[:,0,iFrame] = WormParsing.normalizeParameter(sx,cc)
-                norm_data[:,1,iFrame] = WormParsing.normalizeParameter(sy,cc)
+                norm_data[:,0,iFrame] = WormParsing.normalizeParameter(sx, cc)
+                norm_data[:,1,iFrame] = WormParsing.normalizeParameter(sy, cc)
         
         return norm_data            
     
@@ -551,12 +599,15 @@ class WormParsing(object):
             
         n_frames = len(prop_to_normalize)
         norm_data = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
-        for iFrame, (cur_frame_value,cur_xy) in enumerate(zip(prop_to_normalize,xy_data)):
+        for iFrame, (cur_frame_value,cur_xy) in \
+                                enumerate(zip(prop_to_normalize, xy_data)):
             if cur_xy is not None:
                 sx = cur_xy[0,:]
                 sy = cur_xy[1,:]
                 cc = WormParsing.computeChainCodeLengths(sx,sy)
-                norm_data[:,iFrame] = WormParsing.normalizeParameter(cur_frame_value,cc)
+                norm_data[:,iFrame] = \
+                            WormParsing.normalizeParameter(cur_frame_value, 
+                                                           cc)
         
         return norm_data 
 
@@ -597,7 +648,7 @@ class WormParsing(object):
             else:
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx,sy)
+                cc = WormParsing.computeChainCodeLengths(sx, sy)
     
                 #This is from the old code
                 edge_length = cc[-1]/12               
@@ -609,7 +660,8 @@ class WormParsing(object):
                 left_lengths = cc - edge_length
                 right_lengths = cc + edge_length
     
-                valid_vertices_I = utils.find((left_lengths > cc[0]) & (right_lengths < cc[-1]))
+                valid_vertices_I = utils.find((left_lengths > cc[0]) & \
+                                              (right_lengths < cc[-1]))
                 
                 left_lengths = left_lengths[valid_vertices_I]
                 right_lengths = right_lengths[valid_vertices_I]                
@@ -625,37 +677,36 @@ class WormParsing(object):
                 d1_y = left_y - sy[valid_vertices_I]
                 d1_x = left_x - sx[valid_vertices_I] 
     
-                frame_angles = np.arctan2(d2_y,d2_x) - np.arctan2(d1_y,d1_x)
+                frame_angles = np.arctan2(d2_y, d2_x) - np.arctan2(d1_y ,d1_x)
                 
                 frame_angles[frame_angles > np.pi] -= 2*np.pi
                 frame_angles[frame_angles < -np.pi] += 2*np.pi
                 
                 frame_angles *= 180/np.pi
                 
-                all_frame_angles = np.full_like(cc,np.NaN)
+                all_frame_angles = np.full_like(cc, np.NaN)
                 all_frame_angles[valid_vertices_I] = frame_angles
                 
                 temp_angle_list.append(all_frame_angles)
                 
-        return WormParsing.normalizeAllFrames(temp_angle_list,skeletons)
+        return WormParsing.normalizeAllFrames(temp_angle_list, skeletons)
     
     @staticmethod
     def normalizeParameter(orig_data,old_lengths):
         """
-        
         This function finds where all of the new points will be when evenly
         sampled (in terms of chain code length) from the first to the last 
         point in the old data.
 
         These points are then related to the old points. If a new points is at
         an old point, the old point data value is used. If it is between two
-        old points, then linear interpolation is used to determine the new value
-        based on the neighboring old values.
+        old points, then linear interpolation is used to determine the new 
+        value based on the neighboring old values.
 
-        NOTE: For better or worse, this approach does not smooth the new data
+        NOTE: For better or worse, this approach does not smooth the new data.
         
         Old Code:
-        https://github.com/openworm/SegWorm/blob/master/ComputerVision/chainCodeLengthInterp.m  
+        https://github.com/openworm/SegWorm/blob/master/ComputerVision/chainCodeLengthInterp.m
         
         Parameters:
         -----------
@@ -663,6 +714,8 @@ class WormParsing(object):
             - ()
         """
 
-        new_lengths = np.linspace(old_lengths[0],old_lengths[-1],config.N_POINTS_NORMALIZED)
+        new_lengths = np.linspace(old_lengths[0],
+                                  old_lengths[-1],
+                                  config.N_POINTS_NORMALIZED)
                 
-        return np.interp(new_lengths,old_lengths,orig_data)
+        return np.interp(new_lengths, old_lengths, orig_data)
