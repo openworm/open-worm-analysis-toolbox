@@ -199,7 +199,8 @@ class BasicWorm(JSON_Serializer):
 
     """
     def __init__(self, other=None):
-        attributes = ['h_skeleton', 'h_vulva_contour', 'h_non_vulva_contour']
+        attributes = ['_h_skeleton', '_h_vulva_contour', 
+                      '_h_non_vulva_contour']
         
         if other is None:
             for a in attributes:
@@ -252,15 +253,16 @@ class BasicWorm(JSON_Serializer):
         
         # We purposely ignore the saved skeleton information contained
         # in the BasicWorm, preferring to derive it ourselves.        
-        bw.h_skeleton = None  
+        bw.remove_precalculated_skeleton()
         #bw.h_skeleton = all_skeletons
 
-        bw.h_vulva_contour = all_vulva_contours
-        bw.h_non_vulva_contour = all_non_vulva_contours 
+        bw._h_vulva_contour = all_vulva_contours
+        bw._h_non_vulva_contour = all_non_vulva_contours 
         bw.plate_wireframe_video_key = 'Loaded from Schafer File'
         h.close()   
         
         return bw
+
 
     @classmethod
     def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):
@@ -270,9 +272,54 @@ class BasicWorm(JSON_Serializer):
         Optionally tries to extrapolate a contour from just the skeleton data.
         
         """
+        bw = cls()
         
+        if extrapolate_contour:
+            # TODO: extrapolate the bw.h_vulva_contour and 
+            #       bw.h_non_vulva_contour from bw._h_skeleton
+            # for now we just make the contour on both sides = skeleton
+            # which makes for a one-dimensional worm.
+            bw.h_vulva_contour = h_skeleton
+            bw.h_non_vulva_contour = h_skeleton
 
+        return bw
 
+    @property
+    def h_vulva_contour(self):
+        return self._h_vulva_contour
+
+    @h_vulva_contour.setter
+    def h_vulva_contour(self, x):
+        self._h_vulva_contour = x
+        self.remove_precalculated_skeleton()
+
+    @property
+    def h_non_vulva_contour(self):
+        return self._h_non_vulva_contour
+
+    @h_non_vulva_contour.setter
+    def h_non_vulva_contour(self, x):
+        self._h_non_vulva_contour = x
+        self.remove_precalculated_skeleton()
+        
+    def remove_precalculated_skeleton(self):
+        """
+        Removes the precalculated self._h_skeleton, if it exists.
+        
+        This is typically called if we've potentially changed something, 
+        i.e. if we've loaded new values for self.h_vulva_contour or 
+        self.h_non_vulva contour.
+        
+        In these cases we must be sure to delete h_skeleton, since it is 
+        derived from vulva_contour and non_vulva_contour.
+        
+        It will be recalculated if it's ever asked for.
+        """
+        try:        
+            del(self._h_skeleton)
+        except NameError:
+            pass
+    
     @property
     def h_skeleton(self):
         """

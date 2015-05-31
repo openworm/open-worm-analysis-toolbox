@@ -2,6 +2,12 @@
 """
 Show how to go from a basic worm to a NormalizedWorm
 
+i.e. NormalizedWorm.from_basicWorm_factory
+
+We then load a pre-calculated NormalizedWorm and verify that they are the same:
+
+i.e. nw == nw_calculated
+
 """
 
 import sys, os

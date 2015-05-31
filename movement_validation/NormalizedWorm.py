@@ -69,11 +69,12 @@ class NormalizedWorm(WormPartition):
             self.ventral_mode = config.DEFAULT_VENTRAL_MODE
         else:
             # Copy constructor
-            attributes = [skeleton, vulva_contour, non_vulva_contour,
-                          angles, in_out_touches, widths, length,
-                          head_area, tail_area, vulva_area, non_vulva_area,
-                          segmentation_status, frame_code,
-                          plate_wireframe_video_key, ventral_mode]
+            attributes = ['skeleton', 'vulva_contour', 'non_vulva_contour',
+                          'angles', 'in_out_touches', 'widths', 'length',
+                          'head_area', 'tail_area', 'vulva_area', 
+                          'non_vulva_area', 'segmentation_status', 
+                          'frame_code', 'plate_wireframe_video_key', 
+                          'ventral_mode']
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
 
