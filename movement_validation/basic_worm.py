@@ -18,6 +18,7 @@ import numpy as np
 import warnings
 import copy
 import h5py
+import matplotlib.pyplot as plt
 
 import json
 from collections import namedtuple, Iterable, OrderedDict
@@ -337,12 +338,29 @@ class BasicWorm(JSON_Serializer):
         except AttributeError:
             # Extrapolate skeleton from contour
             # TODO: improve this: for now
-            self.h_skeleton = \
+            self._h_skeleton = \
                 WormParsing.computeWidths(self.h_vulva_contour, 
                                           self.h_non_vulva_contour)[1]
             
             return self._h_skeleton            
     
+
+    def plot_frame(self, frame_index):
+        """
+        Plot the contour and skeleton the worm for one of the frames.
+        
+        """
+        vc = self.h_vulva_contour[frame_index]
+        nvc = self.h_non_vulva_contour[frame_index]
+        skeleton_x = self.h_skeleton[frame_index][0]
+        skeleton_y = self.h_skeleton[frame_index][1]
+        
+        plt.scatter(vc[0,:], vc[1,:])
+        plt.scatter(nvc[0,:], nvc[1,:])
+        plt.scatter(skeleton_x, skeleton_y)
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
+
     
     def __repr__(self):
         return utils.print_object(self)    

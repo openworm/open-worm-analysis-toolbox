@@ -35,6 +35,9 @@ def main():
                                     "example_contour_and_skeleton_info.mat")  
     bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
+    # For fun, let's plot the contour and widths of frame #10
+    bw.plot_frame(10)
+
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw_calculated = NormalizedWorm.from_BasicWorm_factory(bw)
