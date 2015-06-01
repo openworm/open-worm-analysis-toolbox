@@ -41,7 +41,8 @@ from . import config
 
 class NormalizedWormPlottable(animation.TimedAnimation):
     """
-    A class that renders matplotlib plots of worm measurement and feature data.
+    A class that renders matplotlib plots of worm measurement and 
+    feature data.
       
     This follows the [animated subplots example]
     (http://matplotlib.org/1.3.0/examples/animation/subplots.html)
@@ -142,27 +143,22 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                          verticalalignment='bottom',
                                          fontsize=10)
 
-        # DEBUG: this doesn't appear to do anything,
-        # it was an attempt to get it to refresh with diff titles
-        #self.annotation1.animated = True
-
-
         # WIDGETS
         # [left,botton,width,height] as a proportion of 
         # figure width and height
         frame_slider_axes = fig.add_axes([0.2, 0.02, 0.33, 0.02], 
                                          axisbg='lightgoldenrodyellow')
-        frame_slider = Slider(frame_slider_axes, 'Frame#',
-                              1, self.nw.num_frames, valinit=1)
+        self.frame_slider = Slider(frame_slider_axes, label='Frame#',
+                                   valmin=1, valmax=self.nw.num_frames, 
+                                   valinit=1, valfmt=u'%d')
 
-        # TODO: CONNECT THIS TO frame_slider
-        #def update(val):
-        #    amp = samp.val
-        #    freq = sfreq.val
-        #    l.set_ydata(amp*np.sin(2*np.pi*freq*t))
-        #    fig.canvas.draw_idle()
-        #
-        #frame_slider.on_changed(update)
+        def frame_slider_update(val):
+            print("Slider value: %d" % round(val, 0))
+            self.frame_seq = self.new_frame_seq(int(round(val, 0)))
+            
+            fig.canvas.draw()
+        
+        self.frame_slider.on_changed(frame_slider_update)
 
 
         button_axes = fig.add_axes([0.8, 0.025, 0.1, 0.04])
@@ -271,6 +267,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
 
     def set_frame_data(self, frame_index):
+        self._current_frame = frame_index
+
         i = frame_index
         if self._paused:
             return
@@ -291,24 +289,29 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                 self.patch1E.set_facecolor('w')
                 self.annotation1a.set_text("Motion mode: {}".format('NaN'))
             else:
-                # Set the colour of the ellipse surrounding the worm to a colour
-                # corresponding to the current motion mode of the worm
+                # Set the colour of the ellipse surrounding the worm to a 
+                # colour corresponding to the current motion mode of the worm
                 self.patch1E.set_facecolor(self.motion_mode_colours[
                     self.motion_mode[i]])
                 # Annotate the current motion mode of the worm in text
                 self.annotation1a.set_text("Motion mode: {}".format(
                     self.motion_mode_options[self.motion_mode[i]]))
 
-        self.annotation1b.set_text("Frame {} of {}".format(i, self.num_frames))
+        self.annotation1b.set_text("Frame {} of {}".format(i, 
+                                                           self.num_frames))
 
         self.line2W.set_data(self.nw.centred_skeleton[:, 0, i],
                              self.nw.centred_skeleton[:, 1, i])
         self.line2W_head.set_data(self.nw.centred_skeleton[0, 0, i],
                                   self.nw.centred_skeleton[0, 1, i])
-        self.line2C.set_data(self.nw.centred_skeleton[:, 0, i] + (self.nw.vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
-                             self.nw.centred_skeleton[:, 1, i] + (self.nw.vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
-        self.line2C2.set_data(self.nw.centred_skeleton[:, 0, i] + (self.nw.non_vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
-                              self.nw.centred_skeleton[:, 1, i] + (self.nw.non_vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+        self.line2C.set_data(self.nw.centred_skeleton[:, 0, i] + \
+            (self.nw.vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+                             self.nw.centred_skeleton[:, 1, i] + \
+            (self.nw.vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+        self.line2C2.set_data(self.nw.centred_skeleton[:, 0, i] + 
+            (self.nw.non_vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+                              self.nw.centred_skeleton[:, 1, i] + 
+            (self.nw.non_vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
         self.annotation2.xy = (self.nw.centred_skeleton[0, 0, i],
                                self.nw.centred_skeleton[0, 1, i])
 
@@ -354,13 +357,21 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self._drawn_artists = self.artists_to_be_drawn
 
-    def new_frame_seq(self):
+    def new_frame_seq(self, start_frame=0):
         """ 
         Returns an iterator that iterates over the frames 
         in the animation
-
+        
+        Parameters
+        ---------------
+        start_frame: int
+            Start the sequence at this frame then loop back around 
+            to start_frame-1.
+    
         """
-        return iter(range(self.num_frames))
+        s = start_frame
+        n = self.num_frames
+        return iter(np.mod(np.arange(s, s + n), n))
 
     def _init_draw(self):
         """ 
@@ -435,7 +446,8 @@ def plot_frame_codes(normalized_worm):
 
     # Create a dictionary of    frame code : frame code title   pairs
     # TODO: this currently doesn't work since I no longer load frame_codes
-    # into NormalizedWorm.  The data is at documentation/frame_codes.csv though
+    # into NormalizedWorm.  The data is at documentation/frame_codes.csv 
+    # though
     #fc_desc = {b[0]: b[2] for b in nw.frame_codes_descriptions}
 
     # A dictionary with the count for each frame code type
