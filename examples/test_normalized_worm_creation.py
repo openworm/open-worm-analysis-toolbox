@@ -20,7 +20,17 @@ from movement_validation import NormalizedWorm
 from movement_validation import FeatureProcessingOptions
 
 
+
 def main():
+    base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+    schafer_bw_file_path = os.path.join(base_path, 
+                                    "example_contour_and_skeleton_info.mat")  
+    bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    
+    bw.plot_frame(10)
+
+
+def main2():
     # Load from file a normalized worm, as calculated by Schafer Lab code
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
     schafer_nw_file_path = os.path.join(base_path, 

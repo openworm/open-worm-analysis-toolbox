@@ -32,14 +32,17 @@ function awesome_contours_oh_yeah_v4(frame_values)
 
 %Frame 877 - the frame that motivated this version
 
-
 STEP_SIZE = 1; %This should really be a percentage
 %As this gets small, the angles we need to test get really large
 
 FRACTION_WORM_SMOOTH = 1/12;
 
-file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
-fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
+%file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
+%fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
+
+file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_contour_and_skeleton_info.mat';
+fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_norm_worm.mat';
+
 
 %Intersection is a dangerous game because of the problem of being very
 %close ...
@@ -67,8 +70,6 @@ for iFrame = frame_values %1:100:4642
         continue
     end
     
-
-
     filter_width_s1 = sl.math.roundToOdd(size(s1,1)*FRACTION_WORM_SMOOTH);
     s1(:,1) = sgolayfilt(s1(:,1),3,filter_width_s1);
     s1(:,2) = sgolayfilt(s1(:,2),3,filter_width_s1);
@@ -93,7 +94,7 @@ for iFrame = frame_values %1:100:4642
     line([s1(:,1) s1(:,1)+norm_xs1*sc1]',[s1(:,2) s1(:,2)+norm_ys1*sc1]','Color','k')
     line([s2(:,1) s2(:,1)+norm_xs2*sc1]',[s2(:,2) s2(:,2)+norm_ys2*sc1]','Color','r')
     
-    %line([s1(:,1) s2(I2,1)]',[s1(:,2) s2(I2,2)]','Color','k')
+    line([s1(:,1) s2(I2,1)]',[s1(:,2) s2(I2,2)]','Color','k')
  
     keyboard
     
@@ -178,17 +179,17 @@ for iFrame = frame_values %1:100:4642
     
 
     
-    %{
-        s_vector = h__rotateVector(orig_s_vector,12*pi/180);    
+    
+    s_vector = h__rotateVector(orig_s_vector,12*pi/180);    
     temp_mid = cur_p+s_vector;
-     norm1 = h__computeNormalVectors2(s_vector,0);
+    norm1 = h__computeNormalVectors2(s_vector,0);
     norm2 = h__computeNormalVectors2(s_vector,1);
     h__drawLine(cur_p,temp_mid,'Color','k')
     h__drawLine(temp_mid,temp_mid+norm1*sc,'Color','r')
     h__drawLine(temp_mid,temp_mid+norm2*sc,'Color','g')   
     
     
-    %}
+    
     
     
     end
@@ -219,9 +220,9 @@ function [width,I] = h__getWidth(temp_mid,end_point,s,indices_to_try,is_side_1)
             [x,y] = getIntersectionPoint(temp_mid,end_point,s(I:I+1,:));
             width = sqrt((x - temp_mid(1))^2 + (y - temp_mid(2))^2);
             
-%             hold on
-%             plot(x,y,'ks')
-%             hold off
+             %hold on
+             %plot(x,y,'ks')
+             %hold off
             
             break
         end
@@ -326,7 +327,9 @@ result = v*[cos(angle) sin(angle); -sin(angle) cos(angle)];
 
 end
 function h__drawLine(p1,p2,varargin)
-
+% p1 and p2 are n x 2 arrays.  Here we draw lines between all n points, 
+% pairwise.  That is, we draw a line from p1[k,:] to p2[k,:] for k = 1 to
+% n.
 line([p1(:,1) p2(:,1)],[p1(:,2) p2(:,2)],varargin{:});
 end
 
