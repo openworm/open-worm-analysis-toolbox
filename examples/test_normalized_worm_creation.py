@@ -10,23 +10,17 @@ i.e. nw == nw_calculated
 
 """
 
-import sys, os, time
+import sys, os
 
 sys.path.append('..')
 
-from movement_validation import user_config, config, VideoInfo
-from movement_validation import WormFeatures, BasicWorm
-from movement_validation import NormalizedWorm
+from movement_validation import user_config, config, utils
+from movement_validation import BasicWorm, NormalizedWorm
+from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
-
 def main():
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
-        timing_function = time.monotonic
-    else:
-        timing_function = time.time
-    
-    start = timing_function()
+    start = utils.timing_function()
     
     # Load from file a normalized worm, as calculated by Schafer Lab code
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
@@ -67,7 +61,7 @@ def main():
     wf.timer.summarize()
     """
     
-    print("Time elapsed: %.2f" % (timing_function() - start))
+    print("Time elapsed: %.2f" % (utils.timing_function() - start))
 
 if __name__ == '__main__':
     main()

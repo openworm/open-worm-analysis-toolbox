@@ -33,6 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
+from matplotlib.widgets import Button
 import matplotlib.animation as animation
 
 from . import config
@@ -84,6 +85,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # WormPlotter.show() must be called to get it to display.
         plt.interactive(interactive)
 
+        self._paused = False
+
         # 1. set up the data to be used
         self.nw = normalized_worm
         self.motion_mode = motion_mode
@@ -111,7 +114,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         fig.suptitle('C. elegans attributes', fontsize=20)
 
-        # 3. add the subplots
+        # 3. Add the subplots
         ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
         ax1.set_title('Position')
         ax1.set_xlabel('x')
@@ -136,6 +139,18 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # DEBUG: this doesn't appear to do anything,
         # it was an attempt to get it to refresh with diff titles
         #self.annotation1.animated = True
+
+        #resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
+        ax4 = plt.subplot2grid((3, 3), (2, 2))
+        axcolor = 'lightgoldenrodyellow'
+        button = Button(ax4, 'Reset', color=axcolor, hovercolor='0.975')
+        def reset(event):
+            self._paused = 1 - self._paused
+#            self._init_draw()
+        #    
+        #    sfreq.reset()
+        #    samp.reset()
+        button.on_clicked(reset)
 
         ax2 = plt.subplot2grid((3, 3), (2, 0))
         ax2.set_title('Morphology')
@@ -167,8 +182,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.line1C = Line2D([], [], color='yellow', 
                              linestyle='point marker',
                              marker='o', markersize=5)
-        self.patch1E = Ellipse(
-            xy=(0, 0), width=1000, height=500, angle=0, alpha=0.3)
+        self.patch1E = Ellipse(xy=(0, 0), width=1000, height=500, 
+                               angle=0, alpha=0.3)
 
         self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
         self.line2W_head = Line2D([], [], color='red',
@@ -218,8 +233,11 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                                  interval=interval,
                                                  blit=True)
 
-    def set_frame_data(self, frame_number):
-        i = frame_number
+
+    def set_frame_data(self, frame_index):
+        i = frame_index
+        if self._paused:
+            return
 
         self.line1W.set_data(self.nw.skeleton[:, 0, i],
                              self.nw.skeleton[:, 1, i])
@@ -278,14 +296,14 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         """
         plt.show()
 
-    def _draw_frame(self, framedata):
+    def _draw_frame(self, frame_index):
         """ 
         Called sequentially for each frame of the animation.  Thus
         we must set our plot to look like it should for the given frame.
 
         Parameters
         ---------------------------------------
-        framedata: int
+        frame_index: int
           An integer between 0 and the number of frames, giving
           the current frame.
 
@@ -296,7 +314,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         for l in self.artists_to_be_drawn:
             l.set_visible(True)
 
-        self.set_frame_data(framedata)
+        self.set_frame_data(frame_index)
 
         self._drawn_artists = self.artists_to_be_drawn
 

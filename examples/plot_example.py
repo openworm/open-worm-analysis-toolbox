@@ -6,14 +6,14 @@ An example of plotting an animation of a worm's skeleton and contour
 
 import sys, os
 import warnings
-
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
 
-import movement_validation
-
+from movement_validation import user_config
+from movement_validation import NormalizedWorm, VideoInfo, WormFeatures
+from movement_validation import worm_plotter
 
 def main():
     """
@@ -33,23 +33,23 @@ def main():
     nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
     # Placeholder for video metadata
-    v = movement_validation.VideoInfo(video_name="Example name", fps=25)
+    v = VideoInfo(video_name="Example name", fps=25)
 
     # We need to create WormFeatures to get the motion codes
     # (telling us in each frame if the worm is moving forward, backward, etc,
     #  which is nice to have so we can annotate the plot with that info)
-    wf = movement_validation.WormFeatures(nw, v)
+    wf = WormFeatures(nw, v)
     motion_codes = wf.locomotion.motion_mode
 
     # Plot an animation of the worm and its motion codes
-    wp = movement_validation.NormalizedWormPlottable(nw, motion_codes)
+    wp = worm_plotter.NormalizedWormPlottable(nw, motion_codes)
     wp.show()
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')
 
     # Finally, for fun, show a pie chart of how many frames were segmented
-    movement_validation.worm_plotter.plot_frame_codes(nw)
+    worm_plotter.plot_frame_codes(nw)
 
 
 if __name__ == '__main__':

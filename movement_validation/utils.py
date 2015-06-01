@@ -12,6 +12,8 @@ from itertools import groupby
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import sys, time
+
 
 __ALL__ = ['scatter',
            'plotxy',
@@ -25,7 +27,8 @@ __ALL__ = ['scatter',
            'interpolate_with_threshold',
            'interpolate_with_threshold_2D',
            'gausswin',
-           '_extract_time_from_disk']
+           '_extract_time_from_disk',
+           'timing_function']
 
 
 def scatter(x, y):
@@ -661,4 +664,10 @@ def get_non_numeric_mask(data):
         print("uh oh")     # DEBUG: remove late
     
 
-
+def timing_function():
+    # There's a better timing function available in Python 3.3+
+    # Otherwise use the old one.
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
+        return time.monotonic()
+    else:
+        return time.time()

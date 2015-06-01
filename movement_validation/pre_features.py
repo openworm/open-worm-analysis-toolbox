@@ -6,6 +6,7 @@ Written by @JimHokanson
 
 """
 import numpy as np
+import matplotlib.pyplot as plt
 
 from . import config, utils
 
@@ -530,6 +531,21 @@ class WormParsing(object):
             skeleton_x = 0.5 * (s1_x + s1_px)
             skeleton_y = 0.5 * (s1_y + s1_py)
             s_all.append(np.vstack((skeleton_x, skeleton_y)))
+
+            """
+            MICHAEL PLOTTING CODE
+            
+            if iFrame == 4:
+                vc = self.h_vulva_contour[frame_index]
+                nvc = self.h_non_vulva_contour[frame_index]
+                
+                plt.scatter(vc[0,:], vc[1,:])
+                plt.scatter(nvc[0,:], nvc[1,:])
+                plt.scatter(skeleton_x, skeleton_y)
+                plt.gca().set_aspect('equal', adjustable='box')
+                plt.show()
+            """         
+            
             
         return (widths_all, s_all)
 
