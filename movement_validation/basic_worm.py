@@ -349,6 +349,11 @@ class BasicWorm(JSON_Serializer):
         """
         Plot the contour and skeleton the worm for one of the frames.
         
+        Parameters
+        ----------------
+        frame_index: int
+            The desired frame # to plot.
+        
         """
         vc = self.h_vulva_contour[frame_index]
         nvc = self.h_non_vulva_contour[frame_index]

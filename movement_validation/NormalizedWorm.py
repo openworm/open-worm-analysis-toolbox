@@ -11,6 +11,8 @@ import copy
 import warnings
 import os
 import time
+import matplotlib.pyplot as plt
+
 
 from . import config
 from . import utils
@@ -303,6 +305,47 @@ class NormalizedWorm(WormPartition):
         """
         # TODO
         return True
+
+    def plot_path(self, posture_index):
+        """
+        Plot the path of the contour, skeleton and widths
+        
+        Parameters
+        ----------------
+        posture_index: int
+            The desired posture point (along skeleton and contour) to plot.
+        
+        """
+        vc = self.vulva_contour[posture_index,:,:]
+        nvc = self.non_vulva_contour[posture_index,:,:]
+        skeleton_x = self.skeleton[posture_index,0,:]
+        skeleton_y = self.skeleton[posture_index,1,:]
+        
+        plt.scatter(vc[0,:], vc[1,:])
+        plt.scatter(nvc[0,:], nvc[1,:])
+        plt.scatter(skeleton_x, skeleton_y)
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
+        
+    def plot_posture(self, frame_index):
+        """
+        Show a scatterplot of the contour, skeleton and widths of frame #frame
+        
+        Parameters
+        ----------------
+        frame_index: int
+            The desired frame # to plot.
+        
+        """
+        vc = self.vulva_contour[:,:,frame_index]
+        nvc = self.non_vulva_contour[:,:,frame_index]
+        skeleton = self.skeleton[:,:,frame_index]
+        
+        plt.scatter(vc[:,0], vc[:,1], c='red')
+        plt.scatter(nvc[:,0], nvc[:,1], c='blue')
+        plt.scatter(skeleton[:,0], skeleton[:,1], c='black')
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
 
     def rotated(self, theta_d):
         """   

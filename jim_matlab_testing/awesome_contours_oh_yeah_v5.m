@@ -1,4 +1,4 @@
-function awesome_contours_oh_yeah_v4(frame_values)
+function awesome_contours_oh_yeah_v5(frame_values)
 %
 %
 %   SEEMS TO SENSITIVE TO PARAMETERS
@@ -88,15 +88,17 @@ for iFrame = frame_values %1:100:4642
     scatter(s2(:,1),s2(:,2))
     axis equal
     
-    [norm_xs1,norm_ys1]  = h__computeNormalVectors(s1,1);
-    [norm_xs2,norm_ys2]  = h__computeNormalVectors(s2,0);
+    [norm_xs1, norm_ys1]  = h__computeNormalVectors(s1,1);
+    [norm_xs2, norm_ys2]  = h__computeNormalVectors(s2,0);
+    
+    
     sc1 = 60;
     line([s1(:,1) s1(:,1)+norm_xs1*sc1]',[s1(:,2) s1(:,2)+norm_ys1*sc1]','Color','k')
     line([s2(:,1) s2(:,1)+norm_xs2*sc1]',[s2(:,2) s2(:,2)+norm_ys2*sc1]','Color','r')
     
     line([s1(:,1) s2(I2,1)]',[s1(:,2) s2(I2,2)]','Color','k')
  
-    keyboard
+    %keyboard
     
     
     sc = 1000;
@@ -107,91 +109,93 @@ for iFrame = frame_values %1:100:4642
     tic
     while true
 
-    hold on
-    plot(s1(next1,1),s1(next1,2),'k+')
-    plot(s2(next2,1),s2(next2,2),'k+')
-    hold off
-    
-    
-    temp_mid = h__getMidpoint(s1(next1,:),s2(next2,:));
-    s_vector = temp_mid - cur_p;
-    orig_s_vector = s_vector;
-    %Some angles to select from ...
-    
-    %This span needs to be smarter ...
-    if next1 < 2*STEP_SIZE
-        rotation_angles = -60:2:60;
-    else
-        rotation_angles = -60:2:60;
-    end
-    
-    widths_all = zeros(length(rotation_angles),2);
-    I1_used = zeros(1,length(rotation_angles));
-    I2_used = zeros(1,length(rotation_angles));
-    indices_try_1 = next1+[0 -1 1 -2 2 -3 3 -4 4 -5 5 -6 6 -7 7 -8 8 -9 9];
-    indices_try_2 = next2+[0 -1 1 -2 2 -3 3 -4 4 -5 5 -6 6 -7 7 -8 8 -9 9];
-    if next1 < 10
-    indices_try_1(indices_try_1 < 1) = [];
-    end
-    if next2 < 10
-    indices_try_2(indices_try_2 < 1) = [];
-    end
-    %TODO: Add on checks for near end
-    for I = 1:length(rotation_angles)
-        rotation_angle = rotation_angles(I);
-        s_vector = h__rotateVector(orig_s_vector,rotation_angle*pi/180);
+        %{
+        hold on
+        plot(s1(next1,1),s1(next1,2),'k+')
+        plot(s2(next2,1),s2(next2,2),'k+')
+        hold off
+        %}
+
+        temp_mid = h__getMidpoint(s1(next1,:),s2(next2,:));
+        s_vector = temp_mid - cur_p;
+        orig_s_vector = s_vector;
+        %Some angles to select from ...
+
+        %This span needs to be smarter ...
+        if next1 < 2*STEP_SIZE
+            rotation_angles = -60:2:60;
+        else
+            rotation_angles = -60:2:60;
+        end
+
+        widths_all = zeros(length(rotation_angles),2);
+        I1_used = zeros(1,length(rotation_angles));
+        I2_used = zeros(1,length(rotation_angles));
+        indices_try_1 = next1+[0 -1 1 -2 2 -3 3 -4 4 -5 5 -6 6 -7 7 -8 8 -9 9];
+        indices_try_2 = next2+[0 -1 1 -2 2 -3 3 -4 4 -5 5 -6 6 -7 7 -8 8 -9 9];
+        if next1 < 10
+        indices_try_1(indices_try_1 < 1) = [];
+        end
+        if next2 < 10
+        indices_try_2(indices_try_2 < 1) = [];
+        end
+        %TODO: Add on checks for near end
+        for I = 1:length(rotation_angles)
+            rotation_angle = rotation_angles(I);
+            s_vector = h__rotateVector(orig_s_vector,rotation_angle*pi/180);
+            temp_mid = cur_p+s_vector;
+            norm1 = h__computeNormalVectors2(s_vector,0);
+            norm2 = h__computeNormalVectors2(s_vector,1);
+
+            [widths_all(I,1),I1_used(I)] = h__getWidth(temp_mid,temp_mid+norm1*sc,s1,indices_try_1,true);
+            [widths_all(I,2),I2_used(I)] = h__getWidth(temp_mid,temp_mid+norm2*sc,s2,indices_try_2,false);
+        end
+
+        metric = abs((widths_all(:,1) - widths_all(:,2)))./mean(widths_all,2);
+
+        %TODO: Try and improve the accuracy by estimating 0 from the data
+        %points obtained and then recompute with that rotation value
+
+        [~,I] = min(metric);
+
+        s_vector = h__rotateVector(orig_s_vector,rotation_angles(I)*pi/180);    
+        temp_mid = cur_p+s_vector;
+
+        %For plotting result ...
+        
+        %norm1 = h__computeNormalVectors2(s_vector,0);
+        %norm2 = h__computeNormalVectors2(s_vector,1);
+        %hold on
+        %h__drawLine(cur_p,temp_mid,'Color','k')
+        %h__drawLine(temp_mid,temp_mid+norm1*sc_plot,'Color','r')
+        %h__drawLine(temp_mid,temp_mid+norm2*sc_plot,'Color','g')
+        %hold off
+        
+
+
+        cur_p = temp_mid(1,:);
+        next1 = I1_used(I)+STEP_SIZE;
+        next2 = I2_used(I)+STEP_SIZE;
+
+        if (next1+10 >= length(s1)) || (next2+10 >= length(s2))
+           break 
+        end
+
+
+
+        %{
+        s_vector = h__rotateVector(orig_s_vector,12*pi/180);    
         temp_mid = cur_p+s_vector;
         norm1 = h__computeNormalVectors2(s_vector,0);
         norm2 = h__computeNormalVectors2(s_vector,1);
-    
-        [widths_all(I,1),I1_used(I)] = h__getWidth(temp_mid,temp_mid+norm1*sc,s1,indices_try_1,true);
-        [widths_all(I,2),I2_used(I)] = h__getWidth(temp_mid,temp_mid+norm2*sc,s2,indices_try_2,false);
-    end
-    
-    metric = abs((widths_all(:,1) - widths_all(:,2)))./mean(widths_all,2);
-    
-    %TODO: Try and improve the accuracy by estimating 0 from the data
-    %points obtained and then recompute with that rotation value
-    
-    [~,I] = min(metric);
-    
-    s_vector = h__rotateVector(orig_s_vector,rotation_angles(I)*pi/180);    
-    temp_mid = cur_p+s_vector;
-    
-    %For plotting result ...
-    norm1 = h__computeNormalVectors2(s_vector,0);
-    norm2 = h__computeNormalVectors2(s_vector,1);
-    hold on
-    h__drawLine(cur_p,temp_mid,'Color','k')
-    h__drawLine(temp_mid,temp_mid+norm1*sc_plot,'Color','r')
-    h__drawLine(temp_mid,temp_mid+norm2*sc_plot,'Color','g')
-    hold off
-    
-    
-    
-    cur_p = temp_mid(1,:);
-    next1 = I1_used(I)+STEP_SIZE;
-    next2 = I2_used(I)+STEP_SIZE;
-    
-    if (next1+10 >= length(s1)) || (next2+10 >= length(s2))
-       break 
-    end
-    
+        h__drawLine(cur_p,temp_mid,'Color','k')
+        h__drawLine(temp_mid,temp_mid+norm1*sc,'Color','r')
+        h__drawLine(temp_mid,temp_mid+norm2*sc,'Color','g')   
+        %}
 
-    
-    
-    s_vector = h__rotateVector(orig_s_vector,12*pi/180);    
-    temp_mid = cur_p+s_vector;
-    norm1 = h__computeNormalVectors2(s_vector,0);
-    norm2 = h__computeNormalVectors2(s_vector,1);
-    h__drawLine(cur_p,temp_mid,'Color','k')
-    h__drawLine(temp_mid,temp_mid+norm1*sc,'Color','r')
-    h__drawLine(temp_mid,temp_mid+norm2*sc,'Color','g')   
-    
-    
-    
-    
-    
+
+
+
     end
     toc
     %return
