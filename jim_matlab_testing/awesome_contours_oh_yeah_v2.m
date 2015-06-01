@@ -60,8 +60,13 @@ PERCENT_BACK_SEARCH = 0.3;
 PERCENT_FORWARD_SEARCH = 0.3;
 END_S1_WALK_PCT = 0.15;
 
-file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
-fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
+%file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
+%fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
+
+
+file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_contour_and_skeleton_info.mat';
+fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_norm_worm.mat';
+
 
 %Intersection is a dangerous game because of the problem of being very
 %close ...
@@ -160,7 +165,7 @@ for iFrame = frame_values %1:100:4642
     %toc
     %Plotting Results
     %-------------------
-    if false
+    if true
         toc
         %     plot_s2_match = false;
         %
