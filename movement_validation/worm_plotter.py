@@ -33,7 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
-from matplotlib.widgets import Button
+from matplotlib.widgets import Button, Slider
 import matplotlib.animation as animation
 
 from . import config
@@ -107,30 +107,36 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # matplotlib explicitly redraw everything if a resizing event occurs.
         # DEBUG: this actually doesn't appear to work.
         def refresh_plot(event):
+            print("refresh_plot called")
+
+            # We must reset this or else repetitive expanding and contracting
+            # of the window will cause the view to zoom in on the subplots
+            self.set_axes_extents()
+
             fig.canvas.draw()
 
-        self.refresh_connection_id = \
-            fig.canvas.mpl_connect('resize_event', refresh_plot)
+        self.refresh_connection_id = fig.canvas.mpl_connect('resize_event', 
+                                                            refresh_plot)
 
         fig.suptitle('C. elegans attributes', fontsize=20)
 
         # 3. Add the subplots
-        ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
-        ax1.set_title('Position')
-        ax1.set_xlabel('x')
-        ax1.set_ylabel('y')
-        ax1.set_xlim(self.nw.position_limits(0))
-        ax1.set_ylim(self.nw.position_limits(1))
+        self.ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
+        self.ax1.set_title('Position')
+        self.ax1.set_xlabel('x')
+        self.ax1.set_ylabel('y')
         #ax1.set_aspect(aspect='equal', adjustable='datalim')
         # ax1.set_autoscale_on()
 
-        self.annotation1a = ax1.annotate("(motion mode data not available)",
+        self.annotation1a = \
+                       self.ax1.annotate("(motion mode data not available)",
                                          xy=(-10, 10), xycoords='axes points',
                                          horizontalalignment='right',
                                          verticalalignment='top',
                                          fontsize=10)
 
-        self.annotation1b = ax1.annotate("bottom right (points)",
+        self.annotation1b = \
+                       self.ax1.annotate("bottom right (points)",
                                          xy=(-10, 10), xycoords='axes points',
                                          horizontalalignment='right',
                                          verticalalignment='bottom',
@@ -140,36 +146,55 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # it was an attempt to get it to refresh with diff titles
         #self.annotation1.animated = True
 
-        #resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
-        ax4 = plt.subplot2grid((3, 3), (2, 2))
-        axcolor = 'lightgoldenrodyellow'
-        button = Button(ax4, 'Reset', color=axcolor, hovercolor='0.975')
-        def reset(event):
-            self._paused = 1 - self._paused
-#            self._init_draw()
-        #    
-        #    sfreq.reset()
-        #    samp.reset()
-        button.on_clicked(reset)
 
-        ax2 = plt.subplot2grid((3, 3), (2, 0))
-        ax2.set_title('Morphology')
-        # DON'T USE set_xbound, it changes dynmically
-        ax2.set_xlim((-500, 500))
-        ax2.set_ylim((-500, 500))
-        ax2.set_aspect(aspect='equal', adjustable='datalim')
-        self.annotation2 = ax2.annotate("Worm head",
+        # WIDGETS
+        # [left,botton,width,height] as a proportion of 
+        # figure width and height
+        frame_slider_axes = fig.add_axes([0.2, 0.02, 0.33, 0.02], 
+                                         axisbg='lightgoldenrodyellow')
+        frame_slider = Slider(frame_slider_axes, 'Frame#',
+                              1, self.nw.num_frames, valinit=1)
+
+        # TODO: CONNECT THIS TO frame_slider
+        #def update(val):
+        #    amp = samp.val
+        #    freq = sfreq.val
+        #    l.set_ydata(amp*np.sin(2*np.pi*freq*t))
+        #    fig.canvas.draw_idle()
+        #
+        #frame_slider.on_changed(update)
+
+
+        button_axes = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+        #ax4 = plt.subplot2grid((3, 3), (2, 2))
+        button = Button(button_axes, 'Pause', 
+                        color='lightgoldenrodyellow', hovercolor='0.975')
+        def pause(event):
+            if not self._paused:
+                self._stop()
+            else:
+                self.event_source = fig.canvas.new_timer()
+                self.event_source.interval = self._interval
+                self._start()
+            
+            # Toggle the paused state            
+            self._paused = 1 - self._paused
+
+        button.on_clicked(pause)
+
+        self.ax2 = plt.subplot2grid((3, 3), (0, 2))
+        self.ax2.set_title('Morphology')
+        self.ax2.set_aspect(aspect='equal', adjustable='datalim')
+        self.annotation2 = self.ax2.annotate("Worm head",
                             xy=(0, 0), xycoords='data',
                             xytext=(10, 10), textcoords='data',
                             arrowprops=dict(arrowstyle="fancy",
                                             connectionstyle="arc3,rad=.2"))
 
-        ax3 = plt.subplot2grid((3, 3), (2, 1))
-        ax3.set_title('Orientation-free')
+        self.ax3 = plt.subplot2grid((3, 3), (2, 0), rowspan=1, colspan=2)
+        self.ax3.set_title('Orientation-free')
         # DON'T USE set_xbound, it changes dynmically
-        ax3.set_xlim((-500, 500))
-        ax3.set_ylim((-500, 500))
-        ax3.set_aspect(aspect='equal', adjustable='datalim')
+        self.ax3.set_aspect(aspect='equal', adjustable='datalim')
 
 
         # 4. create Artist objects
@@ -205,22 +230,24 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                     self.annotation1b, self.annotation2] + \
                                    self.artists_with_data
 
+        self.set_axes_extents()
+
         # 5. assign Artist objects to the relevant subplot
-        ax1.add_line(self.line1W)
-        ax1.add_line(self.line1W_head)
-        ax1.add_line(self.line1C)
-        ax1.add_artist(self.patch1E)
+        self.ax1.add_line(self.line1W)
+        self.ax1.add_line(self.line1W_head)
+        self.ax1.add_line(self.line1C)
+        self.ax1.add_artist(self.patch1E)
 
-        ax2.add_line(self.line2W)
-        ax2.add_line(self.line2W_head)
-        ax2.add_line(self.line2C)
-        ax2.add_line(self.line2C2)
+        self.ax2.add_line(self.line2W)
+        self.ax2.add_line(self.line2W_head)
+        self.ax2.add_line(self.line2C)
+        self.ax2.add_line(self.line2C2)
 
-        ax3.add_line(self.line3W)
-        ax3.add_line(self.line3W_head)
+        self.ax3.add_line(self.line3W)
+        self.ax3.add_line(self.line3W_head)
 
         # So labels don't overlap:
-        plt.tight_layout()
+        #plt.tight_layout()
 
         # 6. call the base class __init__
 
@@ -232,6 +259,15 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                                  fig,
                                                  interval=interval,
                                                  blit=True)
+
+    def set_axes_extents(self):
+        # DON'T USE set_xbound, it changes dynmically
+        self.ax1.set_xlim(self.nw.position_limits(0))
+        self.ax1.set_ylim(self.nw.position_limits(1))
+        self.ax2.set_xlim((-500, 500))
+        self.ax2.set_ylim((-500, 500))
+        self.ax3.set_xlim((-800, 800))
+        self.ax3.set_ylim((-500, 500))
 
 
     def set_frame_data(self, frame_index):

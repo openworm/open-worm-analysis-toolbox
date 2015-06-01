@@ -49,7 +49,7 @@ def main():
     # wp.save('test_sub.mp4')
 
     # Finally, for fun, show a pie chart of how many frames were segmented
-    worm_plotter.plot_frame_codes(nw)
+    #worm_plotter.plot_frame_codes(nw)
 
 
 if __name__ == '__main__':
