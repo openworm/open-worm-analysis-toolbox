@@ -28,6 +28,36 @@ class WormParsing(object):
     """
 
     @staticmethod
+    def computeAreas(vulva_contour, non_vulva_contour):
+        """
+        Compute the areas of various parts of the worm, for each frame of 
+        video, from a heterocardinal contour.
+
+        Parameters
+        -------------------------
+        vulva_contour: a list of numpy arrays.
+            The list is of the frames.
+        non_vulva_contour: same
+        
+        Returns
+        -------------------------
+        (head_area, tail_area, vulva_area, non_vulva_area): tuple
+            head_area is a numpy array of scalars, giving the area in each 
+            frame of video.  so if there are 4000 frames, head_area would have
+            shape (4000,)
+        
+        """
+        # TODO: this method is currently unimplemented!
+        
+        # The old method was:
+        # Using known transition regions, count the # of 'on' pixels in
+        # the image. Presumably we would use something more akin
+        # to the eccentricity feature code
+        # - @JimHokanson        
+
+        return (None, None, None, None)
+
+    @staticmethod
     def h__computeNormalVectors(data):
         """
         Compute normal vectors
@@ -441,8 +471,8 @@ class WormParsing(object):
         #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
         #        %2Bseg_worm/%2Bworm/%40skeleton/cleanSkeleton.m        
         
-        #Widths are simply the distance between two "corresponding" sides of
-        #the contour. The question is how to get these two locations. 
+        # Widths are simply the distance between two "corresponding" sides of
+        # the contour. The question is how to get these two locations. 
 
         FRACTION_WORM_SMOOTH = 1.0/12.0
         SMOOTHING_ORDER = 3

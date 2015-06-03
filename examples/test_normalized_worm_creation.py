@@ -12,6 +12,7 @@ i.e. nw == nw_calculated
 """
 
 import sys, os
+import csv
 
 sys.path.append('..')
 
@@ -20,7 +21,9 @@ from movement_validation import BasicWorm, NormalizedWorm
 from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
-def main():
+
+
+def main1():
     start = utils.timing_function()
     
     # Load from file a normalized worm, as calculated by Schafer Lab code
@@ -42,6 +45,14 @@ def main():
     nw_calculated = \
         NormalizedWorm.from_BasicWorm_factory(bw, frames_to_plot_widths=[4])
     nw == nw_calculated
+
+    frame_codes_path2 = r'C:\Users\mcurrie\Desktop\GitHub' + \
+                       r'\movement_validation\documentation\frame_codes2.csv'
+
+
+    with open(frame_codes_path2, 'w') as frame_output_file:
+        writer = csv.writer(frame_output_file)
+        writer.writerows(['hi', 'hello'])
 
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """

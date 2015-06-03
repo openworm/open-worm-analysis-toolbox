@@ -30,27 +30,26 @@ class NormalizedWorm(WormPartition):
     Encapsulates the notion of a worm's elementary measurements, scaled
     (i.e. "normalized") to 49 points along the length of the worm.
 
-    The data consists of 13 Numpy arrays (where n is the number of frames):
-   - Of shape (49,2,n):   (Inherited from NormalizedSkeletonAndContour)
+    The data consists of 10 Numpy arrays (where n is the number of frames):
+   - Of shape (49,2,n):
         vulva_contour
         non_vulva_contour
         skeleton
-    - Of shape (49,n):    (Not inherited)
+    - Of shape (49,n):
         angles        
-        in_out_touches
         widths
-    - Of shape (n):       (Not inherited)
+    - Of shape (n):
         length
         head_area
         tail_area
         vulva_area
         non_vulva_area
-        segmentation_status   (not used in further processing)   (inherited)
-        frame_code            (not used in further processing)   (inherited)
 
     Also, some metadata:
+        segmentation_status   (not used in further processing)
+        frame_code            (not used in further processing)
         ventral_mode
-        plate_wireframe_video_key                                (inherited)
+        plate_wireframe_video_key
         
     """
 
@@ -72,7 +71,7 @@ class NormalizedWorm(WormPartition):
         else:
             # Copy constructor
             attributes = ['skeleton', 'vulva_contour', 'non_vulva_contour',
-                          'angles', 'in_out_touches', 'widths', 'length',
+                          'angles', 'widths', 'length',
                           'head_area', 'tail_area', 'vulva_area', 
                           'non_vulva_area', 'segmentation_status', 
                           'frame_code', 'plate_wireframe_video_key', 
@@ -123,17 +122,15 @@ class NormalizedWorm(WormPartition):
             nw.non_vulva_contour = WormParsing.normalizeAllFramesXY(
                                             basic_worm.h_non_vulva_contour)            
 
-            # 4. TODO: Calculate area 
-            # The old method was:
-            # Using known transition regions, count the # of 'on' pixels in
-            # the image. Presumably we would use something more akin
-            # to the eccentricity feature code
+            # 4. TODO: Calculate areas
+            (nw.head_area, nw.tail_area, nw.vulva_area, nw.non_vulva_area) = \
+                 WormParsing.computeAreas(nw.vulva_contour, 
+                                          nw.non_vulva_contour)
             
             # 5. TODO:
             # Still missing:
             # - segmentation_status
             # - frame codes
-            # - in_out_touches
             # I think these things would best be handled by first identifying
             # the feature code that uses them, then determing what if anything
             # we really need to calculate. Perhaps we need to modify the
@@ -211,10 +208,10 @@ class NormalizedWorm(WormPartition):
                 # seg_worm.parsing.frame_errors
                 'frame_codes',
                 'vulva_contours',     # shape is (49, 2, n) integer
-                'non_vulva_contours',  # shape is (49, 2, n) integer
+                'non_vulva_contours', # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
                 'angles',             # shape is (49, n) integer (degrees)
-                'in_out_touches',     # shpe is (49, n)
+                'in_out_touches',     # shape is (49, n)
                 'lengths',            # shape is (n) integer
                 'widths',             # shape is (49, n) integer
                 'head_areas',         # shape is (n) integer
@@ -238,6 +235,13 @@ class NormalizedWorm(WormPartition):
             # in "skeletons"
             del(nw.x)
             del(nw.y)
+            # in_out_touches: I can find no reference to them in Ev's thesis,
+            # nor does any of the feature calculation code depend on them.
+            # the only reason we have them at all is because the one example 
+            # file we've been using has in_out_touches as an array.
+            # the shape is (49, 4642) in that file, and ALL entries are NaN.
+            # Thus for all the above reasons I'm going to ignore it.
+            del(nw.in_out_touches)
             
             # Now for something pedantic: only use plural nouns for
             # those measurements taken along multiple points per frame
