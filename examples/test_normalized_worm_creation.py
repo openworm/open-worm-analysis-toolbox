@@ -43,9 +43,7 @@ def main():
     nw == nw_calculated
 
     # For fun, let's plot the contour and widths of frame #10
-    nw_calculated.plot_posture(10)
-
-    print('\a') # Make a beep so I know it's done.
+    #nw_calculated.plot_posture(10)
 
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """

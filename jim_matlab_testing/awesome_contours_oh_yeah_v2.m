@@ -48,12 +48,12 @@ function awesome_contours_oh_yeah_v2(frame_values)
 %   3601 - coiling that fails with dot product unless a search is done
 %       for multiple peaks and the smaller width chosen
 %
-
-%Original example contour & skeleton data from:
+%   Problem Frames:
+%   -------------------
+%   1200 - ends are a bit messed up
 %
-
-%Problem frames:
-%1200 - ends are a bit messed up
+% Original example contour & skeleton data from:
+%
 
 FRACTION_WORM_SMOOTH = 1/12;
 PERCENT_BACK_SEARCH = 0.3;

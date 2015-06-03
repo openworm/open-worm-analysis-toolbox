@@ -532,19 +532,28 @@ class WormParsing(object):
             skeleton_y = 0.5 * (s1_y + s1_py)
             s_all.append(np.vstack((skeleton_x, skeleton_y)))
 
-            """
-            MICHAEL PLOTTING CODE
-            
+            # Optional plotting code
             if iFrame == 4:
-                vc = self.h_vulva_contour[frame_index]
-                nvc = self.h_non_vulva_contour[frame_index]
+                print("We're at frame 4")
+                #vc = self.h_vulva_contour[frame_index]
+                #nvc = self.h_non_vulva_contour[frame_index]
+
+                #plt.scatter(vc[0,:], vc[1,:])
+                #plt.scatter(nvc[0,:], nvc[1,:])
+                plt.scatter(s1[0,:], s1[1,:], 
+                            marker='o', color='r')
+                plt.scatter(s2[0,:], s2[1,:],
+                            marker='o', color='b')
                 
-                plt.scatter(vc[0,:], vc[1,:])
-                plt.scatter(nvc[0,:], nvc[1,:])
-                plt.scatter(skeleton_x, skeleton_y)
+                print(np.shape(s1))
+                # To plot the lines, we need to run
+                # plot([x1,y1],[x2,y2]), or actually, an array of such pairs.
+                for i in range(np.shape(s1)[1]):
+                    plt.plot([s1[0,i], s2[0,i]], [s1[1,i], s2[1,i]], color='g')
+                plt.scatter(skeleton_x, skeleton_y, marker='D', color='b')
+
                 plt.gca().set_aspect('equal', adjustable='box')
                 plt.show()
-            """         
             
             
         return (widths_all, s_all)
