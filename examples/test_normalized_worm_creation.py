@@ -39,11 +39,9 @@ def main():
 
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
-    nw_calculated = NormalizedWorm.from_BasicWorm_factory(bw)
+    nw_calculated = \
+        NormalizedWorm.from_BasicWorm_factory(bw, frames_to_plot_widths=[4])
     nw == nw_calculated
-
-    # For fun, let's plot the contour and widths of frame #10
-    #nw_calculated.plot_posture(10)
 
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """

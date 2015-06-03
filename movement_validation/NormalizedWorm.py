@@ -82,7 +82,7 @@ class NormalizedWorm(WormPartition):
 
 
     @classmethod
-    def from_BasicWorm_factory(cls, basic_worm):
+    def from_BasicWorm_factory(cls, basic_worm, frames_to_plot_widths=[]):
         """
         Factory classmethod for creating a normalized worm with a basic_worm
         as input.  This requires calculating all the "pre-features" of 
@@ -93,7 +93,10 @@ class NormalizedWorm(WormPartition):
         basic_worm: Instance of BasicWorm.  Contains either:
             h_skeleton AND/OR
             h_vulva_contour and h_non_vulva_contour
-            
+        frames_to_plot_widths: list of ints
+            Optional list of frames to plot, to show exactly how the 
+            widths and skeleton were calculated.        
+
         Returns
         -----------
         An instance of NormalizedWorm
@@ -107,7 +110,8 @@ class NormalizedWorm(WormPartition):
             # 1. Derive skeleton and widths from contour
             nw.widths, h_skeleton = \
                 WormParsing.computeWidths(basic_worm.h_vulva_contour, 
-                                          basic_worm.h_non_vulva_contour)
+                                          basic_worm.h_non_vulva_contour,
+                                          frames_to_plot_widths)
 
             # 2. Calculate angles            
             nw.angles = WormParsing.calculateAngles(h_skeleton)

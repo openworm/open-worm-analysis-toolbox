@@ -383,15 +383,20 @@ class WormParsing(object):
 
 
     @staticmethod
-    def computeWidths(vulva_contour, non_vulva_contour):
+    def computeWidths(vulva_contour, non_vulva_contour, frames_to_plot=[]):
         """
         Compute widths and a heterocardinal skeleton from a heterocardinal 
         contour.
         
         Parameters
         -------------------------
-        vulva_contour: a list of numpy arrays.  The list is of the frames.
+        vulva_contour: a list of numpy arrays.
+            The list is of the frames.
         non_vulva_contour: same
+        frames_to_plot: list of ints
+            Optional list of frames to plot, to show exactly how the 
+            widths and skeleton were calculated.
+            
 
         Returns
         -------------------------
@@ -444,12 +449,11 @@ class WormParsing(object):
         PERCENT_BACK_SEARCH = 0.3;
         PERCENT_FORWARD_SEARCH = 0.3;
         END_S1_WALK_PCT = 0.15;
-        
 
         s_all = []
         widths_all = []
 
-        for iFrame, (s1, s2) in \
+        for frame_index, (s1, s2) in \
                         enumerate(zip(vulva_contour, non_vulva_contour)):
             
             # * I'm writing the code based on awesome_contours_oh_yeah_v2
@@ -488,7 +492,7 @@ class WormParsing(object):
                                                        PERCENT_FORWARD_SEARCH)
             
             # For each point on side 1, calculate normalized orthogonal values
-            norm_x,norm_y = WormParsing.h__computeNormalVectors(s1)
+            norm_x, norm_y = WormParsing.h__computeNormalVectors(s1)
                    
             # For each point on side 1, find which side 2 the point pairs with
             dp_values1, match_I1 = \
@@ -533,26 +537,55 @@ class WormParsing(object):
             s_all.append(np.vstack((skeleton_x, skeleton_y)))
 
             # Optional plotting code
-            if iFrame == 4:
-                print("We're at frame 4")
-                #vc = self.h_vulva_contour[frame_index]
-                #nvc = self.h_non_vulva_contour[frame_index]
+            if frame_index in frames_to_plot:
+                fig = plt.figure()
+                # ARRANGE THE PLOTS AS:
+                # AX1 AX1 SUB2
+                # AX1 AX1 SUB3
+                ax1 = plt.subplot2grid((2,3), (0,0), rowspan=2, colspan=2)
+                #ax2 = plt.subplot2grid((2,3), (0,2))
+                ax3 = plt.subplot2grid((2,3), (1,2))
+                ax1.set_title("Frame #%d of %d" % (frame_index,
+                                                   len(vulva_contour)))
 
-                #plt.scatter(vc[0,:], vc[1,:])
-                #plt.scatter(nvc[0,:], nvc[1,:])
-                plt.scatter(s1[0,:], s1[1,:], 
-                            marker='o', color='r')
-                plt.scatter(s2[0,:], s2[1,:],
-                            marker='o', color='b')
+                # The points along one side of the worm
+                ax1.scatter(s1[0,:], s1[1,:], marker='o', 
+                            edgecolors='r', facecolors='none')
+                # The points along the other side
+                ax1.scatter(s2[0,:], s2[1,:], marker='o', 
+                            edgecolors='b', facecolors='none')
                 
-                print(np.shape(s1))
-                # To plot the lines, we need to run
-                # plot([x1,y1],[x2,y2]), or actually, an array of such pairs.
-                for i in range(np.shape(s1)[1]):
-                    plt.plot([s1[0,i], s2[0,i]], [s1[1,i], s2[1,i]], color='g')
-                plt.scatter(skeleton_x, skeleton_y, marker='D', color='b')
+                # To plot the widths, we need to run
+                # plot([x1,x2],[y1,y2]), for each line segment
+                for i in range(np.shape(s1_px)[0]):
+                    ax1.plot([s1_px[i], s1_x[i]], [s1_py[i], s1_y[i]], 
+                             color='g')
 
-                plt.gca().set_aspect('equal', adjustable='box')
+                # The skeleton points
+                ax1.scatter(skeleton_x, skeleton_y, marker='D', 
+                            edgecolors='b', facecolors='none')
+                # The skeleton points, connected
+                ax1.plot(skeleton_x, skeleton_y, color='navy')
+
+                # Now let's plot each of the 200+ width values as the 
+                # y coordinate.  The x axis is normalized from 0 to 1.
+
+                """
+                # TODO: Jim's original method for plotting this was:
+                # Width should really be plotted as a function of 
+                # distance along the skeleton
+                cum_dist = h__getSkeletonDistance(skeleton_x, skeleton_y)
+                
+                ax2.plot(cum_dist./cum_dist[-1], widths_all[frame_index], 
+                         'r.-')
+                hold on
+                ax2.plot(np.linspace(0,1,49), nw_widths[:,iFrame], 'g.-')
+                hold off
+                """
+
+                with plt.style.context('fivethirtyeight'):
+                    ax3.plot(widths_all[frame_index], color='green', linewidth=2)#, normed=True)
+
                 plt.show()
             
             
