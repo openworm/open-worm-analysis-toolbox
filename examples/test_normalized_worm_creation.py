@@ -22,8 +22,7 @@ from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
 
-
-def main1():
+def main():
     start = utils.timing_function()
     
     # Load from file a normalized worm, as calculated by Schafer Lab code

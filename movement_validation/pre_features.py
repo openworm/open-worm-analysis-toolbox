@@ -570,8 +570,8 @@ class WormParsing(object):
             if frame_index in frames_to_plot:
                 fig = plt.figure()
                 # ARRANGE THE PLOTS AS:
-                # AX1 AX1 SUB2
-                # AX1 AX1 SUB3
+                # AX1 AX1 AX2
+                # AX1 AX1 AX3
                 ax1 = plt.subplot2grid((2,3), (0,0), rowspan=2, colspan=2)
                 #ax2 = plt.subplot2grid((2,3), (0,2))
                 ax3 = plt.subplot2grid((2,3), (1,2))
@@ -597,9 +597,6 @@ class WormParsing(object):
                 # The skeleton points, connected
                 ax1.plot(skeleton_x, skeleton_y, color='navy')
 
-                # Now let's plot each of the 200+ width values as the 
-                # y coordinate.  The x axis is normalized from 0 to 1.
-
                 """
                 # TODO: Jim's original method for plotting this was:
                 # Width should really be plotted as a function of 
@@ -613,8 +610,14 @@ class WormParsing(object):
                 hold off
                 """
 
+                # Now let's plot each of the 200+ width values as the 
+                # y coordinate.
+                ax3.set_title = "Worm width at each calculation point"
+                ax3.set_xlabel("Calculation point")
+                ax3.set_ylabel("Width")
                 with plt.style.context('fivethirtyeight'):
-                    ax3.plot(widths_all[frame_index], color='green', linewidth=2)#, normed=True)
+                    ax3.plot(widths_all[frame_index], color='green', 
+                             linewidth=2)
 
                 plt.show()
             

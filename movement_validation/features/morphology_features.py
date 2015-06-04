@@ -2,52 +2,56 @@
 """
 morphology_features.py
 
+Any more complex morphology features requiring classes are defined here.
+
 """
 
 import numpy as np
 
 from .. import utils
-
 from . import feature_comparisons as fc
 
 class Widths(object):
     """
+    Stores the mean width of various partitions of the worm, for each frame.
+    
     Attributes
     ----------    
-    head :
-    midbody :
-    tail :
+    head:    The mean width of the worm along the 'head' partition
+    midbody: The mean width of the worm along the 'midbody' partition
+    tail:    The mean width of the worm along the 'tail' partition
+
     """
     
-    fields = ('head', 'midbody', 'tail')
-    
-    def __init__(self,features_ref):
+    def __init__(self, nw=None):
         """
         Parameters
         ----------
-        features_ref : WormFeatures
-        
-        Note the current approach just computes the mean of the different 
-        body section widths. Eventually this should be computed in this class.
+        nw: An instance of NormalizedWorm
+
         """
-        nw = features_ref.nw
-    
-        for partition in self.fields:
-            setattr(self,partition, np.mean(nw.get_partition(partition, 'widths'),0))
+        self.fields = ('head', 'midbody', 'tail')
+
+        if nw is not None:
+            for partition in self.fields:
+                setattr(self, partition, 
+                        np.mean(nw.get_partition(partition, 'widths'), 0))
     
     @classmethod
-    def from_disk(cls,width_ref):
+    def from_disk(cls, width_ref):
+        widths_instance = cls()
 
-        self = cls.__new__(cls)
-
-        for partition in self.fields:
-            setattr(self,partition, utils._extract_time_from_disk(width_ref,partition))
+        for partition in widths_instance.fields:
+            setattr(widths_instance, partition, 
+                    utils._extract_time_from_disk(width_ref, partition))
     
-        return self
+        return widths_instance
         
     def __eq__(self, other):
-        return fc.corr_value_high(self.head, other.head, 'morph.width.head') and \
-            fc.corr_value_high(self.midbody, other.midbody, 'morph.width.midbody') and \
+        return \
+            fc.corr_value_high(self.head, other.head, 'morph.width.head') and \
+            fc.corr_value_high(self.midbody, other.midbody, 
+                               'morph.width.midbody') and \
             fc.corr_value_high(self.tail, other.tail, 'morph.width.tail')
 
     def __repr__(self):
