@@ -1,4 +1,17 @@
 """
+**********************************************
+**********************************************
+**********************************************
+**********************************************
+DEPRECATED.   Do not use.
+
+TODO: extract the one useful method from this, 
+interpolate_dropped_frames, put it in NormalizedWorm, and then delete this file
+**********************************************
+**********************************************
+**********************************************
+**********************************************
+
 
 This module defines the SchaferExperimentFile class, which encapsulates
 the data contained in the Shafer lab worm experiment data files
@@ -27,59 +40,6 @@ import h5py
       self.skeletons = np.rollaxis(worm_features.data_dict['skeletons'], 2)
       
 """
-
-
-class SchaferExperimentFile:
-
-    """
-        This class encapsulates the data in the Shafer lab
-        Worm feature files, which store the final features data.
-
-        This is provided as a legacy support to interpret their data.
-
-        The latest equivalent is wormpy.WormFeatures.
-
-        Some aspects of the data here are different in that later version.
-    """
-
-    # A 3-d numpy array containing the worm's position
-    # this array's shape is:
-    #   (
-    # of frames,
-    # of worm points in each frame,
-    #    coordinate (0=x, 1=y)
-    #   )
-    # so shape is approx (23000, 49, 2):
-    skeletons = None
-    name = ''        # TODO: add to __init__, grab from wormFile["info"]
-    # this contains our animation data
-    # TODO: avoid making this a member data element, by
-    # referencing the parent scope when referencing animation_points
-    animation_points = None
-    # this also contains our animation data, as an animation
-    animation_data = None
-
-    def __init__(self):
-        """ Let's not initialize the worm data, leaving it open
-            to an HDF5 load or a load from the more basic, block data.
-        """
-        pass
-
-    def load_HDF5_data(self, worm_file_path):
-        """ Load the worm data, including the skeleton data
-
-        """
-        if(not os.path.isfile(worm_file_path)):
-            raise Exception("Worm file not found: " + worm_file_path)
-        else:
-            worm_file = h5py.File(worm_file_path, 'r')
-
-            x_data = worm_file["worm"]["posture"]["skeleton"]["x"].value
-            y_data = worm_file["worm"]["posture"]["skeleton"]["y"].value
-
-            worm_file.close()
-
-            self.skeletons = self.combine_skeleton_axes(x_data, y_data)
 
     def combine_skeleton_axes(self, x_data, y_data):
         """ We want to "concatenate" the values of the skeletons_x and 
@@ -123,19 +83,6 @@ class SchaferExperimentFile:
             Which frames are interpolated and not genuine data is
             given by self.dropped_frames_mask
         """
-        # ATTEMPT #1 (LOOP-BASED. VERY SLOW)
-        # we will amend entries in this list to false as we patch up
-        # the skeletons
-        #s = list(self.dropped_frames_mask)
-        #counter = 0
-        # while(max(s) == True and counter < 500):
-        #  current_frame_to_fix = s.index(True)
-        #  self.skeletons[current_frame_to_fix] = \
-        #    self.skeletons[current_frame_to_fix - 1]
-        #  s[current_frame_to_fix] = False
-        #  counter += 1
-
-        # ATTEMPT #2 (using the numpy.interp function)
         dropped_frames_mask = self.dropped_frames_mask()
 
         # this numpy function returns the array indices of all the True
@@ -176,27 +123,3 @@ class SchaferExperimentFile:
 
         return w
 
-    def position_limits(self, dimension):
-        """ Maximum extent of worm's travels projected onto a given axis
-            PARAMETERS:
-              dimension: specify 0 for X axis, or 1 for Y axis.
-        NOTE: Dropped frames show up as NaN.  
-              nanmin returns the min ignoring such NaNs.        
-
-        """
-        return (np.nanmin(self.skeletons[:, :, dimension]),
-                np.nanmax(self.skeletons[:, :, dimension]))
-
-    def num_frames(self):
-        """ the number of frames in the video
-            ndarray.shape returns a tuple of array dimensions.
-            the frames are along the first dimension i.e. [0].
-        """
-        return self.skeletons.shape[0]
-
-    def num_skeletons_points(self):
-        """ the number of points in the skeletons of the worm
-            ndarray.shape returns a tuple of array dimensions.
-            the skeletal points are along the first dimension i.e. [1].
-        """
-        return self.skeletons.shape[1]

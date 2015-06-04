@@ -10,7 +10,6 @@ import scipy.io
 import copy
 import warnings
 import os
-import time
 import matplotlib.pyplot as plt
 
 
@@ -30,7 +29,7 @@ class NormalizedWorm(WormPartition):
     Encapsulates the notion of a worm's elementary measurements, scaled
     (i.e. "normalized") to 49 points along the length of the worm.
 
-    The data consists of 10 Numpy arrays (where n is the number of frames):
+    The data consists of 7 Numpy arrays (where n is the number of frames):
    - Of shape (49,2,n):
         vulva_contour
         non_vulva_contour
@@ -40,10 +39,7 @@ class NormalizedWorm(WormPartition):
         widths
     - Of shape (n):
         length
-        head_area
-        tail_area
-        vulva_area
-        non_vulva_area
+        area
 
     Also, some metadata:
         segmentation_status   (not used in further processing)
@@ -71,14 +67,11 @@ class NormalizedWorm(WormPartition):
         else:
             # Copy constructor
             attributes = ['skeleton', 'vulva_contour', 'non_vulva_contour',
-                          'angles', 'widths', 'length',
-                          'head_area', 'tail_area', 'vulva_area', 
-                          'non_vulva_area', 'segmentation_status', 
-                          'frame_code', 'plate_wireframe_video_key', 
-                          'ventral_mode']
+                          'angles', 'widths', 'length', 'area'
+                          'frame_code', 'segmentation_status', 
+                          'ventral_mode', 'plate_wireframe_video_key']
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
-
 
     @classmethod
     def from_BasicWorm_factory(cls, basic_worm, frames_to_plot_widths=[]):
@@ -123,10 +116,8 @@ class NormalizedWorm(WormPartition):
                                             basic_worm.h_non_vulva_contour)            
 
             # 4. TODO: Calculate areas
-            (nw.head_area, nw.tail_area, nw.vulva_area, nw.non_vulva_area) = \
-                 WormParsing.computeAreas(nw.vulva_contour, 
-                                          nw.non_vulva_contour,
-                                          nw.skeleton)
+            nw.area = WormParsing.computeArea(nw.vulva_contour, 
+                                              nw.non_vulva_contour)
             
             # 5. TODO:
             # Still missing:
@@ -144,16 +135,12 @@ class NormalizedWorm(WormPartition):
             nw.skeleton = WormParsing.normalizeAllFramesXY(basic_worm.skeleton)
             nw.vulva_contour = None
             nw.non_vulva_contour = None
-            nw.head_area = None
-            nw.tail_area = None
-            nw.vulva_area = None
-            nw.non_vulva_area = None           
+            nw.area = None
         
         # 6. Calculate length
         nw.length = WormParsing.computeSkeletonLengths(nw.skeleton)
         
         return nw
-            
 
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):
@@ -271,6 +258,17 @@ class NormalizedWorm(WormPartition):
             del(nw.vulva_areas)
             del(nw.non_vulva_areas)
             del(nw.frame_codes)
+            
+            # Somehow those four areas apparently add up to the total area
+            # of the worm.  No feature requires knowing anything more
+            # than just the total area of the worm, so for NormalizedWorm
+            # we just store one variable, area, for the whole worm's area.
+            nw.area = nw.head_area + nw.tail_area + \
+                      nw.vulva_area + nw.non_vulva_area
+            del(nw.head_area)
+            del(nw.tail_area)
+            del(nw.vulva_area)
+            del(nw.non_vulva_area)
 
             # Let's change the string of length n to a numpy array of single
             # characters of length n, to be consistent with the other data
@@ -314,47 +312,6 @@ class NormalizedWorm(WormPartition):
         """
         # TODO
         return True
-
-    def plot_path(self, posture_index):
-        """
-        Plot the path of the contour, skeleton and widths
-        
-        Parameters
-        ----------------
-        posture_index: int
-            The desired posture point (along skeleton and contour) to plot.
-        
-        """
-        vc = self.vulva_contour[posture_index,:,:]
-        nvc = self.non_vulva_contour[posture_index,:,:]
-        skeleton_x = self.skeleton[posture_index,0,:]
-        skeleton_y = self.skeleton[posture_index,1,:]
-        
-        plt.scatter(vc[0,:], vc[1,:])
-        plt.scatter(nvc[0,:], nvc[1,:])
-        plt.scatter(skeleton_x, skeleton_y)
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
-        
-    def plot_posture(self, frame_index):
-        """
-        Show a scatterplot of the contour, skeleton and widths of frame #frame
-        
-        Parameters
-        ----------------
-        frame_index: int
-            The desired frame # to plot.
-        
-        """
-        vc = self.vulva_contour[:,:,frame_index]
-        nvc = self.non_vulva_contour[:,:,frame_index]
-        skeleton = self.skeleton[:,:,frame_index]
-        
-        plt.scatter(vc[:,0], vc[:,1], c='red')
-        plt.scatter(nvc[:,0], nvc[:,1], c='blue')
-        plt.scatter(skeleton[:,0], skeleton[:,1], c='black')
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
 
     def rotated(self, theta_d):
         """   
@@ -566,26 +523,43 @@ class NormalizedWorm(WormPartition):
         d = getattr(self, measurement)
         if(len(np.shape(d)) < 3):
             raise Exception("Position Limits Is Only Implemented for 2D data")
-        return (np.nanmin(d[dimension, 0, :]), 
-                np.nanmax(d[dimension, 1, :]))
+        return (np.nanmin(d[:, dimension, :]), 
+                np.nanmax(d[:, dimension, :]))
+
+    @property
+    def contour(self):
+        """
+        The contour of the worm as one 97-point polygon.
+        
+        Go from vulva_contour shape (49,2,n) and
+            non_vulva_contour shape (49,2,n) to
+            contour with      shape (97,2,n)
+            
+        Why 97 instead of 49x2 = 98?
+        Because the first and last points are duplicates, so we omit
+        those on the second set. We also reverse the contour so that
+        it encompasses an "out and back" contour
+        
+        """
+        try:
+            return self._contour
+        except AttributeError:
+            self._contour = \
+                np.concatenate((self.vulva_contour[:, :, :], 
+                                self.non_vulva_contour[-2:0:-1, :,:]))
+            
+            return self._contour
+
+        #return np.vstack((self.vulva_contour, 
+        #                  self.non_vulva_contour[::-1,:,:]))
 
     @property
     def contour_x(self):
-        """ 
-          Return the approximate worm contour, derived from data
-          NOTE: The first and last points are duplicates, so we omit
-                those on the second set. We also reverse the contour so that
-                it encompasses an "out and back" contour
-        """
-        vc = self.vulva_contour
-        nvc = self.non_vulva_contour
-        return np.concatenate((vc[:, 0, :], nvc[-2:0:-1, 0,:]))    
+        return self.contour[:,0,:]
 
     @property
     def contour_y(self):
-        vc = self.vulva_contour
-        nvc = self.non_vulva_contour
-        return np.concatenate((vc[:, 1, :], nvc[-2:0:-1, 1,:]))    
+        return self.contour[:,1,:]
 
     @property
     def skeleton_x(self):
@@ -594,7 +568,6 @@ class NormalizedWorm(WormPartition):
     @property
     def skeleton_y(self):
         return self.skeleton[:, 1, :]
-
 
     def __eq__(self,other):
         x1 = self.skeleton_x.flatten()
@@ -615,8 +588,48 @@ class NormalizedWorm(WormPartition):
             #fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
             #fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
 
-
     def __repr__(self):
         #TODO: This omits the properties above ...
         return utils.print_object(self)
+
+    def plot_path(self, posture_index):
+        """
+        Plot the path of the contour, skeleton and widths
+        
+        Parameters
+        ----------------
+        posture_index: int
+            The desired posture point (along skeleton and contour) to plot.
+        
+        """
+        vc = self.vulva_contour[posture_index,:,:]
+        nvc = self.non_vulva_contour[posture_index,:,:]
+        skeleton_x = self.skeleton[posture_index,0,:]
+        skeleton_y = self.skeleton[posture_index,1,:]
+        
+        plt.scatter(vc[0,:], vc[1,:])
+        plt.scatter(nvc[0,:], nvc[1,:])
+        plt.scatter(skeleton_x, skeleton_y)
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
+        
+    def plot_posture(self, frame_index):
+        """
+        Show a scatterplot of the contour, skeleton and widths of frame #frame
+        
+        Parameters
+        ----------------
+        frame_index: int
+            The desired frame # to plot.
+        
+        """
+        vc = self.vulva_contour[:,:,frame_index]
+        nvc = self.non_vulva_contour[:,:,frame_index]
+        skeleton = self.skeleton[:,:,frame_index]
+        
+        plt.scatter(vc[:,0], vc[:,1], c='red')
+        plt.scatter(nvc[:,0], nvc[:,1], c='blue')
+        plt.scatter(skeleton[:,0], skeleton[:,1], c='black')
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
 

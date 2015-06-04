@@ -62,7 +62,8 @@ class WormMorphology(object):
     These widths are converted to microns.
 
     3. Area. The worm area is computed from the number of pixels within the
-    segmented contour. The sum of the pixels is converted to microns2.
+    segmented contour. The count of the pixels has been converted to 
+    microns ^ 2.
 
     4. Area/Length.
 
@@ -96,10 +97,7 @@ class WormMorphology(object):
         
         self.width = morphology_features.Widths(nw)
 
-        self.area = nw.tail_area + \
-                    nw.head_area + \
-                    nw.vulva_area + \
-                    nw.non_vulva_area
+        self.area = nw.area
 
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length

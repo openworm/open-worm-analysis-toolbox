@@ -12,7 +12,6 @@ i.e. nw == nw_calculated
 """
 
 import sys, os
-import csv
 
 sys.path.append('..')
 
@@ -20,6 +19,8 @@ from movement_validation import user_config, config, utils
 from movement_validation import BasicWorm, NormalizedWorm
 from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
+
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -42,8 +43,15 @@ def main():
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw_calculated = \
-        NormalizedWorm.from_BasicWorm_factory(bw, frames_to_plot_widths=[4])
+        NormalizedWorm.from_BasicWorm_factory(bw)#, frames_to_plot_widths=[4])
     nw == nw_calculated
+
+    # Compare area calculations
+    plt.title('Worm Area')    
+    area_loaded, = plt.plot(nw.area, 'r', label='Loaded')
+    area_calculated, = plt.plot(nw_calculated.area, 'b', label='Calculated')
+    plt.legend(handles=[area_loaded, area_calculated])
+    plt.show()
 
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """
@@ -64,3 +72,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

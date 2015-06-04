@@ -257,7 +257,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                                  blit=True)
 
     def set_axes_extents(self):
-        # DON'T USE set_xbound, it changes dynmically
+        # DON'T USE set_xbound; it changes dynamically
         self.ax1.set_xlim(self.nw.position_limits(0))
         self.ax1.set_ylim(self.nw.position_limits(1))
         self.ax2.set_xlim((-500, 500))

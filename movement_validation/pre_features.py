@@ -5,6 +5,7 @@ Pre-features calculation
 Written by @JimHokanson
 
 """
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -28,35 +29,67 @@ class WormParsing(object):
     """
 
     @staticmethod
-    def computeAreas(vulva_contour, non_vulva_contour, skeleton):
+    def computeArea(vulva_contour, non_vulva_contour):
         """
-        Compute the areas of various parts of the worm, for each frame of 
-        video, from a heterocardinal contour.
+        Compute the area of the worm, for each frame of video, from a 
+        normalized contour.
 
         Parameters
         -------------------------
-        vulva_contour: a list of numpy arrays.
-            The list is of the frames.
+        vulva_contour: a (49,2,n)-shaped numpy array
         non_vulva_contour: same
-        skeleton: same
         
         Returns
         -------------------------
-        (head_area, tail_area, vulva_area, non_vulva_area): tuple
-            head_area is a numpy array of scalars, giving the area in each 
-            frame of video.  so if there are 4000 frames, head_area would have
+        area: float
+            A numpy array of scalars, giving the area in each 
+            frame of video.  so if there are 4000 frames, area would have
             shape (4000,)
         
         """
-        # TODO: this method is currently unimplemented!
-        
-        # The old method was:
-        # Using known transition regions, count the # of 'on' pixels in
-        # the image. Presumably we would use something more akin
-        # to the eccentricity feature code
-        # - @JimHokanson        
+        # We need the contour points all organized in order around the worm:
+        # - vulva_contour, non_vulva_contour have shape (49, 2, n).
+        # - contour has shape (97, 2, n).
+        contour = np.concatenate((vulva_contour[:, :, :], 
+                                  non_vulva_contour[-2:0:-1, :,:]))
+    
+        # We do this to avoid a RuntimeWarning taking the nanmean of 
+        # frames with nothing BUT nan entries: for those frames nanmean 
+        # returns nan (correctly) but still raises a RuntimeWarning.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            contour_mean = np.nanmean(contour, 0, keepdims=False)
+    
+        # Centre the contour about the origin for each frame
+        # this is technically not necessary but it shrinks the magnitude of 
+        # the coordinates we are about to multiply for a potential speedup
+        contour -= contour_mean
+    
+        # We want a new 3D array, where all the points (i.e. axis 0) 
+        # are shifted forward by one and wrapped.
+        # That is, for a given frame:
+        #  x' sub 1 = x sub 2, 
+        #  x' sub 2 = x sub 3, 
+        #  ...,
+        #  x` sub n = x sub 1.     (this is the "wrapped" index)
+        # Same for y.
+        contour_plus_one = contour.take(range(1,np.shape(contour)[0]+1),
+                                        mode='wrap', axis=0)
+    
+        # Now we use the Shoelace formula to calculate the area of a simple
+        # polygon for each frame.
+        # Credit to Avelino Javer for suggesting this.
+        signed_area = np.nansum(contour[:,0,:]*contour_plus_one[:,1,:] - \
+                                contour[:,1,:]*contour_plus_one[:,0,:], 0) / 2
+    
+        # Frames where the contour[:,:,k] is all NaNs will result in a 
+        # signed_area[k] = 0.  We must replace these 0s with NaNs.
+        signed_area[np.flatnonzero(np.isnan(contour[0,0,:]))] = np.NaN
 
-        return (None, None, None, None)
+        # TODO: convert square pixels to square microns
+        pass    
+    
+        return np.abs(signed_area)
 
     @staticmethod
     def h__computeNormalVectors(data):
@@ -631,6 +664,9 @@ class WormParsing(object):
         Computes the running length (cumulative distance from start - head?) 
         for each skeleton.
         
+        Computed from the skeleton by converting the chain-code 
+        pixel length to microns.
+        
         Parameters
         ----------
         xy_all : [numpy.array]
@@ -642,7 +678,7 @@ class WormParsing(object):
         Returns
         -----------
         lengths
-            
+        
         """
         n_frames = len(xy_all)
         data = np.full([config.N_POINTS_NORMALIZED, n_frames], 
