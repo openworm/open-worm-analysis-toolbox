@@ -51,6 +51,8 @@ def main():
     area_loaded, = plt.plot(nw.area, 'r', label='Loaded')
     area_calculated, = plt.plot(nw_calculated.area, 'b', label='Calculated')
     plt.legend(handles=[area_loaded, area_calculated])
+    plt.xlabel("Frame #")
+    plt.ylabel("Area")
     plt.show()
 
     # EXTRAS (nothing to do with NormalizedWorm creation:)
