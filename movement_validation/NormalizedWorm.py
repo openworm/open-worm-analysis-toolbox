@@ -125,7 +125,8 @@ class NormalizedWorm(WormPartition):
             # 4. TODO: Calculate areas
             (nw.head_area, nw.tail_area, nw.vulva_area, nw.non_vulva_area) = \
                  WormParsing.computeAreas(nw.vulva_contour, 
-                                          nw.non_vulva_contour)
+                                          nw.non_vulva_contour,
+                                          nw.skeleton)
             
             # 5. TODO:
             # Still missing:

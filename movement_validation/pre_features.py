@@ -28,7 +28,7 @@ class WormParsing(object):
     """
 
     @staticmethod
-    def computeAreas(vulva_contour, non_vulva_contour):
+    def computeAreas(vulva_contour, non_vulva_contour, skeleton):
         """
         Compute the areas of various parts of the worm, for each frame of 
         video, from a heterocardinal contour.
@@ -38,6 +38,7 @@ class WormParsing(object):
         vulva_contour: a list of numpy arrays.
             The list is of the frames.
         non_vulva_contour: same
+        skeleton: same
         
         Returns
         -------------------------

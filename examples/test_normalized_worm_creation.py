@@ -45,14 +45,6 @@ def main():
         NormalizedWorm.from_BasicWorm_factory(bw, frames_to_plot_widths=[4])
     nw == nw_calculated
 
-    frame_codes_path2 = r'C:\Users\mcurrie\Desktop\GitHub' + \
-                       r'\movement_validation\documentation\frame_codes2.csv'
-
-
-    with open(frame_codes_path2, 'w') as frame_output_file:
-        writer = csv.writer(frame_output_file)
-        writer.writerows(['hi', 'hello'])
-
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """
     # The frame rate is somewhere in the video info. Ideally this would 

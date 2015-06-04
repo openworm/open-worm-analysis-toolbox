@@ -104,6 +104,7 @@ class WormMorphology(object):
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
 
+
     @classmethod
     def from_disk(cls, m_var):
         self = cls.__new__(cls)
