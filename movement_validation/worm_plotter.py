@@ -50,7 +50,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
     using PyLab-shell-type calls to construct the animation.
 
     """
-    def __init__(self, normalized_worm, motion_mode=None, interactive=False):
+    def __init__(self, normalized_worm, motion_mode=None, interactive=False,
+                 interpolate_nan_frames=False):
         """ 
         Initialize the animation of the worm's attributes.
 
@@ -69,6 +70,9 @@ class NormalizedWormPlottable(animation.TimedAnimation):
             is called.  this allows WormPlotter to be instantiated without 
             just automatically being displayed.  Instead, the user must call
             WormPlotter.show() to have plt.show() be called.
+            
+        interpolate_nan_frames: interpolate the flickering nan frames
+            Note: this is currently not implemented
 
         Notes
         ---------------------------------------

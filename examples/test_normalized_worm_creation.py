@@ -21,7 +21,7 @@ from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def main():
     start = utils.timing_function()
@@ -50,11 +50,22 @@ def main():
     plt.title('Worm Area')    
     area_loaded, = plt.plot(nw.area, 'r', label='Loaded')
     area_calculated, = plt.plot(nw_calculated.area, 'b', label='Calculated')
-    plt.legend(handles=[area_loaded, area_calculated])
+    area_ratio, = plt.plot(nw_calculated.area / nw.area, label='Ratio')
+    area_diff, = plt.plot(nw_calculated.area - nw.area, label='Difference')
+    plt.legend(handles=[area_loaded, area_calculated, area_ratio, area_diff])
     plt.xlabel("Frame #")
     plt.ylabel("Area")
     plt.show()
+    
+    print(np.nanmean(nw_calculated.area / nw.area))
+    print(np.nanmin(nw_calculated.area / nw.area))
+    print(np.nanmax(nw_calculated.area / nw.area))
 
+    print(np.nanmean(nw_calculated.area - nw.area))
+    print(np.nanmin(nw_calculated.area - nw.area))
+    print(np.nanmax(nw_calculated.area - nw.area))
+
+    
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """
     # The frame rate is somewhere in the video info. Ideally this would 

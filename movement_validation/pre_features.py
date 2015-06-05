@@ -86,9 +86,6 @@ class WormParsing(object):
         # signed_area[k] = 0.  We must replace these 0s with NaNs.
         signed_area[np.flatnonzero(np.isnan(contour[0,0,:]))] = np.NaN
 
-        # TODO: convert square pixels to square microns
-        pass    
-    
         return np.abs(signed_area)
 
     @staticmethod

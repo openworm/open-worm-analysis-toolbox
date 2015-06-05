@@ -48,7 +48,6 @@ class NormalizedWorm(WormPartition):
         plate_wireframe_video_key
         
     """
-
     def __init__(self, other=None):
         """
         Populates an empty normalized worm.
@@ -388,6 +387,26 @@ class NormalizedWorm(WormPartition):
             self._angle = np.arctan(v[1,:]/v[0,:])*(180/np.pi)
 
             return self._angle
+
+    @property
+    def dropped_frames_mask(self):
+        """ 
+        Which frames are "dropped", i.e. which frames have the first 
+        skeleton X-coordinate set to NaN.
+        
+        Returns
+        ------------------
+        boolean numpy array of shape (n,) where n is the number of frames
+            True if frame is dropped in the skeleton or contour
+            
+        Note
+        ------------------
+        We are assuming that self.validate() == True, i.e. that the 
+        skeleton and contour are NaN along all points in frames where 
+        ANY of the points are NaN.
+        
+        """
+        return np.isnan(self.skeleton[0,0,:])
 
     @property
     def centred_skeleton(self):
