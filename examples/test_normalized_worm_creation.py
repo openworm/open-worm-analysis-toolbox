@@ -10,7 +10,6 @@ they are the same:
 i.e. nw == nw_calculated
 
 """
-
 import sys, os
 
 sys.path.append('..')
@@ -20,12 +19,7 @@ from movement_validation import BasicWorm, NormalizedWorm
 from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 def main():
-    start = utils.timing_function()
-    
     # Load from file a normalized worm, as calculated by Schafer Lab code
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
     schafer_nw_file_path = os.path.join(base_path, 
@@ -45,26 +39,6 @@ def main():
     nw_calculated = \
         NormalizedWorm.from_BasicWorm_factory(bw)#, frames_to_plot_widths=[4])
     nw == nw_calculated
-
-    # Compare area calculations
-    plt.title('Worm Area')    
-    area_loaded, = plt.plot(nw.area, 'r', label='Loaded')
-    area_calculated, = plt.plot(nw_calculated.area, 'b', label='Calculated')
-    area_ratio, = plt.plot(nw_calculated.area / nw.area, label='Ratio')
-    area_diff, = plt.plot(nw_calculated.area - nw.area, label='Difference')
-    plt.legend(handles=[area_loaded, area_calculated, area_ratio, area_diff])
-    plt.xlabel("Frame #")
-    plt.ylabel("Area")
-    plt.show()
-    
-    print(np.nanmean(nw_calculated.area / nw.area))
-    print(np.nanmin(nw_calculated.area / nw.area))
-    print(np.nanmax(nw_calculated.area / nw.area))
-
-    print(np.nanmean(nw_calculated.area - nw.area))
-    print(np.nanmin(nw_calculated.area - nw.area))
-    print(np.nanmax(nw_calculated.area - nw.area))
-
     
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """
@@ -80,9 +54,10 @@ def main():
     # Display how long it took to generate each of the features
     wf.timer.summarize()
     """
-    
-    print("Time elapsed: %.2f" % (utils.timing_function() - start))
 
 if __name__ == '__main__':
+    start = utils.timing_function()
     main()
+    print("Time elapsed: %.2f" % (utils.timing_function() - start))
+
 

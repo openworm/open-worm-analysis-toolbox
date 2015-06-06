@@ -29,15 +29,16 @@ class WormParsing(object):
     """
 
     @staticmethod
-    def computeArea(vulva_contour, non_vulva_contour):
+    def computeArea(contour):
         """
         Compute the area of the worm, for each frame of video, from a 
         normalized contour.
 
         Parameters
         -------------------------
-        vulva_contour: a (49,2,n)-shaped numpy array
-        non_vulva_contour: same
+        contour: a (98,2,n)-shaped numpy array
+            The contour points, in order around the worm, with two redundant
+            points at the head and tail.
         
         Returns
         -------------------------
@@ -47,12 +48,6 @@ class WormParsing(object):
             shape (4000,)
         
         """
-        # We need the contour points all organized in order around the worm:
-        # - vulva_contour, non_vulva_contour have shape (49, 2, n).
-        # - contour has shape (97, 2, n).
-        contour = np.concatenate((vulva_contour[:, :, :], 
-                                  non_vulva_contour[-2:0:-1, :,:]))
-    
         # We do this to avoid a RuntimeWarning taking the nanmean of 
         # frames with nothing BUT nan entries: for those frames nanmean 
         # returns nan (correctly) but still raises a RuntimeWarning.

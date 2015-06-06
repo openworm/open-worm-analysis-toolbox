@@ -115,8 +115,8 @@ class NormalizedWorm(WormPartition):
                                             basic_worm.h_non_vulva_contour)            
 
             # 4. TODO: Calculate areas
-            nw.area = WormParsing.computeArea(nw.vulva_contour, 
-                                              nw.non_vulva_contour)
+            nw.area = WormParsing.computeArea(
+                                    nw.contour(keep_redundant_points=True))
             
             # 5. TODO:
             # Still missing:
