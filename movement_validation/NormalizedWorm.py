@@ -545,32 +545,30 @@ class NormalizedWorm(WormPartition):
         return (np.nanmin(d[:, dimension, :]), 
                 np.nanmax(d[:, dimension, :]))
 
-    @property
-    def contour(self):
+    def contour(self, keep_redundant_points=True):
         """
-        The contour of the worm as one 97-point polygon.
+        The contour of the worm as one 96-point or 98-point polygon.
+
+        That is:
         
         Go from vulva_contour shape (49,2,n) and
             non_vulva_contour shape (49,2,n) to
-            contour with      shape (97,2,n)
+            contour with      shape (96,2,n) or (98,2,n)
             
-        Why 97 instead of 49x2 = 98?
-        Because the first and last points are duplicates, so we omit
-        those on the second set. We also reverse the contour so that
-        it encompasses an "out and back" contour
+        Why 96 instead of 49x2 = 98?
+        Because the first and last points are duplicates, so if 
+        keep_redundant_points=False, we omit those on the second set.
+        
+        In either case we reverse the contour so that
+        it encompasses an "out and back" contour.
         
         """
-        try:
-            return self._contour
-        except AttributeError:
-            self._contour = \
-                np.concatenate((self.vulva_contour[:, :, :], 
-                                self.non_vulva_contour[-2:0:-1, :,:]))
-            
-            return self._contour
-
-        #return np.vstack((self.vulva_contour, 
-        #                  self.non_vulva_contour[::-1,:,:]))
+        if keep_redundant_points:
+            return np.concatenate((self.vulva_contour, 
+                                   self.non_vulva_contour[::-1,:,:])) 
+        else:
+            return np.concatenate((self.vulva_contour[:, :, :], 
+                                   self.non_vulva_contour[-2:0:-1, :,:]))
 
     @property
     def contour_x(self):

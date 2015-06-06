@@ -37,7 +37,7 @@ def main():
     # normalized worm.  This file was generated earlier in the code though,
     # and contains more "primitive", non-normalized contour and skeleton data
     schafer_bw_file_path = os.path.join(base_path, 
-                                    "example_contour_and_skeleton_info.mat")  
+                                     "example_contour_and_skeleton_info.mat")  
     bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
     # Compare our generated normalized worm `nw2` with the pre-loaded 
