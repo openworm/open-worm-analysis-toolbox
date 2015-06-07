@@ -175,3 +175,11 @@ direction is measured as the angular direction from the its second half
 
 Credit for this definition: `Yemini *et al.*
 (2013) <http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf>`__
+
+10. Kinks
+~~~~~~~~~~~~~
+
+Apparently this feature is undocumented in the original scientific paper.   `Yemini *et al.*
+(2013) <http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf>`__
+
+Nevertheless, we do have code to calculate it, and it does appear as a data item in the feature files available in the *C. elegans* behavioural database.
