@@ -21,9 +21,33 @@ Details of feature files and algorithms for feature measurement
 Four feature categories:
 
 - Morphology
+   - length
+   - width
+   - area
+   - area_per_length
+   - width_per_length
 - Locomotion
+   - bends
+   - bend count (not on below list?? -@MichaelCurrie)
+   - eccentricity
+   - amplitude
+   - wavelength
+   - track length
+   - coils
+   - eigen_projection
+   - orientation (not on below list?? -@MichaelCurrie)
+   - kinks
 - Path
+   - range
+   - curvature
+   - dwelling (aka duration ?  - @MichaelCurrie)
 - Posture
+   - velocity
+   - motion_events
+   - foraging_bends
+   - crawling_bends
+   - omegas
+   - upsilons
 
 Features can be one of three "types":
 
