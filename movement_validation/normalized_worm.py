@@ -545,6 +545,7 @@ class NormalizedWorm(WormPartition):
         return (np.nanmin(d[:, dimension, :]), 
                 np.nanmax(d[:, dimension, :]))
 
+    @property
     def contour(self, keep_redundant_points=True):
         """
         The contour of the worm as one 96-point or 98-point polygon.
