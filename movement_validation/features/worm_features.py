@@ -101,10 +101,15 @@ class WormMorphology(object):
         #This work is currently ongoing in the constructor for NormalizedWorm
         #
         #Eventually those methods will probably move to here ...
-        self.area = nw.tail_area + \
-            nw.head_area + \
-            nw.vulva_area + \
-            nw.non_vulva_area
+        if hasattr(nw, 'area'):
+            self.area = nw.area
+        else:
+            hasattr(self, 'area')
+            print(self)
+            self.area = nw.tail_area + \
+                nw.head_area + \
+                nw.vulva_area + \
+                nw.non_vulva_area
 
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
@@ -194,6 +199,7 @@ class WormLocomotion(object):
             features_ref,nw.is_segmented,nw.ventral_mode)
 
         is_stage_movement = nw.segmentation_status == 'm'
+       
 
         self.turns = locomotion_turns.LocomotionTurns(features_ref, 
                                                       nw.angles,
@@ -320,11 +326,11 @@ class WormPosture(object):
         
         self.bends = posture_features.Bends.create(features_ref)
 
-        self.eccentricity, orientation = \
+        self.eccentricity, self.orientation = \
             posture_features.get_eccentricity_and_orientation(features_ref)
 
         amp_wave_track = posture_features.AmplitudeAndWavelength(
-            orientation, features_ref)
+            self.orientation, features_ref)
 
         self.amplitude_max = amp_wave_track.amplitude_max
         self.amplitude_ratio = amp_wave_track.amplitude_ratio
