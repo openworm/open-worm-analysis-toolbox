@@ -455,15 +455,22 @@ def interpolate_with_threshold(array,
 
     assert(threshold == None or threshold >= 0)
 
+    
+    if make_copy:
+        # Use a new array so we don't modify the original array passed to us
+        new_array = np.copy(array)
+    else:
+        new_array = array
+    
     if(threshold == 0):  # everything gets left as NaN
-        return array
-
+        return new_array
+    
     # Say array = [10, 12, 15, nan, 17, nan, nan, nan, -5]
     # Then np.isnan(array) =
     # [False, False, False, True, False True, True, True, False]
     # Let's obtain the "x-coordinates" of the NaN entries.
     # e.g. [3, 5, 6, 7]
-    x = np.flatnonzero(np.isnan(array))
+    x = np.flatnonzero(np.isnan(new_array))
 
     # (If we weren't using a threshold and just interpolating all NaNs,
     # we could skip the next four lines.)
@@ -488,18 +495,18 @@ def interpolate_with_threshold(array,
         # e.g. if threshold was 5, then x_runs would be [(3,1), (5,3)] so
         #      x would be [3, 5, 6, 7]
         # this give us the x-coordinates of the values to be interpolated:
-        x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
+        
+        if x_runs:
+            x = np.concatenate([(i[0] + list(range(i[1]))) for i in x_runs])
+        else:
+            #consider th case that there where not valid groups remaining to interpolate 
+            return new_array
+            
 
     # The x-coordinates of the data points, must be increasing.
-    xp = np.flatnonzero(~np.isnan(array))
+    xp = np.flatnonzero(~np.isnan(new_array))
     # The y-coordinates of the data points, same length as xp
-    yp = array[~np.isnan(array)]
-
-    if make_copy:
-        # Use a new array so we don't modify the original array passed to us
-        new_array = np.copy(array)
-    else:
-        new_array = array
+    yp = array[~np.isnan(new_array)]
 
     if extrapolate:
         # TODO

@@ -144,8 +144,8 @@ class LocomotionTurns(object):
         # value in each angle vector
         if n_head < 2 or n_body < 2 or n_tail < 2:
             # Make omegas and upsilons into blank events lists and return
-            self.omegas   = events.EventListWithFeatures(make_null=True)
-            self.upsilons = events.EventListWithFeatures(make_null=True)
+            self.omegas   = events.EventListWithFeatures(fps, make_null=True)
+            self.upsilons = events.EventListWithFeatures(fps, make_null=True)
             return
 
         # Interpolate the angles.  angles is modified.

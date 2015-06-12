@@ -1265,7 +1265,7 @@ def get_worm_coils(features_ref, midbody_distance):
             coil_frame_start = iFrame
 
     if options.mimic_old_behaviour:
-        if (len(starts) > 0) & (ends[-1] == len(frame_code) - 1):
+        if (len(starts) > 0) and (ends[-1] == len(frame_code) - 1):
             ends[-1] += -1
             starts[-1] += -1
 

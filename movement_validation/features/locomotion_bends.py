@@ -291,9 +291,12 @@ class LocomotionCrawlingBends(object):
             #
             # Compute the real part of the STFT.
             # These two steps take a lot of time ...
-            fft_data = np.fft.fft(windowed_data, fft_n_samples)
-            fft_data = abs(fft_data[:fft_max_I])
-
+            #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
+            #fft_data = abs(fft_data[:fft_max_I])
+            
+            #it is faster to use rfft, than using fft and abs to obtain the real part of the transform
+            fft_data = np.fft.rfft(windowed_data, fft_n_samples)
+            
             # Find the peak frequency.
             maxPeakI = np.argmax(fft_data)
             maxPeak  = fft_data[maxPeakI]
@@ -853,17 +856,16 @@ class CrawlingBendsBoundInfo(object):
             (right_bounds > n_frames) | \
             is_paused
             
-    def h__getBoundingZeroIndices(self, avg_bend_angles, min_win_size):
+    def h__getBoundingZeroIndices(self, avg_bend_angles, min_number_frames_for_bend):
         """
         The goal of this function is to bound each index of avg_bend_angles by 
         sign changes.
 
-        #TODO: rename min_win_size to min_number_frames_for_bend
 
         Parameters:
         -----------
         avg_bend_angles : [1 x n_frames]
-        min_win_size    : int
+        min_number_frames_for_bend    : int
           The minimum size of the data window
 
         Returns
@@ -877,7 +879,7 @@ class CrawlingBendsBoundInfo(object):
         Notes
         ----------------------
         Formerly [back_zeros_I,front_zeros_I] = \
-                h__getBoundingZeroIndices(avg_bend_angles,min_win_size)
+                h__getBoundingZeroIndices(avg_bend_angles,min_number_frames_for_bend)
 
         """
 
@@ -900,6 +902,11 @@ class CrawlingBendsBoundInfo(object):
         
         sign_change_I = np.flatnonzero(sign_change_mask)
         n_sign_changes = len(sign_change_I)
+        n_frames = len(avg_bend_angles)
+        
+        if n_sign_changes == 0:
+            #no changes of sign return two zeros arrays
+            return [np.zeros(n_frames),np.zeros(n_frames)]
 
         """
         To get the correct frame numbers, we need to do the following 
@@ -943,7 +950,7 @@ class CrawlingBendsBoundInfo(object):
         We've gone too far, nothing at index 0, set to invalid
         """
 
-        n_frames = len(avg_bend_angles)
+        
 
         #For each element, determine the indices to the left and right of the
         #element at which a sign change occurs.
@@ -1038,14 +1045,14 @@ class CrawlingBendsBoundInfo(object):
             #
             # so in reality we should use:
             #
-            # front_zero_I - iFrame < min_win_size/2 and
-            # iFrame - back_zero_I < min_win_size/2
+            # front_zero_I - iFrame < min_number_frames_for_bend/2 and
+            # iFrame - back_zero_I < min_number_frames_for_bend/2
             #
             # By not doing this, we overshoot the minimum window size that
             # we need to use. Consider window sizes that are in terms of
             # the minimum window size.
             #
-            # i.e. 0.5w means the left or right window is half min_win_size
+            # i.e. 0.5w means the left or right window is half min_number_frames_for_bend
             #
             # Consider we have:
             # 0.5w left
@@ -1055,7 +1062,7 @@ class CrawlingBendsBoundInfo(object):
             #
             #   But in reality, if we stopped now we would be at twice 0.5w
 
-            while (front_zero_I - back_zero_I + 1) < min_win_size:
+            while (front_zero_I - back_zero_I + 1) < min_number_frames_for_bend:
                 # Expand the smaller of the two windows
                 # -------------------------------------
                 #  left_window_size       right_window_size
