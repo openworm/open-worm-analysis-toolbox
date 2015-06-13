@@ -13,14 +13,14 @@ movement_validation package based on the user_config_example.txt
 
 """
 
-import sys, os, time
+import sys, os
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 from movement_validation import user_config, NormalizedWorm
-from movement_validation import WormFeatures, VideoInfo, config
+from movement_validation import WormFeatures, VideoInfo, config, utils
 
 
 def main():
@@ -28,13 +28,7 @@ def main():
     Compare Schafer-generated features with our new code's generated features
 
     """
-    # A better method after Python 3.3 is to use time.monotonic
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
-        timer_function = time.monotonic
-    else:
-        timer_function = time.time
-
-    start_time = timer_function()
+    start_time = utils.timing_function()
     
     # Set up the necessary file paths for file loading
     #----------------------
@@ -81,7 +75,8 @@ def main():
         str(matlab_worm_features.path == openworm_features.path))
 
     print("\nDone validating features")
-    print("Time elapsed: %.2f seconds" % (timer_function() - start_time))
+    print("Time elapsed: %.2f seconds" % 
+          (utils.timing_function() - start_time))
 
 
 if __name__ == '__main__':
