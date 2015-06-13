@@ -56,8 +56,8 @@ def main():
     """
 
 if __name__ == '__main__':
-    start = utils.timing_function()
+    start_time = utils.timing_function()
     main()
-    print("Time elapsed: %.2f" % (utils.timing_function() - start))
-
-
+    print("Time elapsed: %.2f seconds" % 
+          (utils.timing_function() - start_time))
+    

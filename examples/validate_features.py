@@ -28,7 +28,6 @@ def main():
     Compare Schafer-generated features with our new code's generated features
 
     """
-    start_time = utils.timing_function()
     
     # Set up the necessary file paths for file loading
     #----------------------
@@ -75,9 +74,11 @@ def main():
         str(matlab_worm_features.path == openworm_features.path))
 
     print("\nDone validating features")
-    print("Time elapsed: %.2f seconds" % 
-          (utils.timing_function() - start_time))
 
 
 if __name__ == '__main__':
+    start_time = utils.timing_function()
     main()
+    print("Time elapsed: %.2f seconds" % 
+          (utils.timing_function() - start_time))
+    

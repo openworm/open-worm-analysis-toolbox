@@ -115,8 +115,7 @@ class NormalizedWorm(WormPartition):
                                             basic_worm.h_non_vulva_contour)            
 
             # 4. TODO: Calculate areas
-            nw.area = WormParsing.computeArea(
-                                    nw.contour(keep_redundant_points=True))
+            nw.area = WormParsing.computeArea(nw.contour)
             
             # 5. TODO:
             # Still missing:
@@ -208,8 +207,8 @@ class NormalizedWorm(WormPartition):
                 'x',                  # shape is (49, n) integer
                 'y']                  # shape is (49, n) integer
 
-            # Here I use powerful python syntax to reference data elements of s
-            # dynamically through built-in method getattr
+            # Here I use powerful python syntax to reference data elements of
+            # s dynamically through built-in method getattr
             # that is, getattr(s, x)  works syntactically just like s.x,
             # only x is a variable, so we can do a list comprehension with it!
             for key in data_keys:
@@ -304,9 +303,9 @@ class NormalizedWorm(WormPartition):
   
     def validate(self):
         """
-        Checks array lengths, etc. to ensure that this is a valid instance
-        and no further problems will arise if further processing is attempted
-        on this instance
+        Checks array lengths, etc. to ensure that this is a valid 
+        instance and no further problems will arise if further 
+        processing is attempted on this instance
 
         """
         # TODO
@@ -451,8 +450,9 @@ class NormalizedWorm(WormPartition):
         and the second matrix treated as one-dimensional,
         with the results applied elementwise in the other dimensions.
 
-        To make this work I believe we need to pre-broadcast rot_matrix into
-        the skeleton points dimension (the one with 49 points) so that we have
+        To make this work I believe we need to pre-broadcast rot_matrix
+        into the skeleton points dimension (the one with 49 points) so 
+        that we have
           2 x 2 x 49 x n, times 2 x 49 x n
         #s1 = np.rollaxis(self.skeleton, 1)
 
@@ -479,13 +479,15 @@ class NormalizedWorm(WormPartition):
             # rot_matrix[:,:,0].dot(s1[:,0,0])
     
             # ATTEMPTING TO CHANGE rot_matrix from 2x2x49xn to 2x49xn
-            # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], np.shape(s1)[2])) * rot_matrix
+            # rot_matrix2 = np.ones((2, 2, np.shape(s1)[1], 
+            #                        np.shape(s1)[2])) * rot_matrix
     
             s1_rotated = []
     
             # Rotate the worm frame-by-frame and add these skeletons to a list
             for frame_index in range(self.num_frames):
-                s1_rotated.append(rot_matrix[:, :, frame_index].dot(s1[:,:, frame_index]))
+                s1_rotated.append(rot_matrix[:, :, frame_index].dot
+                                                    (s1[:,:, frame_index]))
             # print(np.shape(np.rollaxis(rot_matrix[:,:,0].dot(s1[:,:,0]),0)))
     
             # Save the list as a numpy array
@@ -609,11 +611,14 @@ class NormalizedWorm(WormPartition):
         fc.corr_value_high(y1,y2,'asdf')
 
         #return \
-            #fc.corr_value_high(self.length, other.length, 'morph.length')  and \
+            #fc.corr_value_high(self.length, other.length, 
+            #                   'morph.length') and \
             #self.width == other.width and \
-            #fc.corr_value_high(self.area, other.area, 'morph.area')      and \
-            #fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
-            #fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
+            #fc.corr_value_high(self.area, other.area, 'morph.area') and \
+            #fc.corr_value_high(self.area_per_length, other.area_per_length, 
+            #                   'morph.area_per_length') and \
+            #fc.corr_value_high(self.width_per_length, other.width_per_length, 
+            #                   'morph.width_per_length')
 
     def __repr__(self):
         #TODO: This omits the properties above ...

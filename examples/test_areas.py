@@ -87,8 +87,8 @@ def main():
 
     nw_calculated = NormalizedWorm.from_BasicWorm_factory(bw)
 
-    contour = nw_calculated.contour(keep_redundant_points=True)
-    area_by_rasterization = compute_area_by_rasterization(contour)
+    area_by_rasterization = compute_area_by_rasterization(
+                                                    nw_calculated.contour)
 
     #--------------------------------------------------------------------------
     # We perform comparison of three ways of calculating area:
