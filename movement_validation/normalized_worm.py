@@ -546,7 +546,14 @@ class NormalizedWorm(WormPartition):
                 np.nanmax(d[:, dimension, :]))
 
     @property
-    def contour(self, keep_redundant_points=True):
+    def contour(self):
+        return self.get_contour(keep_redundant_points=True)
+        
+    @property
+    def contour_without_redundant_points(self):
+        return self.get_contour(keep_redundant_points=False)
+       
+    def get_contour(self, keep_redundant_points=True):
         """
         The contour of the worm as one 96-point or 98-point polygon.
 
@@ -566,18 +573,20 @@ class NormalizedWorm(WormPartition):
         """
         if keep_redundant_points:
             return np.concatenate((self.vulva_contour, 
-                                   self.non_vulva_contour[::-1,:,:])) 
+                                   self.non_vulva_contour[::-1, :, :])) 
         else:
             return np.concatenate((self.vulva_contour[:, :, :], 
-                                   self.non_vulva_contour[-2:0:-1, :,:]))
+                                   self.non_vulva_contour[-2:0:-1, :, :]))
 
     @property
     def contour_x(self):
-        return self.contour[:,0,:]
+        # Note that this includes 2 redundant points.
+        return self.contour[:, 0, :]
 
     @property
     def contour_y(self):
-        return self.contour[:,1,:]
+        # Note that this includes 2 redundant points.
+        return self.contour[:, 1, :]
 
     @property
     def skeleton_x(self):
