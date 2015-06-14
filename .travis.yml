@@ -14,7 +14,7 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
-  - conda update --yes 
+  - conda update --yes conda
   # https://github.com/hackcasual/firstpythonfortravis/blob/master/.travis.yml
   #- sudo apt-get update
   #- sudo apt-get install python-opencv
