@@ -3,90 +3,102 @@
 A utility to compare frame_codes and segementation_status to understand
 how they are related, specifically, if they are redundant.
 
+We load the frame codes for an example video, example_video_norm_worm.mat
+
+Then we load frame code and segementation status information
+
+Then we look at which frames have distinct segementation status / frame codes
+
 @author: @MichaelCurrie
 
 """
 import pandas as pd
 import numpy as np
 import sys, os
-import csv
 import matplotlib.pyplot as plt
 
 sys.path.append('..')
-from movement_validation import user_config, NormalizedWorm
+from movement_validation import user_config, NormalizedWorm, BasicWorm
+      
+base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+schafer_nw_file_path = os.path.join(base_path, 
+                                 "example_video_norm_worm.mat")
+nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
+
+schafer_bw_file_path = os.path.join(base_path, 
+                                 "example_contour_and_skeleton_info.mat")  
+bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
 
-def main():
-    base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
-    schafer_nw_file_path = os.path.join(base_path, 
-                                     "example_video_norm_worm.mat")
-    nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
+nw_frame_metadata = pd.DataFrame(
+                     {'Frame Code': nw.frame_code, 
+                      'Segmentation Status': nw.segmentation_status,
+                      'is_nan_skeleton': np.isnan(nw.skeleton[0,0,:]),
+                      'is_valid': bw.is_valid,
+                      'is_stage_movement': bw.is_stage_movement[:-1]})
 
-    frame_code = nw.frame_code
-    segmentation_status = nw.segmentation_status
-    is_nan_skeleton = np.isnan(nw.skeleton[0,0,:])
-    
-    nw_frame_metadata = pd.DataFrame(
-                         {'Frame Code': frame_code, 
-                          'Segementation Status': segmentation_status,
-                          'is_nan_skeleton': is_nan_skeleton})
+# obtain this computer's path to 
+# movement_validation\documentation\frame_codes.csv
+package_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+frame_codes_path = os.path.join(package_path, 
+                                'documentation', 
+                                'frame_codes.csv')
 
-    # load and compare frame codes and segmentation status!
-    frame_codes_path = r'C:\Users\mcurrie\Desktop\GitHub' + \
-                       r'\movement_validation\documentation\frame_codes.csv'
+# Load frame code information
+frame_code_info = pd.read_csv(frame_codes_path, delimiter=';', 
+                              quotechar="'")
+# Convert the 'Frame Codes' column, which is all int, to int.
+frame_code_info = frame_code_info.convert_objects(convert_numeric=True)
 
-    frame_code_info = pd.read_csv(frame_codes_path, delimiter=';', 
-                                  quotechar="'")
+segmentation_status_info = pd.DataFrame(
+    {'Segmentation Status': ['s', 'f', 'm', 'd', 'n'],
+     'Segmentation Description': ['Segmented', 
+                                  'Segmentation failed', 
+                                  'Stage movement', 
+                                  'Dropped frame', 
+                                  '??? There is reference '
+                                  'in some old code to this']})
+nw_frame_metadata = \
+    nw_frame_metadata.merge(frame_code_info, how='left',
+                            left_on='Frame Code',
+                            right_on='Frame Code')
 
-    nw222 = nw_frame_metadata.merge(frame_code_info, how='left')
-    
-    print(nw222)
-    nw222.to_csv(frame_codes_path+'2')
+nw_frame_metadata = \
+    nw_frame_metadata.merge(segmentation_status_info, how='left',
+                            left_on='Segmentation Status',
+                            right_on='Segmentation Status')
 
-    """
+#nw_frame_metadata = \
 
-    with open(frame_codes_path, 'r') as frame_codes_file:
-        reader = csv.DictReader(frame_codes_file, delimiter=';', quotechar="'")
+unique_metadata = nw_frame_metadata.drop_duplicates()
 
-        for row in reader:
-            print(row)
+print(unique_metadata)
+print(nw_frame_metadata['Segmentation Status'])#, 'is_stage_movement'])
+#nw_frame_metadata.to_csv(frame_codes_path+'2')
 
-    # TODO: I want an incidence matrix!!
+q = nw_frame_metadata[nw_frame_metadata['Segmentation Status']=='d']
 
-    plt.scatter(frame_code, [ord(x) for x in segmentation_status])
-    plt.show()
-    """
+q['is_stage_movement']
 
-    frame_codes_path2 = r'C:\Users\mcurrie\Desktop\GitHub' + \
-                       r'\movement_validation\documentation\frame_codes2.csv'
 
-    frame_codes_path3 = r'C:\Users\mcurrie\Desktop\GitHub' + \
-                       r'\movement_validation\documentation\frame_codes3.csv'
+"""
+CONCLUSIONS SO FAR:
+- Only 7 unique rows
+- is_stage_movement is 0 or 1 unpredictably when Segementation Status == 'd'
+- is_stage_movement == 1 when Segementation Status == 'm'
+- is_nan_skeleton == False iff Segementation Status == 's'
+- Segementation Status == 's'
+- other stuff too
+"""
 
-    frame_codes_path4 = r'C:\Users\mcurrie\Desktop\GitHub' + \
-                       r'\movement_validation\documentation\frame_codes4.csv'
 
-    """
-    frame_code.tofile(frame_codes_path2, sep=',', format='%d')
-    segmentation_status.tofile(frame_codes_path3, sep=',', format='%s')
-    np.isnan(nw.skeleton[0,0,:]).tofile(frame_codes_path4, sep=',', format='%s')
-    
-    """
-    #with open(frame_codes_path2, 'w', newline='') as frame_output_file:
-    #    writer = csv.writer(frame_output_file, delimiter=',')
-    #    writer.writerows(frame_code.tolist())
-    #    writer.writerows(segmentation_status.tolist())
-        
+"""
+# TODO: I want an incidence matrix!!
 
-    # a string of length n, showing, for each frame of the video:
-    # s = segmented
-    # f = segmentation failed
-    # m = stage movement
-    # d = dropped frame
-    # n??? - there is reference in some old code to this
-    # after loading this we convert it to a numpy array.
-    #                'segmentation_status',
-                
+plt.scatter(frame_code, [ord(x) for x in segmentation_status])
+plt.show()
+"""
 
-if __name__ == '__main__':
-    main()
+
+
+ 
