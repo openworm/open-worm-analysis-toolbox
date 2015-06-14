@@ -28,7 +28,7 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
   #opencv 3
-  - conda install -c https://conda.binstar.org/hadim opencv
+  - conda install -y -c https://conda.binstar.org/hadim opencv
   # Coverage packages are on my binstar channel
   # The next line currently fails with the error "Error: Unsatisfiable package specifications.  
   #                                               Hint: the following packages conflict with each other:
