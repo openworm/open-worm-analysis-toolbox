@@ -3,7 +3,8 @@
 language: python
 python:
   - 2.7
-  - 3.3
+  #Open CV isn't working with 3.3 for some reason ...
+  #- 3.3
   - 3.4
 notifications:
   email: false
@@ -15,10 +16,6 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
-  # https://github.com/hackcasual/firstpythonfortravis/blob/master/.travis.yml
-  #- sudo apt-get update
-  #- sudo apt-get install python-opencv
-  #- sudo dpkg -L python-opencv  
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
@@ -27,7 +24,7 @@ before_install:
   # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
-  #opencv 3
+  #opencv 3 via hadim, need -y to say yes to prompts
   - conda install -y -c https://conda.binstar.org/hadim opencv
   # Coverage packages are on my binstar channel
   # The next line currently fails with the error "Error: Unsatisfiable package specifications.  
