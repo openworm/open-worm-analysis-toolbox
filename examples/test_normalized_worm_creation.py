@@ -40,8 +40,9 @@ def main():
         NormalizedWorm.from_BasicWorm_factory(bw)#, frames_to_plot_widths=[4])
     nw == nw_calculated
     
-    # EXTRAS (nothing to do with NormalizedWorm creation:)
     """
+    # EXTRAS (nothing to do with NormalizedWorm creation:)
+    
     # The frame rate is somewhere in the video info. Ideally this would 
     # all come from the video parser eventually
     fpo = FeatureProcessingOptions(config.FPS)
@@ -58,6 +59,6 @@ def main():
 if __name__ == '__main__':
     start_time = utils.timing_function()
     main()
-    print("Time elapsed: %.2f seconds" % 
+    print("Time elapsed: %.2fs" % 
           (utils.timing_function() - start_time))
     
