@@ -16,9 +16,9 @@ before_install:
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes 
   # https://github.com/hackcasual/firstpythonfortravis/blob/master/.travis.yml
-  - sudo apt-get update
-  - sudo apt-get install python-opencv
-  - sudo dpkg -L python-opencv  
+  #- sudo apt-get update
+  #- sudo apt-get install python-opencv
+  #- sudo dpkg -L python-opencv  
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
@@ -27,6 +27,8 @@ before_install:
   # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
+  #opencv 3
+  - conda install -c https://conda.binstar.org/hadim opencv
   # Coverage packages are on my binstar channel
   # The next line currently fails with the error "Error: Unsatisfiable package specifications.  
   #                                               Hint: the following packages conflict with each other:
