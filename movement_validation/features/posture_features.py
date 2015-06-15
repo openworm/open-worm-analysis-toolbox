@@ -12,6 +12,8 @@ import numpy as np
 import warnings
 import os, inspect, h5py
 
+import cv2
+
 # http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import Point
@@ -184,6 +186,40 @@ class BendSection(object):
 
 
 def get_eccentricity_and_orientation(features_ref):
+    """
+     Get the eccentricity and orientation of a contour using the moments
+     http://en.wikipedia.org/wiki/Image_moment
+     calculated by opencv:moments (http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html).
+    """
+    nw = features_ref.nw
+    #Since the first and the last points of vulva and non_vulva contour are equal
+    #we remove those points for the non_vulva_contour
+    contour = np.concatenate((nw.vulva_contour, nw.non_vulva_contour[-1::-1,:,:]))
+    
+    #opencv does not like float64, this actually make sense for image data where
+    #we do not require a large precition in the decimal part. This could save quite a lot of space
+    contour = contour.astype(np.float32)
+    tot = contour.shape[-1]
+
+    
+    eccentricity = np.full(tot, np.nan);
+    orientation = np.full(tot, np.nan);
+    for ii in range(tot):
+        worm_cnt = contour[:,:,ii];
+        if ~np.any(np.isnan(worm_cnt)):
+            moments  = cv2.moments(worm_cnt)
+        
+            a1 = (moments['mu20']+moments['mu02'])/2
+            a2 = np.sqrt(4*moments['mu11']**2+(moments['mu20']-moments['mu02'])**2)/2
+        
+            minor_axis = a1-a2
+            major_axis = a1+a2
+
+            eccentricity[ii] = np.sqrt(1-minor_axis/major_axis)
+            orientation[ii] = (180 / np.pi)*np.arctan2(2*moments['mu11'], (moments['mu20']-moments['mu02']))/2
+    return (eccentricity, orientation)
+
+def get_eccentricity_and_orientation_old(features_ref):
     """
       get_eccentricity   
 
@@ -1229,7 +1265,7 @@ def get_worm_coils(features_ref, midbody_distance):
             coil_frame_start = iFrame
 
     if options.mimic_old_behaviour:
-        if (len(starts) > 0) & (ends[-1] == len(frame_code) - 1):
+        if (len(starts) > 0) and (ends[-1] == len(frame_code) - 1):
             ends[-1] += -1
             starts[-1] += -1
 
