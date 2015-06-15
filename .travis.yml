@@ -5,7 +5,7 @@ python:
   - 2.7
   #Open CV isn't working with 3.3 for some reason ...
   #- 3.3
-  - 3.4
+  #- 3.4
 notifications:
   email: false
 
@@ -28,11 +28,16 @@ before_install:
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
   
+  - which python
+  - python --version
+  
   #OpenCV
-  - travis_retry git clone https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
+  #https://github.com/kevin-brown/blog.kevin-brown.com/blob/2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/2014-09-27-building-and-installing-opencv-3.markdown
+  #https://github.com/kashefy/elm/blob/76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
+  - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
   - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
   #http://answers.opencv.org/question/17536/install-opencv-for-anaconda-ipython/
-  - cmake -PYTHON_PACKAGES_PATH=/home/travis/miniconda/lib/site-packages -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_stitching=OFF $DEPS_DIR/opencv
+  - cmake -D PYTHON_PACKAGES_PATH=/home/travis/miniconda/lib/site-packages -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_stitching=OFF $DEPS_DIR/opencv
   
   
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
