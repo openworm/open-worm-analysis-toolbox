@@ -4,18 +4,42 @@ language: python
 python:
   - 2.7
   #Open CV isn't working with 3.3 for some reason ...
-  #- 3.3
+  - 3.3
   - 3.4
 notifications:
   email: false
+
+env:
+  global:
+    # Dependencies
+    - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
+    - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
  
 before_install:
+  - which python
+  - python --version
+  - cmake --version
+  
+
   # Anaconda installation
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
+  
+  - which python
+  - python --version
+  
+  #OpenCV
+  #https://github.com/kevin-brown/blog.kevin-brown.com/blob/2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/2014-09-27-building-and-installing-opencv-3.markdown
+  #https://github.com/kashefy/elm/blob/76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
+  - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
+  - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
+  #http://answers.opencv.org/question/17536/install-opencv-for-anaconda-ipython/
+  - cmake -D PYTHON_PACKAGES_PATH=/home/travis/miniconda/lib/site-packages -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_stitching=OFF $DEPS_DIR/opencv
+  
+  
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
@@ -25,7 +49,7 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
   #opencv 3 via hadim, need -y to say yes to prompts
-  - conda install -y -c https://conda.binstar.org/hadim opencv
+  #- conda install -y -c https://conda.binstar.org/hadim opencv
   # Coverage packages are on my binstar channel
   # The next line currently fails with the error "Error: Unsatisfiable package specifications.  
   #                                               Hint: the following packages conflict with each other:
