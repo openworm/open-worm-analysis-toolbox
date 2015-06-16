@@ -17,17 +17,21 @@ import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
 
-sys.path.append('..')
-from movement_validation import user_config, NormalizedWorm, BasicWorm
+if __name__ == '__main__':
+    sys.path.append('..')
+    import movement_validation as mv
+else:
+    from movement_validation import movement_validation as mv
+    
       
-base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
 schafer_nw_file_path = os.path.join(base_path, 
                                  "example_video_norm_worm.mat")
-nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
+nw = mv.NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
 schafer_bw_file_path = os.path.join(base_path, 
                                  "example_contour_and_skeleton_info.mat")  
-bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
 
 nw_frame_metadata = pd.DataFrame(
@@ -35,7 +39,7 @@ nw_frame_metadata = pd.DataFrame(
                       'Segmentation Status': nw.segmentation_status,
                       'is_nan_skeleton': np.isnan(nw.skeleton[0,0,:]),
                       'is_valid': bw.is_valid,
-                      'is_stage_movement': bw.is_stage_movement[:-1]})
+                      'is_stage_movement': bw.is_stage_movement})
 
 # obtain this computer's path to 
 # movement_validation\documentation\frame_codes.csv
@@ -68,17 +72,10 @@ nw_frame_metadata = \
                             left_on='Segmentation Status',
                             right_on='Segmentation Status')
 
-#nw_frame_metadata = \
+print(frame_code_info[['Frame Code', 'Code Name']].transpose().to_dict())
 
-unique_metadata = nw_frame_metadata.drop_duplicates()
 
-print(unique_metadata)
-print(nw_frame_metadata['Segmentation Status'])#, 'is_stage_movement'])
-#unique_metadata.to_csv(frame_codes_path+'2')
 
-q = nw_frame_metadata[nw_frame_metadata['Segmentation Status']=='d']
-
-q['is_stage_movement']
 
 
 """

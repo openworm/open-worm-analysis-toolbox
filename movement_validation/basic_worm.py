@@ -249,8 +249,14 @@ class BasicWorm(JSON_Serializer):
                 all_vulva_contours.append(None) 
                 all_non_vulva_contours.append(None)           
                 
-        bw.is_stage_movement = is_stage_movement
-        bw.is_valid = is_valid
+        bw.is_stage_movement = is_stage_movement.astype(bool)
+        bw.is_valid = is_valid.astype(bool)
+
+        # A kludge, we drop frames in is_stage_movement that are in excess 
+        # of the number of frames in the video.  It's unclear why 
+        # is_stage_movement would be longer by 1, which it was in our 
+        # canonical example.
+        bw.is_stage_movement = bw.is_stage_movement[0:len(all_skeletons)]
         
         # We purposely ignore the saved skeleton information contained
         # in the BasicWorm, preferring to derive it ourselves.        
@@ -263,7 +269,6 @@ class BasicWorm(JSON_Serializer):
         h.close()   
         
         return bw
-
 
     @classmethod
     def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):

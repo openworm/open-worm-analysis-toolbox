@@ -26,7 +26,6 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
-import time #For FeatureTimer
 
 from .. import utils
 
@@ -647,10 +646,10 @@ class FeatureTimer(object):
         self.times = []
         
     def tic(self):
-        self.start_time = time.time()
+        self.start_time = utils.timing_function()
     
     def toc(self,name):
-        self.times.append(time.time() - self.start_time)
+        self.times.append(utils.timing_function() - self.start_time)
         self.names.append(name)
         
     def __repr__(self):
@@ -661,7 +660,7 @@ class FeatureTimer(object):
         This can be called to display each logged function and how long it
         took to run
         """
-        for (name, time) in zip(self.names, self.times):
-            print('%s: %0.3fs' %(name, time))
+        for (name, finish_time) in zip(self.names, self.times):
+            print('%s: %0.3fs' %(name, finish_time))
 
             

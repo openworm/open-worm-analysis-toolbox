@@ -51,8 +51,12 @@ class Skeleton(object):
     
     def __eq__(self, other):
 
-        eq_skeleton_x = fc.corr_value_high(np.ravel(self.x), np.ravel(other.x), 'posture.skeleton.x')
-        eq_skeleton_y = fc.corr_value_high(np.ravel(self.y), np.ravel(other.y), 'posture.skeleton.y')
+        eq_skeleton_x = fc.corr_value_high(np.ravel(self.x), 
+                                           np.ravel(other.x), 
+                                           'posture.skeleton.x')
+        eq_skeleton_y = fc.corr_value_high(np.ravel(self.y), 
+                                           np.ravel(other.y), 
+                                           'posture.skeleton.y')
 
         return eq_skeleton_x and eq_skeleton_y
 
@@ -188,16 +192,20 @@ class BendSection(object):
 def get_eccentricity_and_orientation(features_ref):
     """
      Get the eccentricity and orientation of a contour using the moments
+
      http://en.wikipedia.org/wiki/Image_moment
-     calculated by opencv:moments (http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html).
+
+     Calculated by opencv:moments (http://docs.opencv.org/modules/imgproc/
+     doc/structural_analysis_and_shape_descriptors.html).
     """
-    nw = features_ref.nw
-    #Since the first and the last points of vulva and non_vulva contour are equal
-    #we remove those points for the non_vulva_contour
-    contour = np.concatenate((nw.vulva_contour, nw.non_vulva_contour[-1::-1,:,:]))
     
-    #opencv does not like float64, this actually make sense for image data where
-    #we do not require a large precition in the decimal part. This could save quite a lot of space
+    features_ref.timer.tic()
+        
+    contour = features_ref.nw.contour_without_redundant_points
+    
+    # OpenCV does not like float64, this actually make sense for image 
+    # data where we do not require a large precition in the decimal part. 
+    # This could save quite a lot of space
     contour = contour.astype(np.float32)
     tot = contour.shape[-1]
 
@@ -209,21 +217,30 @@ def get_eccentricity_and_orientation(features_ref):
         if ~np.any(np.isnan(worm_cnt)):
             moments  = cv2.moments(worm_cnt)
         
-            a1 = (moments['mu20']+moments['mu02'])/2
-            a2 = np.sqrt(4*moments['mu11']**2+(moments['mu20']-moments['mu02'])**2)/2
+            a1 = (moments['mu20'] + moments['mu02']) / 2
+            a2 = np.sqrt(4*moments['mu11']**2 + 
+                         (moments['mu20'] - moments['mu02'])**2) / 2
         
-            minor_axis = a1-a2
-            major_axis = a1+a2
+            minor_axis = a1 - a2
+            major_axis = a1 + a2
 
-            eccentricity[ii] = np.sqrt(1-minor_axis/major_axis)
-            orientation[ii] = (180 / np.pi)*np.arctan2(2*moments['mu11'], (moments['mu20']-moments['mu02']))/2
+            eccentricity[ii] = np.sqrt(1 - minor_axis/major_axis)
+            orientation[ii] = \
+                np.arctan2(2*moments['mu11'], 
+                           (moments['mu20'] - moments['mu02'])) / 2
+            # Convert from radians to degrees
+            orientation[ii] *= 180 / np.pi
+            
+    features_ref.timer.toc('posture.eccentricity_and_orientation')
+    
     return (eccentricity, orientation)
 
 def get_eccentricity_and_orientation_old(features_ref):
     """
       get_eccentricity   
 
-        [eccentricity, orientation] = seg_worm.utils.posture.getEccentricity(xOutline, yOutline, gridSize)
+        [eccentricity, orientation] = \
+            seg_worm.utils.posture.getEccentricity(xOutline, yOutline, gridSize)
 
         Given x and y coordinates of the outline of a region of interest, fill
         the outline with a grid of evenly spaced points and use these points in
@@ -285,7 +302,8 @@ def get_eccentricity_and_orientation_old(features_ref):
     timer = features_ref.timer
     timer.tic()
 
-    if not options.should_compute_feature('posture.eccentricity',features_ref):
+    if not options.should_compute_feature('posture.eccentricity',
+                                          features_ref):
         return (None, None)
 
     #Inputs:
@@ -306,7 +324,9 @@ def get_eccentricity_and_orientation_old(features_ref):
     grid_spacings = x_interp[1,:] - x_interp[0,:]
 
     y_bottom_bounds,y_top_bounds = \
-        h__computeYBoundsOfSimpleWorms(y_interp_bottom,y_interp_top,grid_spacings)    
+        h__computeYBoundsOfSimpleWorms(y_interp_bottom,
+                                       y_interp_top,
+                                       grid_spacings)    
 
     n_frames = contour_x.shape[1]
     eccentricity = np.zeros(n_frames)
@@ -315,7 +335,9 @@ def get_eccentricity_and_orientation_old(features_ref):
     orientation[:] = np.NaN
     
     eccentricity[is_simple_worm],orientation[is_simple_worm] = \
-    h__computeOutputsFromSimpleWorms(x_interp,y_bottom_bounds,y_top_bounds,grid_spacings)    
+    h__computeOutputsFromSimpleWorms(x_interp, 
+                                     y_bottom_bounds, y_top_bounds,
+                                     grid_spacings)    
 
     #Use slow grid method for all unfinished worms
     #--------------------------------------------------------------------------
@@ -352,7 +374,10 @@ def get_eccentricity_and_orientation_old(features_ref):
   
     return (eccentricity, orientation)
 
-def h__getEccentricityAndOrientation(x_mc,y_mc,xRange_all,yRange_all,gridAspectRatio_all,N_GRID_POINTS,eccentricity,orientation,run_mask):
+def h__getEccentricityAndOrientation(x_mc, y_mc, xRange_all, yRange_all,
+                                     gridAspectRatio_all,
+                                     N_GRID_POINTS,
+                                     eccentricity, orientation, run_mask):
     
     # h__getEccentricityAndOrientation
     for iFrame in np.nditer(utils.find(run_mask)):
@@ -380,8 +405,10 @@ def h__getEccentricityAndOrientation(x_mc,y_mc,xRange_all,yRange_all,gridAspectR
             n1 = np.round(N_GRID_POINTS * cur_aspect_ratio)
             n2 = N_GRID_POINTS
 
-        wtf1 = np.linspace(np.min(x_mc[:, iFrame]), np.max(x_mc[:, iFrame]), num=n1)
-        wtf2 = np.linspace(np.min(y_mc[:, iFrame]), np.max(y_mc[:, iFrame]), num=n2)
+        wtf1 = np.linspace(np.min(x_mc[:, iFrame]), 
+                           np.max(x_mc[:, iFrame]), num=n1)
+        wtf2 = np.linspace(np.min(y_mc[:, iFrame]), 
+                           np.max(y_mc[:, iFrame]), num=n2)
 
         m, n = np.meshgrid(wtf1, wtf2)
 
@@ -400,7 +427,8 @@ def h__getEccentricityAndOrientation(x_mc,y_mc,xRange_all,yRange_all,gridAspectR
         x = m_lin[in_worm]
         y = n_lin[in_worm]
 
-        eccentricity[iFrame],orientation[iFrame] = h__calculateSingleValues(x,y)
+        eccentricity[iFrame], orientation[iFrame] = \
+                                    h__calculateSingleValues(x, y)
 
 # First eccentricity value should be: 0.9743
         """
@@ -749,29 +777,30 @@ def h__getSimpleWormInfo(xo,yo,n_grid_points):
 
 def h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,gridSize,iFrame,mn_x_I,mx_x_I):
     """
-    %
-    %
-    %   [y_interp_1,y_interp_2,x_out_all] = h__getInterpValues(x1,x2,xOutline_mc,yOutline_mc,gridSize,iFrame,mn_x_I,mx_x_I)
-    %
-    %
-    %   This function computes the interpolated y-values on the contour
-    %   for the x grid locations that we will be testing at. It also computes
-    %   the x grid (TODO: Might move this ...)
-    %   
-    %   Inputs
-    %   =======================================================================
-    %   x1          : [1 x m] contour indices with values going from low to high
-    %   x2          : [1 x n] contour indices with values going from high to low
-    %
-    %                   NOTE: x1 and x2 do not need to have the same length
-    %                   although m and n are usually around 48 - 50
-    %       
-    %   xOutline_mc : [96 x n_frames] x values of the contour
-    %   yOutline_mc : [96 x n_frames] y values of the contour
-    %   gridSize    : (scalar, normally 50) # of points to use between the minimum and maximum value
-    %   iFrame      : (scalar) current frame index
-    %   mn_x_I      : [1 x n_frames] array of minimum x values for all frames
-    %   mx_x_I      : [1 x n_frames] "       " maximum "           "
+    
+    [y_interp_1,y_interp_2,x_out_all] = h__getInterpValues(x1,x2,
+               xOutline_mc,yOutline_mc,gridSize,iFrame,mn_x_I,mx_x_I)
+    
+    
+    This function computes the interpolated y-values on the contour
+    for the x grid locations that we will be testing at. It also computes
+    the x grid (TODO: Might move this ...)
+       
+    Inputs
+    =======================================================================
+    x1 : [1 x m] contour indices with values going from low to high
+    x2 : [1 x n] contour indices with values going from high to low
+    
+                       NOTE: x1 and x2 do not need to have the same length
+                       although m and n are usually around 48 - 50
+           
+    xOutline_mc : [96 x n_frames] x values of the contour
+    yOutline_mc : [96 x n_frames] y values of the contour
+    gridSize    : (scalar, normally 50) # of points to use between the 
+                     minimum and maximum value
+    iFrame      : (scalar) current frame index
+    mn_x_I      : [1 x n_frames] array of minimum x values for all frames
+    mx_x_I      : [1 x n_frames] "       " maximum "           "
     """
     
     X_in_1 = xo[x1,iFrame];
@@ -793,7 +822,8 @@ def h__getInterpValuesForSimpleWorm(x1,x2,xo,yo,gridSize,iFrame,mn_x_I,mx_x_I):
 
 def h__centerAndRotateOutlines(x_outline, y_outline):
     """
-    #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getEccentricity.m#L391
+    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bfeatures/%40posture/getEccentricity.m#L391
     """
     
     x_mc = x_outline - np.mean(x_outline, axis=0)  # mc - mean centered
@@ -868,7 +898,8 @@ class AmplitudeAndWavelength(object):
     def __init__(self,theta_d, features_ref):
 
         """
-        Calculates amplitude of rotated worm (relies on orientation aka theta_d)
+        Calculates amplitude of rotated worm (relies on orientation
+        aka theta_d)
         
         Parameters
         ----------
@@ -881,7 +912,8 @@ class AmplitudeAndWavelength(object):
         #TODO: I think this would be better as a class
         
         
-        if not features_ref.options.should_compute_feature('locomotion.amplitude_and_wavelength',features_ref):
+        if not features_ref.options.should_compute_feature('locomotion.amplitude_and_wavelength',
+                                                           features_ref):
             self.amplitude_max = None
             self.amplitude_ratio = None
             self.primary_wavelength = None
@@ -906,7 +938,8 @@ class AmplitudeAndWavelength(object):
     
         wave_options = features_ref.options.posture.wavelength
     
-        # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
+        # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+        # %2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
         N_POINTS_FFT = wave_options.n_points_fft
         HALF_N_FFT = int(N_POINTS_FFT / 2)
         MIN_DIST_PEAKS = wave_options.min_dist_peaks
@@ -938,7 +971,8 @@ class AmplitudeAndWavelength(object):
         
         #Ignore NaN division warnings
         with np.errstate(invalid='ignore'):
-            amplitude_ratio = np.divide(np.minimum(amp1, amp2), np.maximum(amp1, amp2))
+            amplitude_ratio = np.divide(np.minimum(amp1, amp2), 
+                                        np.maximum(amp1, amp2))
     
         # Calculate track length
         #--------------------------------------------------------------------------
@@ -1043,8 +1077,8 @@ class AmplitudeAndWavelength(object):
                 p_temp = worm_wavelength_max
     
             # ??? Do we really want to keep this as well if p_temp == worm_2x?
-            # i.e., should the secondary wavelength be valid if the primary is also
-            # limited in this way ?????
+            # i.e., should the secondary wavelength be valid if the primary is
+            # also limited in this way ?????
             if s_temp > worm_wavelength_max:
                 s_temp = worm_wavelength_max
     
@@ -1053,10 +1087,10 @@ class AmplitudeAndWavelength(object):
     
     
         if options.mimic_old_behaviour:
-            #In the old code, the first peak (i.e. larger wavelength, lower frequency)
-            #was always the primary wavelength, where as the new definition is
-            #based on the amplitude of the peaks, not their position along the
-            #frequency axis
+            # In the old code, the first peak (i.e. larger wavelength, 
+            # lower frequency) was always the primary wavelength, where as 
+            # the new definition is based on the amplitude of the peaks, 
+            # not their position along the frequency axis
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 mask = secondary_wavelength > primary_wavelength
@@ -1094,10 +1128,8 @@ def get_worm_kinks(features_ref):
     Returns
     -------
     numpy.array
-    
+
     """
-    
-    # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getWormKinks.m
 
     nw = features_ref.nw
     timer = features_ref.timer
@@ -1155,7 +1187,8 @@ def get_worm_kinks(features_ref):
             np.not_equal(dataSign[1:], dataSign[0:-1])).nonzero()[0]
 
         end_I = np.concatenate(
-            (sign_change_I, n_frames * np.ones(1, dtype=np.result_type(sign_change_I))))
+            (sign_change_I, 
+             n_frames * np.ones(1, dtype=np.result_type(sign_change_I))))
 
         wtf1 = np.zeros(1, dtype=np.result_type(sign_change_I))
         wtf2 = sign_change_I + 1
@@ -1171,7 +1204,8 @@ def get_worm_kinks(features_ref):
         # of the worm. I have not translated that feature to the newer code. I
         # don't think it will ever happen though for a valid frame, only on the
         # edges should you have NaN values.
-        if start_I.size != 0 and np.any(np.isnan(smoothed_bend_angles[start_I[0]:end_I[-1]])):
+        if start_I.size != 0 and \
+           np.any(np.isnan(smoothed_bend_angles[start_I[0]:end_I[-1]])):
             raise Exception("Unhandled code case")
 
         #-------------------------------------------------------
@@ -1206,7 +1240,8 @@ def get_worm_coils(features_ref, midbody_distance):
     This function is currently very reliant on the MRC processor.
     
     Translated From:
-    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
+    https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
     """
 
     
@@ -1309,8 +1344,8 @@ class Directions(object):
         sy = nw.skeleton_y
         wp = nw.worm_partitions
 
-        # For each set of indices, compute the centroids of the tip and tail then
-        # compute a direction vector between them (tip - tail)
+        # For each set of indices, compute the centroids of the tip and tail
+        # then compute a direction vector between them (tip - tail)
 
         # I - "indices" - really a tuple of start,stop
         TIP_I = [wp['head'], wp['head_tip'], wp['tail_tip']]
@@ -1325,7 +1360,8 @@ class Directions(object):
             tail_x = np.mean(sx[TAIL_S[iVector], :], axis=0)
             tail_y = np.mean(sy[TAIL_S[iVector], :], axis=0)
 
-            dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, tip_x - tail_x)
+            dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, 
+                                                 tip_x - tail_x)
             setattr(self, attribute_name, dir_value)
 
         timer.toc('posture.directions')
@@ -1369,9 +1405,11 @@ def load_eigen_worms():
     ----------
     eigen_worms: [7 x 48]
 
+    From http://stackoverflow.com/questions/50499/
+
     """
-    #http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-that-is-currently-executin/50905#50905
-    package_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    current_module_path = inspect.getfile(inspect.currentframe())
+    package_path = os.path.dirname(os.path.abspath(current_module_path))
     
     repo_path        = os.path.split(package_path)[0]
     eigen_worm_file_path = os.path.join(repo_path,
@@ -1431,8 +1469,8 @@ def get_eigenworms(features_ref):
         mask_neg = np.concatenate(
             (false_row, np.diff(angles, n=1, axis=0) < -np.pi), axis=0)
 
-    # Only fix the frames we need to, in which there is a jump in going from one
-    # segment to the next ...
+    # Only fix the frames we need to, in which there is a jump in going
+    # from one segment to the next ...
     fix_frames_I = (
         np.any(np.logical_or(mask_pos, mask_neg), axis=0)).nonzero()[0]
 

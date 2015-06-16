@@ -42,8 +42,8 @@ class NormalizedWorm(WormPartition):
         area
 
     Also, some metadata:
-        segmentation_status   (not used in further processing)
-        frame_code            (not used in further processing)
+        segmentation_status
+        frame_code
         ventral_mode
         plate_wireframe_video_key
         
@@ -96,7 +96,6 @@ class NormalizedWorm(WormPartition):
         nw = cls()
         
         #TODO: Need to add on testing for normalized data as an input
-        #TODO: This could be simplified, although order may matter somewhat
         if basic_worm.h_vulva_contour is not None:
             # 1. Derive skeleton and widths from contour
             nw.widths, h_skeleton = \
@@ -114,17 +113,16 @@ class NormalizedWorm(WormPartition):
             nw.non_vulva_contour = WormParsing.normalizeAllFramesXY(
                                             basic_worm.h_non_vulva_contour)            
 
-            # 4. TODO: Calculate areas
+            # 4. Calculate areas
             nw.area = WormParsing.computeArea(nw.contour)
             
-            # 5. TODO:
-            # Still missing:
-            # - segmentation_status
-            # - frame codes
-            # I think these things would best be handled by first identifying
-            # the feature code that uses them, then determing what if anything
-            # we really need to calculate. Perhaps we need to modify the
-            # feature code instead.
+            # 5. Derive frame_code from the two pieces of data we have,
+            #    is_valid and is_stage_movement.
+            nw.frame_code = basic_worm.is_valid * 1 + \
+                            basic_worm.is_stage_movement * 2 + \
+                            ~(basic_worm.is_valid | 
+                              basic_worm.is_stage_movement) * 100
+
         else:
             # With no contour, let's assume we have a skeleton.
             # Measurements that cannot be calculated (e.g. areas) are simply
@@ -182,17 +180,12 @@ class NormalizedWorm(WormPartition):
                 # of the source code, and is loaded at the features 
                 # calculation step
                 'EIGENWORM_PATH',
-                # a string of length n, showing, for each frame of the video:
-                # s = segmented
-                # f = segmentation failed
-                # m = stage movement
-                # d = dropped frame
-                # n??? - there is reference in some old code to this
-                # after loading this we convert it to a numpy array.
-                'segmentation_status',
-                # shape is (1 n), see comments in
-                # seg_worm.parsing.frame_errors
-                'frame_codes',
+                # We can't load this one since we have an @property method 
+                # whose name clashes with it, derived from frame_codes
+                #'segmentation_status',
+                # Each code corresponds to a success / failure mode of the 
+                # computer vision algorithm.
+                'frame_codes',        # shape is (n) integer
                 'vulva_contours',     # shape is (49, 2, n) integer
                 'non_vulva_contours', # shape is (49, 2, n) integer
                 'skeletons',          # shape is (49, 2, n) integer
@@ -267,13 +260,30 @@ class NormalizedWorm(WormPartition):
             del(nw.tail_area)
             del(nw.vulva_area)
             del(nw.non_vulva_area)
-
-            # Let's change the string of length n to a numpy array of single
-            # characters of length n, to be consistent with the other data
-            # structures
-            nw.segmentation_status = np.array(list(nw.segmentation_status))
             
             return nw
+
+    @property
+    def segmentation_status(self):
+        try:
+            return self._segmentation_status
+        except AttributeError:
+            s = self.frame_code == 1
+            m = self.frame_code == 2
+            d = self.frame_code == 3
+
+            self._segmentation_status = np.empty(self.num_frames, dtype='<U1')
+            for frame_index in range(self.num_frames):
+                if s[frame_index]:
+                    self._segmentation_status[frame_index] = 's'
+                elif m[frame_index]:
+                    self._segmentation_status[frame_index] = 'm'
+                elif d[frame_index]:
+                    self._segmentation_status[frame_index] = 'd'
+                else:
+                    self._segmentation_status[frame_index] = 'f'
+        
+            return self._segmentation_status        
 
     def get_BasicWorm(self):
         """
@@ -577,7 +587,7 @@ class NormalizedWorm(WormPartition):
             return np.concatenate((self.vulva_contour, 
                                    self.non_vulva_contour[::-1, :, :])) 
         else:
-            return np.concatenate((self.vulva_contour[:, :, :], 
+            return np.concatenate((self.vulva_contour, 
                                    self.non_vulva_contour[-2:0:-1, :, :]))
 
     @property
@@ -665,3 +675,31 @@ class NormalizedWorm(WormPartition):
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 
+    def plot_contour(self, frame_index):
+        NormalizedWorm.plot_contour_with_labels(self.contour[:,:,frame_index])
+
+    @staticmethod
+    def plot_contour_with_labels(contour, frame_index=0):
+        """
+        Makes a beautiful plot with all the points labeled.
+        
+        Parameters:
+        One frame's worth of a contour
+        
+        """
+        contour_x = contour[:,0,frame_index]
+        contour_y = contour[:,1,frame_index]
+        plt.plot(contour_x, contour_y, 'r', lw=3)
+        plt.scatter(contour_x, contour_y, s=35)
+        labels = list(str(l) for l in range(0,len(contour_x)))
+        for label_index, (label, x, y), in enumerate(zip(labels, contour_x, contour_y)):
+            # Orient the label for the first half of the points in one direction
+            # and the other half in the other         
+            if label_index <= len(contour_x)//2 - 1:  # Minus one since indexing 
+                xytext = (20,-20)                     # is 0-based 
+            else:
+                xytext = (-20,20)
+            plt.annotate(label, xy=(x,y), xytext=xytext,
+            textcoords = 'offset points', ha = 'right', va = 'bottom',
+            bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
+            arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))#, xytext=(0,0))
