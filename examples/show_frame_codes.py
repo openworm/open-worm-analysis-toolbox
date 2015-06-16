@@ -74,7 +74,7 @@ unique_metadata = nw_frame_metadata.drop_duplicates()
 
 print(unique_metadata)
 print(nw_frame_metadata['Segmentation Status'])#, 'is_stage_movement'])
-#nw_frame_metadata.to_csv(frame_codes_path+'2')
+#unique_metadata.to_csv(frame_codes_path+'2')
 
 q = nw_frame_metadata[nw_frame_metadata['Segmentation Status']=='d']
 
