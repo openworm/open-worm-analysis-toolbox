@@ -14,7 +14,7 @@ from movement_validation import NormalizedWorm
 
 def test_simply():
     # Simple test to verify our test harness works
-    assert(1 == 1)
+    assert(1 == 0)
 
 
 
