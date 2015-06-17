@@ -15,7 +15,8 @@ env:
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
     #This will obviously need to be made generic ...
-    - MINICONDA_DIR=/home/travis/virtualenv/python3.3.5
+    #- MINICONDA_DIR=/home/travis/virtualenv/python3.3.5
+    - MINICONDA_DIR=/home/travis/miniconda
  
 before_install:
   - which python
@@ -53,7 +54,7 @@ before_install:
   - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
   - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
   #http://answers.opencv.org/question/17536/install-opencv-for-anaconda-ipython/
-  - cmake -D PYTHON_INCLUDE_DIR=$MINICONDA_DIR/include/python3.3 -D PYTHON_INCLUDE_DIR2=$MINICONDA_DIR/include/python3.3 -D PYTHON_PACKAGES_PATH=$MINICONDA_DIR/lib/python3.3/site-packages -D BUILD_opencv_python3=ON -D BUILD_NEW_PYTHON_SUPPORT=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_stitching=OFF $DEPS_DIR/opencv
+  - cmake -D PYTHON_LIBRARY=$MINICONDA_DIR/lib/libpython3.3.so -D PYTHON_INCLUDE_DIR=$MINICONDA_DIR/include/python3.3 -D PYTHON_INCLUDE_DIR2=$MINICONDA_DIR/include/python3.3 -D PYTHON_PACKAGES_PATH=$MINICONDA_DIR/lib/python3.3/site-packages -D BUILD_opencv_python3=ON -D BUILD_NEW_PYTHON_SUPPORT=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_stitching=OFF $DEPS_DIR/opencv
   - find $OPENCV_BUILD_DIR -type f -iname "cv2"
   
   #JAH: Is this still an issue? Can we remove it? 2015/06/15
