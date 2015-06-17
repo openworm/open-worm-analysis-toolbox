@@ -14,7 +14,8 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-    - MINICONDA_DIR=/home/travis/miniconda
+    #This will obviously need to be made generic ...
+    - MINICONDA_DIR=/home/travis/virtualenv/python3.3.5
  
 before_install:
   - which python
@@ -26,7 +27,7 @@ before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=$MINICONDA_DIR/bin:$PATH
+  - export PATH=/home/travis/miniconda/bin:$PATH
   #- conda update --yes conda
   
   #Need to install the actual Python version, does this work?
