@@ -78,4 +78,4 @@ if __name__ == '__main__':
     #start_time = utils.timing_function()
     test_main()
     #print("Time elapsed: %.2f seconds" % 
-          (utils.timing_function() - start_time))
+    #(utils.timing_function() - start_time))
