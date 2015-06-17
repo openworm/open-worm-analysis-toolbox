@@ -2,6 +2,21 @@
 """
 Metadata (i.e. not frame-by-frame information)
 
+The following attributes are used in downstream processing:
+
+fps:
+    - several features
+
+frame_code:
+    - 1, 105, 106 is used in posture.coils
+    -            2 is used in locomotion.turns
+            
+ventral_mode: 
+    Needed to sign (give + or -) several features:
+        - locomotion.velocity, the motion direction.
+        - The amplitude and frequency of foraging.bends
+        - path.curvature
+
 """
 import os
 import numpy as np
@@ -143,6 +158,10 @@ class VideoInfo(object):
 
     @property
     def segmentation_status(self):
+        """
+        Deprecated in favour of using self.frame_code directly.
+        
+        """
         try:
             return self._segmentation_status
         except AttributeError:

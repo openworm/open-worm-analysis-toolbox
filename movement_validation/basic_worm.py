@@ -264,6 +264,15 @@ class BasicWorm(JSON_Serializer):
         return bw
 
     @classmethod
+    def from_h_contour_factory(cls, h_vulva_contour, h_non_vulva_contour):
+        bw = cls()
+        
+        bw.h_vulva_contour = h_vulva_contour
+        bw.h_non_vulva_contour = h_non_vulva_contour
+        
+        return bw
+
+    @classmethod
     def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):
         """
         Factory method         

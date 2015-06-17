@@ -49,7 +49,6 @@ def main():
     video_info = VideoInfo('Example Video File', config.FPS)
 
     # Generate the OpenWorm movement validation repo version of the features
-    fpo.disable_feature_sections(['morphology']) 
     wf = WormFeatures(nw, video_info, fpo)
     
     # Display how long it took to generate each of the features

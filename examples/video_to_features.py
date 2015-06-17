@@ -18,7 +18,33 @@ def main():
         Kezhi_CV_Algorithm('test.avi')
 
     load_experiment_info('test.csv')
+    
+    bw = BasicWorm.from_h_contour_factory(h_ventral_contour, h_dorsal_contour)
+    bw.video_info = video_info
+    
+    nw = NormalizedWorm.from_BasicWorm_factory(bw)
 
+    # TODO: fix fpo, also nw.video_info shouldn't need to be specified here
+    fpo = FeatureProcessingOptions(config.FPS)    
+    wf = WormFeatures(nw, nw.video_info, fpo)
+
+    """
+    # TODO: get the above as the "experiment!"
+    
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
+    root_path = os.path.join(base_path, '30m_wait')
+
+    experiment_histograms, control_histograms = \
+        obtain_histograms(root_path, "pickled_histograms.dat")
+
+
+    #for i in range(0, 700, 100):
+    for i in range(1):
+        experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
+
+    print('Done with stats generation')
+    """
+    
     
 
 def geppetto_to_features(minimal_worm_spec_path):
