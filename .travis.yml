@@ -16,7 +16,10 @@ env:
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
     #This will obviously need to be made generic ...
     #- MINICONDA_DIR=/home/travis/virtualenv/python3.3.5
-    - MINICONDA_DIR=/home/travis/miniconda
+    #THis is the python 2.7 version ...
+    #- MINICONDA_DIR=/home/travis/miniconda
+    #Is this the path for miniconda3?
+    - MINICONDA_DIR=/home/travis/miniconda3
  
 before_install:
   - which python
