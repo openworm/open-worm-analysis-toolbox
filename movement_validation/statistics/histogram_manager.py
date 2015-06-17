@@ -46,7 +46,8 @@ class HistogramManager(object):
         
         """
         #DEBUG: just for fun
-        print("Number of feature files passed into the hisotgram manager:", len(feature_path_or_object_list))
+        print("Number of feature files passed into the histogram manager:", 
+              len(feature_path_or_object_list))
         
         #For each ...
         hist_cell_array = []        
@@ -77,7 +78,8 @@ class HistogramManager(object):
         # Here we merge them and we assign to self.hists a numpy array
         # of 700+ Histogram instances, for the merged video
         self.hists = HistogramManager.merge_histograms(hist_cell_array)
-        #self.hists = hist_cell_array[0]   # DEBUG: remove this and replace with above
+        #self.hists = hist_cell_array[0]   # DEBUG: remove this and replace 
+        #                                           with above
 
 
     def init_histograms(self, worm_features):
@@ -228,7 +230,8 @@ class HistogramManager(object):
             # (motion_types x data_types)
             
             for cur_motion_type in motion_types:
-                if (good_data_mask.size != indices_use_mask[cur_motion_type].size):
+                if (good_data_mask.size != 
+                                    indices_use_mask[cur_motion_type].size):
                     import pdb
                     pdb.set_trace()
                 
@@ -328,7 +331,8 @@ class HistogramManager(object):
             cur_data = utils.filter_non_numeric(cur_data)
 
             # Calculate the first histogram, on all the data.
-            temp_hists.append(self.create_histogram(cur_data, cur_specs, 'event', 'all', 'all'))
+            temp_hists.append(self.create_histogram(cur_data, cur_specs, 
+                                                    'event', 'all', 'all'))
 
             # If the data is signed, we calculate three more histograms:
             # - On an absolute version of the data, 
@@ -336,21 +340,33 @@ class HistogramManager(object):
             # - On only the negative data.
             if cur_specs.is_signed:
                 if cur_data is None:
-                    #TODO: This is a bit opaque and should be clarified
-                    #The call to create_histograms() just returns None, so we put together a bunch of None's
-                    #in a list and append, rather than calling the function 3x
+                    # TODO: This is a bit opaque and should be clarified
+                    # The call to create_histograms() just returns None, so 
+                    # we put together a bunch of None's
+                    # in a list and append, rather than calling the 
+                    # function three times
                     temp_hists = temp_hists + [None, None, None]
                 else:
-                    temp_hists.append(self.create_histogram(abs(cur_data), cur_specs, 'event', 'all', 'absolute'))
-                    positive_mask = cur_data > 0
-                    negative_mask = cur_data < 0
-                    temp_hists.append(self.create_histogram(cur_data[positive_mask], cur_specs, 'event', 'all', 'positive'))
-                    temp_hists.append(self.create_histogram(cur_data[negative_mask], cur_specs, 'event', 'all', 'negative'))
+                    temp_hists.append(self.create_histogram(abs(cur_data), 
+                                      cur_specs, 'event', 'all', 'absolute'))
+
+                    positive_histogram = \
+                        self.create_histogram(cur_data[cur_data > 0], 
+                                              cur_specs, 'event', 
+                                              'all', 'positive')
+                    negative_histogram = \
+                        self.create_histogram(cur_data[cur_data < 0], 
+                                              cur_specs, 'event', 
+                                              'all', 'negative')
+
+                    temp_hists.append(positive_histogram)
+                    temp_hists.append(negative_histogram)
 
         return temp_hists
 
 
-    def create_histogram(self, data, specs, hist_type, motion_type, data_type):
+    def create_histogram(self, data, specs, hist_type, 
+                         motion_type, data_type):
         """
         Create individual Histogram instance.
         The only thing this does beyond the Histogram constructor is
@@ -381,14 +397,6 @@ class HistogramManager(object):
             return None
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)
-
-
-    def merge_histograms_michael(hist_cell_array):
-        """
-        I don't understand Jim's merge_histograms method.  Here's my version.
-        """
-        pass
-        #hist_cell_array = np.arra
 
 
     @staticmethod
@@ -426,9 +434,10 @@ class HistogramManager(object):
 
         Parameters
         -------------------------
-        hist_cell_array: a list of objects
+        hist_cell_array: a list of objects, of shape (v,f),
+            Where v is the number of videos and f is the number of features
             Currently each object should only contain a single set of data
-            (i.e. single video) prior to merging. This could be changed.
+            (i.e. v == 1). This could be changed.
 
 
         Returns
@@ -437,8 +446,10 @@ class HistogramManager(object):
 
         """
         # DEBUG: just for fun
-        print("In Histogram.merge_histograms... # of histograms to merge:", len(hist_cell_array))
+        print("In Histogram.merge_histograms... # of histograms to merge:",
+              len(hist_cell_array))
 
+        # Make sure that the hist_cell_array is a numpy array
         hist_cell_array = np.array(hist_cell_array)
 
         num_videos_per_object = [obj.num_videos for obj 
@@ -458,8 +469,7 @@ class HistogramManager(object):
         # Go through each feature and create a merged histogram across
         # all the videos.
         for iFeature in range(num_features):
-            
-            video_array = hist_cell_array[:,iFeature]
+            video_array = hist_cell_array[:, iFeature]
 
             # This is @MichaelCurrie's kludge to step over features that
             # for some reason didn't get their histograms populated on all
@@ -467,9 +477,14 @@ class HistogramManager(object):
             none_video_found = False
             for video in video_array:
                 if video is None:
-                    print("found a None video in the feature list")
                     none_video_found = True
             if none_video_found:
+                if num_videos == 1:
+                    print("The video is None for feature #%d.  Bypassing."
+                          % iFeature)
+                else:
+                    print("For feature #%d, at least one video is None.  "
+                          "Bypassing." % iFeature)
                 continue
             
             # Create an output object with same meta properties
@@ -493,8 +508,8 @@ class HistogramManager(object):
             
             # Colon operator was giving warnings about non-integer indices :/
             # - @JimHokanson
-            start_indices = (first_bin_midpoints - min_bin_midpoint) / \
-                             cur_bin_width
+            start_indices = ((first_bin_midpoints - min_bin_midpoint) /
+                             cur_bin_width)
             start_indices = start_indices.round()
             end_indices   = start_indices + num_bins
             

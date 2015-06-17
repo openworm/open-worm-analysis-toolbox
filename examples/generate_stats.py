@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 This should replicate the behaviour of the compute "new" histograms code from
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
+https://github.com/JimHokanson/SegwormMatlabClasses/
+blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
 
 We are just trying to achieve the creation of an in-memory object that contains
 the statistics generated from comparing a set of 20 Feature .mat Files:
@@ -9,7 +10,6 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Control" files.
 
 """
-
 import sys, os, pickle
 
 # We must add .. to the path so that we can perform the 
@@ -79,8 +79,9 @@ def obtain_histograms(root_path, pickle_file_path):
         A path that has two subfolders, L and R, containing some .mat files,
         for the experiment and control samples, respectively.
     pickle_file_path: string
-        A relative path, to the pickle file that has serialized the histograms. This is
-        generally found in the examples folder if one wishes to delete it to rerun the code fresh
+        A relative path, to the pickle file that has serialized the 
+        histograms.  This is generally found in the examples folder 
+        if one wishes to delete it to rerun the code fresh.
     
     Returns
     -------
@@ -88,14 +89,15 @@ def obtain_histograms(root_path, pickle_file_path):
     
     """
     if os.path.isfile(pickle_file_path):
-        print("Found a pickled version of the histogram managers at:\n%s\n" % pickle_file_path +
-              "Let's attempt to unpickle rather than re-calculate, to save time...")
+        print("Found a pickled version of the histogram managers "
+              "at:\n%s\n" % pickle_file_path + "Let's attempt to "
+              "unpickle rather than re-calculate, to save time...")
         with open(pickle_file_path, "rb") as pickle_file:
             experiment_histograms = pickle.load(pickle_file)
             control_histograms = pickle.load(pickle_file)
     else:
-        print("Could not find a pickled version of the histogram managers " + \
-              "so let's calculate from scratch and then pickle")
+        print("Could not find a pickled version of the histogram "
+              "managers so let's calculate from scratch and then pickle")
 
         experiment_path = os.path.join(root_path, 'L')
         control_path = os.path.join(root_path, 'R')
@@ -110,6 +112,9 @@ def obtain_histograms(root_path, pickle_file_path):
         # Compute histograms on our files
         experiment_histograms = mv.HistogramManager(experiment_files)
         control_histograms = mv.HistogramManager(control_files)
+        
+        # Store a pickle file in the same folder as this script 
+        # (i.e. movement_validation/examples/)
         with open(pickle_file_path, "wb") as pickle_file:
             pickle.dump(experiment_histograms, pickle_file)
             pickle.dump(control_histograms, pickle_file)

@@ -2,7 +2,8 @@
 """
 
 Instances of these classes define how a feature should be quantized into a
-histogram as well as some additional informaton (see csv files and class definitions)
+histogram as well as some additional informaton (see csv files and class 
+definitions)
 
 The raw information is actually located in csv files in:
 
@@ -11,17 +12,22 @@ The raw information is actually located in csv files in:
 These classes instantiate each row of these files as instances.
 
 This is the Python port of:
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/specs.m
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bstats/specs.m
 and its subclasses:
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/movement_specs.m
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/simple_specs.m
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/event_specs.m
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bstats/movement_specs.m
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bstats/simple_specs.m
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+    %2Bseg_worm/%2Bstats/event_specs.m
 
 This module defines the following classes:
-Specs
-MovementSpecs(Specs)
-SimpleSpecs(Specs)
-EventSpecs(Specs)
+
+- Specs
+- MovementSpecs(Specs)
+- SimpleSpecs(Specs)
+- EventSpecs(Specs)
 
 """
 import os
@@ -278,7 +284,7 @@ class MovementSpecs(Specs):
         #       filtered according to the value of the data, not 
         #       according to the velocity of the midbody
         
-        if self.index != None and data != None:
+        if self.index is not None and data is not None:
             # This is for eigenprojections, i.e. for instances when 
             # self.feature_field = 'posture.eigen_projection'
             # In these cases the data is stored as a num_frames x 6 numpy 
