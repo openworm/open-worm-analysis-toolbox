@@ -14,8 +14,12 @@ import movement_validation as mv
 
 
 def main():
-    pass
+    h_ventral_contour, h_dorsal_contour, video_info = \
+        Kezhi_CV_Algorithm('test.avi')
 
+    load_experiment_info('test.csv')
+
+    
 
 def geppetto_to_features(minimal_worm_spec_path):
     pass
@@ -37,6 +41,8 @@ def video_to_features(video_path, output_path):
     A StatisticsManager instance
     
     """
+    
+
     # The segmentation algorithm requires a temporary folder to generate 
     # some intermediate files.  The folder will be deleted at the end.
     tmp_root = os.path.join(os.path.abspath(output_path), 'TEMP_DATA')

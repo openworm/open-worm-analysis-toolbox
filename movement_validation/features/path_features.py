@@ -376,7 +376,7 @@ def worm_path_curvature(features_ref):
     x = nw.skeleton_x
     y = nw.skeleton_y
     fps = features_ref.video_info.fps
-    ventral_mode = nw.ventral_mode    
+    ventral_mode = nw.video_info.ventral_mode    
 
     # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
 

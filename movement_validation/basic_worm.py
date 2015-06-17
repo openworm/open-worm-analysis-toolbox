@@ -25,6 +25,7 @@ from collections import namedtuple, Iterable, OrderedDict
 
 from . import utils
 from .pre_features import WormParsing
+from .video_info import VideoInfo
 
 class JSON_Serializer():
     """
@@ -72,19 +73,16 @@ class UnorderedWorm(JSON_Serializer):
     """
     def __init__(self, other):
         attributes = ['unordered_contour', 'unordered_skeleton', 
-                      'head', 'tail']
+                      'head', 'tail', 'video_info']
         
         if other is None:
             for a in attributes:
                 setattr(self, a, None)
                 
-            self.plate_wireframe_video_key = "Unordered Worm"           
         else:
             # Copy constructor
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
-
-            self.plate_wireframe_video_key = other.plate_wireframe_video_key
     
     
     @classmethod
@@ -110,7 +108,6 @@ class UnorderedWorm(JSON_Serializer):
         #                   "shape (n_points,2,n_frames)")
         uow.skeleton = skeleton
 
-        uow.plate_wireframe_video_key = 'Simple Skeleton'
         if tail is None:
             uow.tail = skeleton[0,:,:]
         else:
@@ -186,17 +183,8 @@ class BasicWorm(JSON_Serializer):
             Missing frames in the first case should be identified by None.    
     h_vulva_contour : The vulva side of the contour.  See skeleton.
     h_non_vulva_contour : The vulva side of the contour.  See skeleton.
-
-    ?????    
-    is_stage_movement :
-    is_valid : 
-    ????
-
-    Metadata Attributes
-    -------------------    
-    plate_wireframe_video_key : string
-        This is the foreign key to the metadata table in the database
-        giving plate information like lab name, time of recording, etc.
+    video_info : An instance of the VideoInfo class.
+                 (contains metadata attributes of the worm video)
 
     """
     def __init__(self, other=None):
@@ -206,14 +194,12 @@ class BasicWorm(JSON_Serializer):
         if other is None:
             for a in attributes:
                 setattr(self, a, None)
-                
-            self.plate_wireframe_video_key = "Basic Worm"
+
+            self.video_info = VideoInfo()
         else:
             # Copy constructor
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
-
-            self.plate_wireframe_video_key = other.plate_wireframe_video_key
 
     
     @classmethod
@@ -249,15 +235,22 @@ class BasicWorm(JSON_Serializer):
                 all_vulva_contours.append(None) 
                 all_non_vulva_contours.append(None)           
                 
-        bw.is_stage_movement = is_stage_movement.astype(bool)
-        bw.is_valid = is_valid.astype(bool)
+        # Video Metadata
+        is_stage_movement = is_stage_movement.astype(bool)
+        is_valid = is_valid.astype(bool)
 
         # A kludge, we drop frames in is_stage_movement that are in excess 
         # of the number of frames in the video.  It's unclear why 
         # is_stage_movement would be longer by 1, which it was in our 
         # canonical example.
-        bw.is_stage_movement = bw.is_stage_movement[0:len(all_skeletons)]
-        
+        is_stage_movement = is_stage_movement[0:len(all_skeletons)]
+
+        # 5. Derive frame_code from the two pieces of data we have,
+        #    is_valid and is_stage_movement.
+        bw.video_info.frame_code = (1   * is_valid +
+                                    2   * is_stage_movement +
+                                    100 * ~(is_valid | is_stage_movement))
+                                   
         # We purposely ignore the saved skeleton information contained
         # in the BasicWorm, preferring to derive it ourselves.        
         bw.remove_precalculated_skeleton()
@@ -265,7 +258,7 @@ class BasicWorm(JSON_Serializer):
 
         bw._h_vulva_contour = all_vulva_contours
         bw._h_non_vulva_contour = all_non_vulva_contours 
-        bw.plate_wireframe_video_key = 'Loaded from Schafer File'
+
         h.close()   
         
         return bw
@@ -320,6 +313,7 @@ class BasicWorm(JSON_Serializer):
         derived from vulva_contour and non_vulva_contour.
         
         It will be recalculated if it's ever asked for.
+        
         """
         try:        
             del(self._h_skeleton)

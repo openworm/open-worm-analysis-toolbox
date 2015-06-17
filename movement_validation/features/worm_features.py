@@ -46,7 +46,6 @@ from . import morphology_features
 """
 
 class WormMorphology(object):
-
     """
     The worm's morphology features class.
 
@@ -95,11 +94,12 @@ class WormMorphology(object):
         
         self.width = morphology_features.Widths(features_ref)
 
-        #TODO: This should eventually be calculated from the contour and skeleton
+        #TODO: This should eventually be calculated from the contour
+        #      and skeleton
         #
-        #This work is currently ongoing in the constructor for NormalizedWorm
+        # This work is currently ongoing in the constructor for NormalizedWorm
         #
-        #Eventually those methods will probably move to here ...
+        # Eventually those methods will probably move to here ...
         if hasattr(nw, 'area'):
             self.area = nw.area
         else:
@@ -189,23 +189,26 @@ class WormLocomotion(object):
         self.motion_mode = self.motion_events.get_motion_mode()
 
         self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
-            features_ref,
-            nw.angles,
-            self.motion_events.is_paused,
-            nw.is_segmented)
+                                            features_ref,
+                                            nw.angles,
+                                            self.motion_events.is_paused,
+                                            nw.video_info.is_segmented)
 
         self.foraging_bends = locomotion_bends.LocomotionForagingBends(
-            features_ref,nw.is_segmented,nw.ventral_mode)
+                                            features_ref, 
+                                            nw.video_info.is_segmented, 
+                                            nw.video_info.ventral_mode)
 
-        is_stage_movement = nw.segmentation_status == 'm'
+        is_stage_movement = nw.video_info.is_stage_movement
        
 
-        self.turns = locomotion_turns.LocomotionTurns(features_ref, 
-                                                      nw.angles,
-                                                      is_stage_movement,
-                                                      self.velocity.get_midbody_distance(),
-                                                      nw.skeleton_x,
-                                                      nw.skeleton_y)
+        self.turns = locomotion_turns.LocomotionTurns(
+                                        features_ref, 
+                                        nw.angles,
+                                        is_stage_movement,
+                                        self.velocity.get_midbody_distance(),
+                                        nw.skeleton_x,
+                                        nw.skeleton_y)
 
     def __repr__(self):
         return utils.print_object(self)
@@ -230,7 +233,8 @@ class WormLocomotion(object):
             same_locomotion = False
 
         # Test motion codes
-        if not fc.corr_value_high(self.motion_mode, other.motion_mode, 'locomotion.motion_mode'):
+        if not fc.corr_value_high(self.motion_mode, other.motion_mode, 
+                                  'locomotion.motion_mode'):
             same_locomotion = False
 
         #TODO: Define ne for all functions (instead of needing not(eq))
@@ -270,11 +274,14 @@ class WormLocomotion(object):
         self.motion_mode = self.motion_events.get_motion_mode()
 
         bend_ref = m_var['bends']
-        self.crawling_bends = locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
+        self.crawling_bends = \
+            locomotion_bends.LocomotionCrawlingBends.from_disk(bend_ref)
         
-        self.foraging_bends = locomotion_bends.LocomotionForagingBends.from_disk(bend_ref['foraging'])
+        self.foraging_bends = \
+            locomotion_bends.LocomotionForagingBends.\
+                                    from_disk(bend_ref['foraging'])
         
-        self.turns    = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
+        self.turns = locomotion_turns.LocomotionTurns.from_disk(m_var['turns'])
 
         return self
 
@@ -339,7 +346,8 @@ class WormPosture(object):
 
         self.kinks = posture_features.get_worm_kinks(features_ref)
 
-        self.coils = posture_features.get_worm_coils(features_ref, midbody_distance)
+        self.coils = posture_features.get_worm_coils(features_ref,
+                                                     midbody_distance)
 
         self.directions = posture_features.Directions(features_ref)
 
@@ -358,25 +366,34 @@ class WormPosture(object):
         temp_amp = p_var['amplitude']
 
         self.amplitude_max = utils._extract_time_from_disk(temp_amp, 'max')
-        self.amplitude_ratio = utils._extract_time_from_disk(temp_amp, 'ratio')
+        self.amplitude_ratio = utils._extract_time_from_disk(temp_amp, 
+                                                             'ratio')
 
         temp_wave = p_var['wavelength']
-        self.primary_wavelength = utils._extract_time_from_disk(temp_wave, 'primary')
-        self.secondary_wavelength = utils._extract_time_from_disk(temp_wave, 'secondary')
+        self.primary_wavelength = utils._extract_time_from_disk(temp_wave, 
+                                                                'primary')
+        self.secondary_wavelength = utils._extract_time_from_disk(temp_wave, 
+                                                                  'secondary')
 
-        self.track_length = utils._extract_time_from_disk(p_var, 'tracklength')
-        self.eccentricity = utils._extract_time_from_disk(p_var, 'eccentricity')
+        self.track_length = utils._extract_time_from_disk(p_var, 
+                                                          'tracklength')
+        self.eccentricity = utils._extract_time_from_disk(p_var, 
+                                                          'eccentricity')
         self.kinks = utils._extract_time_from_disk(p_var, 'kinks')
 
-        self.coils = events.EventListWithFeatures.from_disk(p_var['coils'], 'MRC')
+        self.coils = events.EventListWithFeatures.from_disk(p_var['coils'], 
+                                                            'MRC')
 
-        self.directions = posture_features.Directions.from_disk(p_var['directions'])
+        self.directions = \
+            posture_features.Directions.from_disk(p_var['directions'])
 
         # TODO: Add contours
 
         self.skeleton = posture_features.Skeleton.from_disk(p_var['skeleton'])
         
-        temp_eigen_projection = utils._extract_time_from_disk(p_var,'eigenProjection',is_matrix=True)        
+        temp_eigen_projection = \
+            utils._extract_time_from_disk(p_var, 'eigenProjection', 
+                                          is_matrix=True)
         
         self.eigen_projection = temp_eigen_projection.transpose()
 
@@ -398,34 +415,50 @@ class WormPosture(object):
         #Note that the order of these matches the order in which they are 
         #populated in the constructor
         eq_bends = self.bends == other.bends
-        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, other.amplitude_max, 'posture.amplitude_max')    
-        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, other.amplitude_ratio, 'posture.amplitude_ratio',high_corr_value=0.985)
+        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, 
+                                              other.amplitude_max, 
+                                              'posture.amplitude_max')    
+        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, 
+                                                other.amplitude_ratio, 
+                                                'posture.amplitude_ratio',
+                                                high_corr_value=0.985)
         
-        eq_primary_wavelength = fc.corr_value_high(self.primary_wavelength,
-                                                   other.primary_wavelength,
-                                                   'posture.primary_wavelength',
-                                                   merge_nans=True,
-                                                   high_corr_value=0.97)   
+        eq_primary_wavelength = \
+            fc.corr_value_high(self.primary_wavelength,
+                               other.primary_wavelength,
+                               'posture.primary_wavelength',
+                               merge_nans=True,
+                               high_corr_value=0.97)   
                                                    
-        eq_secondary_wavelength = fc.corr_value_high(self.secondary_wavelength,
-                                                     other.secondary_wavelength,
-                                                     'posture.secondary_wavelength',
-                                                     merge_nans=True,
-                                                     high_corr_value=0.985)
+        eq_secondary_wavelength = \
+            fc.corr_value_high(self.secondary_wavelength,
+                               other.secondary_wavelength,
+                               'posture.secondary_wavelength',
+                               merge_nans=True,
+                               high_corr_value=0.985)
         
         
         #TODO: We need a more lazy evaluation for these since they don't match
         #Are they even close?
         #We could provide a switch for exactly equal vs mimicing the old setup
         #in which our goal could be to shoot for close
-        eq_track_length = fc.corr_value_high(self.track_length, other.track_length, 'posture.track_length')
-        eq_eccentricity = fc.corr_value_high(self.eccentricity, other.eccentricity, 'posture.eccentricity',high_corr_value=0.99)
-        eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 'posture.kinks')
+        eq_track_length = fc.corr_value_high(self.track_length, 
+                                             other.track_length, 
+                                             'posture.track_length')
+        eq_eccentricity = fc.corr_value_high(self.eccentricity, 
+                                             other.eccentricity, 
+                                             'posture.eccentricity',
+                                             high_corr_value=0.99)
+        eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 
+                                      'posture.kinks')
         
         eq_coils = self.coils.test_equality(other.coils,'posture.coils')       
         eq_directions = self.directions == other.directions
         eq_skeleton = self.skeleton == other.skeleton
-        eq_eigen_projection = fc.corr_value_high(np.ravel(self.eigen_projection), np.ravel(other.eigen_projection), 'posture.eigen_projection')
+        eq_eigen_projection = \
+            fc.corr_value_high(np.ravel(self.eigen_projection), 
+                               np.ravel(other.eigen_projection), 
+                               'posture.eigen_projection')
         
         
         #TODO: Reorder these as they appear above
@@ -507,7 +540,8 @@ class WormPath(object):
         self.range = path_features.Range.from_disk(path_var)
         self.duration = path_features.Duration.from_disk(path_var['duration'])
 
-        self.coordinates = path_features.Coordinates.from_disk(path_var['coordinates'])
+        self.coordinates = \
+            path_features.Coordinates.from_disk(path_var['coordinates'])
 
         #Make a call to utils loader
         self.curvature = path_var['curvature'].value[:, 0]
@@ -528,8 +562,9 @@ class WormPath(object):
                                high_corr_value=0.95,
                                merge_nans=True)
 
-        # NOTE: Unfortunately the curvature is slightly different. It looks the same
-        # but I'm guessing there are a few off by 1 errors in it.
+        # NOTE: Unfortunately the curvature is slightly different. It
+        # looks the same but I'm guessing there are a few off-by-1 errors 
+        # in it.
 
 
 """

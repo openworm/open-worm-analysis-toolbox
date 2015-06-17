@@ -1231,7 +1231,7 @@ def get_worm_kinks(features_ref):
 
 def get_worm_coils(features_ref, midbody_distance):
     """
-    
+    Get the worm's posture.coils.
     
     Parameters
     ----------
@@ -1242,28 +1242,28 @@ def get_worm_coils(features_ref, midbody_distance):
     Translated From:
     https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
     %2Bseg_worm/%2Bfeatures/%40posture/getCoils.m
-    """
 
-    
+    """
     options = features_ref.options
     posture_options = options.posture
     timer = features_ref.timer
     
     fps = features_ref.video_info.fps     
     
-    timer.tic()    
+    timer.tic()
     
-    frame_code = features_ref.nw.frame_code
+    frame_code = features_ref.nw.video_info.frame_code
     
 
     COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold
     
-    #These are values that are specific to the MRC processor
+    # These are values that are specific to the MRC processor
     COIL_START_CODES = [105, 106]
-    FRAME_SEGMENTED = 1 #Code that indicates a frame was succsefully segmented
+    # Code that indicates a frame was successfully segmented
+    FRAME_SEGMENTED = 1 
     
-    # Algorithm: Whenever a new start is found, find the first segmented frame,
-    # that's the end.
+    # Algorithm: Whenever a new start is found, find the 
+    # first segmented frame; that's the end.
 
     # Add on a frame to allow closing a coil at the end ...
     coil_start_mask = (frame_code == COIL_START_CODES[0]) | (

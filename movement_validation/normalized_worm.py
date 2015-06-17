@@ -12,12 +12,11 @@ import warnings
 import os
 import matplotlib.pyplot as plt
 
-
-from . import config
 from . import utils
 from .basic_worm import WormPartition
 from .basic_worm import BasicWorm
 from .pre_features import WormParsing
+from .video_info import VideoInfo
 
 # TODO: remove this dependency by moving feature_comparisons to utils and 
 #       renaming it to something more general.
@@ -41,12 +40,9 @@ class NormalizedWorm(WormPartition):
         length
         area
 
-    Also, some metadata:
-        segmentation_status
-        frame_code
-        ventral_mode
-        plate_wireframe_video_key
-        
+    It also contains video metadata, in :
+        video_info : An instance of VideoInfo
+
     """
     def __init__(self, other=None):
         """
@@ -57,18 +53,14 @@ class NormalizedWorm(WormPartition):
         WormPartition.__init__(self)
 
         if other is None:
-            # DEBUG: (Note from @MichaelCurrie:)
-            # This should be set by the normalized worm file, since each
-            # worm subjected to an experiment is manually examined to find the
-            # vulva so the ventral mode can be determined.  Here we just set
-            # the ventral mode to a default value as a stopgap measure
-            self.ventral_mode = config.DEFAULT_VENTRAL_MODE
+            # By default, leave all variables uninitialized
+            # Initialize an empty VideoInfo instance, though:
+            self.video_info = VideoInfo()
         else:
             # Copy constructor
             attributes = ['skeleton', 'vulva_contour', 'non_vulva_contour',
                           'angles', 'widths', 'length', 'area'
-                          'frame_code', 'segmentation_status', 
-                          'ventral_mode', 'plate_wireframe_video_key']
+                          'video_info']
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
 
@@ -94,6 +86,7 @@ class NormalizedWorm(WormPartition):
         
         """
         nw = cls()
+        nw.video_info = basic_worm.video_info
         
         #TODO: Need to add on testing for normalized data as an input
         if basic_worm.h_vulva_contour is not None:
@@ -115,13 +108,6 @@ class NormalizedWorm(WormPartition):
 
             # 4. Calculate areas
             nw.area = WormParsing.computeArea(nw.contour)
-            
-            # 5. Derive frame_code from the two pieces of data we have,
-            #    is_valid and is_stage_movement.
-            nw.frame_code = basic_worm.is_valid * 1 + \
-                            basic_worm.is_stage_movement * 2 + \
-                            ~(basic_worm.is_valid | 
-                              basic_worm.is_stage_movement) * 100
 
         else:
             # With no contour, let's assume we have a skeleton.
@@ -151,7 +137,7 @@ class NormalizedWorm(WormPartition):
 
         """
         nw = cls()
-        nw.plate_wireframe_video_key = 'Schafer'
+        nw.video_info = VideoInfo()        
         
         if(not os.path.isfile(data_file_path)):
             raise Exception("Data file not found: " + data_file_path)
@@ -242,14 +228,16 @@ class NormalizedWorm(WormPartition):
             nw.tail_area = nw.tail_areas
             nw.vulva_area = nw.vulva_areas
             nw.non_vulva_area = nw.non_vulva_areas
-            nw.frame_code = nw.frame_codes
             del(nw.lengths)
             del(nw.head_areas)
             del(nw.tail_areas)
             del(nw.vulva_areas)
             del(nw.non_vulva_areas)
+
+            # Frame codes should be stored in the VideoInfo object            
+            nw.video_info.frame_code = nw.frame_codes
             del(nw.frame_codes)
-            
+
             # Somehow those four areas apparently add up to the total area
             # of the worm.  No feature requires knowing anything more
             # than just the total area of the worm, so for NormalizedWorm
@@ -263,27 +251,6 @@ class NormalizedWorm(WormPartition):
             
             return nw
 
-    @property
-    def segmentation_status(self):
-        try:
-            return self._segmentation_status
-        except AttributeError:
-            s = self.frame_code == 1
-            m = self.frame_code == 2
-            d = self.frame_code == 3
-
-            self._segmentation_status = np.empty(self.num_frames, dtype='<U1')
-            for frame_index in range(self.num_frames):
-                if s[frame_index]:
-                    self._segmentation_status[frame_index] = 's'
-                elif m[frame_index]:
-                    self._segmentation_status[frame_index] = 'm'
-                elif d[frame_index]:
-                    self._segmentation_status[frame_index] = 'd'
-                else:
-                    self._segmentation_status[frame_index] = 'f'
-        
-            return self._segmentation_status        
 
     def get_BasicWorm(self):
         """
@@ -307,6 +274,7 @@ class NormalizedWorm(WormPartition):
         bw.h_vulva_contour = np.copy(self.vulva_contour)
         bw.h_non_vulva_contour = np.copy(self.non_vulva_contour)
         bw.ventral_mode = self.ventral_mode
+        bw.video_info = self.video_info
         
         return bw
 
@@ -528,14 +496,7 @@ class NormalizedWorm(WormPartition):
     
             return self._num_frames
 
-    @property
-    def is_segmented(self):
-        """
-        Returns a 1-d boolean numpy array of whether 
-        or not, frame-by-frame, the given frame was segmented
 
-        """
-        return self.segmentation_status == 's'
 
     def position_limits(self, dimension, measurement='skeleton'):
         """ 

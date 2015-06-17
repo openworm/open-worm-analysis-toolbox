@@ -485,12 +485,12 @@ class LocomotionForagingBends(object):
         """
         Initialize an instance of LocomotionForagingBends
 
-
         Parameters
         ----------  
         nw: NormalizedWorm instance
         is_segmented_mask: boolean numpy array [1 x n_frames]
-        ventral_mode: boolean numpy array [1 x n_frames]
+        ventral_mode: int
+            0, 1, or 2 depending on the orientation of the worm.
 
         """
         
@@ -508,16 +508,16 @@ class LocomotionForagingBends(object):
         # self.amplitude  = None  # DEBUG
         # self.angleSpeed = None # DEBUG
 
-        nw  = features_ref.nw
-        
-        
-
         fps = features_ref.video_info.fps
 
-        nose_x, nose_y = nw.get_partition('head_tip', data_key='skeleton',
+        nose_x, nose_y = \
+            features_ref.nw.get_partition('head_tip', 
+                                          data_key='skeleton',
                                           split_spatial_dimensions=True)
 
-        neck_x, neck_y = nw.get_partition('head_base', data_key='skeleton',
+        neck_x, neck_y = \
+            features_ref.nw.get_partition('head_base', 
+                                          data_key='skeleton',
                                           split_spatial_dimensions=True)
 
         # TODO: Add "reversed" and "interpolated" options to the get_partition
@@ -561,7 +561,8 @@ class LocomotionForagingBends(object):
         # Step 3:
         #---------------------------------------
         [nose_amps, nose_freqs] = \
-            self.h__foragingData(fps, nose_bends, options.min_nose_window_samples)
+            self.h__foragingData(fps, nose_bends, 
+                                 options.min_nose_window_samples)
 
         if ventral_mode > 1:
             nose_amps = -nose_amps

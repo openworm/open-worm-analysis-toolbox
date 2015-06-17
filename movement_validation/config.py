@@ -23,20 +23,17 @@ since the latter approach pollutes the global namespace.
 
 from __future__ import division
 
-#__ALL__ = ['FPS', 'N_ECCENTRICITY']
-
 """ DEBUG MODE TO RESTORE OLD SCHAFER LAB ERRORS """
 
 
 """ FEATURE CONFIGURATION SETTINGS """
 
-# Frames Per Second
-# (must be a multiple of both 1/TIP_DIFF and 1/BODY_DIFF)
-# JAH to MC; Why?
-# This is the frame rate of the test video.
-# TODO: This needs to be moved elsewhere, in fact made into a parameter
-FPS = 25.8398
-# DEBUG: might not need to be here but used in Path code and Locomotion code
+# This is the frame rate of the test video.  Generally the FPS should be
+# obtained properly from the video itself; this value will not be correct
+# for most videos.
+DEFAULT_FPS = 25.8398
+# Again, generally ventral_mode should be determined and specified by the
+# experimenter.  This default value will be wrong for most videos.
 DEFAULT_VENTRAL_MODE = 0
 
 

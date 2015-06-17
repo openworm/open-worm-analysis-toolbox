@@ -12,7 +12,6 @@ In addition the user_config.py file should be created in the
 movement_validation package based on the user_config_example.txt
 
 """
-
 import sys, os
 
 # We must add .. to the path so that we can perform the 
@@ -43,9 +42,12 @@ def main():
     # Load the normalized worm from file
     nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
 
+    print(nw.video_info.ventral_mode)
+
     # The frame rate is somewhere in the video info. Ideally this would all
     # come from the video parser eventually
-    vi = VideoInfo('Example Video File', config.FPS)
+    vi = VideoInfo(video_name='Example Video File', 
+                   fps=config.DEFAULT_FPS)
 
     # Generate the OpenWorm movement validation repo version of the features
     openworm_features = WormFeatures(nw, vi)
