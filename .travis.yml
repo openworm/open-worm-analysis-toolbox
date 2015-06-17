@@ -29,6 +29,12 @@ before_install:
   - export PATH=$MINICONDA_DIR/bin:$PATH
   #- conda update --yes conda
   
+  #Need to install the actual Python version, does this work?
+  #To get the correct version you have to do a conda install
+  #Old versions are at: http://repo.continuum.io/miniconda/ but don't match Python versions
+  #and it seems like continuum doesn't want you to try and match
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
+  
   - which python
   - python --version
   
@@ -56,8 +62,8 @@ before_install:
   - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
 
   # Install packages
-install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py shapely
+#install:
+  
   #opencv 3 via hadim, need -y to say yes to prompts
   #- conda install -y -c https://conda.binstar.org/hadim opencv
   # Coverage packages are on my binstar channel
