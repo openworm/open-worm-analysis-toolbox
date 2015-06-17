@@ -74,7 +74,7 @@ before_script:
  
 # Run test
 script:
-  - cd tests
+  - cd $TRAVIS_BUILD_DIR/tests
   - pwd
   - nosetests --nocapture
 #  - nosetests --with-cov --cov YOUR_PACKAGE_NAME_HERE --cov-config .coveragerc --logging-level=INFO
