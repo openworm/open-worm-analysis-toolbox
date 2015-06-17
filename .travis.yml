@@ -14,7 +14,7 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-    - MINICONDA_DIR = /home/travis/miniconda
+    - MINICONDA_DIR=/home/travis/miniconda
  
 before_install:
   - which python
