@@ -81,9 +81,12 @@ before_install:
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
   - cd $TRAVIS_BUILD_DIR/example_data
-  - wget https://drive.google.com/file/d/0B7to9gBdZEyGX2tFQ1JyRzdUYUE -O example_video_feature_file.mat
-  - wget https://drive.google.com/file/d/0B7to9gBdZEyGakg5U3loVUktRm8 -O example_video_norm_worm.mat
+  #Presumably the initial address could be a variable
+  - wget https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE -O example_video_feature_file.mat
+  - wget https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8 -O example_video_norm_worm.mat
   #presumably we could run some command on the directory
+  #This may no longer be necessary, found other bugs ...
+  - ls -l
   - chmod 777 example_video_feature_file.mat
   - chmod 777 example_video_norm_worm.mat
   - pwd
