@@ -83,8 +83,11 @@ before_script:
   - cd $TRAVIS_BUILD_DIR/example_data
   - wget https://drive.google.com/file/d/0B7to9gBdZEyGX2tFQ1JyRzdUYUE -O example_video_feature_file.mat
   - wget https://drive.google.com/file/d/0B7to9gBdZEyGakg5U3loVUktRm8 -O example_video_norm_worm.mat
+  #presumably we could run some command on the directory
+  - chmod 755 example_video_feature_file.mat
+  - chmod 755 example_video_norm_worm.mat
   - pwd
-  - ls -a
+  - ls -l
  
 # Run test
 script:
