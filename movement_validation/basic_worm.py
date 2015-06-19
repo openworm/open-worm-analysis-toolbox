@@ -445,7 +445,7 @@ class WormPartition():
         # worm_partition_subsets
         p = self.worm_partition_subsets[partition_type]
 
-        # return only the subset of partitions contained in the particular
+        # Return only the subset of partitions contained in the particular
         # subset of interest, p.
         return {k: self.worm_partitions[k] for k in p}
 

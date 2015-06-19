@@ -715,9 +715,11 @@ def correlation(x, y, variable_name, high_corr_value=0.999,
     y: numpy array
     variable_name: str
         The name that will be displayed for this variable in error messages
-    high_corr_value: the threshold below which an error will be thrown.
+    high_corr_value: float
+        The threshold below which an error will be thrown.  Default 0.999.
     merge_nans: bool
-    
+        Default False.
+        
     Returns
     ----------------
     bool

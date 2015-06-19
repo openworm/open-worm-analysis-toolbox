@@ -565,31 +565,46 @@ class NormalizedWorm(WormPartition):
     def skeleton_y(self):
         return self.skeleton[:, 1, :]
 
+    @property
+    def vulva_contour_x(self):
+        return self.vulva_contour[:, 0, :]
+
+    @property
+    def vulva_contour_y(self):
+        return self.vulva_contour[:, 1, :]
+
+    @property
+    def non_vulva_contour_x(self):
+        return self.vulva_contour[:, 0, :]
+
+    @property
+    def non_vulva_contour_y(self):
+        return self.vulva_contour[:, 1, :]
+
     def __eq__(self, other):
         """
         Compare this Normalized worm against another.
+
+        # Idea from @JimHokanson:
+        # TODO: Do this on a frame by frame basis, do some sort of distance 
+        # computation rather than all together. This might hide bad frames        
         
         """
-        x1 = self.skeleton_x.flatten()
-        x2 = other.skeleton_x.flatten()
-        y1 = self.skeleton_y.flatten()
-        y2 = other.skeleton_y.flatten()
-        
-        #TODO: Do this on a frame by frame basis, do some sort of distance 
-        #computation rather than all together. This might hide bad frames        
-        
-        utils.correlation(x1, x2, 'asdf')
-        utils.correlation(y1, y2, 'asdf')
+        attributes = ['skeleton_x', 'skeleton_y',
+                      'vulva_contour_x', 'vulva_contour_y',
+                      'vulva_contour_x', 'vulva_contour_y',
+                      'angles', 'widths', 'length', 'area']
 
-        #return \
-            #utils.correlation(self.length, other.length, 
-            #                   'morph.length') and \
-            #self.width == other.width and \
-            #utils.correlation(self.area, other.area, 'morph.area') and \
-            #utils.correlation(self.area_per_length, other.area_per_length, 
-            #                   'morph.area_per_length') and \
-            #utils.correlation(self.width_per_length, other.width_per_length, 
-            #                   'morph.width_per_length')
+        is_equal = True        
+        for attribute in attributes:
+            attrib_equal = utils.correlation(getattr(self, attribute), 
+                                             getattr(other, attribute), 
+                                             attribute)
+            if not attrib_equal:
+                is_equal = False
+    
+        # Return True only if all attributes are correlating
+        return is_equal
 
     def __repr__(self):
         #TODO: This omits the properties above ...

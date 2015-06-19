@@ -161,6 +161,12 @@ class VideoInfo(object):
         """
         Deprecated in favour of using self.frame_code directly.
         
+        A numpy array of characters 's', 'm', 'd', 'f', where:
+            s = Segmented           (aka frame code 1)
+            m = Stage movement      (aka frame code 2)
+            d = Dropped frame       (aka frame code 3)
+            f = Segmentation failed (aka frame codes 100+)
+    
         """
         try:
             return self._segmentation_status
