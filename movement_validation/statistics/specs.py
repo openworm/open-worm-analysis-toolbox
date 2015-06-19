@@ -69,7 +69,7 @@ class Specs(object):
         value = self.feature_field
 
         if hasattr(self, 'sub_field') and \
-           self.sub_field != None and self.sub_field != '':
+           not self.sub_field is not None and self.sub_field != '':
             value += '.' + self.sub_field
 
         return value
@@ -278,7 +278,7 @@ class MovementSpecs(Specs):
         #       filtered according to the value of the data, not 
         #       according to the velocity of the midbody
         
-        if self.index != None and data != None:
+        if self.index is not None and data is not None:
             # This is for eigenprojections, i.e. for instances when 
             # self.feature_field = 'posture.eigen_projection'
             # In these cases the data is stored as a num_frames x 6 numpy 
@@ -340,7 +340,7 @@ class EventSpecs(Specs):
         return Specs.specs_factory(csv_path, EventSpecs)
 
     
-    def getData(self, worm_features, num_samples):
+    def getData(self, worm_features, num_samples=-1):
         """
 
         Parameters
@@ -354,6 +354,8 @@ class EventSpecs(Specs):
                - locomotion, in an h5py group.
         num_samples: int
             Number of samples (i.e. number of frames in the video)
+        frame_range: [int, int]
+            Frame range, used in case the 
 
         Returns
         ---------------------
@@ -377,6 +379,12 @@ class EventSpecs(Specs):
 
         #JAH: This will fail in Python 2.7
         #???? super(Specs).getData(worm_features)
+        
+        #add the option to have the num_samples as optional parameter and 
+        #extract it from the worm_features structure
+        if num_samples<=0:
+            num_samples = len(worm_features.morphology.length)
+
 
         parent_data = super(EventSpecs,self).getData(worm_features)
 
@@ -445,7 +453,7 @@ class EventSpecs(Specs):
             pdb.set_trace()
             raise Exception("The WormFeature contains no data for " + self.long_field)
         
-        if data.size == 0 and self.make_zero_if_empty:
+        if not isinstance(data, (float, int)) and data.size == 0 and self.make_zero_if_empty:
             data = 0
         
         return data

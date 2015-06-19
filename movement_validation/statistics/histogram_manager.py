@@ -36,7 +36,7 @@ class HistogramManager(object):
     hists: list
     
     """
-    def __init__(self, feature_path_or_object_list):
+    def __init__(self, feature_path_or_object_list=[]):
         """
         Parameters
         ----------
@@ -47,6 +47,10 @@ class HistogramManager(object):
         """
         #DEBUG: just for fun
         print("Number of feature files passed into the hisotgram manager:", len(feature_path_or_object_list))
+        
+        #consider the case that an empty list is passed (useful to initialize the object without having to create histograms)
+        if not feature_path_or_object_list:
+            return
         
         #For each ...
         hist_cell_array = []        
@@ -70,7 +74,7 @@ class HistogramManager(object):
             #worm_features.info -> obj.info
 
             hist_cell_array.append(self.init_histograms(worm_features))
-
+        
         # At this point hist_cell_array is a list, with one element for 
         # each video.
         # Each element is a numpy array of 700+ Histogram instances.
@@ -78,7 +82,7 @@ class HistogramManager(object):
         # of 700+ Histogram instances, for the merged video
         self.hists = HistogramManager.merge_histograms(hist_cell_array)
         #self.hists = hist_cell_array[0]   # DEBUG: remove this and replace with above
-
+        
 
     def init_histograms(self, worm_features):
         """
@@ -381,14 +385,6 @@ class HistogramManager(object):
             return None
         else:
             return Histogram(data, specs, hist_type, motion_type, data_type)
-
-
-    def merge_histograms_michael(hist_cell_array):
-        """
-        I don't understand Jim's merge_histograms method.  Here's my version.
-        """
-        pass
-        #hist_cell_array = np.arra
 
 
     @staticmethod
