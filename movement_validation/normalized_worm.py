@@ -18,10 +18,6 @@ from .basic_worm import BasicWorm
 from .pre_features import WormParsing
 from .video_info import VideoInfo
 
-# TODO: remove this dependency by moving feature_comparisons to utils and 
-#       renaming it to something more general.
-from .features import feature_comparisons as fc
-
 
 class NormalizedWorm(WormPartition):
     """
@@ -569,7 +565,11 @@ class NormalizedWorm(WormPartition):
     def skeleton_y(self):
         return self.skeleton[:, 1, :]
 
-    def __eq__(self,other):
+    def __eq__(self, other):
+        """
+        Compare this Normalized worm against another.
+        
+        """
         x1 = self.skeleton_x.flatten()
         x2 = other.skeleton_x.flatten()
         y1 = self.skeleton_y.flatten()
@@ -578,17 +578,17 @@ class NormalizedWorm(WormPartition):
         #TODO: Do this on a frame by frame basis, do some sort of distance 
         #computation rather than all together. This might hide bad frames        
         
-        fc.corr_value_high(x1,x2,'asdf')
-        fc.corr_value_high(y1,y2,'asdf')
+        utils.correlation(x1, x2, 'asdf')
+        utils.correlation(y1, y2, 'asdf')
 
         #return \
-            #fc.corr_value_high(self.length, other.length, 
+            #utils.correlation(self.length, other.length, 
             #                   'morph.length') and \
             #self.width == other.width and \
-            #fc.corr_value_high(self.area, other.area, 'morph.area') and \
-            #fc.corr_value_high(self.area_per_length, other.area_per_length, 
+            #utils.correlation(self.area, other.area, 'morph.area') and \
+            #utils.correlation(self.area_per_length, other.area_per_length, 
             #                   'morph.area_per_length') and \
-            #fc.corr_value_high(self.width_per_length, other.width_per_length, 
+            #utils.correlation(self.width_per_length, other.width_per_length, 
             #                   'morph.width_per_length')
 
     def __repr__(self):

@@ -74,10 +74,7 @@ import h5py
 import warnings
 
 from itertools import groupby
-from .. import config
 from .. import utils
-
-from . import feature_comparisons
 
 
 class EventFinder:
@@ -1060,18 +1057,16 @@ class EventListWithFeatures(EventList):
         except:
             raise Exception("Problem while testing inequality")
 
-        fc = feature_comparisons
-
         # TODO: Add an integer equality comparison with name printing
         return \
-            fc.fp_isequal(self.num_video_frames, other.num_video_frames, event_name + '.num_video_frames') and \
-            fc.corr_value_high(self.start_frames, other.start_frames, event_name + '.start_frames') and \
-            fc.corr_value_high(self.end_frames, other.end_frames, event_name + '.end_frames')   and \
-            fc.corr_value_high(self.event_durations, other.event_durations, event_name + '.event_durations')   and \
-            fc.corr_value_high(self.distance_during_events, other.distance_during_events, event_name + '.distance_during_events')   and \
-            fc.fp_isequal(self.total_time, other.total_time, event_name + '.total_time', 0.01) and \
-            fc.fp_isequal(self.frequency, other.frequency, event_name + '.frequency', 0.01) and \
-            fc.fp_isequal(self.time_ratio, other.time_ratio, event_name + '.time_ratio', 0.01) and \
-            fc.fp_isequal(self.data_ratio, other.data_ratio, event_name + '.data_ratio', 0.01) and \
-            fc.fp_isequal(self.num_events_for_stats, other.num_events_for_stats, event_name + '.total_time')
+            utils.compare_is_equal(self.num_video_frames, other.num_video_frames, event_name + '.num_video_frames') and \
+            utils.correlation(self.start_frames, other.start_frames, event_name + '.start_frames') and \
+            utils.correlation(self.end_frames, other.end_frames, event_name + '.end_frames')   and \
+            utils.correlation(self.event_durations, other.event_durations, event_name + '.event_durations')   and \
+            utils.correlation(self.distance_during_events, other.distance_during_events, event_name + '.distance_during_events')   and \
+            utils.compare_is_equal(self.total_time, other.total_time, event_name + '.total_time', 0.01) and \
+            utils.compare_is_equal(self.frequency, other.frequency, event_name + '.frequency', 0.01) and \
+            utils.compare_is_equal(self.time_ratio, other.time_ratio, event_name + '.time_ratio', 0.01) and \
+            utils.compare_is_equal(self.data_ratio, other.data_ratio, event_name + '.data_ratio', 0.01) and \
+            utils.compare_is_equal(self.num_events_for_stats, other.num_events_for_stats, event_name + '.total_time')
            

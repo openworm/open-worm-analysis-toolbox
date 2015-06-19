@@ -8,7 +8,6 @@ import numpy as np
 
 from .. import utils
 
-from . import feature_comparisons as fc
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
@@ -43,8 +42,8 @@ class Coordinates(object):
         
     def __eq__(self, other):
         return \
-            fc.corr_value_high(self.x, other.x, 'path.coordinates.x') and \
-            fc.corr_value_high(self.y, other.y, 'path.coordinates.y')      
+            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
+            utils.correlation(self.y, other.y, 'path.coordinates.y')      
 
 class Range(object):
 
@@ -85,7 +84,7 @@ class Range(object):
 
     def __eq__(self, other):
 
-        return fc.corr_value_high(self.value, other.value, 'path.range', 0.99)
+        return utils.correlation(self.value, other.value, 'path.range', 0.99)
 
 
 class Duration(object):
@@ -295,8 +294,8 @@ class DurationElement(object):
     def __eq__(self, other):
 
         return \
-            fc.corr_value_high(self.indices, other.indices, 'Duration.indices') and \
-            fc.corr_value_high(self.times, other.times, 'Duration.times')
+            utils.correlation(self.indices, other.indices, 'Duration.indices') and \
+            utils.correlation(self.times, other.times, 'Duration.times')
 
     @classmethod
     def from_disk(cls, saved_duration_elem):
@@ -337,12 +336,12 @@ class Arena(object):
         # NOTE: Due to rounding differences between Matlab and numpy
         # the height and width values are different by 1
         return \
-            fc.fp_isequal(self.height, other.height, 'Arena.height', 1) and \
-            fc.fp_isequal(self.width, other.width, 'Arena.width', 1)   and \
-            fc.fp_isequal(self.min_x, other.min_x, 'Arena.min_x')   and \
-            fc.fp_isequal(self.min_y, other.min_y, 'Arena.min_y')   and \
-            fc.fp_isequal(self.max_x, other.max_x, 'Arena.max_x')   and \
-            fc.fp_isequal(self.max_y, other.max_y, 'Arena.max_y')
+            utils.compare_is_equal(self.height, other.height, 'Arena.height', 1) and \
+            utils.compare_is_equal(self.width, other.width, 'Arena.width', 1)   and \
+            utils.compare_is_equal(self.min_x, other.min_x, 'Arena.min_x')   and \
+            utils.compare_is_equal(self.min_y, other.min_y, 'Arena.min_y')   and \
+            utils.compare_is_equal(self.max_x, other.max_x, 'Arena.max_x')   and \
+            utils.compare_is_equal(self.max_y, other.max_y, 'Arena.max_y')
 
     def __repr__(self):
         return utils.print_object(self)

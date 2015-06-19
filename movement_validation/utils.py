@@ -678,3 +678,87 @@ def timing_function():
         return time.monotonic()
     else:
         return time.time()
+
+
+
+def compare_is_equal(x, y, variable_name, tol=1e-6):
+    """
+    This code is meant to implement the functions that actually compare 
+    data between two different instances without knowing anything about
+    what they are comparing (i.e. just looking at the numbers)
+    
+    e.g. this can be used for features comparison.
+        
+    """
+    if np.isnan(x) and np.isnan(y):
+        return True
+    elif np.logical_or(np.isnan(x),np.isnan(y)): 
+        print('Values not equal: %s' % variable_name)
+
+        return False
+    elif np.abs(x - y) <= tol:
+        return True
+    else:
+        print('Values not equal: %s' % variable_name)
+
+        return False
+
+
+def correlation(x, y, variable_name, high_corr_value=0.999, 
+                merge_nans=False):
+    """
+    Compare two numpy arrays using a tolerance threshold
+    
+    Parameters
+    ----------------
+    x: numpy array
+    y: numpy array
+    variable_name: str
+        The name that will be displayed for this variable in error messages
+    high_corr_value: the threshold below which an error will be thrown.
+    merge_nans: bool
+    
+    Returns
+    ----------------
+    bool
+    
+    NOTE: For now everything is printed; eventually it would be nice
+    to optionally print things.
+    
+    """
+    return_value = False
+
+    if type(x) != type(y):
+        print('Type mismatch %s vs %s: %s' % (type(x), type(y), 
+                                              variable_name))
+    elif x.shape != y.shape:
+        print('Shape mismatch %s vs %s: %s' % (str(x.shape), str(y.shape),
+                                               variable_name))
+    else:
+        np.reshape(x, x.size)
+        np.reshape(y, y.size)
+
+        if merge_nans:
+            keep_mask = ~np.logical_or(np.isnan(x), np.isnan(y))
+            xn = x[keep_mask]
+            yn = y[keep_mask]
+        else:
+            xn = x[~np.isnan(x)]  # xn -> x without NaNs or x no NaN -> xn
+            yn = y[~np.isnan(y)]
+
+        if (xn.size == 0) and (yn.size == 0):
+            return_value = True
+        elif (xn.size == 1) and (yn.size == 1):
+            #Can't take correlation coefficient with single values
+            return_value = True
+        elif xn.shape != yn.shape:
+            print('Shape mismatch after NaN filter: %s' % variable_name)
+        else:
+            c = np.corrcoef(xn, yn)
+            is_good = c[1, 0] > high_corr_value
+            if not is_good:
+                print('Corr value too low for %s: %0.3f' %
+                      (variable_name, c[1, 0]))
+            return_value = is_good
+                
+        return return_value

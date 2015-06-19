@@ -42,8 +42,6 @@ def main():
     # Load the normalized worm from file
     nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
 
-    print(nw.video_info.ventral_mode)
-
     # The frame rate is somewhere in the video info. Ideally this would all
     # come from the video parser eventually
     vi = VideoInfo(video_name='Example Video File', 

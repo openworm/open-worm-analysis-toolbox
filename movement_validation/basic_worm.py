@@ -521,7 +521,7 @@ class WormPartition():
         part = self.worm_partitions[partition_key]
 
         worm_attribute_values = getattr(self, data_key)
-        if(worm_attribute_values.size != 0):
+        if(len(worm_attribute_values) != 0):
             # Let's suppress the warning about zero arrays being reshaped
             # since that's irrelevant since we are only looking at the 
             # non-zero array in the middle i.e. the 2nd element i.e. [1]

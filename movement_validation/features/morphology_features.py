@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 morphology_features.py
-"""
 
+"""
 import numpy as np
 
 from .. import utils
-
-from . import feature_comparisons as fc
 
 class Widths(object):
     """
@@ -20,19 +18,22 @@ class Widths(object):
     
     fields = ('head', 'midbody', 'tail')
     
-    def __init__(self,features_ref):
+    def __init__(self, features_ref):
         """
         Parameters
         ----------
-        features_ref : WormFeatures
+        features_ref : WormFeatures instance
         
-        Note the current approach just computes the mean of the different 
-        body section widths. Eventually this should be computed in this class.
+        Note the current approach just computes the mean of the 
+        different body section widths. Eventually this should be 
+        computed in this class.
+
         """
         nw = features_ref.nw
     
         for partition in self.fields:
-            setattr(self,partition, np.mean(nw.get_partition(partition, 'widths'),0))
+            widths_in_partition = nw.get_partition(partition, 'widths')
+            setattr(self, partition, np.mean(widths_in_partition, 0))
     
     @classmethod
     def from_disk(cls,width_ref):
@@ -40,14 +41,20 @@ class Widths(object):
         self = cls.__new__(cls)
 
         for partition in self.fields:
-            setattr(self,partition, utils._extract_time_from_disk(width_ref,partition))
+            widths_in_partition = utils._extract_time_from_disk(width_ref, 
+                                                                partition)
+            setattr(self, partition, widths_in_partition)
     
         return self
         
     def __eq__(self, other):
-        return fc.corr_value_high(self.head, other.head, 'morph.width.head') and \
-            fc.corr_value_high(self.midbody, other.midbody, 'morph.width.midbody') and \
-            fc.corr_value_high(self.tail, other.tail, 'morph.width.tail')
+        return (
+                utils.correlation(self.head, other.head, 
+                                   'morph.width.head') and
+                utils.correlation(self.midbody, other.midbody,
+                                   'morph.width.midbody') and
+                utils.correlation(self.tail, other.tail, 
+                                   'morph.width.tail'))
 
     def __repr__(self):
         return utils.print_object(self)  

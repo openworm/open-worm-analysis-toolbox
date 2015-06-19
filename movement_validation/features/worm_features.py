@@ -30,7 +30,6 @@ import collections  # For namedtuple
 from .. import utils
 
 from . import feature_processing_options as fpo
-from . import feature_comparisons as fc
 from . import events
 from . import path_features
 from . import posture_features
@@ -129,11 +128,11 @@ class WormMorphology(object):
     def __eq__(self, other):
 
         return \
-            fc.corr_value_high(self.length, other.length, 'morph.length')  and \
+            utils.correlation(self.length, other.length, 'morph.length')  and \
             self.width == other.width and \
-            fc.corr_value_high(self.area, other.area, 'morph.area')      and \
-            fc.corr_value_high(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
-            fc.corr_value_high(self.width_per_length, other.width_per_length, 'morph.width_per_length')
+            utils.correlation(self.area, other.area, 'morph.area')      and \
+            utils.correlation(self.area_per_length, other.area_per_length, 'morph.area_per_length') and \
+            utils.correlation(self.width_per_length, other.width_per_length, 'morph.width_per_length')
 
     def __repr__(self):
         return utils.print_object(self)
@@ -233,7 +232,7 @@ class WormLocomotion(object):
             same_locomotion = False
 
         # Test motion codes
-        if not fc.corr_value_high(self.motion_mode, other.motion_mode, 
+        if not utils.correlation(self.motion_mode, other.motion_mode, 
                                   'locomotion.motion_mode'):
             same_locomotion = False
 
@@ -415,23 +414,23 @@ class WormPosture(object):
         #Note that the order of these matches the order in which they are 
         #populated in the constructor
         eq_bends = self.bends == other.bends
-        eq_amplitude_max = fc.corr_value_high(self.amplitude_max, 
+        eq_amplitude_max = utils.correlation(self.amplitude_max, 
                                               other.amplitude_max, 
                                               'posture.amplitude_max')    
-        eq_amplitude_ratio = fc.corr_value_high(self.amplitude_ratio, 
+        eq_amplitude_ratio = utils.correlation(self.amplitude_ratio, 
                                                 other.amplitude_ratio, 
                                                 'posture.amplitude_ratio',
                                                 high_corr_value=0.985)
         
         eq_primary_wavelength = \
-            fc.corr_value_high(self.primary_wavelength,
+            utils.correlation(self.primary_wavelength,
                                other.primary_wavelength,
                                'posture.primary_wavelength',
                                merge_nans=True,
                                high_corr_value=0.97)   
                                                    
         eq_secondary_wavelength = \
-            fc.corr_value_high(self.secondary_wavelength,
+            utils.correlation(self.secondary_wavelength,
                                other.secondary_wavelength,
                                'posture.secondary_wavelength',
                                merge_nans=True,
@@ -442,21 +441,21 @@ class WormPosture(object):
         #Are they even close?
         #We could provide a switch for exactly equal vs mimicing the old setup
         #in which our goal could be to shoot for close
-        eq_track_length = fc.corr_value_high(self.track_length, 
+        eq_track_length = utils.correlation(self.track_length, 
                                              other.track_length, 
                                              'posture.track_length')
-        eq_eccentricity = fc.corr_value_high(self.eccentricity, 
+        eq_eccentricity = utils.correlation(self.eccentricity, 
                                              other.eccentricity, 
                                              'posture.eccentricity',
                                              high_corr_value=0.99)
-        eq_kinks = fc.corr_value_high(self.kinks, other.kinks, 
+        eq_kinks = utils.correlation(self.kinks, other.kinks, 
                                       'posture.kinks')
         
         eq_coils = self.coils.test_equality(other.coils,'posture.coils')       
         eq_directions = self.directions == other.directions
         eq_skeleton = self.skeleton == other.skeleton
         eq_eigen_projection = \
-            fc.corr_value_high(np.ravel(self.eigen_projection), 
+            utils.correlation(np.ravel(self.eigen_projection), 
                                np.ravel(other.eigen_projection), 
                                'posture.eigen_projection')
         
@@ -557,7 +556,7 @@ class WormPath(object):
             self.range == other.range and \
             self.duration == other.duration and \
             self.coordinates == other.coordinates and \
-            fc.corr_value_high(self.curvature, other.curvature,
+            utils.correlation(self.curvature, other.curvature,
                                'path.curvature',
                                high_corr_value=0.95,
                                merge_nans=True)

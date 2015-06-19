@@ -29,8 +29,6 @@ import warnings
 
 from .. import utils
 
-from . import feature_comparisons as fc
-
 
 class LocomotionBend(object):
     
@@ -64,10 +62,10 @@ class LocomotionBend(object):
         #and the old version works incorrectly but was convoluted enough that
         #it was hard to replicate        
         
-        return fc.corr_value_high(self.amplitude, other.amplitude,
+        return utils.correlation(self.amplitude, other.amplitude,
                                   'locomotion.bends.' + self.name + '.amplitude',
                                   merge_nans=True) and \
-             fc.corr_value_high(self.frequency, other.frequency, 
+             utils.correlation(self.frequency, other.frequency, 
                                 'locomotion.bends.' + self.name + '.frequency',
                                 merge_nans=True)   
 
@@ -783,8 +781,8 @@ class LocomotionForagingBends(object):
         return utils.print_object(self)
         
     def __eq__(self, other):
-        return fc.corr_value_high(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
-             fc.corr_value_high(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
+             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
 
 class CrawlingBendsBoundInfo(object):
     

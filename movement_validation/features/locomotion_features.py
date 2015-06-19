@@ -14,7 +14,6 @@ import numpy as np
 from .. import utils
 
 from . import events
-from . import feature_comparisons as fc
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
@@ -42,9 +41,9 @@ class LocomotionVelocityElement(object):
         self.direction = direction
         
     def __eq__(self, other):
-        return fc.corr_value_high(self.speed,other.speed,
+        return utils.correlation(self.speed,other.speed,
                                   'locomotion.velocity.' + self.name + '.speed') and \
-               fc.corr_value_high(self.direction,other.direction,
+               utils.correlation(self.direction,other.direction,
                                   'locomotion.velocity.' + self.name + '.direction')
     def __repr__(self):
         return utils.print_object(self)         
