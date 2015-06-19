@@ -5,7 +5,7 @@ Created on Mon Jun 15 21:41:46 2015
 @author: RNEL
 """
 
-EXAMPLE_DATA_PATH = '/home/travis/openworm/movement_validation/example_data'
+EXAMPLE_DATA_PATH = '/home/travis/build/openworm/movement_validation/example_data'
 PERFORM_SLOW_ECCENTRICITY_CALC = True
 
 
