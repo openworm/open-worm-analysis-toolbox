@@ -439,16 +439,16 @@ class WormParsing(object):
 
 
     @staticmethod
-    def computeWidths(vulva_contour, non_vulva_contour, frames_to_plot=[]):
+    def computeWidths(ventral_contour, dorsal_contour, frames_to_plot=[]):
         """
         Compute widths and a heterocardinal skeleton from a heterocardinal 
         contour.
         
         Parameters
         -------------------------
-        vulva_contour: a list of numpy arrays.
+        ventral_contour: a list of numpy arrays.
             The list is of the frames.
-        non_vulva_contour: same
+        dorsal_contour: same
         frames_to_plot: list of ints
             Optional list of frames to plot, to show exactly how the 
             widths and skeleton were calculated.
@@ -510,7 +510,7 @@ class WormParsing(object):
         widths_all = []
 
         for frame_index, (s1, s2) in \
-                        enumerate(zip(vulva_contour, non_vulva_contour)):
+                        enumerate(zip(ventral_contour, dorsal_contour)):
             
             # * I'm writing the code based on awesome_contours_oh_yeah_v2
             #   in Jim's testing folder            
@@ -602,7 +602,7 @@ class WormParsing(object):
                 #ax2 = plt.subplot2grid((2,3), (0,2))
                 ax3 = plt.subplot2grid((2,3), (1,2))
                 ax1.set_title("Frame #%d of %d" % (frame_index,
-                                                   len(vulva_contour)))
+                                                   len(ventral_contour)))
 
                 # The points along one side of the worm
                 ax1.scatter(s1[0,:], s1[1,:], marker='o', 

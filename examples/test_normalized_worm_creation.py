@@ -34,6 +34,7 @@ def main():
                                      "example_contour_and_skeleton_info.mat")  
     bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
+    print("Now let's calculate nw from bw")
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw_calculated = \

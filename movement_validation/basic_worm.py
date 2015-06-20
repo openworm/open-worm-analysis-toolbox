@@ -132,7 +132,7 @@ class UnorderedWorm(JSON_Serializer):
         pass
 
 
-    def ordered_vulva_contour(self):
+    def ordered_ventral_contour(self):
         """
         Return the vulva side of the ordered heterocardinal contour.
         
@@ -143,7 +143,7 @@ class UnorderedWorm(JSON_Serializer):
         pass
 
 
-    def ordered_non_vulva_contour(self):
+    def ordered_dorsal_contour(self):
         """
         Return the non-vulva side of the ordered heterocardinal contour.
         
@@ -181,15 +181,15 @@ class BasicWorm(JSON_Serializer):
             in the second case n_points is obviously fixed, and currently
             should be at 49.
             Missing frames in the first case should be identified by None.    
-    h_vulva_contour : The vulva side of the contour.  See skeleton.
-    h_non_vulva_contour : The vulva side of the contour.  See skeleton.
+    h_ventral_contour : The vulva side of the contour.  See skeleton.
+    h_dorsal_contour : The vulva side of the contour.  See skeleton.
     video_info : An instance of the VideoInfo class.
                  (contains metadata attributes of the worm video)
 
     """
     def __init__(self, other=None):
-        attributes = ['_h_skeleton', '_h_vulva_contour', 
-                      '_h_non_vulva_contour']
+        attributes = ['_h_skeleton', '_h_ventral_contour', 
+                      '_h_dorsal_contour']
         
         if other is None:
             for a in attributes:
@@ -210,8 +210,8 @@ class BasicWorm(JSON_Serializer):
         h = h5py.File(data_file_path, 'r')
 
         # These are all HDF5 'references'
-        all_vulva_contours_refs     = h['all_vulva_contours'].value
-        all_non_vulva_contours_refs = h['all_non_vulva_contours'].value
+        all_ventral_contours_refs     = h['all_vulva_contours'].value
+        all_dorsal_contours_refs = h['all_non_vulva_contours'].value
         all_skeletons_refs          = h['all_skeletons'].value
                 
         is_stage_movement = utils._extract_time_from_disk(h,
@@ -219,21 +219,21 @@ class BasicWorm(JSON_Serializer):
         is_valid = utils._extract_time_from_disk(h, 'is_valid')
 
         all_skeletons = []
-        all_vulva_contours = []
-        all_non_vulva_contours = []
+        all_ventral_contours = []
+        dorsal_contour = []
 
         for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
             if valid_frame:
                 all_skeletons.append(
                             h[all_skeletons_refs[iFrame][0]].value) 
-                all_vulva_contours.append(
-                            h[all_vulva_contours_refs[iFrame][0]].value)
-                all_non_vulva_contours.append(
-                            h[all_non_vulva_contours_refs[iFrame][0]].value)
+                all_ventral_contours.append(
+                            h[all_ventral_contours_refs[iFrame][0]].value)
+                dorsal_contour.append(
+                            h[all_dorsal_contours_refs[iFrame][0]].value)
             else:
                 all_skeletons.append(None) 
-                all_vulva_contours.append(None) 
-                all_non_vulva_contours.append(None)           
+                all_ventral_contours.append(None) 
+                dorsal_contour.append(None)           
                 
         # Video Metadata
         is_stage_movement = is_stage_movement.astype(bool)
@@ -256,19 +256,19 @@ class BasicWorm(JSON_Serializer):
         bw.remove_precalculated_skeleton()
         #bw.h_skeleton = all_skeletons
 
-        bw._h_vulva_contour = all_vulva_contours
-        bw._h_non_vulva_contour = all_non_vulva_contours 
+        bw._h_ventral_contour = all_ventral_contours
+        bw._h_dorsal_contour = dorsal_contour 
 
         h.close()   
         
         return bw
 
     @classmethod
-    def from_h_contour_factory(cls, h_vulva_contour, h_non_vulva_contour):
+    def from_h_contour_factory(cls, h_ventral_contour, h_dorsal_contour):
         bw = cls()
         
-        bw.h_vulva_contour = h_vulva_contour
-        bw.h_non_vulva_contour = h_non_vulva_contour
+        bw.h_ventral_contour = h_ventral_contour
+        bw.h_dorsal_contour = h_dorsal_contour
         
         return bw
 
@@ -283,31 +283,31 @@ class BasicWorm(JSON_Serializer):
         bw = cls()
         
         if extrapolate_contour:
-            # TODO: extrapolate the bw.h_vulva_contour and 
-            #       bw.h_non_vulva_contour from bw._h_skeleton
+            # TODO: extrapolate the bw.h_ventral_contour and 
+            #       bw.h_dorsal_contour from bw._h_skeleton
             # for now we just make the contour on both sides = skeleton
             # which makes for a one-dimensional worm.
-            bw.h_vulva_contour = h_skeleton
-            bw.h_non_vulva_contour = h_skeleton
+            bw.h_ventral_contour = h_skeleton
+            bw.h_dorsal_contour = h_skeleton
 
         return bw
 
     @property
-    def h_vulva_contour(self):
-        return self._h_vulva_contour
+    def h_ventral_contour(self):
+        return self._h_ventral_contour
 
-    @h_vulva_contour.setter
-    def h_vulva_contour(self, x):
-        self._h_vulva_contour = x
+    @h_ventral_contour.setter
+    def h_ventral_contour(self, x):
+        self._h_ventral_contour = x
         self.remove_precalculated_skeleton()
 
     @property
-    def h_non_vulva_contour(self):
-        return self._h_non_vulva_contour
+    def h_dorsal_contour(self):
+        return self._h_dorsal_contour
 
-    @h_non_vulva_contour.setter
-    def h_non_vulva_contour(self, x):
-        self._h_non_vulva_contour = x
+    @h_dorsal_contour.setter
+    def h_dorsal_contour(self, x):
+        self._h_dorsal_contour = x
         self.remove_precalculated_skeleton()
         
     def remove_precalculated_skeleton(self):
@@ -315,11 +315,11 @@ class BasicWorm(JSON_Serializer):
         Removes the precalculated self._h_skeleton, if it exists.
         
         This is typically called if we've potentially changed something, 
-        i.e. if we've loaded new values for self.h_vulva_contour or 
+        i.e. if we've loaded new values for self.h_ventral_contour or 
         self.h_non_vulva contour.
         
         In these cases we must be sure to delete h_skeleton, since it is 
-        derived from vulva_contour and non_vulva_contour.
+        derived from ventral_contour and dorsal_contour.
         
         It will be recalculated if it's ever asked for.
         
@@ -347,8 +347,8 @@ class BasicWorm(JSON_Serializer):
             # Extrapolate skeleton from contour
             # TODO: improve this: for now
             self._h_skeleton = \
-                WormParsing.computeWidths(self.h_vulva_contour, 
-                                          self.h_non_vulva_contour)[1]
+                WormParsing.computeWidths(self.h_ventral_contour, 
+                                          self.h_dorsal_contour)[1]
             
             return self._h_skeleton            
     
@@ -363,8 +363,8 @@ class BasicWorm(JSON_Serializer):
             The desired frame # to plot.
         
         """
-        vc = self.h_vulva_contour[frame_index]
-        nvc = self.h_non_vulva_contour[frame_index]
+        vc = self.h_ventral_contour[frame_index]
+        nvc = self.h_dorsal_contour[frame_index]
         skeleton_x = self.h_skeleton[frame_index][0]
         skeleton_y = self.h_skeleton[frame_index][1]
         

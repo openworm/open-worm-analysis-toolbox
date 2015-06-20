@@ -26,8 +26,8 @@ class NormalizedWorm(WormPartition):
 
     The data consists of 7 Numpy arrays (where n is the number of frames):
    - Of shape (49,2,n):
-        vulva_contour
-        non_vulva_contour
+        ventral_contour
+        dorsal_contour
         skeleton
     - Of shape (49,n):
         angles        
@@ -54,7 +54,7 @@ class NormalizedWorm(WormPartition):
             self.video_info = VideoInfo()
         else:
             # Copy constructor
-            attributes = ['skeleton', 'vulva_contour', 'non_vulva_contour',
+            attributes = ['skeleton', 'ventral_contour', 'dorsal_contour',
                           'angles', 'widths', 'length', 'area'
                           'video_info']
             for a in attributes:
@@ -71,7 +71,7 @@ class NormalizedWorm(WormPartition):
         -----------
         basic_worm: Instance of BasicWorm.  Contains either:
             h_skeleton AND/OR
-            h_vulva_contour and h_non_vulva_contour
+            h_ventral_contour and h_dorsal_contour
         frames_to_plot_widths: list of ints
             Optional list of frames to plot, to show exactly how the 
             widths and skeleton were calculated.        
@@ -85,11 +85,11 @@ class NormalizedWorm(WormPartition):
         nw.video_info = basic_worm.video_info
         
         #TODO: Need to add on testing for normalized data as an input
-        if basic_worm.h_vulva_contour is not None:
+        if basic_worm.h_ventral_contour is not None:
             # 1. Derive skeleton and widths from contour
             nw.widths, h_skeleton = \
-                WormParsing.computeWidths(basic_worm.h_vulva_contour, 
-                                          basic_worm.h_non_vulva_contour,
+                WormParsing.computeWidths(basic_worm.h_ventral_contour, 
+                                          basic_worm.h_dorsal_contour,
                                           frames_to_plot_widths)
 
             # 2. Calculate angles            
@@ -97,10 +97,10 @@ class NormalizedWorm(WormPartition):
 
             # 3. Normalize the skeleton and contour to 49 points per frame
             nw.skeleton = WormParsing.normalizeAllFramesXY(h_skeleton)
-            nw.vulva_contour = WormParsing.normalizeAllFramesXY(
-                                            basic_worm.h_vulva_contour)
-            nw.non_vulva_contour = WormParsing.normalizeAllFramesXY(
-                                            basic_worm.h_non_vulva_contour)            
+            nw.ventral_contour = WormParsing.normalizeAllFramesXY(
+                                            basic_worm.h_ventral_contour)
+            nw.dorsal_contour = WormParsing.normalizeAllFramesXY(
+                                            basic_worm.h_dorsal_contour)            
 
             # 4. Calculate areas
             nw.area = WormParsing.computeArea(nw.contour)
@@ -111,8 +111,8 @@ class NormalizedWorm(WormPartition):
             # marked None.
             nw.angles = WormParsing.calculateAngles(basic_worm.skeleton)
             nw.skeleton = WormParsing.normalizeAllFramesXY(basic_worm.skeleton)
-            nw.vulva_contour = None
-            nw.non_vulva_contour = None
+            nw.ventral_contour = None
+            nw.dorsal_contour = None
             nw.area = None
         
         # 6. Calculate length
@@ -214,8 +214,8 @@ class NormalizedWorm(WormPartition):
             # (where n is the number of frames)
 
             nw.skeleton = nw.skeletons
-            nw.vulva_contour = nw.vulva_contours
-            nw.non_vulva_contour = nw.non_vulva_contours
+            nw.ventral_contour = nw.vulva_contours
+            nw.dorsal_contour = nw.non_vulva_contours
             del(nw.skeletons)
             del(nw.vulva_contours)
             del(nw.non_vulva_contours)
@@ -267,8 +267,8 @@ class NormalizedWorm(WormPartition):
         bw = BasicWorm()
 
         bw.skeleton = np.copy(self.skeleton)
-        bw.h_vulva_contour = np.copy(self.vulva_contour)
-        bw.h_non_vulva_contour = np.copy(self.non_vulva_contour)
+        bw.h_ventral_contour = np.copy(self.ventral_contour)
+        bw.h_dorsal_contour = np.copy(self.dorsal_contour)
         bw.ventral_mode = self.ventral_mode
         bw.video_info = self.video_info
         
@@ -528,8 +528,8 @@ class NormalizedWorm(WormPartition):
 
         That is:
         
-        Go from vulva_contour shape (49,2,n) and
-            non_vulva_contour shape (49,2,n) to
+        Go from ventral_contour shape (49,2,n) and
+            dorsal_contour shape (49,2,n) to
             contour with      shape (96,2,n) or (98,2,n)
             
         Why 96 instead of 49x2 = 98?
@@ -541,11 +541,11 @@ class NormalizedWorm(WormPartition):
         
         """
         if keep_redundant_points:
-            return np.concatenate((self.vulva_contour, 
-                                   self.non_vulva_contour[::-1, :, :])) 
+            return np.concatenate((self.ventral_contour, 
+                                   self.dorsal_contour[::-1, :, :])) 
         else:
-            return np.concatenate((self.vulva_contour, 
-                                   self.non_vulva_contour[-2:0:-1, :, :]))
+            return np.concatenate((self.ventral_contour, 
+                                   self.dorsal_contour[-2:0:-1, :, :]))
 
     @property
     def contour_x(self):
@@ -566,20 +566,20 @@ class NormalizedWorm(WormPartition):
         return self.skeleton[:, 1, :]
 
     @property
-    def vulva_contour_x(self):
-        return self.vulva_contour[:, 0, :]
+    def ventral_contour_x(self):
+        return self.ventral_contour[:, 0, :]
 
     @property
-    def vulva_contour_y(self):
-        return self.vulva_contour[:, 1, :]
+    def ventral_contour_y(self):
+        return self.ventral_contour[:, 1, :]
 
     @property
-    def non_vulva_contour_x(self):
-        return self.vulva_contour[:, 0, :]
+    def dorsal_contour_x(self):
+        return self.dorsal_contour[:, 0, :]
 
     @property
-    def non_vulva_contour_y(self):
-        return self.vulva_contour[:, 1, :]
+    def dorsal_contour_y(self):
+        return self.dorsal_contour[:, 1, :]
 
     def __eq__(self, other):
         """
@@ -591,8 +591,8 @@ class NormalizedWorm(WormPartition):
         
         """
         attributes = ['skeleton_x', 'skeleton_y',
-                      'vulva_contour_x', 'vulva_contour_y',
-                      'vulva_contour_x', 'vulva_contour_y',
+                      'ventral_contour_x', 'ventral_contour_y',
+                      'dorsal_contour_x', 'dorsal_contour_y',
                       'angles', 'widths', 'length', 'area']
 
         is_equal = True        
@@ -620,8 +620,8 @@ class NormalizedWorm(WormPartition):
             The desired posture point (along skeleton and contour) to plot.
         
         """
-        vc = self.vulva_contour[posture_index,:,:]
-        nvc = self.non_vulva_contour[posture_index,:,:]
+        vc = self.ventral_contour[posture_index,:,:]
+        nvc = self.dorsal_contour[posture_index,:,:]
         skeleton_x = self.skeleton[posture_index,0,:]
         skeleton_y = self.skeleton[posture_index,1,:]
         
@@ -641,8 +641,8 @@ class NormalizedWorm(WormPartition):
             The desired frame # to plot.
         
         """
-        vc = self.vulva_contour[:,:,frame_index]
-        nvc = self.non_vulva_contour[:,:,frame_index]
+        vc = self.ventral_contour[:,:,frame_index]
+        nvc = self.dorsal_contour[:,:,frame_index]
         skeleton = self.skeleton[:,:,frame_index]
         
         plt.scatter(vc[:,0], vc[:,1], c='red')

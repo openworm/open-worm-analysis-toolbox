@@ -281,8 +281,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                              self.nw.skeleton[:, 1, i])
         self.line1W_head.set_data(self.nw.skeleton[0, 0, i],
                                   self.nw.skeleton[0, 1, i])
-        self.line1C.set_data(self.nw.vulva_contour[:, 0, i],
-                             self.nw.vulva_contour[:, 1, i])
+        self.line1C.set_data(self.nw.ventral_contour[:, 0, i],
+                             self.nw.ventral_contour[:, 1, i])
         self.patch1E.center = (self.nw.centre[:, i])  # skeleton centre
         self.patch1E.angle = self.nw.angle[i]    # orientation
 
@@ -309,13 +309,13 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.line2W_head.set_data(self.nw.centred_skeleton[0, 0, i],
                                   self.nw.centred_skeleton[0, 1, i])
         self.line2C.set_data(self.nw.centred_skeleton[:, 0, i] + \
-            (self.nw.vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+            (self.nw.ventral_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
                              self.nw.centred_skeleton[:, 1, i] + \
-            (self.nw.vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+            (self.nw.ventral_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
         self.line2C2.set_data(self.nw.centred_skeleton[:, 0, i] + 
-            (self.nw.non_vulva_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
+            (self.nw.dorsal_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
                               self.nw.centred_skeleton[:, 1, i] + 
-            (self.nw.non_vulva_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
+            (self.nw.dorsal_contour[:, 1, i] - self.nw.skeleton[:, 1, i]))
         self.annotation2.xy = (self.nw.centred_skeleton[0, 0, i],
                                self.nw.centred_skeleton[0, 1, i])
 
