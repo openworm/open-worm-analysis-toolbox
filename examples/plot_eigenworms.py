@@ -36,7 +36,7 @@ def main():
 
     # Plot the eigenworms
     for eigenworm_i in range(np.shape(eigenworms)[1]):
-        plt.plot(eigenworms[eigenworm_i])
+        plt.plot(eigenworms[:,eigenworm_i])
     plt.show()
 
 
