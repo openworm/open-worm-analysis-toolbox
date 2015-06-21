@@ -47,3 +47,6 @@ last 1/12 of the skeleton have no bending angle defined). 1/12 of the
 skeleton has been shown to effectively measure worm bending in previous
 trackers and likely reflects constraints of the bodywall muscles, their
 innervation, and cuticular rigidity (Cronin et al. 2005).
+
+
+[Freeman 1961] Herbert Freeman. 1961.  On the encoding of arbitrary geometric configurations.  *IRE Transactions on Electronic Computers*, 10:260-268.
