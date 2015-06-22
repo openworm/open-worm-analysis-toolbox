@@ -19,6 +19,10 @@ from movement_validation import BasicWorm, NormalizedWorm
 from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
 
+from movement_validation.pre_features import WormParsing
+import numpy as np
+
+
 def main():
     # Load from file a normalized worm, as calculated by Schafer Lab code
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
@@ -34,11 +38,13 @@ def main():
                                      "example_contour_and_skeleton_info.mat")  
     bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
+    # Calculate a NormalizedWorm from the basic worm information.
     print("Now let's calculate nw from bw")
-    # Compare our generated normalized worm `nw2` with the pre-loaded 
-    # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw_calculated = \
         NormalizedWorm.from_BasicWorm_factory(bw)#, frames_to_plot_widths=[4])
+
+    # Compare our generated normalized worm `nw2` with the pre-loaded 
+    # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
     
     # EXTRAS (nothing to do with NormalizedWorm creation:)

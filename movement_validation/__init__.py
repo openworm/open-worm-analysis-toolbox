@@ -39,4 +39,6 @@ __all__ = ['BasicWorm',
 		'VideoInfo',
            'WormFeatures',
            'FeatureProcessingOptions',
-           'NormalizedWormPlottable']
+           'NormalizedWormPlottable',
+           'HistogramManager',
+           'StatisticsManager']

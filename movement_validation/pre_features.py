@@ -74,7 +74,7 @@ class WormParsing(object):
         # Now we use the Shoelace formula to calculate the area of a simple
         # polygon for each frame.
         # Credit to Avelino Javer for suggesting this.
-        signed_area = np.nansum(contour[:,0,:]*contour_plus_one[:,1,:] - \
+        signed_area = np.nansum(contour[:,0,:]*contour_plus_one[:,1,:] -
                                 contour[:,1,:]*contour_plus_one[:,0,:], 0) / 2
     
         # Frames where the contour[:,:,k] is all NaNs will result in a 
@@ -651,42 +651,116 @@ class WormParsing(object):
         return (widths_all, s_all)
 
     @staticmethod
-    def computeSkeletonLengths(xy_all):
+    def compute_skeleton_length(skeleton):
         """
-        Computes the running length (cumulative distance from start - head?) 
-        for each skeleton.
+        Computes the length of the skeleton for each frame.
         
         Computed from the skeleton by converting the chain-code 
         pixel length to microns.
         
         Parameters
         ----------
-        xy_all : [numpy.array]
+        skeleton: numpy array of shape (49,2,n)
             Contains the skeleton positions for each frame.
-            List length: # of frames
-            Each element contains a numpy array of size [n_points x 2]
-            Skeleton 
+            (n is the number of frames)
 
         Returns
         -----------
         lengths
         
         """
-        n_frames = len(xy_all)
-        data = np.full([config.N_POINTS_NORMALIZED, n_frames], 
-                       np.NaN)
-        for iFrame, cur_xy in enumerate(xy_all):
-            if cur_xy is not None:
-                sx = cur_xy[0,:]
-                sy = cur_xy[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx, sy)
-                data[:,iFrame] = WormParsing.normalizeParameter(cc, cc)
+        # For each frame, for x and y, take the difference between skeleton
+        # points: (hence axis=0).  Resulting shape is (48,2,n)
+        skeleton_diffs = np.diff(skeleton, axis=0)
+        # Now for each frame, for each (diffx, diffy) pair along the skeleton,
+        # find the magnitude of this vector.  Resulting shape is (48,n)
+        chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=1)
+        # Now for each frame, sum these lengths to obtain the complete
+        # skeleton length.  Resulting shape is (n)
+        lengths = np.sum(chain_code_lengths, axis=0)
+        
+        return lengths
+
+        """
+        # OLD METHOD (based on the mistaken premise that we needed a running
+        # length along each point, which is now what is in the example mat
+        # file.  instead we just need a scalar value for each frame.)
+        
+        n_frames = np.shape(skeleton)[2]
+
+        # start with an empty numpy array of the correct shape
+        lengths = np.full([config.N_POINTS_NORMALIZED, n_frames], np.NaN)
+        
+        for frame_index, cur_xy in enumerate(skeleton):
+            if skeleton[:,:,frame_index] is not None:
+                # Obtain an array of x- and y- coordinates for the current
+                # frame's skeleton
+                cur_x = skeleton[:, 0, frame_index]
+                cur_y = skeleton[:, 1, frame_index]
                 
-        return data
+                diff_x = np.diff(cur_x)
+                diff_y = np.diff(cur_y)
+                
+                skeleton_diffs = np.diff(skeleton[:,:,frame_index], axis=1)
+                chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=0)
+
+                lengths = np.sum(chain_code_lengths)                
+                
+                np.linalg.norm(np.diff(cur_x), )
+                # Compute the Freeman 8-direction chain-code length
+                cc = WormParsing.compute_chain_code_lengths(cur_x, cur_y)
+                lengths[:,frame_index] = WormParsing.normalizeParameter(cc, cc)
+                
+        return lengths
+        """
 
     @staticmethod
-    def computeChainCodeLengths(x,y):
+    def compute_Freeman_chain_codes(skeleton):
         """
+        Compute the Freeman 8-direction chain-codes.
+        
+        3  2  1
+        4  P  0
+        5  6  7        
+        
+        Given a sequence of (x,y)-coordinates, we return a sequence of
+        direction vectors, coded according to the following scheme.        
+        
+        Parameters
+        -------------
+        skeleton: numpy array of shape k,2
+            where skeleton[:,0] are the x coordinates and
+                  skeleton[:,1] are the y coordinates
+        
+        """
+        chain_code = []
+        skeleton_x = skeleton[:,0]
+        skeleton_y = skeleton[:,1]
+        
+        diff_x = np.diff(skeleton_x)
+        diff_y = np.diff(skeleton_y)
+        
+        
+        
+        for i in range(np.shape(skeleton)[0]):
+            pass            
+        
+        pass
+    
+    @staticmethod
+    def compute_sequence_from_chain_codes(origin_point, chain_codes):
+        """
+        The reverse of compute_Freeman_chain_codes.
+        
+        """
+        pass
+
+    @staticmethod
+    def compute_chain_code_lengths(x,y):
+        """
+        Compute the Freeman 8-direction chain-code length.
+        
+        
         Calculate the distance between a set of points and then calculate
         their cumulative distance from the first point.
         
@@ -701,6 +775,7 @@ class WormParsing(object):
         dx = np.diff(x)
         dy = np.diff(y)
         
+        #distances = np.concatenate([[0], np.linalg.norm([dx, dy])])
         distances = np.concatenate([np.array([0.0]), np.sqrt(dx**2 + dy**2)])
         return np.cumsum(distances)
 
@@ -721,7 +796,7 @@ class WormParsing(object):
             if cur_frame_value is not None:
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx,sy)
+                cc = WormParsing.compute_chain_code_lengths(sx,sy)
                 norm_data[:,0,iFrame] = WormParsing.normalizeParameter(sx, cc)
                 norm_data[:,1,iFrame] = WormParsing.normalizeParameter(sy, cc)
         
@@ -737,7 +812,7 @@ class WormParsing(object):
             if cur_xy is not None:
                 sx = cur_xy[0,:]
                 sy = cur_xy[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx,sy)
+                cc = WormParsing.compute_chain_code_lengths(sx,sy)
                 norm_data[:,iFrame] = \
                             WormParsing.normalizeParameter(cur_frame_value, 
                                                            cc)
@@ -745,45 +820,42 @@ class WormParsing(object):
         return norm_data 
 
     @staticmethod
-    def calculateAngles(skeletons):
-    
+    def calculateAngles(skeleton):
         """
-        #Angles
-        #----------------------------------
-        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+        Angles
+        ----------------------------------
+        https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
                  %2Bseg_worm/%2Bworm/%40skeleton/skeleton.m
-        #https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/
+        https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/
                  %2Bseg_worm/%2Bcv/curvature.m
-        #
-        #   Note, the above code is written for the non-normalized worm ...
-        #   edge_length= total_length/12
-        #
-        #   Importantly, the above approach calculates angles not between
-        #   neighboring pairs but over a longer stretch of pairs (pairs that
-        #   exceed the edge length). The net effect of this approach is to
-        #   smooth the angles
         
-        #vertex index - first one where the distance from the tip to this
-        # point is greater than the edge length
+        Note, the above code is written for the non-normalized worm ...
+        edge_length= total_length/12
         
+        Importantly, the above approach calculates angles not between
+        neighboring pairs but over a longer stretch of pairs (pairs that
+        exceed the edge length). The net effect of this approach is to
+        smooth the angles
         
-        #s = norm_data[]
+        vertex index - First one where the distance from the tip to this
+                       point is greater than the edge length
         
+        s = norm_data[]
         
-        #temp_s = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
-        #for iFrame in range(n_frames):
-        #   temp_   
-        """                  
+        temp_s = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
+        for iFrame in range(n_frames):
+           temp_   
 
+        """                  
         temp_angle_list = []
                       
-        for iFrame, cur_frame_value in enumerate(skeletons):
+        for iFrame, cur_frame_value in enumerate(skeleton):
             if cur_frame_value is None:
                 temp_angle_list.append([])
             else:
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
-                cc = WormParsing.computeChainCodeLengths(sx, sy)
+                cc = WormParsing.compute_chain_code_lengths(sx, sy)
     
                 # This is from the old code
                 edge_length = cc[-1]/12               
@@ -818,6 +890,7 @@ class WormParsing(object):
                 frame_angles[frame_angles > np.pi] -= 2*np.pi
                 frame_angles[frame_angles < -np.pi] += 2*np.pi
                 
+                # Convert to degrees
                 frame_angles *= 180/np.pi
                 
                 all_frame_angles = np.full_like(cc, np.NaN)
@@ -825,16 +898,16 @@ class WormParsing(object):
                 
                 temp_angle_list.append(all_frame_angles)
                 
-        return WormParsing.normalizeAllFrames(temp_angle_list, skeletons)
+        return WormParsing.normalizeAllFrames(temp_angle_list, skeleton)
     
     @staticmethod
-    def normalizeParameter(orig_data,old_lengths):
+    def normalizeParameter(orig_data, old_lengths):
         """
         This function finds where all of the new points will be when evenly
         sampled (in terms of chain code length) from the first to the last 
         point in the old data.
 
-        These points are then related to the old points. If a new points is at
+        These points are then related to the old points. If a new point is at
         an old point, the old point data value is used. If it is between two
         old points, then linear interpolation is used to determine the new 
         value based on the neighboring old values.
@@ -847,12 +920,19 @@ class WormParsing(object):
         
         Parameters:
         -----------
-        non_normalizied_data :
-            - ()
-        """
+        orig_data:
+        old_lengths: 
 
-        new_lengths = np.linspace(old_lengths[0],
-                                  old_lengths[-1],
+
+        Returns:
+        -----------
+
+
+        """
+        # Create n evenly spaced points between the first and last point in 
+        # old_lengths
+        new_lengths = np.linspace(old_lengths[0], old_lengths[-1],
                                   config.N_POINTS_NORMALIZED)
-                
+
+        # Interpolate                 
         return np.interp(new_lengths, old_lengths, orig_data)

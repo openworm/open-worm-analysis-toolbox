@@ -116,7 +116,7 @@ class NormalizedWorm(WormPartition):
             nw.area = None
         
         # 6. Calculate length
-        nw.length = WormParsing.computeSkeletonLengths(nw.skeleton)
+        nw.length = WormParsing.compute_skeleton_length(nw.skeleton)
         
         return nw
 
