@@ -21,7 +21,7 @@ from movement_validation import FeatureProcessingOptions
 
 from movement_validation.pre_features import WormParsing
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def main():
     # Load from file a normalized worm, as calculated by Schafer Lab code
@@ -46,6 +46,15 @@ def main():
     # Compare our generated normalized worm `nw2` with the pre-loaded 
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
+    
+    plt.plot(nw.length, c='red')
+    plt.plot(nw_calculated.length, c='blue')
+    plt.show()
+
+
+    
+    plt.plot()    
+    
     
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     """

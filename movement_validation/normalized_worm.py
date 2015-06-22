@@ -79,38 +79,43 @@ class NormalizedWorm(WormPartition):
         Returns
         -----------
         An instance of NormalizedWorm
+
+        # TODO: Need to add on testing for normalized data as an input
         
         """
         nw = cls()
-        nw.video_info = basic_worm.video_info
+        bw = basic_worm
+        nw.video_info = bw.video_info
         
-        #TODO: Need to add on testing for normalized data as an input
-        if basic_worm.h_ventral_contour is not None:
+        if bw.h_ventral_contour is not None:
             # 1. Derive skeleton and widths from contour
             nw.widths, h_skeleton = \
-                WormParsing.computeWidths(basic_worm.h_ventral_contour, 
-                                          basic_worm.h_dorsal_contour,
-                                          frames_to_plot_widths)
+                WormParsing.compute_skeleton_and_widths(bw.h_ventral_contour, 
+                                                        bw.h_dorsal_contour,
+                                                        frames_to_plot_widths)
 
-            # 2. Calculate angles            
-            nw.angles = WormParsing.calculateAngles(h_skeleton)
+            # 2. Calculate the angles along the skeleton for each frame
+            nw.angles = WormParsing.calculate_angles(h_skeleton)
 
-            # 3. Normalize the skeleton and contour to 49 points per frame
+            # 3. Normalize the skeleton, widths and contour to 49 points
+            #    per frame
             nw.skeleton = WormParsing.normalizeAllFramesXY(h_skeleton)
+            
+            nw.widths = WormParsing.normalizeAllFrames(nw.widths, h_skeleton)
             nw.ventral_contour = WormParsing.normalizeAllFramesXY(
-                                            basic_worm.h_ventral_contour)
+                                            bw.h_ventral_contour)
             nw.dorsal_contour = WormParsing.normalizeAllFramesXY(
-                                            basic_worm.h_dorsal_contour)            
+                                            bw.h_dorsal_contour)            
 
-            # 4. Calculate areas
+            # 4. Calculate area for each frame
             nw.area = WormParsing.computeArea(nw.contour)
 
         else:
             # With no contour, let's assume we have a skeleton.
             # Measurements that cannot be calculated (e.g. areas) are simply
             # marked None.
-            nw.angles = WormParsing.calculateAngles(basic_worm.skeleton)
-            nw.skeleton = WormParsing.normalizeAllFramesXY(basic_worm.skeleton)
+            nw.angles = WormParsing.calculateAngles(bw.skeleton)
+            nw.skeleton = WormParsing.normalizeAllFramesXY(bw.skeleton)
             nw.ventral_contour = None
             nw.dorsal_contour = None
             nw.area = None

@@ -1,6 +1,42 @@
 # -*- coding: utf-8 -*-
 """
-Pre-features calculation
+Pre-features calculation methods.
+
+These methods are exclusively called by NormalizedWorm.from_BasicWorm_factory
+
+They are all in a class called WormParsing below, but all methods are static
+so their grouping into a class is only for convenient grouping, and does not
+have any further functional meaning.
+
+Original notes from Schafer Lab paper on this process:
+
+"Once the worm has been thresholded, its contour is extracted by tracing the
+worm''s perimeter. The head and tail are located as sharp, convex angles on
+either side of the contour. The skeleton is extracted by tracing the midline of
+the contour from head to tail. During this process, widths and angles are
+measured at each skeleton point to be used later for feature computation. At
+each skeleton point, the width is measured as the distance between opposing
+contour points that determine the skeleton midline.  Similarly, each skeleton
+point serves as a vertex to a bend and is assigned the supplementary angle to
+this bend. The supplementary angle can also be expressed as the difference in
+tangent angles at the skeleton point. This angle provides an intuitive
+measurement. Straight, unbent worms have an angle of 0 degrees. Right angles 
+are 90 degrees. And the largest angle theoretically possible, a worm bending 
+back on itself, would measure 180 degress. The angle is signed to provide the 
+bend's dorsal-ventral orientation. When the worm has its ventral side internal 
+to the bend (i.e., the vectors forming the angle point towards the ventral 
+side), the bending angle is signed negatively.
+
+Pixel count is a poor measure of skeleton and contour lengths. For this reason,
+we use chain-code lengths (Freeman 1961). Each laterally-connected pixel is
+counted as 1. Each diagonally-connected pixel is counted as \surd2. The
+supplementary angle is determined, per skeleton point, using edges 1/12 the
+skeleton''s chain-code length, in opposing directions, along the skeleton. When
+insufficient skeleton points are present, the angle remains undefined (i.e. the
+first and last 1/12 of the skeleton have no bending angle defined). 1/12 of the
+skeleton has been shown to effectively measure worm bending in previous 
+trackers and likely reflects constraints of the bodywall muscles, their 
+innervation, and cuticular rigidity (Cronin et al. 2005)."
 
 Written by @JimHokanson
 
@@ -439,7 +475,9 @@ class WormParsing(object):
 
 
     @staticmethod
-    def computeWidths(ventral_contour, dorsal_contour, frames_to_plot=[]):
+    def compute_skeleton_and_widths(ventral_contour, 
+                                    dorsal_contour, 
+                                    frames_to_plot=[]):
         """
         Compute widths and a heterocardinal skeleton from a heterocardinal 
         contour.
@@ -661,12 +699,13 @@ class WormParsing(object):
         Parameters
         ----------
         skeleton: numpy array of shape (49,2,n)
-            Contains the skeleton positions for each frame.
+            The skeleton positions for each frame.
             (n is the number of frames)
 
         Returns
         -----------
-        lengths
+        length: numpy array of shape (n)
+            The (chain-code) length of the skeleton for each frame.
         
         """
         # For each frame, for x and y, take the difference between skeleton
@@ -677,9 +716,9 @@ class WormParsing(object):
         chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=1)
         # Now for each frame, sum these lengths to obtain the complete
         # skeleton length.  Resulting shape is (n)
-        lengths = np.sum(chain_code_lengths, axis=0)
+        length = np.sum(chain_code_lengths, axis=0)
         
-        return lengths
+        return length
 
         """
         # OLD METHOD (based on the mistaken premise that we needed a running
@@ -709,7 +748,7 @@ class WormParsing(object):
                 np.linalg.norm(np.diff(cur_x), )
                 # Compute the Freeman 8-direction chain-code length
                 cc = WormParsing.compute_chain_code_lengths(cur_x, cur_y)
-                lengths[:,frame_index] = WormParsing.normalizeParameter(cc, cc)
+                lengths[:,frame_index] = WormParsing.normalize_parameter(cc, cc)
                 
         return lengths
         """
@@ -760,7 +799,6 @@ class WormParsing(object):
         """
         Compute the Freeman 8-direction chain-code length.
         
-        
         Calculate the distance between a set of points and then calculate
         their cumulative distance from the first point.
         
@@ -797,16 +835,31 @@ class WormParsing(object):
                 sx = cur_frame_value[0,:]
                 sy = cur_frame_value[1,:]
                 cc = WormParsing.compute_chain_code_lengths(sx,sy)
-                norm_data[:,0,iFrame] = WormParsing.normalizeParameter(sx, cc)
-                norm_data[:,1,iFrame] = WormParsing.normalizeParameter(sy, cc)
+                norm_data[:,0,iFrame] = WormParsing.normalize_parameter(sx, cc)
+                norm_data[:,1,iFrame] = WormParsing.normalize_parameter(sy, cc)
         
         return norm_data            
     
     @staticmethod
-    def normalizeAllFrames(prop_to_normalize,xy_data):
-            
+    def normalize_all_frames(prop_to_normalize, xy_data):
+        """
+        Normalize a (heterocardinal) array of lists of variable length
+        down to a numpy array of shape (49,n).
+        
+        Parameters
+        --------------
+        prop_to_normalize: numpy array of lists ??
+        xy_data: numpy array
+        
+        Returns
+        --------------
+        numpy array of shape (49,n)
+            prop_to_normalize, now normalized down to 49 points per frame
+        
+        """        
         n_frames = len(prop_to_normalize)
-        norm_data = np.full([config.N_POINTS_NORMALIZED,n_frames],np.NaN)
+        # Start with an empty numpy array
+        norm_data = np.full([config.N_POINTS_NORMALIZED,n_frames], np.NaN)
         for iFrame, (cur_frame_value,cur_xy) in \
                                 enumerate(zip(prop_to_normalize, xy_data)):
             if cur_xy is not None:
@@ -814,16 +867,39 @@ class WormParsing(object):
                 sy = cur_xy[1,:]
                 cc = WormParsing.compute_chain_code_lengths(sx,sy)
                 norm_data[:,iFrame] = \
-                            WormParsing.normalizeParameter(cur_frame_value, 
+                            WormParsing.normalize_parameter(cur_frame_value, 
                                                            cc)
         
         return norm_data 
 
     @staticmethod
-    def calculateAngles(skeleton):
+    def calculate_angles(h_skeleton):
         """
-        Angles
-        ----------------------------------
+        Calculate the angles
+
+        From the Schafer Lab description:
+        
+        "Each normalized skeleton point serves as a vertex to a bend and is assigned the supplementary angle to
+        this bend. The supplementary angle can also be expressed as the difference in
+        tangent angles at the skeleton point. This angle provides an intuitive
+        measurement. Straight, unbent worms have an angle of 0 degrees. Right angles 
+        are 90 degrees. And the largest angle theoretically possible, a worm bending 
+        back on itself, would measure 180 degress."
+        
+        Parameters
+        ----------------
+        h_skeleton: list of length n, of lists of skeleton coordinate points.
+            The heterocardinal skeleton
+
+        Returns
+        ----------------
+        numpy array of shape (49,n)
+            An angle for each normalized point in each frame.
+
+
+        Notes
+        ----------------
+        Original code in:
         https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
                  %2Bseg_worm/%2Bworm/%40skeleton/skeleton.m
         https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/
@@ -846,10 +922,12 @@ class WormParsing(object):
         for iFrame in range(n_frames):
            temp_   
 
+        TODO: sign these angles using ventral_mode ?? - @MichaelCurrie
+
         """                  
         temp_angle_list = []
                       
-        for iFrame, cur_frame_value in enumerate(skeleton):
+        for iFrame, cur_frame_value in enumerate(h_skeleton):
             if cur_frame_value is None:
                 temp_angle_list.append([])
             else:
@@ -898,10 +976,10 @@ class WormParsing(object):
                 
                 temp_angle_list.append(all_frame_angles)
                 
-        return WormParsing.normalizeAllFrames(temp_angle_list, skeleton)
+        return WormParsing.normalizeAllFrames(temp_angle_list, h_skeleton)
     
     @staticmethod
-    def normalizeParameter(orig_data, old_lengths):
+    def normalize_parameter(orig_data, old_lengths):
         """
         This function finds where all of the new points will be when evenly
         sampled (in terms of chain code length) from the first to the last 
@@ -913,20 +991,20 @@ class WormParsing(object):
         value based on the neighboring old values.
 
         NOTE: For better or worse, this approach does not smooth the new data.
-        
-        Old Code:
-        https://github.com/openworm/SegWorm/blob/master/ComputerVision/
-                chainCodeLengthInterp.m
-        
-        Parameters:
+
+        Parameters
         -----------
         orig_data:
         old_lengths: 
 
-
-        Returns:
+        Returns
         -----------
-
+        
+        Notes
+        ------------
+        Old code:
+        https://github.com/openworm/SegWorm/blob/master/ComputerVision/
+                chainCodeLengthInterp.m
 
         """
         # Create n evenly spaced points between the first and last point in 
