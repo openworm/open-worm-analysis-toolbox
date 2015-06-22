@@ -65,7 +65,7 @@ class WormParsing(object):
     """
 
     @staticmethod
-    def computeArea(contour):
+    def compute_area(contour):
         """
         Compute the area of the worm, for each frame of video, from a 
         normalized contour.
@@ -494,9 +494,28 @@ class WormParsing(object):
 
         Returns
         -------------------------
-        (widths_all, s_all): tuple
-            widths_all : the heterocardinal widths, frame by frame
-            s_all : the heterocardinal skeleton, frame by frame.
+        (h_widths, h_skeleton): tuple
+            h_widths : the heterocardinal widths, frame by frame
+            h_skeleton : the heterocardinal skeleton, frame by frame.
+
+
+        @JimHokanson's notes on developing the algorithm for widths:
+        ------------------------------------
+        The caller:
+        https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+                %2Bseg_worm/%2Bworm/%40skeleton/linearSkeleton.m
+        see helper__skeletonize - callls seg_worm.cv.skeletonize
+        
+        
+        Initial skeletonization:
+        https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+               %2Bseg_worm/%2Bcv/skeletonize.m
+        Some refinement:
+        https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+               %2Bseg_worm/%2Bworm/%40skeleton/cleanSkeleton.m        
+        
+        Widths are simply the distance between two "corresponding" sides of
+        the contour. The question is how to get these two locations. 
 
         From Ev's Thesis: 3.3.1.6 - page 126 (or 110 as labeled in document)
         -------------------------        
@@ -517,35 +536,14 @@ class WormParsing(object):
         other sideremains still.
         
         """
-
-
-        #Widths:
-        #------------------------------------
-        #The caller:
-        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
-        #        %2Bseg_worm/%2Bworm/%40skeleton/linearSkeleton.m
-        #see helper__skeletonize - callls seg_worm.cv.skeletonize
-        #
-        #
-        #Initial skeletonization:
-        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
-        #        %2Bseg_worm/%2Bcv/skeletonize.m
-        #
-        #Some refinement:
-        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
-        #        %2Bseg_worm/%2Bworm/%40skeleton/cleanSkeleton.m        
-        
-        # Widths are simply the distance between two "corresponding" sides of
-        # the contour. The question is how to get these two locations. 
-
         FRACTION_WORM_SMOOTH = 1.0/12.0
         SMOOTHING_ORDER = 3
         PERCENT_BACK_SEARCH = 0.3;
         PERCENT_FORWARD_SEARCH = 0.3;
         END_S1_WALK_PCT = 0.15;
 
-        s_all = []
-        widths_all = []
+        h_skeleton = []
+        h_widths = []
 
         for frame_index, (s1, s2) in \
                         enumerate(zip(ventral_contour, dorsal_contour)):
@@ -554,8 +552,8 @@ class WormParsing(object):
             #   in Jim's testing folder            
             
             if s1 is None:
-                s_all.append(None)
-                widths_all.append(None)
+                h_skeleton.append(None)
+                h_widths.append(None)
                 continue
             
             # Step 1: filter
@@ -624,11 +622,11 @@ class WormParsing(object):
             #-----------------------
             #TODO: Allow smoothing on x & y
             widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
-            widths_all.append(widths1)
+            h_widths.append(widths1)
             
             skeleton_x = 0.5 * (s1_x + s1_px)
             skeleton_y = 0.5 * (s1_y + s1_py)
-            s_all.append(np.vstack((skeleton_x, skeleton_y)))
+            h_skeleton.append(np.vstack((skeleton_x, skeleton_y)))
 
             # Optional plotting code
             if frame_index in frames_to_plot:
@@ -667,7 +665,7 @@ class WormParsing(object):
                 # distance along the skeleton
                 cum_dist = h__getSkeletonDistance(skeleton_x, skeleton_y)
                 
-                ax2.plot(cum_dist./cum_dist[-1], widths_all[frame_index], 
+                ax2.plot(cum_dist./cum_dist[-1], h_widths[frame_index], 
                          'r.-')
                 hold on
                 ax2.plot(np.linspace(0,1,49), nw_widths[:,iFrame], 'g.-')
@@ -680,13 +678,12 @@ class WormParsing(object):
                 ax3.set_xlabel("Calculation point")
                 ax3.set_ylabel("Width")
                 with plt.style.context('fivethirtyeight'):
-                    ax3.plot(widths_all[frame_index], color='green', 
+                    ax3.plot(h_widths[frame_index], color='green', 
                              linewidth=2)
 
                 plt.show()
             
-            
-        return (widths_all, s_all)
+        return (h_widths, h_skeleton)
 
     @staticmethod
     def compute_skeleton_length(skeleton):
@@ -779,8 +776,6 @@ class WormParsing(object):
         diff_x = np.diff(skeleton_x)
         diff_y = np.diff(skeleton_y)
         
-        
-        
         for i in range(np.shape(skeleton)[0]):
             pass            
         
@@ -818,12 +813,20 @@ class WormParsing(object):
         return np.cumsum(distances)
 
     @staticmethod
-    def normalizeAllFramesXY(prop_to_normalize):
+    def normalize_all_frames_xy(prop_to_normalize):
         """
         Normalize a "heterocardinal" skeleton or contour into a "homocardinal"
         one, where each frame has the same number of points.
         
         We always normalize to config.N_POINTS_NORMALIZED points per frame.
+
+        Parameters
+        --------------
+        prop_to_normalize: numpy array of lists ??
+
+        Returns
+        --------------
+        numpy array of shape (49,2,n)
         
         """
         n_frames = len(prop_to_normalize)
@@ -873,7 +876,7 @@ class WormParsing(object):
         return norm_data 
 
     @staticmethod
-    def calculate_angles(h_skeleton):
+    def compute_angles(h_skeleton):
         """
         Calculate the angles
 
@@ -976,7 +979,7 @@ class WormParsing(object):
                 
                 temp_angle_list.append(all_frame_angles)
                 
-        return WormParsing.normalizeAllFrames(temp_angle_list, h_skeleton)
+        return WormParsing.normalize_all_frames(temp_angle_list, h_skeleton)
     
     @staticmethod
     def normalize_parameter(orig_data, old_lengths):

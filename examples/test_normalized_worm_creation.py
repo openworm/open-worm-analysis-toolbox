@@ -11,6 +11,7 @@ i.e. nw == nw_calculated
 
 """
 import sys, os
+import matplotlib.pyplot as plt
 
 sys.path.append('..')
 
@@ -18,10 +19,6 @@ from movement_validation import user_config, config, utils
 from movement_validation import BasicWorm, NormalizedWorm
 from movement_validation import VideoInfo, WormFeatures
 from movement_validation import FeatureProcessingOptions
-
-from movement_validation.pre_features import WormParsing
-import numpy as np
-import matplotlib.pyplot as plt
 
 def main():
     # Load from file a normalized worm, as calculated by Schafer Lab code
@@ -47,17 +44,12 @@ def main():
     # Schafer Lab normalized worm, `nw`.  Validate they are the same.
     nw == nw_calculated
     
+    # Compare lengths
     plt.plot(nw.length, c='red')
     plt.plot(nw_calculated.length, c='blue')
     plt.show()
-
-
-    
-    plt.plot()    
-    
     
     # EXTRAS (nothing to do with NormalizedWorm creation:)
-    """
     # The frame rate is somewhere in the video info. Ideally this would 
     # all come from the video parser eventually
     fpo = FeatureProcessingOptions(config.DEFAULT_FPS)
@@ -68,7 +60,6 @@ def main():
     
     # Display how long it took to generate each of the features
     wf.timer.summarize()
-    """
     
 
 if __name__ == '__main__':
