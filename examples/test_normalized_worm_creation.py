@@ -34,6 +34,7 @@ def main():
     schafer_bw_file_path = os.path.join(base_path, 
                                      "example_contour_and_skeleton_info.mat")  
     bw = BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    
 
     # Calculate a NormalizedWorm from the basic worm information.
     print("Now let's calculate nw from bw")

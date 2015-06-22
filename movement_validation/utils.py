@@ -28,7 +28,8 @@ __ALL__ = ['scatter',
            'interpolate_with_threshold_2D',
            'gausswin',
            '_extract_time_from_disk',
-           'timing_function']
+           'timing_function',
+           'ElementTimer']
 
 
 def scatter(x, y):
@@ -764,3 +765,43 @@ def correlation(x, y, variable_name, high_corr_value=0.999,
             return_value = is_good
                 
         return return_value
+
+
+            
+        
+class ElementTimer(object):
+
+    """
+    This class is meant to be called in the following way by code that is 
+    processing a feature.
+    
+    timer = utils.ElementTimer
+    timer.tic()
+    # Run the feature processing code, or some other code
+    timer.toc('name of feature being processed')    
+        
+    """
+
+    def __init__(self):    
+        self.names = []
+        self.times = []
+        
+    def tic(self):
+        self.start_time = timing_function()
+    
+    def toc(self,name):
+        self.times.append(timing_function() - self.start_time)
+        self.names.append(name)
+        
+    def __repr__(self):
+        return print_object(self)
+        
+    def summarize(self):
+        """
+        This can be called to display each logged function and how long it
+        took to run
+        """
+        for (name, finish_time) in zip(self.names, self.times):
+            print('%s: %0.3fs' %(name, finish_time))
+
+            

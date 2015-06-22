@@ -615,7 +615,7 @@ class WormFeatures(object):
         self.video_info = video_info
         self.options = processing_options
         self.nw = nw
-        self.timer = FeatureTimer()
+        self.timer = utils.ElementTimer()
         
         self.morphology = WormMorphology(self)
         self.locomotion = WormLocomotion(self)
@@ -660,41 +660,3 @@ class WormFeatures(object):
              same_posture and \
              same_path
                       
-            
-        
-class FeatureTimer(object):
-
-    """
-    This class is meant to be called in the following way by code that is 
-    processing a feature.
-    
-    timer = features_ref.timer
-    timer.tic()
-    #Run the feature processing code
-    timer.toc('name of feature being processed')    
-        
-    """
-
-    def __init__(self):    
-        self.names = []
-        self.times = []
-        
-    def tic(self):
-        self.start_time = utils.timing_function()
-    
-    def toc(self,name):
-        self.times.append(utils.timing_function() - self.start_time)
-        self.names.append(name)
-        
-    def __repr__(self):
-        return utils.print_object(self)
-        
-    def summarize(self):
-        """
-        This can be called to display each logged function and how long it
-        took to run
-        """
-        for (name, finish_time) in zip(self.names, self.times):
-            print('%s: %0.3fs' %(name, finish_time))
-
-            
