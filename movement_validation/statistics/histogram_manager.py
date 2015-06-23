@@ -28,12 +28,16 @@ from ..features.worm_features import WormFeatures
 
 class HistogramManager(object):
     """
-    
-    Equivalent to seg_worm.stats.hist.manager class
+    Histograms calculated on all features for a collection of feature files
+    or WormFeatures objects.    
     
     Attributes
-    ----------    
+    ------------- 
     hists: list
+
+    Notes
+    -------------
+    Translated from the seg_worm.stats.hist.manager class
     
     """
     def __init__(self, feature_path_or_object_list):
@@ -45,7 +49,6 @@ class HistogramManager(object):
             their in-memory object equivalents.
         
         """
-        #DEBUG: just for fun
         print("Number of feature files passed into the histogram manager:", 
               len(feature_path_or_object_list))
         

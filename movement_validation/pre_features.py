@@ -180,7 +180,24 @@ class WormParsing(object):
                       d_across, 
                       left_I, right_I):
         """
-        getMatches
+        For a given frame,        
+        For each point on side 1, find which side 2 the point pairs with
+        
+        Parameters
+        ---------------
+        s1: a list of coordinates
+        s2: a list of coordinates
+        norm_x:
+        norm_y:
+        dx_across:
+        dy_across:
+        d_across:
+        left_I:
+        right_I:
+        
+        Returns
+        ---------------        
+        
         
         """
         n_s1 = s1.shape[1]
@@ -225,7 +242,7 @@ class WormParsing(object):
                 match_I[I] = dp_I    
 
 
-        return (dp_values,match_I)
+        return (dp_values, match_I)
     
     @staticmethod
     def h__getProjectionIndex(vc_dx_ortho, vc_dy_ortho, 
@@ -475,8 +492,8 @@ class WormParsing(object):
 
 
     @staticmethod
-    def compute_skeleton_and_widths(ventral_contour, 
-                                    dorsal_contour, 
+    def compute_skeleton_and_widths(h_ventral_contour, 
+                                    h_dorsal_contour, 
                                     frames_to_plot=[]):
         """
         Compute widths and a heterocardinal skeleton from a heterocardinal 
@@ -484,9 +501,9 @@ class WormParsing(object):
         
         Parameters
         -------------------------
-        ventral_contour: a list of numpy arrays.
+        h_ventral_contour: a list of numpy arrays.
             The list is of the frames.
-        dorsal_contour: same
+        h_dorsal_contour: same
         frames_to_plot: list of ints
             Optional list of frames to plot, to show exactly how the 
             widths and skeleton were calculated.
@@ -545,8 +562,18 @@ class WormParsing(object):
         h_skeleton = []
         h_widths = []
 
+        profile_times = {'h__roundToOdd':0, 
+                         'transpose':0, 
+                         'h__getBounds':0,
+                         'h__computeNormalVectors':0,
+                         'h__getMatches':0,
+                         'h__updateEndsByWalking':0,
+                         'hstack':0,
+                         'final calculations':0}
+
+
         for frame_index, (s1, s2) in \
-                        enumerate(zip(ventral_contour, dorsal_contour)):
+                        enumerate(zip(h_ventral_contour, h_dorsal_contour)):
             
             # * I'm writing the code based on awesome_contours_oh_yeah_v2
             #   in Jim's testing folder            
@@ -556,6 +583,7 @@ class WormParsing(object):
                 h_widths.append(None)
                 continue
             
+            start = utils.timing_function()
             # Step 1: filter
             filter_width_s1 = \
                 WormParsing.h__roundToOdd(s1.shape[1] * FRACTION_WORM_SMOOTH)    
@@ -566,7 +594,8 @@ class WormParsing(object):
                 WormParsing.h__roundToOdd(s2.shape[1] * FRACTION_WORM_SMOOTH)    
             s2[0, :] = sgolay(s2[0, :], filter_width_s2, SMOOTHING_ORDER)
             s2[1, :] = sgolay(s2[1, :], filter_width_s2, SMOOTHING_ORDER)
-
+            profile_times['h__roundToOdd'] += utils.timing_function()-start
+            start = utils.timing_function()
             # TODO: Allow downsampling if the # of points is ridiculous
             # 200 points seems to be a good #
             # This operation gives us a matrix that is len(s1) x len(s2)
@@ -575,6 +604,8 @@ class WormParsing(object):
             d_across = np.sqrt(dx_across**2 + dy_across**2)
             dx_across = dx_across / d_across
             dy_across = dy_across / d_across
+            profile_times['transpose'] += utils.timing_function()-start
+            start = utils.timing_function()
             
             # All s1 matching to s2
             # ---------------------------------------
@@ -582,9 +613,17 @@ class WormParsing(object):
                                                        s2.shape[1],
                                                        PERCENT_BACK_SEARCH,
                                                        PERCENT_FORWARD_SEARCH)
+
+            profile_times['h__getBounds'] += utils.timing_function()-start
+            start = utils.timing_function()
+
             
             # For each point on side 1, calculate normalized orthogonal values
             norm_x, norm_y = WormParsing.h__computeNormalVectors(s1)
+
+            profile_times['h__computeNormalVectors'] += utils.timing_function()-start
+            start = utils.timing_function()
+
                    
             # For each point on side 1, find which side 2 the point pairs with
             dp_values1, match_I1 = \
@@ -594,10 +633,17 @@ class WormParsing(object):
                                                       d_across,
                                                       left_I, right_I)
 
+            profile_times['h__getMatches'] += utils.timing_function()-start
+            start = utils.timing_function()
+
+
             I_1,I_2 = WormParsing.h__updateEndsByWalking(d_across,
                                                          match_I1,
                                                          s1, s2,
                                                          END_S1_WALK_PCT)
+
+            profile_times['h__updateEndsByWalking'] += utils.timing_function()-start
+            start = utils.timing_function()
 
             # TODO: Make this a function
             # ------------------------------------
@@ -609,6 +655,9 @@ class WormParsing(object):
             #                                    current after previous            
                                                 (I_2[1:-1] >= I_2[:-2])), 
                                                  True))
+
+            profile_times['hstack'] += utils.timing_function()-start
+            start = utils.timing_function()
             
             I_1 = I_1[is_good]
             I_2 = I_2[is_good]
@@ -628,6 +677,9 @@ class WormParsing(object):
             skeleton_y = 0.5 * (s1_y + s1_py)
             h_skeleton.append(np.vstack((skeleton_x, skeleton_y)))
 
+            profile_times['final calculations'] += utils.timing_function()-start
+
+
             # Optional plotting code
             if frame_index in frames_to_plot:
                 fig = plt.figure()
@@ -638,7 +690,7 @@ class WormParsing(object):
                 #ax2 = plt.subplot2grid((2,3), (0,2))
                 ax3 = plt.subplot2grid((2,3), (1,2))
                 ax1.set_title("Frame #%d of %d" % (frame_index,
-                                                   len(ventral_contour)))
+                                                   len(h_ventral_contour)))
 
                 # The points along one side of the worm
                 ax1.scatter(s1[0,:], s1[1,:], marker='o', 
@@ -683,6 +735,7 @@ class WormParsing(object):
 
                 plt.show()
             
+        print(profile_times)
         return (h_widths, h_skeleton)
 
     @staticmethod
@@ -717,39 +770,6 @@ class WormParsing(object):
         
         return length
 
-        """
-        # OLD METHOD (based on the mistaken premise that we needed a running
-        # length along each point, which is now what is in the example mat
-        # file.  instead we just need a scalar value for each frame.)
-        
-        n_frames = np.shape(skeleton)[2]
-
-        # start with an empty numpy array of the correct shape
-        lengths = np.full([config.N_POINTS_NORMALIZED, n_frames], np.NaN)
-        
-        for frame_index, cur_xy in enumerate(skeleton):
-            if skeleton[:,:,frame_index] is not None:
-                # Obtain an array of x- and y- coordinates for the current
-                # frame's skeleton
-                cur_x = skeleton[:, 0, frame_index]
-                cur_y = skeleton[:, 1, frame_index]
-                
-                diff_x = np.diff(cur_x)
-                diff_y = np.diff(cur_y)
-                
-                skeleton_diffs = np.diff(skeleton[:,:,frame_index], axis=1)
-                chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=0)
-
-                lengths = np.sum(chain_code_lengths)                
-                
-                np.linalg.norm(np.diff(cur_x), )
-                # Compute the Freeman 8-direction chain-code length
-                cc = WormParsing.compute_chain_code_lengths(cur_x, cur_y)
-                lengths[:,frame_index] = WormParsing.normalize_parameter(cc, cc)
-                
-        return lengths
-        """
-
     @staticmethod
     def compute_Freeman_chain_codes(skeleton):
         """
@@ -769,6 +789,8 @@ class WormParsing(object):
                   skeleton[:,1] are the y coordinates
         
         """
+        # TODO        
+        
         chain_code = []
         skeleton_x = skeleton[:,0]
         skeleton_y = skeleton[:,1]
@@ -787,6 +809,7 @@ class WormParsing(object):
         The reverse of compute_Freeman_chain_codes.
         
         """
+        #TODO
         pass
 
     @staticmethod

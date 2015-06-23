@@ -264,6 +264,42 @@ class BasicWorm(JSON_Serializer):
         return bw
 
     @classmethod
+    def from_contour_factory(cls, ventral_contour, dorsal_contour):
+        """
+        Return a BasicWorm from a normalized ventral_contour and dorsal_contour
+        
+        Parameters
+        ---------------
+        ventral_contour: numpy array of shape (49,2,n)
+        dorsal_contour: numpy array of shape (49,2,n)
+        
+        Returns
+        ----------------
+        BasicWorm object
+        
+        """
+        assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
+
+        num_frames = np.shape(ventral_contour)[2]
+        
+        # Pre-allocate the lists to the correct length
+        h_ventral_contour = [np.empty(0)]*num_frames
+        h_dorsal_contour = [np.empty(0)]*num_frames
+        
+        for frame_index in range(num_frames):
+            h_ventral_contour[frame_index] = ventral_contour[:,:,frame_index]
+            h_dorsal_contour[frame_index] = dorsal_contour[:,:,frame_index]
+
+        # Having converted our normalized contour to a heterocardinal-type
+        # contour that just "happens" to have all its frames with the same
+        # number of skeleton points, we can just call another factory method
+        # and we are done:
+        return BasicWorm.from_h_contour_factory(h_ventral_contour, 
+                                                h_dorsal_contour)
+        
+
+
+    @classmethod
     def from_h_contour_factory(cls, h_ventral_contour, h_dorsal_contour):
         bw = cls()
         

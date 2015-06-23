@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 An example showing how to use the movement_validation package to go from a 
-raw video to a feature file.
+raw video .avi file to a fitness function result.
 
 """
 import sys, os, warnings
@@ -36,11 +36,9 @@ def main():
     fpo = mv.FeatureProcessingOptions(nw.video_info.fps)
     wf = mv.WormFeatures(nw, nw.video_info, fpo)
 
-    """
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')
     
-    #experiment_files = get_matlab_filepaths(experiment_path)
     experiment_files = [wf]
     control_files = get_matlab_filepaths(control_path)
 
@@ -48,9 +46,9 @@ def main():
     experiment_histograms = mv.HistogramManager(experiment_files)
     control_histograms = mv.HistogramManager(control_files)
 
+    # TODO: show all histograms on a tabular format on an HTML page.
     for i in range(1):
         experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
-    """
 
     
 def get_matlab_filepaths(root_path):
