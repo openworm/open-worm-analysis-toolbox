@@ -126,4 +126,8 @@ def video_to_features(video_path, output_path):
 
 
 if __name__ == '__main__':
+    start = mv.utils.timing_function()
     main()
+    print("Time elapsed: %.2fs" % 
+          (utils.timing_function() - start_time))
+        

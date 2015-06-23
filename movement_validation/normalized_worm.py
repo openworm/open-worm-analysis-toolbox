@@ -290,12 +290,9 @@ class NormalizedWorm(WormPartition):
         normalized.
 
         """
-        bw = BasicWorm()
+        bw = BasicWorm.from_contour_factory(self.ventral_contour, 
+                                            self.dorsal_contour)
 
-        bw.skeleton = np.copy(self.skeleton)
-        bw.h_ventral_contour = np.copy(self.ventral_contour)
-        bw.h_dorsal_contour = np.copy(self.dorsal_contour)
-        bw.ventral_mode = self.ventral_mode
         bw.video_info = self.video_info
         
         return bw
@@ -616,21 +613,13 @@ class NormalizedWorm(WormPartition):
         # computation rather than all together. This might hide bad frames        
         
         """
-        attributes = ['skeleton_x', 'skeleton_y',
-                      'ventral_contour_x', 'ventral_contour_y',
-                      'dorsal_contour_x', 'dorsal_contour_y',
-                      'angles', 'widths', 'length', 'area']
+        attribute_list = ['skeleton_x', 'skeleton_y',
+                          'ventral_contour_x', 'ventral_contour_y',
+                          'dorsal_contour_x', 'dorsal_contour_y',
+                          'angles', 'widths', 'length', 'area']
 
-        is_equal = True        
-        for attribute in attributes:
-            attrib_equal = utils.correlation(getattr(self, attribute), 
-                                             getattr(other, attribute), 
-                                             attribute)
-            if not attrib_equal:
-                is_equal = False
-    
-        # Return True only if all attributes are correlating
-        return is_equal
+        return utils.compare_attributes(self, other, attribute_list)
+
 
     def __repr__(self):
         #TODO: This omits the properties above ...

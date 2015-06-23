@@ -767,6 +767,34 @@ def correlation(x, y, variable_name, high_corr_value=0.999,
         return return_value
 
 
+def compare_attributes(obj1, obj2, attribute_list):
+    """
+    Compare all attributes in attribute_list belonging to obj
+    
+    Parameters
+    -------------    
+    obj1, obj2: objects
+        should have the attributes given in attribute_list
+    attribute_list: list of strings
+        a list of the attributes to compare
+    
+    Returns
+    ------------
+    bool
+        True if comparison passed on all attributes.  False otherwise.
+    
+    """
+    is_equal = True
+    for attribute in attribute_list:
+        attrib_equal = correlation(getattr(obj1, attribute), 
+                                   getattr(obj2, attribute), 
+                                   attribute)
+        if not attrib_equal:
+            is_equal = False
+
+    # Return True only if all attributes are correlating
+    return is_equal
+
             
         
 class ElementTimer(object):
@@ -805,3 +833,4 @@ class ElementTimer(object):
             print('%s: %0.3fs' %(name, finish_time))
 
             
+

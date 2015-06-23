@@ -27,6 +27,7 @@ from . import utils
 from .pre_features import WormParsing
 from .video_info import VideoInfo
 
+#%%
 class JSON_Serializer():
     """
     A class that can save all of its attributes to a JSON file, or 
@@ -51,7 +52,7 @@ class JSON_Serializer():
         for member in member_list:
             setattr(self, member[0], member[1])
 
-
+#%%
 class UnorderedWorm(JSON_Serializer):
     """
     Encapsulates the notion of worm contour or skeleton data that might have
@@ -163,7 +164,7 @@ class UnorderedWorm(JSON_Serializer):
         # TODO
         pass
 
-
+#%%
 class BasicWorm(JSON_Serializer):
     """
     A worm's skeleton and contour, not necessarily "normalized" to 49 points,
@@ -253,7 +254,7 @@ class BasicWorm(JSON_Serializer):
                                    
         # We purposely ignore the saved skeleton information contained
         # in the BasicWorm, preferring to derive it ourselves.        
-        bw.remove_precalculated_skeleton()
+        bw.__remove_precalculated_skeleton()
         #bw.h_skeleton = all_skeletons
 
         bw._h_ventral_contour = all_ventral_contours
@@ -335,7 +336,7 @@ class BasicWorm(JSON_Serializer):
     @h_ventral_contour.setter
     def h_ventral_contour(self, x):
         self._h_ventral_contour = x
-        self.remove_precalculated_skeleton()
+        self.__remove_precalculated_skeleton()
 
     @property
     def h_dorsal_contour(self):
@@ -344,9 +345,9 @@ class BasicWorm(JSON_Serializer):
     @h_dorsal_contour.setter
     def h_dorsal_contour(self, x):
         self._h_dorsal_contour = x
-        self.remove_precalculated_skeleton()
+        self.__remove_precalculated_skeleton()
         
-    def remove_precalculated_skeleton(self):
+    def __remove_precalculated_skeleton(self):
         """
         Removes the precalculated self._h_skeleton, if it exists.
         
@@ -413,9 +414,23 @@ class BasicWorm(JSON_Serializer):
     
     def __repr__(self):
         return utils.print_object(self)    
+
+
+    def __eq__(self, other):
+        """
+        Compare this BasicWorm against another.
+        
+        """
+        attribute_list = ['h_ventral_contour', 'h_dorsal_contour',
+                          'h_skeleton', 'video_info']
+
+        return utils.compare_attributes(self, other, attribute_list)
+
+
+
     
     
-    
+#%%
 class WormPartition():
     def __init__(self):
         # These are RANGE values, so the last value is not inclusive
@@ -573,6 +588,7 @@ class WormPartition():
             return None
 
 
+#%%
 
 def isnamedtuple(obj):
     """

@@ -53,7 +53,7 @@ class HistogramManager(object):
               len(feature_path_or_object_list))
         
         #For each ...
-        hist_cell_array = []        
+        hist_cell_array = []
         
         # Loop over all feature files and get histogram objects for each
         for feature_path_or_object in feature_path_or_object_list:
