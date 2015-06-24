@@ -173,17 +173,15 @@ class BasicWorm(JSON_Serializer):
 
     Attributes
     ----------
-    h_skeleton : [ndarray] or ndarray 
-        This input can either be a list, composed of skeletons for each 
-            frame or a singular ndarray. Shapes for these would be:
-                - [n_frames] list with elements [2,n_points] OR
-                - [n_points,2,n_frames]
-            In the first case n_points is variable (for MRC around 200) and
-            in the second case n_points is obviously fixed, and currently
-            should be at 49.
-            Missing frames in the first case should be identified by None.    
-    h_ventral_contour : The vulva side of the contour.  See skeleton.
-    h_dorsal_contour : The vulva side of the contour.  See skeleton.
+    h_skeleton : list, where each element is a numpy array of shape (2,k_i)
+        Each element of the list is a frame.        
+        Where k_i is the number of skeleton points in frame i.
+        The first axis of the numpy array, having len 2, is the x and y.
+         Missing frames should be identified by None.
+    h_ventral_contour:   Same type and shape as skeleton (see above)
+        The vulva side of the contour.
+    h_dorsal_contour: Same type and shape as skeleton (see above)
+        The non-vulva side of the contour.
     video_info : An instance of the VideoInfo class.
                  (contains metadata attributes of the worm video)
 
@@ -280,16 +278,33 @@ class BasicWorm(JSON_Serializer):
         
         """
         assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
+        # TODO: more validations, like that the nans are ligned up, etc.
 
         num_frames = np.shape(ventral_contour)[2]
         
+        # we need it to be shape (2,49,n) instead of (49,2,n) so we roll
+        # axis 1 back to position 0.
+        ventral_contour = np.rollaxis(ventral_contour, axis=1)
+        dorsal_contour = np.rollaxis(dorsal_contour, axis=1)
+        
         # Pre-allocate the lists to the correct length
-        h_ventral_contour = [np.empty(0)]*num_frames
-        h_dorsal_contour = [np.empty(0)]*num_frames
+        h_ventral_contour = [None]*num_frames
+        h_dorsal_contour = [None]*num_frames
+        
+        nan_frame_mask = np.isnan(ventral_contour[0,0,:])
         
         for frame_index in range(num_frames):
-            h_ventral_contour[frame_index] = ventral_contour[:,:,frame_index]
-            h_dorsal_contour[frame_index] = dorsal_contour[:,:,frame_index]
+            # The heterocardinal contour expects to have None entries
+            # in the frame list where we previous had NaN-filled numpy 
+            # arrays, so just avoid those elements since they are 
+            # already pre-populated with None as required.
+            if not nan_frame_mask[frame_index]:
+                # Otherwise just take the appropriate data from the 
+                # appropriate frame:
+                h_ventral_contour[frame_index] = \
+                                        ventral_contour[:,:,frame_index]
+                h_dorsal_contour[frame_index] = \
+                                        dorsal_contour[:,:,frame_index]
 
         # Having converted our normalized contour to a heterocardinal-type
         # contour that just "happens" to have all its frames with the same
@@ -363,7 +378,7 @@ class BasicWorm(JSON_Serializer):
         """
         try:        
             del(self._h_skeleton)
-        except NameError:
+        except AttributeError:
             pass
     
     @property
@@ -401,15 +416,21 @@ class BasicWorm(JSON_Serializer):
         
         """
         vc = self.h_ventral_contour[frame_index]
-        nvc = self.h_dorsal_contour[frame_index]
-        skeleton_x = self.h_skeleton[frame_index][0]
-        skeleton_y = self.h_skeleton[frame_index][1]
+        dc = self.h_dorsal_contour[frame_index]
+        s = self.h_skeleton[frame_index]
         
         plt.scatter(vc[0,:], vc[1,:])
-        plt.scatter(nvc[0,:], nvc[1,:])
-        plt.scatter(skeleton_x, skeleton_y)
+        plt.scatter(dc[0,:], dc[1,:])
+        plt.scatter(s[0,:], s[1,:])
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
+
+    def validate(self):
+        """
+        Validate that self is a well-defined BasicWorm instance.
+        
+        """
+        assert(len(self.h_ventral_contour) == len(self.h_dorsal_contour))
 
     
     def __repr__(self):
