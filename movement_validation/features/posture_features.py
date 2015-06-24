@@ -676,7 +676,7 @@ def get_worm_coils(features_ref, midbody_distance):
     
     timer.tic()
     
-    frame_code = features_ref.nw.video_info.frame_code
+    frame_code = features_ref.video_info.frame_code
     
 
     COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold

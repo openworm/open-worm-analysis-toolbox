@@ -175,9 +175,10 @@ class WormLocomotion(object):
 
         """
         print('Calculating Locomotion Features')    
-
+        
         nw  = features_ref.nw
-
+        video_info = features_ref.video_info
+        
         self.velocity = locomotion_features.LocomotionVelocity(features_ref)
 
         self.motion_events = \
@@ -191,14 +192,14 @@ class WormLocomotion(object):
                                             features_ref,
                                             nw.angles,
                                             self.motion_events.is_paused,
-                                            nw.video_info.is_segmented)
+                                            video_info.is_segmented)
 
         self.foraging_bends = locomotion_bends.LocomotionForagingBends(
                                             features_ref, 
-                                            nw.video_info.is_segmented, 
-                                            nw.video_info.ventral_mode)
+                                            video_info.is_segmented, 
+                                            video_info.ventral_mode)
 
-        is_stage_movement = nw.video_info.is_stage_movement
+        is_stage_movement = video_info.is_stage_movement
        
 
         self.turns = locomotion_turns.LocomotionTurns(
@@ -613,6 +614,7 @@ class WormFeatures(object):
 
         #These are saved locally for reference by others when processing
         self.video_info = video_info
+        
         self.options = processing_options
         self.nw = nw
         self.timer = utils.ElementTimer()

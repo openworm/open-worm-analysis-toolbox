@@ -346,7 +346,7 @@ class EventSpecs(Specs):
         return Specs.specs_factory(csv_path, EventSpecs)
 
     
-    def getData(self, worm_features, num_samples):
+    def getData(self, worm_features, num_samples=0):
         """
 
         Parameters
@@ -384,6 +384,9 @@ class EventSpecs(Specs):
         #JAH: This will fail in Python 2.7
         #???? super(Specs).getData(worm_features)
 
+        if num_samples == 0:
+            num_samples = worm_features.nw.length.size
+            
         parent_data = super(EventSpecs,self).getData(worm_features)
 
         #JAH: The Matlab code would use an empty structure.
@@ -451,7 +454,7 @@ class EventSpecs(Specs):
             pdb.set_trace()
             raise Exception("The WormFeature contains no data for " + self.long_field)
         
-        if data.size == 0 and self.make_zero_if_empty:
+        if not isinstance(data, (float, int)) and data.size == 0 and self.make_zero_if_empty:
             data = 0
         
         return data
