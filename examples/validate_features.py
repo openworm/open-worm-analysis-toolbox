@@ -46,9 +46,10 @@ def main():
     # come from the video parser eventually
     vi = VideoInfo(video_name='Example Video File', 
                    fps=config.DEFAULT_FPS)
+    nw.video_info = vi
 
     # Generate the OpenWorm movement validation repo version of the features
-    openworm_features = WormFeatures(nw, vi)
+    openworm_features = WormFeatures(nw)
 
     # SCHAFER LAB
     #----------------------

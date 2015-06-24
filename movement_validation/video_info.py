@@ -38,8 +38,8 @@ class VideoInfo(object):
     length_in_seconds
     length_in_frames
     
-    frame_codes : numpy array of codes for each frame of the video
-    frame_code_info : Hardcoded!
+    frame_code : numpy array of codes for each frame of the video
+    frame_code_info : Descriptions of the frame codes, lazy-loaded from csv
     ventral_mode : int
         The ventral side mode:
         0 = unknown

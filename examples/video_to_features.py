@@ -34,7 +34,7 @@ def main():
 
     # TODO: fix fpo, also nw.video_info shouldn't need to be specified here
     fpo = mv.FeatureProcessingOptions(nw.video_info.fps)
-    wf = mv.WormFeatures(nw, nw.video_info, fpo)
+    wf = mv.WormFeatures(nw, fpo)
 
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')

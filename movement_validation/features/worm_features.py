@@ -574,7 +574,6 @@ class WormPath(object):
 
 
 class WormFeatures(object):
-
     """ 
     WormFeatures: Takes a NormalizedWorm instance and
     during initialization calculates all the features of the worm.
@@ -586,34 +585,31 @@ class WormFeatures(object):
          
     Attributes
     ----------      
-    video_info : movement_validation.video_info
-    options : movement_validation.features.feature_processing_options
-    nw : movement_validation.NormalizedWorm
-    morphology : WormMorphology
-    locomotion : WormLocomotion
-    posture : WormPosture
-    path : WormPath
+    video_info: VideoInfo object
+    options: movement_validation.features.feature_processing_options
+    nw: NormalizedWorm object
+    morphology: WormMorphology object
+    locomotion: WormLocomotion object
+    posture: WormPosture object
+    path: WormPath object
 
     """
 
-    def __init__(self, nw, video_info, processing_options=None):
+    def __init__(self, nw, processing_options=None):
         """
         
         Parameters
         ----------
-        nw : movement_validation.NormalizedWorm
-        video_info : movement_validation.video_info
-        processing_options : movement_validation.features.feature_processing_options
+        nw: NormalizedWorm object
+        processing_options: movement_validation.features.feature_processing_options
 
         """
-        
-        #TODO: Create the normalized worm in here ... 
-
         if processing_options is None:
-            processing_options = fpo.FeatureProcessingOptions(video_info.fps)
+            processing_options = \
+                            fpo.FeatureProcessingOptions(nw.video_info.fps)
 
-        #These are saved locally for reference by others when processing
-        self.video_info = video_info
+        # These are saved locally for reference by others when processing
+        self.video_info = nw.video_info
         
         self.options = processing_options
         self.nw = nw
@@ -621,8 +617,8 @@ class WormFeatures(object):
         
         self.morphology = WormMorphology(self)
         self.locomotion = WormLocomotion(self)
-        self.posture = WormPosture(self, 
-                                   self.locomotion.velocity.get_midbody_distance())
+        self.posture = \
+            WormPosture(self, self.locomotion.velocity.get_midbody_distance())
         self.path = WormPath(self)
 
     @classmethod

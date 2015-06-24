@@ -54,10 +54,9 @@ def main():
     # The frame rate is somewhere in the video info. Ideally this would 
     # all come from the video parser eventually
     fpo = FeatureProcessingOptions(config.DEFAULT_FPS)
-    video_info = VideoInfo('Example Video File', config.DEFAULT_FPS)
 
     # Generate the OpenWorm movement validation repo version of the features
-    wf = WormFeatures(nw_calculated, video_info, fpo)
+    wf = WormFeatures(nw_calculated, fpo)
     
     # Display how long it took to generate each of the features
     wf.timer.summarize()
