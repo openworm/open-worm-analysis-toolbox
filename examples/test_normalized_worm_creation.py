@@ -17,7 +17,7 @@ sys.path.append('..')
 
 from movement_validation import user_config, config, utils
 from movement_validation import BasicWorm, NormalizedWorm
-from movement_validation import VideoInfo, WormFeatures
+from movement_validation import WormFeatures
 from movement_validation import FeatureProcessingOptions
 
 def main():
@@ -49,6 +49,8 @@ def main():
     plt.plot(nw.length, c='red')
     plt.plot(nw_calculated.length, c='blue')
     plt.show()
+
+    # TODO: change fpo here, since we get fps now from video_info
     
     # EXTRAS (nothing to do with NormalizedWorm creation:)
     # The frame rate is somewhere in the video info. Ideally this would 

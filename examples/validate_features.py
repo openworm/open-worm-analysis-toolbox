@@ -19,7 +19,7 @@ import sys, os
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 from movement_validation import user_config, NormalizedWorm
-from movement_validation import WormFeatures, VideoInfo, config, utils
+from movement_validation import WormFeatures, utils
 
 
 def main():
@@ -27,26 +27,17 @@ def main():
     Compare Schafer-generated features with our new code's generated features
 
     """
-    
     # Set up the necessary file paths for file loading
     #----------------------
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
-
     matlab_generated_file_path = os.path.join(
         base_path,'example_video_feature_file.mat')
-
     data_file_path = os.path.join(base_path,"example_video_norm_worm.mat")
 
     # OPENWORM
     #----------------------
     # Load the normalized worm from file
     nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
-
-    # The frame rate is somewhere in the video info. Ideally this would all
-    # come from the video parser eventually
-    vi = VideoInfo(video_name='Example Video File', 
-                   fps=config.DEFAULT_FPS)
-    nw.video_info = vi
 
     # Generate the OpenWorm movement validation repo version of the features
     openworm_features = WormFeatures(nw)
