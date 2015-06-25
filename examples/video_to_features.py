@@ -32,9 +32,7 @@ def main():
 
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
 
-    # TODO: fix fpo, also nw.video_info shouldn't need to be specified here
-    fpo = mv.FeatureProcessingOptions(nw.video_info.fps)
-    wf = mv.WormFeatures(nw, fpo)
+    wf = mv.WormFeatures(nw)
 
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')

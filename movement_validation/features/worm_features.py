@@ -606,7 +606,7 @@ class WormFeatures(object):
         """
         if processing_options is None:
             processing_options = \
-                            fpo.FeatureProcessingOptions(nw.video_info.fps)
+                            fpo.FeatureProcessingOptions()
 
         # These are saved locally for reference by others when processing
         self.video_info = nw.video_info

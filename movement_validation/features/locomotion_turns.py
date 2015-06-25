@@ -54,6 +54,7 @@ from .. import utils
 
 from . import events
 
+#%%
 class LocomotionTurns(object):
 
     """
@@ -445,7 +446,7 @@ class LocomotionTurns(object):
 ===============================================================================
 """
 
-
+#%%
 class UpsilonTurns(object):
 
     """
@@ -498,7 +499,7 @@ class UpsilonTurns(object):
 ===============================================================================
 """
 
-
+#%%
 class OmegaTurns(object):
 
     """
@@ -572,7 +573,7 @@ class OmegaTurns(object):
         omega_frames_from_th_change = \
             self.h__filterAndSignFrames(body_angles_i, 
                                         omega_frames_from_th_change, 
-                                        options.min_omega_event_length)
+                                        options.min_omega_event_length(fps))
 
         is_omega_frame = (omega_frames_from_angles != 0) | \
                          (omega_frames_from_th_change != 0)
@@ -581,7 +582,7 @@ class OmegaTurns(object):
         signed_omega_frames = \
             self.h__filterAndSignFrames(body_angles_i,
                                         is_omega_frame,
-                                        options.min_omega_event_length)
+                                        options.min_omega_event_length(fps))
 
         # Convert frames to events ...
         self.value = getTurnEventsFromSignedFrames(signed_omega_frames,
@@ -758,9 +759,9 @@ class OmegaTurns(object):
 
 
     def h__filterAndSignFrames(self, body_angles_i, is_omega_frame,
-                               MIN_OMEGA_EVENT_LENGTH):
+                               min_omega_event_length):
         """
-
+        Filter and sign frames.
 
         Notes
         ---------------------------------------    
@@ -779,7 +780,7 @@ class OmegaTurns(object):
         is_omega_frame_as_list = [chr(x)
                                   for x in is_omega_frame_as_ascii_codes]
         is_omega_frame_as_string = ''.join(is_omega_frame_as_list)
-        gap_re = re.compile(r'B{%d,}' % MIN_OMEGA_EVENT_LENGTH)
+        gap_re = re.compile(r'B{%d,}' % min_omega_event_length)
         # Obtain a iterator of the results that match our regex, gap_re.
         re_result = list(gap_re.finditer(is_omega_frame_as_string))
         start1 = [m.start(0) for m in re_result]
@@ -802,10 +803,10 @@ class OmegaTurns(object):
 ===============================================================================
 """
 
-
+#%%
 def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     """
-
+    Get turn events from signed frames
 
     Parameters
     ---------------------------------------    

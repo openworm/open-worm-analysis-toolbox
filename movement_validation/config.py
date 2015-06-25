@@ -45,9 +45,6 @@ N_POINTS_NORMALIZED = 49
 TIP_DIFF = 0.25
 BODY_DIFF = 0.5
 
-
-
-
 # The following two are used in EventOutputStructure...
 # When retrieving the final structure
 # this is the name given to the field that contains the

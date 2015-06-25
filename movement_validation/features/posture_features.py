@@ -679,7 +679,7 @@ def get_worm_coils(features_ref, midbody_distance):
     frame_code = features_ref.video_info.frame_code
     
 
-    COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold
+    COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold(fps)
     
     # These are values that are specific to the MRC processor
     COIL_START_CODES = [105, 106]

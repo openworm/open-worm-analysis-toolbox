@@ -16,8 +16,10 @@ from .. import utils
 #from .worm_features import WormFeatures
 
 class FeatureProcessingOptions(object):
-    
-    def __init__(self, fps):    
+    """
+    """
+
+    def __init__(self):
         
         # The idea with this attribute is that functions will check if 
         # they are in this list. If they are then they can display some 
@@ -39,8 +41,8 @@ class FeatureProcessingOptions(object):
         # that the behavior will not match even if this value is set to True.
         self.mimic_old_behaviour = True
     
-        self.locomotion = LocomotionOptions(fps)
-        self.posture = PostureOptions(fps)
+        self.locomotion = LocomotionOptions()
+        self.posture = PostureOptions()
         
         # TODO: Implement this.
         # This is not yet implemented. The idea is to support not 
@@ -109,7 +111,7 @@ class FeatureProcessingOptions(object):
 
 class PostureOptions(object):
     
-    def __init__(self, fps):
+    def __init__(self):
         # Grid size for estimating eccentricity, this is the
         # max # of points that will fill the wide dimension.
         # (scalar) The # of points to place in the long dimension. More points
@@ -118,14 +120,6 @@ class PostureOptions(object):
         #
         # Used by: posture_features.get_eccentricity_and_orientation
         self.n_eccentricity_grid_points = 50 
-        
-        # This is the # of 
-        # frames that an epoch must exceed in order for it to be truly
-        # considered a coiling event
-        # Current value translation: 1/5 of a second
-        #
-        # Used by: posture_features.get_worm_coils
-        self.coiling_frame_threshold = round(1/5 * fps) 
         
         #The maximum # of available values is 7 although technically there
         #are generally 48 eigenvectors avaiable, we've just only precomputed
@@ -143,6 +137,15 @@ class PostureOptions(object):
         self.kink_length_threshold_pct = 1/12
         
         self.wavelength = PostureWavelengthOptions() 
+        
+    def coiling_frame_threshold(self, fps):
+        # This is the # of 
+        # frames that an epoch must exceed in order for it to be truly
+        # considered a coiling event
+        # Current value translation: 1/5 of a second
+        #
+        # Used by: posture_features.get_worm_coils
+        return round(1/5 * fps) 
 
 
 class PostureWavelengthOptions(object):
@@ -165,7 +168,7 @@ class PostureWavelengthOptions(object):
         self.pct_cutoff = 2
 
 class LocomotionOptions(object):
-    def __init__(self, fps):
+    def __init__(self):
         #locomotion_features.LocomotionVelocity
         #-------------------------------------
         #Units: seconds
@@ -190,9 +193,9 @@ class LocomotionOptions(object):
         self.motion_codes_max_interframes_threshold = 0.25  
 
         #locomotion_bends.LocomotionCrawlingBends
-        self.crawling_bends = LocomotionCrawlingBends(fps)
-        self.foraging_bends = LocomotionForagingBends(fps)
-        self.locomotion_turns = LocomotionTurns(fps)
+        self.crawling_bends = LocomotionCrawlingBends()
+        self.foraging_bends = LocomotionForagingBends()
+        self.locomotion_turns = LocomotionTurns()
 
     def __repr__(self):
         return utils.print_object(self)
@@ -200,9 +203,11 @@ class LocomotionOptions(object):
 
 class LocomotionTurns(object):
     
-    def __init__(self,fps):
+    def __init__(self):
         self.max_interpolation_gap_allowed = 9 #frames
-        self.min_omega_event_length = round(fps/4)
+    
+    def min_omega_event_length(self, fps):
+        return round(fps/4)
         
         
         #TODO: There is still a lot to put into here
@@ -211,16 +216,21 @@ class LocomotionTurns(object):
 
 class LocomotionForagingBends(object):
     
-    def __init__(self, fps):
+    def __init__(self):
         # NOTE: The nose & neck can also be thought of as the head tip 
         # and head neck
-        self.min_nose_window_samples = round(0.1 * fps)
-        self.max_samples_interp_nose = 2*self.min_nose_window_samples - 1
+        pass
+    
+    def min_nose_window_samples(self, fps):
+        return round(0.1 * fps)
+    
+    def max_samples_interp_nose(self, fps):
+        return 2*self.min_nose_window_samples(fps) - 1
 
 
 class LocomotionCrawlingBends(object):
 
-    def __init__(self, fps):
+    def __init__(self):
         self.fft_n_samples = 2 ** 14
         
         self.bends_partitions = \
@@ -243,15 +253,17 @@ class LocomotionCrawlingBends(object):
         # This is a spatial frequency
         self.min_frequency = 0.25 * self.max_time_for_bend
         
-        # What is the technical max???? 0.5 fps????
-        self.max_frequency = 0.25 * fps
-        
         # This is a processing optimization.
         # How far into the maximum peaks should we look ...
         # If this value is low, an expensive computation could go faster. 
         # If it is too low, then we end up rerunning the calculation the 
         # whole dataset and we end up losing time.
         self.initial_max_I_pct = 0.5
+
+    def max_frequency(self, fps):
+        # What is the technical max???? 0.5 fps????
+        return 0.25 * fps
+
         
     def __repr__(self):
         return utils.print_object(self)        

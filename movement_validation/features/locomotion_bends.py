@@ -29,7 +29,7 @@ import warnings
 
 from .. import utils
 
-
+#%%
 class LocomotionBend(object):
     
     """
@@ -234,12 +234,13 @@ class LocomotionCrawlingBends(object):
 
         Parameters
         ----------
-        avg_bend_angles : numpy.array
+        avg_bend_angles: numpy.array
             - [1 x n_frames]
-        bound_info :
-        options : movement_validation.features.feature_processing_options.LocomotionCrawlingBends
-        cur_partition :
-        fps : 
+        bound_info:
+        options: movement_validation.features.feature_processing_options.LocomotionCrawlingBends
+        cur_partition:
+        fps: float
+            Frames Per Second
 
 
         Returns
@@ -250,7 +251,7 @@ class LocomotionCrawlingBends(object):
         # Compute the short-time Fourier transforms (STFT).
         #--------------------------------------------------
         # Unpack options ...
-        max_freq = options.max_frequency
+        max_freq = options.max_frequency(fps)
         min_freq = options.min_frequency
         fft_n_samples = options.fft_n_samples
         max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
@@ -417,7 +418,7 @@ class LocomotionCrawlingBends(object):
                                                              use_max=False,
                                                              value_cutoff=np.inf)
 
-            del min_peaks   # this part of max_peaks_dist's return is unused
+            del(min_peaks)  # This part of max_peaks_dist's return is unused
 
             peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
             peak_end_I   = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
@@ -444,12 +445,7 @@ class LocomotionCrawlingBends(object):
             self.midbody == other.midbody and \
             self.tail == other.tail
 
-"""
-===============================================================================
-===============================================================================
-"""
-
-
+#%%
 class LocomotionForagingBends(object):
 
     """
@@ -543,7 +539,7 @@ class LocomotionForagingBends(object):
         # utils.interpolate_with_threshold code.
         interp = utils.interpolate_with_threshold_2D
 
-        max_samples_interp = options.max_samples_interp_nose
+        max_samples_interp = options.max_samples_interp_nose(fps)
 
         nose_xi = interp(nose_x, threshold=max_samples_interp)
         nose_yi = interp(nose_y, threshold=max_samples_interp)
@@ -560,7 +556,7 @@ class LocomotionForagingBends(object):
         #---------------------------------------
         [nose_amps, nose_freqs] = \
             self.h__foragingData(fps, nose_bends, 
-                                 options.min_nose_window_samples)
+                                 options.min_nose_window_samples(fps))
 
         if ventral_mode > 1:
             nose_amps = -nose_amps
@@ -784,6 +780,7 @@ class LocomotionForagingBends(object):
         return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
              utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
 
+#%%
 class CrawlingBendsBoundInfo(object):
     
     """
