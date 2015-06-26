@@ -53,7 +53,7 @@ from . import config, utils
 # Instead we use the following statement:
 from scipy.signal import savgol_filter as sgolay
 
-
+#%%
 class WormParsing(object):
     """
     This might eventually move somewhere else, but at least it is 
@@ -63,7 +63,7 @@ class WormParsing(object):
     TODO: Self does not refer to WormParsing ...
     
     """
-
+    #%%    
     @staticmethod
     def compute_area(contour):
         """
@@ -119,6 +119,7 @@ class WormParsing(object):
 
         return np.abs(signed_area)
 
+    #%%
     @staticmethod
     def h__computeNormalVectors(data):
         """
@@ -738,6 +739,7 @@ class WormParsing(object):
         print(profile_times)
         return (h_widths, h_skeleton)
 
+    #%%
     @staticmethod
     def compute_skeleton_length(skeleton):
         """
@@ -770,6 +772,7 @@ class WormParsing(object):
         
         return length
 
+    #%%
     @staticmethod
     def compute_Freeman_chain_codes(skeleton):
         """
@@ -835,6 +838,7 @@ class WormParsing(object):
         distances = np.concatenate([np.array([0.0]), np.sqrt(dx**2 + dy**2)])
         return np.cumsum(distances)
 
+    #%%
     @staticmethod
     def normalize_all_frames_xy(prop_to_normalize):
         """
@@ -866,6 +870,7 @@ class WormParsing(object):
         
         return norm_data            
     
+    #%%
     @staticmethod
     def normalize_all_frames(prop_to_normalize, xy_data):
         """
@@ -898,6 +903,7 @@ class WormParsing(object):
         
         return norm_data 
 
+    #%%
     @staticmethod
     def compute_angles(h_skeleton):
         """
@@ -951,14 +957,14 @@ class WormParsing(object):
         TODO: sign these angles using ventral_mode ?? - @MichaelCurrie
 
         """                  
-        temp_angle_list = []
+        temp_angle_list = [] # TODO: pre-allocate the space we need
                       
-        for iFrame, cur_frame_value in enumerate(h_skeleton):
-            if cur_frame_value is None:
+        for frame_index, cur_skeleton in enumerate(h_skeleton):
+            if cur_skeleton is None:
                 temp_angle_list.append([])
             else:
-                sx = cur_frame_value[0,:]
-                sy = cur_frame_value[1,:]
+                sx = cur_skeleton[0,:]
+                sy = cur_skeleton[1,:]
                 cc = WormParsing.compute_chain_code_lengths(sx, sy)
     
                 # This is from the old code
@@ -1001,9 +1007,11 @@ class WormParsing(object):
                 all_frame_angles[valid_vertices_I] = frame_angles
                 
                 temp_angle_list.append(all_frame_angles)
+
                 
         return WormParsing.normalize_all_frames(temp_angle_list, h_skeleton)
     
+    #%%
     @staticmethod
     def normalize_parameter(orig_data, old_lengths):
         """

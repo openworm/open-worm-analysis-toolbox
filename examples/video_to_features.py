@@ -12,7 +12,7 @@ import sys, os, warnings
 sys.path.append('..') 
 import movement_validation as mv
 
-
+#%%
 def main():
     # TODO:
     #h_ventral_contour, h_dorsal_contour, video_info = \
@@ -30,9 +30,9 @@ def main():
     bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
     # -------------------------------------
 
-    nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+    #nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
 
-    wf = mv.WormFeatures(nw)
+    #wf = mv.WormFeatures(nw)
 
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')
@@ -48,7 +48,7 @@ def main():
     for i in range(1):
         experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
 
-    
+#%%
 def get_matlab_filepaths(root_path):
     """
     Recursively traverses from root_path to find all .mat files
@@ -68,10 +68,11 @@ def get_matlab_filepaths(root_path):
 
     return matlab_filepaths
 
+#%%
 def geppetto_to_features(minimal_worm_spec_path):
     pass
 
-
+#%%
 def video_to_features(video_path, output_path):
     """
     Go from a path to a .avi file to features
@@ -122,10 +123,10 @@ def video_to_features(video_path, output_path):
     
     worm_features.write_to_disk(output_path)
 
-
+#%%
 if __name__ == '__main__':
-    start = mv.utils.timing_function()
+    start_time = mv.utils.timing_function()
     main()
     print("Time elapsed: %.2fs" % 
-          (utils.timing_function() - start_time))
+          (mv.utils.timing_function() - start_time))
         
