@@ -11,9 +11,8 @@ import sys
 # import of movement_validation while running this as
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-from movement_validation import NormalizedWorm
+import movement_validation as mv
 import examples
-
 
 def test_simply():
     # Simple test to verify our test harness works
@@ -23,7 +22,7 @@ def test_simply():
 
 def test_empty_nw():
     # Test edge cases when our normalized worm is empty
-    nw = NormalizedWorm()
+    nw = mv.NormalizedWorm()
     nw.validate()
     #centred_skeleton = nw.centre()
 
@@ -39,3 +38,15 @@ def test_example_scripts():
     for example in EXAMPLES_TO_RUN:
         method_to_call = getattr(examples,example)
         method_to_call()
+
+
+
+# Unit tests for utils
+def test_round_to_odd():
+    round_to_odd = mv.utils.round_to_odd
+    
+    assert(round_to_odd(3) == 3)
+    assert(round_to_odd(3.5) == 3)
+    assert(round_to_odd(4) in (3,5))
+    assert(round_to_odd(-12) in (-11,-13))    
+

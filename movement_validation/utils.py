@@ -832,5 +832,71 @@ class ElementTimer(object):
         for (name, finish_time) in zip(self.names, self.times):
             print('%s: %0.3fs' %(name, finish_time))
 
-            
 
+
+def round_to_odd(num):
+    """
+    Round a number to the     
+    
+    Parameters
+    -------------
+    num: float
+        The number to be rounded
+        
+    Returns
+    -------------
+    An integer
+        The nearest odd number to num
+        
+    """
+    num = np.floor(num)
+    if num % 2 == 0:
+        num = num + 1
+        
+    return num
+
+    
+    
+def compute_normal_vectors(curve, clockwise_orientation=True):
+    """
+    Compute normal vectors for a given curve in two dimensions.
+    (i.e. Obtain vectors of direction 1 perpendicular to the gradient) 
+    
+    Parameters
+    ---------------
+    curve: numpy array of shape (2,k)
+        This is for a given curve, where k is the number of points 
+        on the curve.
+    clockwise_orientation: bool
+        Whether to rotate the gradient vectors clockwise 90 degrees or 
+        counter-clockwise 90 degrees.
+
+    Returns
+    ---------------
+    numpy array of shape (k,), numpy array of shape (k,)
+        x-coordinate of normal vector, y-coordinate of normal vector
+    
+    """
+    dx = np.gradient(curve[0,:])
+    dy = np.gradient(curve[1,:])
+    
+    # Take the perpendicular of each of these gradient vectors by applying
+    # a 90 degree rotation.
+    # curve_gradient should have shape (2,k)
+    if clockwise_orientation:
+        # (This should give us -1 for the projection)
+        curve_gradient = [dy, -dx]
+    else:
+        # (This should give us 1 for the projection)
+        curve_gradient = [-dy, dx]        
+
+    # Find the magnitude of the gradient (shape (k,))
+    curve_gradient_magnitude = np.linalg.norm(curve_gradient, axis=0)
+    
+    # Scale each coordinate down so that we have a vector of length 1
+    # This numpy array should have shape (2,k)
+    normal_vector = curve_gradient / curve_gradient_magnitude
+
+    # Split up our return value into x and y coordinates        
+    return normal_vector[0,:], normal_vector[1,:]
+    

@@ -37,7 +37,7 @@ def main():
 
     # Calculate a NormalizedWorm from the basic worm information.
     print("Now let's calculate nw from bw_from_nw")    
-    nw_calculated = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+    nw_calculated = mv.NormalizedWorm.from_BasicWorm_factory(bw_from_nw)
 
     #plt.plot(nw.angles)
     angles1 = pd.DataFrame(nw.angles)

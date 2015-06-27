@@ -119,60 +119,34 @@ class WormParsing(object):
 
         return np.abs(signed_area)
 
-    #%%
-    @staticmethod
-    def h__computeNormalVectors(data):
-        """
-        Compute normal vectors
-        
-        """
-        dx = np.gradient(data[0,:])
-        dy = np.gradient(data[1,:])
-        
-        #This approach gives us -1 for the projection
-        #We could also use:
-        #dx_norm = -dy;
-        #dy_norm = dx;
-        #
-        #and we would get 1 for the projection
-        dx_norm = dy;
-        dy_norm = -dx;
-        
-        vc_d_magnitude = np.sqrt(dx_norm**2 + dy_norm**2);
-        
-        norm_x = dx_norm/vc_d_magnitude;
-        norm_y = dy_norm/vc_d_magnitude;
-        
-        return norm_x,norm_y
-
-    @staticmethod
-    def h__roundToOdd(value):
-        """
-        Round to odd
-        
-        """
-        value = np.floor(value)
-        if value % 2 == 0:
-            value = value + 1
-            
-        return value
-
     @staticmethod
     def h__getBounds(n1, n2, p_left, p_right):
         """
         Returns slice starts and stops
         #TODO: Rename everything to start and stop
 
+        Parameters
+        ---------------
+        n1:
+        n2:
+        p_left:
+        p_right:
+
+        Returns
+        ---------------
+        left_I, right_I
+
         """
-        pct = np.linspace(0,1,n1)
+        pct = np.linspace(0, 1, n1)
         left_pct = pct - p_left
         right_pct = pct + p_right
 
         left_I = np.floor(left_pct*n2)
         right_I = np.ceil(right_pct*n2)
         left_I[left_I < 0] = 0;
-        right_I[right_I >= n2] = n2-1
-        return left_I,right_I
+        right_I[right_I >= n2] = n2 - 1
+        
+        return left_I, right_I
     
     @staticmethod
     def h__getMatches(s1, s2, 
@@ -198,7 +172,7 @@ class WormParsing(object):
         
         Returns
         ---------------        
-        
+        (dp_values, match_I)
         
         """
         n_s1 = s1.shape[1]
@@ -317,19 +291,22 @@ class WormParsing(object):
         
         Parameters
         ----------
-        d_across
-        match_I1
-        s1
-        s2
-        END_S1_WALK_PCT :
+        d_across:
+        match_I1:
+        s1: list of numpy arrays, with the arrays having shape (2,ki)
+            One side of the contour.  ki is the number of points in frame i
+        s2: list of numpy arrays, with the arrays having shape (2,ki)
+            The other side of the contour.  ki is the number of points in 
+            frame i
+        END_S1_WALK_PCT:
         
         Returns
         -------
-        (I_1,I_2)
+        (I_1, I_2)
         
         """
         n_s1 = s1.shape[1]
-        n_s2 = s2.shape[1]       
+        n_s2 = s2.shape[1]
         
         
         end_s1_walk_I = np.ceil(n_s1*END_S1_WALK_PCT)
@@ -531,6 +508,10 @@ class WormParsing(object):
         Some refinement:
         https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
                %2Bseg_worm/%2Bworm/%40skeleton/cleanSkeleton.m        
+
+        # * I'm writing the code based on awesome_contours_oh_yeah_v2
+        #   in Jim's testing folder            
+        # - @JimHokanson
         
         Widths are simply the distance between two "corresponding" sides of
         the contour. The question is how to get these two locations. 
@@ -560,13 +541,15 @@ class WormParsing(object):
         PERCENT_FORWARD_SEARCH = 0.3;
         END_S1_WALK_PCT = 0.15;
 
-        h_skeleton = []
-        h_widths = []
+        num_frames = len(h_ventral_contour) # == len(h_dorsal_contour)
 
-        profile_times = {'h__roundToOdd':0, 
+        h_skeleton = [None] * num_frames
+        h_widths = [None] * num_frames
+
+        profile_times = {'sgolay':0, 
                          'transpose':0, 
                          'h__getBounds':0,
-                         'h__computeNormalVectors':0,
+                         'compute_normal_vectors':0,
                          'h__getMatches':0,
                          'h__updateEndsByWalking':0,
                          'hstack':0,
@@ -576,26 +559,23 @@ class WormParsing(object):
         for frame_index, (s1, s2) in \
                         enumerate(zip(h_ventral_contour, h_dorsal_contour)):
             
-            # * I'm writing the code based on awesome_contours_oh_yeah_v2
-            #   in Jim's testing folder            
-            
+            # If the frame has no contour values, assign no skeleton 
+            # or widths values
             if s1 is None:
-                h_skeleton.append(None)
-                h_widths.append(None)
                 continue
             
             start = utils.timing_function()
             # Step 1: filter
-            filter_width_s1 = \
-                WormParsing.h__roundToOdd(s1.shape[1] * FRACTION_WORM_SMOOTH)    
+            filter_width_s1 = utils.round_to_odd(s1.shape[1] * 
+                                                 FRACTION_WORM_SMOOTH)    
             s1[0, :] = sgolay(s1[0, :], filter_width_s1, SMOOTHING_ORDER)
             s1[1, :] = sgolay(s1[1, :], filter_width_s1, SMOOTHING_ORDER)
 
-            filter_width_s2 = \
-                WormParsing.h__roundToOdd(s2.shape[1] * FRACTION_WORM_SMOOTH)    
+            filter_width_s2 = utils.round_to_odd(s2.shape[1] * 
+                                                 FRACTION_WORM_SMOOTH)    
             s2[0, :] = sgolay(s2[0, :], filter_width_s2, SMOOTHING_ORDER)
             s2[1, :] = sgolay(s2[1, :], filter_width_s2, SMOOTHING_ORDER)
-            profile_times['h__roundToOdd'] += utils.timing_function()-start
+            profile_times['sgolay'] += utils.timing_function()-start
             start = utils.timing_function()
             # TODO: Allow downsampling if the # of points is ridiculous
             # 200 points seems to be a good #
@@ -620,9 +600,9 @@ class WormParsing(object):
 
             
             # For each point on side 1, calculate normalized orthogonal values
-            norm_x, norm_y = WormParsing.h__computeNormalVectors(s1)
+            norm_x, norm_y = utils.compute_normal_vectors(s1)
 
-            profile_times['h__computeNormalVectors'] += utils.timing_function()-start
+            profile_times['compute_normal_vectors'] += utils.timing_function()-start
             start = utils.timing_function()
 
                    
@@ -638,10 +618,10 @@ class WormParsing(object):
             start = utils.timing_function()
 
 
-            I_1,I_2 = WormParsing.h__updateEndsByWalking(d_across,
-                                                         match_I1,
-                                                         s1, s2,
-                                                         END_S1_WALK_PCT)
+            I_1, I_2 = WormParsing.h__updateEndsByWalking(d_across,
+                                                          match_I1,
+                                                          s1, s2,
+                                                          END_S1_WALK_PCT)
 
             profile_times['h__updateEndsByWalking'] += utils.timing_function()-start
             start = utils.timing_function()
@@ -672,11 +652,11 @@ class WormParsing(object):
             #-----------------------
             #TODO: Allow smoothing on x & y
             widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
-            h_widths.append(widths1)
+            h_widths[frame_index] = widths1
             
             skeleton_x = 0.5 * (s1_x + s1_px)
             skeleton_y = 0.5 * (s1_y + s1_py)
-            h_skeleton.append(np.vstack((skeleton_x, skeleton_y)))
+            h_skeleton[frame_index] = np.vstack((skeleton_x, skeleton_y))
 
             profile_times['final calculations'] += utils.timing_function()-start
 
