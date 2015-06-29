@@ -11,6 +11,7 @@ Windows. (Note, this isn't required)
 **Plotting:** matplotlib is a plotting library for the Python
 programming language and its NumPy numerical mathematics extension.
 FFMPEG is used for video processing.
+mpld3 is used for rendering the plots in HTML via [D3.js](http://d3js.org/)
 
 **File processing:** The Schafer Lab chose to structure their experiment
 files using the “Heirarchical Data Format, Version 5” `(HDF5)
@@ -47,11 +48,15 @@ Installing and running the movement\_validation repository
        ``from .nanfunctions import *`` at the relevant places to
        ``numpy/lib/__init__.py``.
 
-3.  Install Shapely:
+3.  Install `mpld3` for plotting to HTML.
 
-    a. Windows: `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`__.
-    b. OS X: Install geos (e.g. brew install geos), followed by shapely
-       (e.g. pip install shapely).
+Note, mpld3 does not work for Python 3 under the official release
+version available through `pip` (see mpld3 issue
+jakevdp/mpld3#294).
+
+The workaround is to install from source.  Follow the instructions under
+"Installing from git" in
+http://mpld3.github.io/install.html#installing-released-versions.
 
 4.  Clone this GitHub repository to your computer.
 5.  If you don't already have an account, get a `Google
