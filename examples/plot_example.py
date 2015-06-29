@@ -5,15 +5,14 @@ An example of plotting an animation of a worm's skeleton and contour
 """
 
 import sys, os, warnings
+import mpld3
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
 
-from movement_validation import user_config
-from movement_validation import NormalizedWorm, VideoInfo, WormFeatures
-from movement_validation import worm_plotter
+import movement_validation as mv
 
 def main():
     """
@@ -27,23 +26,24 @@ def main():
     warnings.simplefilter("error")
 
     # Load from file a normalized worm, as calculated by Schafer Lab code
-    base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     schafer_nw_file_path = os.path.join(base_path, 
                                      "example_video_norm_worm.mat")
-    nw = NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
+    nw = mv.NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
     # Placeholder for video metadata
-    v = VideoInfo(video_name="Example name", fps=25)
+    nw.video_info.video_name = "Example name"
 
     # We need to create WormFeatures to get the motion codes
     # (telling us in each frame if the worm is moving forward, backward, etc,
     #  which is nice to have so we can annotate the plot with that info)
-    wf = WormFeatures(nw, v)
+    wf = mv.WormFeatures(nw)
     motion_codes = wf.locomotion.motion_mode
 
     # Plot an animation of the worm and its motion codes
-    wp = worm_plotter.NormalizedWormPlottable(nw, motion_codes)
-    wp.show()
+    wp = mv.NormalizedWormPlottable(nw, motion_codes)
+    #wp.show()
+    mpld3.show()
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')

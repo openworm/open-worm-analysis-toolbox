@@ -253,7 +253,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         # TimedAnimation draws a new frame every *interval* milliseconds.
         # so this is how we convert from FPS to interval:
-        interval = 1000 / config.FPS
+        interval = 1000 / self.nw.video_info.fps
 
         return animation.TimedAnimation.__init__(self,
                                                  fig,
