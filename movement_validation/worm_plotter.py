@@ -422,13 +422,14 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         http://matplotlib.sourceforge.net/api/animation_api.html
 
         """
+        fps = self.nw.video_info.fps
         FFMpegWriter = animation.writers['ffmpeg']
         metadata = dict(title=file_title,
                         artist='matplotlib',
                         comment=file_comment)
-        writer = FFMpegWriter(fps=15, metadata=metadata)
+        writer = FFMpegWriter(fps=fps, metadata=metadata)
         animation.TimedAnimation.save(self, filename,
-                                      writer=writer, fps=config.FPS,
+                                      writer=writer, fps=fps,
                                       extra_args=['-vcodec', 'libx264'])
 
 

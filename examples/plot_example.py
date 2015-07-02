@@ -5,13 +5,11 @@ An example of plotting an animation of a worm's skeleton and contour
 """
 
 import sys, os, warnings
-import mpld3
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-
 import movement_validation as mv
 
 def main():
@@ -32,7 +30,7 @@ def main():
     nw = mv.NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
     # Placeholder for video metadata
-    nw.video_info.video_name = "Example name"
+    nw.video_info.video_name= "Example name"
 
     # We need to create WormFeatures to get the motion codes
     # (telling us in each frame if the worm is moving forward, backward, etc,
@@ -42,8 +40,7 @@ def main():
 
     # Plot an animation of the worm and its motion codes
     wp = mv.NormalizedWormPlottable(nw, motion_codes)
-    #wp.show()
-    mpld3.show()
+    wp.show()
 
     # At this point we could save the plot to a file:
     # wp.save('test_sub.mp4')

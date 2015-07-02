@@ -836,7 +836,18 @@ class ElementTimer(object):
 
 def round_to_odd(num):
     """
-    Round a number to the     
+    Round a number to the nearest odd number.
+    
+    The only ambiguous case is that of a whole even number, since it's    
+    equally close to its higher and lower neighbour.
+    In this case, go with the higher (rightmost) one on the number line. 
+    (NOT the highest in absolute value)
+    
+    e.g. round_to_odd(4) returns 5
+         round_to_odd(2) returns 3
+         round_to_odd(-2) returns -1
+         round_to_odd(1.5) returns 1
+         round_to_odd(0.5) returns 1
     
     Parameters
     -------------

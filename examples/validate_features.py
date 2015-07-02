@@ -18,8 +18,7 @@ import sys, os
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-from movement_validation import user_config, NormalizedWorm
-from movement_validation import WormFeatures, utils
+import movement_validation as mv
 
 
 def main():
@@ -29,7 +28,7 @@ def main():
     """
     # Set up the necessary file paths for file loading
     #----------------------
-    base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     matlab_generated_file_path = os.path.join(
         base_path,'example_video_feature_file.mat')
     data_file_path = os.path.join(base_path,"example_video_norm_worm.mat")
@@ -37,15 +36,16 @@ def main():
     # OPENWORM
     #----------------------
     # Load the normalized worm from file
-    nw = NormalizedWorm.from_schafer_file_factory(data_file_path)
+    nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
     # Generate the OpenWorm movement validation repo version of the features
-    openworm_features = WormFeatures(nw)
+    openworm_features = mv.WormFeatures(nw)
 
     # SCHAFER LAB
     #----------------------
     # Load the Matlab codes generated features from disk
-    matlab_worm_features = WormFeatures.from_disk(matlab_generated_file_path)
+    matlab_worm_features = \
+        mv.WormFeatures.from_disk(matlab_generated_file_path)
 
     # COMPARISON
     #----------------------
@@ -69,8 +69,8 @@ def main():
 
 
 if __name__ == '__main__':
-    start_time = utils.timing_function()
+    start_time = mv.utils.timing_function()
     main()
     print("Time elapsed: %.2f seconds" % 
-          (utils.timing_function() - start_time))
+          (mv.utils.timing_function() - start_time))
     
