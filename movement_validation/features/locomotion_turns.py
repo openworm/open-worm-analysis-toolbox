@@ -207,6 +207,8 @@ class LocomotionTurns(object):
                                    is_upsilon[i],
                                    values_to_assign[i])
 
+
+
         # Calculate the events from the frame values
         self.omegas   = OmegaTurns.create(options,
                                    frames.omega_frames,
@@ -220,6 +222,9 @@ class LocomotionTurns(object):
                                      fps)
 
         timer.toc('locomotion.turns')
+
+    def __repr__(self):
+        return utils.print_object(self)
 
     @classmethod
     def from_disk(cls, turns_ref):
@@ -567,9 +572,10 @@ class OmegaTurns(object):
 
         omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, fps)
             
+            
         # Filter:
-        # This is to be consistent with the old code. We filter then merge, then
-        # filter again :/
+        # This is to be consistent with the old code. We filter then merge, 
+        # then filter again :/
         omega_frames_from_th_change = \
             self.h__filterAndSignFrames(body_angles_i, 
                                         omega_frames_from_th_change, 
@@ -830,7 +836,6 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     """
 
     ef = events.EventFinder()
-
     ef.include_at_frames_threshold = True
 
     # get_events(self, speed_data, distance_data=None):
@@ -842,6 +847,8 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
 
     frames_dorsal = ef.get_events(signed_frames)
 
+    ef = events.EventFinder()
+    ef.include_at_frames_threshold = True
     ef.min_speed_threshold = None
     ef.max_speed_threshold = -1
     frames_ventral = ef.get_events(signed_frames)

@@ -213,15 +213,8 @@ class EventFinder:
         # were set there was nothing to mask.
         event_mask = np.ones((len(event_data)), dtype=bool)
 
-        # If min_speed_threshold has been initialized to something...
-        # We can no longer check if min_speed_threshold is None because 
-        # it's going to go elementwise after Python 3.4
-        if(type(self.min_speed_threshold) == np.ndarray and
-           self.min_speed_threshold.size > 0):
-            # We suppress a *** RuntimeWarning: invalid value encountered
-            # greater_equal
-            # which appears because some of the elements in event_data
-            # and/or what we are comparing it to are NaN.
+        if self.min_speed_threshold is not None:
+            #suppress runtime warning of comparison to None
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=RuntimeWarning)
                 if self.include_at_speed_threshold:
@@ -229,15 +222,8 @@ class EventFinder:
                 else:
                     event_mask = event_data > self.min_speed_threshold
 
-        # If max_speed_threshold has been initialized to something...
-        # We can no longer check if max_speed_threshold is None because 
-        # it's going to go elementwise after Python 3.4
-        if(type(self.max_speed_threshold) == np.ndarray and
-           self.max_speed_threshold.size > 0):
-            # We suppress a *** RuntimeWarning: invalid value encountered
-            # greater_equal
-            # which appears because some of the elements in event_data
-            # and/or what we are comparing it to are NaN.
+
+        if self.max_speed_threshold is not None:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=RuntimeWarning)
                 if self.include_at_speed_threshold:
