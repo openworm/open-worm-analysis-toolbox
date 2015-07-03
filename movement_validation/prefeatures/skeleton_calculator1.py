@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter as sgolay
 
 from .. import utils
+from .pre_features_helpers import WormParserHelpers
 
 #%%
 class SkeletonCalculatorType1(object):
@@ -112,11 +113,25 @@ class SkeletonCalculatorType1(object):
             if s1 is None:
                 continue
 
-            if len(s1) > 250:
-                # Allow downsampling if the # of points is ridiculous
+            """
+            if s1.shape[1] < 50:
+                # Upsample if we have too few points
+                s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
+                                                      num_norm_points=75)[0]
+                s2 = WormParserHelpers.normalize_all_frames_xy([s2], 
+                                                      num_norm_points=75)[0]
+
+            if s1.shape[1] > 250:
+                # Downsample if the # of points is ridiculous
                 # 200 points seems to be a good number
-                # TODO
-                pass
+                # So let's set 250 as a maximum
+                # Upsample if we have too few points
+                s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
+                                                      num_norm_points=250)[0]
+                s2 = WormParserHelpers.normalize_all_frames_xy([s2], 
+                                                      num_norm_points=250)[0]
+            """
+
             #Smoothing of the contour
             #------------------------------------------            
             start = utils.timing_function()
