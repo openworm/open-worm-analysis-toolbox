@@ -1,4 +1,8 @@
-# Courtesy https://gist.github.com/dan-blanchard/7045057
+# The movement_validation Travis CI build configuration file.
+#
+# The original template for this .travis.yml came from 
+# https://gist.github.com/dan-blanchard/7045057
+#
 
 language: python
 python:
@@ -35,45 +39,51 @@ before_install:
   - export PATH=$MINICONDA_DIR/bin:$PATH
   #- conda update --yes conda
   
-  #Need to install the actual Python version, does this work?
-  #To get the correct version you have to do a conda install
-  #Old versions are at: http://repo.continuum.io/miniconda/ but don't match Python versions
-  #and it seems like continuum doesn't want you to try and match
+  # Need to install the actual Python version, does this work?
+  # To get the correct version you have to do a conda install
+  # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
+  # match Python versions and it seems like continuum doesn't want you 
+  # to try and match
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py
   
   - which python
   - python --version
   
-  #OpenCV
-  #------
-  #JAH: Anaconda doesn't support conda install opencv & binstart wasn't working
-  #so instead we download and build from source. The only other trick is making
-  #sure we move the correct files to the correct Python installation, which is 
-  #done via specifying PYTHON_PACKAGES_PATH
+  # OpenCV
+  #-------------
+  # Anaconda doesn't support conda install opencv & binstart wasn't working
+  # so instead we download and build from source. The only other trick is making
+  # sure we move the correct files to the correct Python installation, which is 
+  # done via specifying PYTHON_PACKAGES_PATH
+  # - @JimHokanson
   #
-  #References:
-  #https://github.com/kevin-brown/blog.kevin-brown.com/blob/2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/2014-09-27-building-and-installing-opencv-3.markdown
-  #https://github.com/kashefy/elm/blob/76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
-  #1) Get from source, currently master is v3.0.0 (supporting Python 3)
+  # References:
+  # https://github.com/kevin-brown/blog.kevin-brown.com/blob/
+  #     2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/
+  #     2014-09-27-building-and-installing-opencv-3.markdown
+  # https://github.com/kashefy/elm/blob/
+  #     76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
+  # 1) Get from source, currently master is v3.0.0 (supporting Python 3)
   - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
   - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
 
-  #https://scivision.co/anaconda-python-opencv3/
-  #------------------------------------------
+  # https://scivision.co/anaconda-python-opencv3/
+  # ------------------------------------------
   - cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
   - make -j4
   - sudo make install
   
-  #https://gist.github.com/itguy51/4239282
-  #------------------------------------------
+  # https://gist.github.com/itguy51/4239282
+  # ------------------------------------------
   - echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
   - sudo ldconfig
   - echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" | sudo tee -a /etc/bash.bashrc
   - echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
   - export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
 
-  #JAH: Is this still an issue? Can we remove it? 2015/06/15
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  # Is this still an issue? Can we remove it? - @JimHokanson, 2015/06/15
+  # The next couple lines fix a crash with multiprocessing on Travis and 
+  # are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
   - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
@@ -81,12 +91,14 @@ before_install:
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
   - cd $TRAVIS_BUILD_DIR/example_data
-  #Presumably the initial address could be a variable
+  # TODO: Presumably the initial address could be a variable
+  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGWVAzUlYwbk1ad0E" -O example_contour_and_skeleton_info.mat
   - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
   - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
-  #presumably we could run some command on the directory
-  #This may no longer be necessary, found other bugs ...
+  # TODO: Presumably we could run some command on the directory
+  # This may no longer be necessary, found other bugs ...
   - ls -l
+  - chmod 777 example_contour_and_skeleton_info.mat
   - chmod 777 example_video_feature_file.mat
   - chmod 777 example_video_norm_worm.mat
   - pwd

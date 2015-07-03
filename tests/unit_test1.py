@@ -10,7 +10,6 @@ import sys
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 import movement_validation as mv
-import examples
 
 def test_simple():
     # Simple test to verify our test harness works
