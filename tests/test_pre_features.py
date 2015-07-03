@@ -37,25 +37,6 @@ def test_pre_features():
     _test_bw_and_nw(bw, nw)
 
 
-
-def debug_angles(nw):
-    bw_from_nw = nw.get_BasicWorm()
-    nw_calculated = mv.NormalizedWorm.from_BasicWorm_factory(bw_from_nw)
-
-    #plt.plot(nw.angles)
-    angles1 = pd.DataFrame(nw.angles)
-    angles2 = pd.DataFrame(nw_calculated.angles)
-    
-    angles = pd.concat([angles1, angles2])
-    #angles.to_csv('angles.csv')
-    
-    #pd.concat([pd.DataFrame(nw.skeleton[:,:,21]),
-    #                pd.DataFrame(nw_calculated.skeleton[:,:,21])]).to_csv('skeleton.csv')
-
-
-    
-
-
 def _test_nw_to_bw_to_nw(nw):
     print("Testing that we can load the normalized worm, then lop off "
           "all the calculated normalized worm measurements, i.e. "
