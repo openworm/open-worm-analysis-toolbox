@@ -7,7 +7,7 @@ the original Matlab code.
 
 To run this code files should be obtained from:
 https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing
-
+yout
 In addition the user_config.py file should be created in the 
 movement_validation package based on the user_config_example.txt
 
@@ -51,19 +51,16 @@ def main():
     #----------------------
     # Show the results of the comparison
     print("\nComparison of computed features to those computed with "
-          "old Matlab code")
+          "old Matlab code:")
 
-    print("Locomotion: " + 
-        str(matlab_worm_features.locomotion == openworm_features.locomotion))
-
-    print("Posture: " +
-        str(matlab_worm_features.posture == openworm_features.posture))
-
-    print("Morphology: " +
-        str(matlab_worm_features.morphology == openworm_features.morphology))
-
-    print("Path: " +
-        str(matlab_worm_features.path == openworm_features.path))
+    categories = ['locomotion', 'posture', 'morphology', 'path']
+    
+    # Compare each feature category to make sure they are equal
+    for category in categories:
+        is_test_passed = (getattr(matlab_worm_features, category) ==
+                          getattr(openworm_features, category))
+        print(str.capitalize(category)+ ": " + str(is_test_passed))
+        assert(is_test_passed)
 
     print("\nDone validating features")
 
