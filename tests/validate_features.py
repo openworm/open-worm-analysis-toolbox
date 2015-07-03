@@ -7,7 +7,7 @@ the original Matlab code.
 
 To run this code files should be obtained from:
 https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing
-yout
+
 In addition the user_config.py file should be created in the 
 movement_validation package based on the user_config_example.txt
 
@@ -21,7 +21,7 @@ sys.path.append('..')
 import movement_validation as mv
 
 
-def main():
+def test_features():
     """
     Compare Schafer-generated features with our new code's generated features
 
@@ -67,7 +67,7 @@ def main():
 
 if __name__ == '__main__':
     start_time = mv.utils.timing_function()
-    main()
+    test_features()
     print("Time elapsed: %.2f seconds" % 
           (mv.utils.timing_function() - start_time))
     

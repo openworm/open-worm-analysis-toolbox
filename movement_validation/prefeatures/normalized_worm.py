@@ -618,7 +618,8 @@ class NormalizedWorm(WormPartition):
                           'dorsal_contour_x', 'dorsal_contour_y',
                           'angles', 'widths', 'length', 'area']
 
-        return utils.compare_attributes(self, other, attribute_list)
+        return utils.compare_attributes(self, other, attribute_list,
+                                        high_corr_value=0.94)
 
 
     def __repr__(self):

@@ -767,16 +767,18 @@ def correlation(x, y, variable_name, high_corr_value=0.999,
         return return_value
 
 
-def compare_attributes(obj1, obj2, attribute_list):
+def compare_attributes(obj1, obj2, attribute_list, high_corr_value=0.999):
     """
     Compare all attributes in attribute_list belonging to obj
     
     Parameters
     -------------    
     obj1, obj2: objects
-        should have the attributes given in attribute_list
+        Should have the attributes given in attribute_list
     attribute_list: list of strings
-        a list of the attributes to compare
+        A list of the attributes to compare
+    high_corr_value: float
+        The threshold below which an error will be thrown.  Default 0.999.
     
     Returns
     ------------
@@ -788,7 +790,7 @@ def compare_attributes(obj1, obj2, attribute_list):
     for attribute in attribute_list:
         attrib_equal = correlation(getattr(obj1, attribute), 
                                    getattr(obj2, attribute), 
-                                   attribute)
+                                   attribute, high_corr_value)
         if not attrib_equal:
             is_equal = False
 
