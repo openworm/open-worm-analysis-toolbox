@@ -205,34 +205,32 @@ class BasicWorm(JSON_Serializer):
     def from_schafer_file_factory(cls, data_file_path):
         bw = cls()
     
-        # Would 'with()' be more appropriate here ???
-        h = h5py.File(data_file_path, 'r')
-
-        # These are all HDF5 'references'
-        all_ventral_contours_refs     = h['all_vulva_contours'].value
-        all_dorsal_contours_refs = h['all_non_vulva_contours'].value
-        all_skeletons_refs          = h['all_skeletons'].value
+        with h5py.File(data_file_path, 'r') as h:
+            # These are all HDF5 'references'
+            all_ventral_contours_refs     = h['all_vulva_contours'].value
+            all_dorsal_contours_refs = h['all_non_vulva_contours'].value
+            all_skeletons_refs          = h['all_skeletons'].value
                 
-        is_stage_movement = utils._extract_time_from_disk(h,
-                                                          'is_stage_movement')
-        is_valid = utils._extract_time_from_disk(h, 'is_valid')
+            is_stage_movement = utils._extract_time_from_disk(h,
+                                                              'is_stage_movement')
+            is_valid = utils._extract_time_from_disk(h, 'is_valid')
 
-        all_skeletons = []
-        all_ventral_contours = []
-        dorsal_contour = []
-
-        for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
-            if valid_frame:
-                all_skeletons.append(
-                            h[all_skeletons_refs[iFrame][0]].value) 
-                all_ventral_contours.append(
-                            h[all_ventral_contours_refs[iFrame][0]].value)
-                dorsal_contour.append(
-                            h[all_dorsal_contours_refs[iFrame][0]].value)
-            else:
-                all_skeletons.append(None) 
-                all_ventral_contours.append(None) 
-                dorsal_contour.append(None)           
+            all_skeletons = []
+            all_ventral_contours = []
+            dorsal_contour = []
+    
+            for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
+                if valid_frame:
+                    all_skeletons.append(
+                                h[all_skeletons_refs[iFrame][0]].value) 
+                    all_ventral_contours.append(
+                                h[all_ventral_contours_refs[iFrame][0]].value)
+                    dorsal_contour.append(
+                                h[all_dorsal_contours_refs[iFrame][0]].value)
+                else:
+                    all_skeletons.append(None) 
+                    all_ventral_contours.append(None) 
+                    dorsal_contour.append(None)           
                 
         # Video Metadata
         is_stage_movement = is_stage_movement.astype(bool)
@@ -257,8 +255,6 @@ class BasicWorm(JSON_Serializer):
 
         bw._h_ventral_contour = all_ventral_contours
         bw._h_dorsal_contour = dorsal_contour 
-
-        h.close()   
         
         return bw
 
