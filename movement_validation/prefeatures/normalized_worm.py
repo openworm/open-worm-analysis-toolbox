@@ -12,7 +12,7 @@ import warnings
 import os
 import matplotlib.pyplot as plt
 
-from . import utils
+from .. import utils
 from .basic_worm import WormPartition
 from .basic_worm import BasicWorm
 from .pre_features import WormParsing

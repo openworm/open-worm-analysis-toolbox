@@ -43,7 +43,7 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
-from . import config, utils
+from .. import config, utils
 
 # If you are interested to know why the following line didn't work:
 # import scipy.signal.savgol_filter as sgolay
@@ -375,7 +375,8 @@ class WormParsing(object):
         numpy array of shape (49,2,n)
         
         """
-        #return WormParsing.normalize_all_frames(heterocardinal_property, heterocardinal_property)
+        return WormParsing.normalize_all_frames(heterocardinal_property, 
+                                                heterocardinal_property)
 
         n_frames = len(heterocardinal_property)
         norm_data = np.full([config.N_POINTS_NORMALIZED, 2, n_frames],
@@ -386,6 +387,9 @@ class WormParsing(object):
                 # We need cur_frame_value to have shape (k,2), not (2,k)
                 cur_frame_value2 = np.rollaxis(cur_frame_value, 1)
                 cc = WormParsing.chain_code_lengths_cum_sum(cur_frame_value2)
+                norm_data[:,iFrame] = \
+                            WormParsing.normalize_parameter(cur_frame_value, 
+                                                            cc)
                 norm_data[:,0,iFrame] = WormParsing.normalize_parameter(cur_frame_value[0,:], cc)
                 norm_data[:,1,iFrame] = WormParsing.normalize_parameter(cur_frame_value[1,:], cc)
         
@@ -400,7 +404,8 @@ class WormParsing(object):
         
         Parameters
         --------------
-        prop_to_normalize: numpy array of lists ??
+        prop_to_normalize: numpy array
+            2d or 1d
         xy_data: numpy array
         
         Returns
@@ -409,16 +414,17 @@ class WormParsing(object):
             prop_to_normalize, now normalized down to 49 points per frame
         
         """        
-        shape_as_list = [x for x in np.shape(prop_to_normalize)]
+        norm_data_shape = ([config.N_POINTS_NORMALIZED] +
+                           list(np.shape(prop_to_normalize)))
         # Start with an empty numpy array
-        norm_data = np.full([config.N_POINTS_NORMALIZED]+shape_as_list, np.NaN)
+        norm_data = np.full(norm_data_shape, np.NaN)
         for iFrame, (cur_frame_value, cur_xy) in \
                                 enumerate(zip(prop_to_normalize, xy_data)):
             if cur_xy is not None:
                 # We need cur_xy to have shape (k,2), not (2,k)
                 cur_xy2 = np.rollaxis(cur_xy, axis=1)
                 cc = WormParsing.chain_code_lengths_cum_sum(cur_xy2)
-                norm_data[:,iFrame] = \
+                norm_data[...,iFrame] = \
                             WormParsing.normalize_parameter(cur_frame_value, 
                                                             cc)
         

@@ -36,8 +36,6 @@ from matplotlib.patches import Ellipse
 from matplotlib.widgets import Button, Slider
 import matplotlib.animation as animation
 
-from . import config
-
 
 class NormalizedWormPlottable(animation.TimedAnimation):
     """
