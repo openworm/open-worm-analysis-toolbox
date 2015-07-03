@@ -30,7 +30,7 @@ def main():
     # and contains more "primitive", non-normalized contour and skeleton data
     schafer_bw_file_path = os.path.join(base_path, 
                                      "example_contour_and_skeleton_info.mat")  
-    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    #bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
     bw_from_nw = nw.get_BasicWorm()
 
