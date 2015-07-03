@@ -53,9 +53,7 @@ class Skeleton(object):
         return eq_skeleton_x and eq_skeleton_y
 
 class Bends(object):
-
     """
-
     Posture Bends    
     
     Attributes
@@ -72,7 +70,9 @@ class Bends(object):
 
         p = nw.get_partition_subset('normal')
 
-        for partition_key in p.keys():
+        self.posture_bend_keys = p.keys()
+
+        for partition_key in self.posture_bend_keys:
             # Retrieve the part of the worm we are currently looking at:
             bend_angles = nw.get_partition(partition_key, 'angles')
 
@@ -98,9 +98,15 @@ class Bends(object):
                     BendSection(temp_mean, temp_std, partition_key))
 
     @classmethod
-    def create(self,features_ref):
+    def create(self, features_ref):
         options = features_ref.options
-        if options.should_compute_feature('locomotion.bends',features_ref):
+        
+        # TODO: this should be populated by calling 
+        # WormPartition.get_partition_subset('normal'), and 
+        # get_partition_subset should be an @classmethod.
+        self.posture_bend_keys = ['head', 'midbody', 'tail', 'hips', 'neck']        
+        
+        if options.should_compute_feature('locomotion.bends', features_ref):
             return Bends(features_ref)
         else:
             return None
@@ -108,17 +114,13 @@ class Bends(object):
     def __repr__(self):
         return utils.print_object(self)
 
-
     def __eq__(self, other):
-        pass
-        """
-        same_values = True
+        is_equal = True
         for partition_key in self.posture_bend_keys:
-            same_values = same_values and \
-                (getattr(self,partition_key) == getattr(other,partition_key))
+            is_equal = is_equal and (getattr(self, partition_key) == 
+                                     getattr(other, partition_key))
             
-        return same_values    
-	   """
+        return is_equal
 
     @classmethod
     def from_disk(cls, saved_bend_data):
@@ -176,9 +178,10 @@ class BendSection(object):
         #Are we not mimicing some old error properly???
         return utils.correlation(self.mean,other.mean,
                                   'posture.bends.' + self.name + '.mean',
-                                  high_corr_value=0.99) and \
+                                  high_corr_value=0.95) and \
                utils.correlation(self.std_dev,other.std_dev,
-                                  'posture.bends.' + self.name + '.std_dev')
+                                  'posture.bends.' + self.name + '.std_dev',
+                                  high_corr_value=0.60)
 
 
 def get_eccentricity_and_orientation(features_ref):
