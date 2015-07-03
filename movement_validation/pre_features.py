@@ -4,9 +4,9 @@ Pre-features calculation methods.
 
 These methods are exclusively called by NormalizedWorm.from_BasicWorm_factory
 
-The methods of the classes below are all static, so the class usage is only
-for grouping purposes.
-
+The methods of the classes below are all static, so their grouping into
+classes is only for convenient grouping and does not have any further 
+functional meaning.
 
 Original notes from Schafer Lab paper on this process:
 ------------------------------------------------------
@@ -38,10 +38,7 @@ skeleton has been shown to effectively measure worm bending in previous
 trackers and likely reflects constraints of the bodywall muscles, their 
 innervation, and cuticular rigidity (Cronin et al. 2005)."
 
-
-
 """
-import pprint
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
@@ -145,6 +142,7 @@ class WormParsing(object):
         
         return (h_widths, h_skeleton)
 
+
     #%%
     @staticmethod
     def compute_skeleton_length(skeleton):
@@ -156,9 +154,10 @@ class WormParsing(object):
         
         Parameters
         ----------
-        skeleton: numpy array of shape (49,2,n)
+        skeleton: numpy array of shape (k,2,n)
             The skeleton positions for each frame.
-            (n is the number of frames)
+            (n is the number of frames, and
+             k is the number points in each frame)
 
         Returns
         -----------
@@ -166,148 +165,10 @@ class WormParsing(object):
             The (chain-code) length of the skeleton for each frame.
         
         """
-        # For each frame, for x and y, take the difference between skeleton
-        # points: (hence axis=0).  Resulting shape is (48,2,n)
-        skeleton_diffs = np.diff(skeleton, axis=0)
-        # Now for each frame, for each (diffx, diffy) pair along the skeleton,
-        # find the magnitude of this vector.  Resulting shape is (48,n)
-        chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=1)
-        # Now for each frame, sum these lengths to obtain the complete
-        # skeleton length.  Resulting shape is (n)
-        length = np.sum(chain_code_lengths, axis=0)
-        
-        return length
+        # For each frame, sum the chain code lengths to get the total length
+        return np.sum(WormParsing.chain_code_lengths(skeleton),
+                      axis=0)
 
-    #%%
-    @staticmethod
-    def compute_Freeman_chain_codes(skeleton):
-        """
-        Compute the Freeman 8-direction chain-codes.
-        
-        3  2  1
-        4  P  0
-        5  6  7        
-        
-        Given a sequence of (x,y)-coordinates, we return a sequence of
-        direction vectors, coded according to the following scheme.        
-        
-        Parameters
-        -------------
-        skeleton: numpy array of shape k,2
-            where skeleton[:,0] are the x coordinates and
-                  skeleton[:,1] are the y coordinates
-        
-        """
-        # TODO        
-        
-        chain_code = []
-        skeleton_x = skeleton[:,0]
-        skeleton_y = skeleton[:,1]
-        
-        diff_x = np.diff(skeleton_x)
-        diff_y = np.diff(skeleton_y)
-        
-        for i in range(np.shape(skeleton)[0]):
-            pass            
-        
-        pass
-    
-    @staticmethod
-    def compute_sequence_from_chain_codes(origin_point, chain_codes):
-        """
-        The reverse of compute_Freeman_chain_codes.
-        
-        """
-        #TODO
-        pass
-
-    @staticmethod
-    def compute_chain_code_lengths(x,y):
-        """
-        Compute the Freeman 8-direction chain-code length.
-        
-        Calculate the distance between a set of points and then calculate
-        their cumulative distance from the first point.
-        
-        The first value returned has a value of 0 by definition.
-
-        """
-        #TODO: Should handle empty set - remove adding 0 as first element        
-        
-        #TODO: We need this for lengths as well, but the matrix vs vector 
-        #complicates things
-        
-        dx = np.diff(x)
-        dy = np.diff(y)
-        
-        #distances = np.concatenate([[0], np.linalg.norm([dx, dy])])
-        distances = np.concatenate([np.array([0.0]), np.sqrt(dx**2 + dy**2)])
-        return np.cumsum(distances)
-
-    #%%
-    @staticmethod
-    def normalize_all_frames_xy(prop_to_normalize):
-        """
-        Normalize a "heterocardinal" skeleton or contour into a "homocardinal"
-        one, where each frame has the same number of points.
-        
-        We always normalize to config.N_POINTS_NORMALIZED points per frame.
-
-        Parameters
-        --------------
-        prop_to_normalize: numpy array of lists ??
-
-        Returns
-        --------------
-        numpy array of shape (49,2,n)
-        
-        """
-        n_frames = len(prop_to_normalize)
-        norm_data = np.full([config.N_POINTS_NORMALIZED, 2, n_frames],
-                            np.NaN)
-
-        for iFrame, cur_frame_value in enumerate(prop_to_normalize):
-            if cur_frame_value is not None:
-                sx = cur_frame_value[0,:]
-                sy = cur_frame_value[1,:]
-                cc = WormParsing.compute_chain_code_lengths(sx,sy)
-                norm_data[:,0,iFrame] = WormParsing.normalize_parameter(sx, cc)
-                norm_data[:,1,iFrame] = WormParsing.normalize_parameter(sy, cc)
-        
-        return norm_data            
-    
-    #%%
-    @staticmethod
-    def normalize_all_frames(prop_to_normalize, xy_data):
-        """
-        Normalize a (heterocardinal) array of lists of variable length
-        down to a numpy array of shape (49,n).
-        
-        Parameters
-        --------------
-        prop_to_normalize: numpy array of lists ??
-        xy_data: numpy array
-        
-        Returns
-        --------------
-        numpy array of shape (49,n)
-            prop_to_normalize, now normalized down to 49 points per frame
-        
-        """        
-        n_frames = len(prop_to_normalize)
-        # Start with an empty numpy array
-        norm_data = np.full([config.N_POINTS_NORMALIZED,n_frames], np.NaN)
-        for iFrame, (cur_frame_value,cur_xy) in \
-                                enumerate(zip(prop_to_normalize, xy_data)):
-            if cur_xy is not None:
-                sx = cur_xy[0,:]
-                sy = cur_xy[1,:]
-                cc = WormParsing.compute_chain_code_lengths(sx,sy)
-                norm_data[:,iFrame] = \
-                            WormParsing.normalize_parameter(cur_frame_value, 
-                                                           cc)
-        
-        return norm_data 
 
     #%%
     @staticmethod
@@ -371,7 +232,8 @@ class WormParsing(object):
             else:
                 sx = cur_skeleton[0,:]
                 sy = cur_skeleton[1,:]
-                cc = WormParsing.compute_chain_code_lengths(sx, sy)
+                cur_skeleton2 = np.rollaxis(cur_skeleton, 1)
+                cc = WormParsing.chain_code_lengths_cum_sum(cur_skeleton2)
     
                 # This is from the old code
                 edge_length = cc[-1]/12               
@@ -415,11 +277,156 @@ class WormParsing(object):
                 temp_angle_list.append(all_frame_angles)
 
                 
-        return WormParsing.normalize_all_frames(temp_angle_list, h_skeleton)
+        return WormParsing.normalize_all_frames(temp_angle_list, 
+                                                h_skeleton)
+
+
+    #%%
+    @staticmethod
+    def chain_code_lengths(skeleton):
+        """
+        Computes the chain-code lengths of the skeleton for each frame.
+        
+        Computed from the skeleton by converting the chain-code 
+        pixel length to microns.
+        
+        These chain-code lengths are based on the Freeman 8-direction
+        chain codes:
+        
+        3  2  1
+        4  P  0
+        5  6  7        
+        
+        Given a sequence of (x,y)-coordinates, we could obtain a sequence of
+        direction vectors, coded according to the following scheme.
+        
+        However, since we just need the lengths, we don't need to actually
+        calculate all of these codes.  Instead we just calculate the 
+        Euclidean 2-norm from pixel i to pixel i+1.
+        
+        Note:
+        Our method is actually different than if we stepped from pixel 
+        to pixel in one-pixel increments, since in our method the distances 
+        can be something other than multiples of the 1- or sqrt(2)- steps 
+        characteristic in Freeman 8-direction chain codes.
+        
+        
+        Parameters
+        ----------
+        skeleton: numpy array of shape (k,2,n)
+            The skeleton positions for each frame.
+            (n is the number of frames, and
+             k is the number points in each frame)
+
+        Returns
+        -----------
+        length: numpy array of shape (n)
+            The (chain-code) length of the skeleton for each frame.        
+
+        """
+        # For each frame, for x and y, take the difference between skeleton
+        # points: (hence axis=0).  Resulting shape is (k-1,2,n)
+        skeleton_diffs = np.diff(skeleton, axis=0)
+        # Now for each frame, for each (diffx, diffy) pair along the skeleton,
+        # find the magnitude of this vector.  Resulting shape is (k-1,n)
+        chain_code_lengths = np.linalg.norm(skeleton_diffs, axis=1)
+
+        return chain_code_lengths
+        
+    #%%
+    @staticmethod
+    def chain_code_lengths_cum_sum(skeleton):
+        """
+        Compute the Freeman 8-direction chain-code length.
+        
+        Calculate the distance between a set of points and then calculate
+        their cumulative distance from the first point.
+        
+        The first value returned has a value of 0 by definition.
+
+        """
+        if np.size(skeleton) == 0:
+            # Handle empty set - don't add 0 as first element
+            distances = WormParsing.chain_code_lengths(skeleton)
+        else:
+            distances = np.concatenate(
+                    [np.array([0.0]), 
+                     WormParsing.chain_code_lengths(skeleton)])
+
+        return np.cumsum(distances)
+
+    #%%
+    @staticmethod
+    def normalize_all_frames_xy(heterocardinal_property):
+        """
+        Normalize a "heterocardinal" skeleton or contour into a "homocardinal"
+        one, where each frame has the same number of points.
+        
+        We always normalize to config.N_POINTS_NORMALIZED points per frame.
+
+        Parameters
+        --------------
+        prop_to_normalize: list of numpy arrays
+            the outermost dimension, that of the lists, has length n
+            the numpy arrays are of shape 
+
+        Returns
+        --------------
+        numpy array of shape (49,2,n)
+        
+        """
+        #return WormParsing.normalize_all_frames(heterocardinal_property, heterocardinal_property)
+
+        n_frames = len(heterocardinal_property)
+        norm_data = np.full([config.N_POINTS_NORMALIZED, 2, n_frames],
+                            np.NaN)
+
+        for iFrame, cur_frame_value in enumerate(heterocardinal_property):
+            if cur_frame_value is not None:
+                # We need cur_frame_value to have shape (k,2), not (2,k)
+                cur_frame_value2 = np.rollaxis(cur_frame_value, 1)
+                cc = WormParsing.chain_code_lengths_cum_sum(cur_frame_value2)
+                norm_data[:,0,iFrame] = WormParsing.normalize_parameter(cur_frame_value[0,:], cc)
+                norm_data[:,1,iFrame] = WormParsing.normalize_parameter(cur_frame_value[1,:], cc)
+        
+        return norm_data            
     
     #%%
     @staticmethod
-    def normalize_parameter(orig_data, old_lengths):
+    def normalize_all_frames(prop_to_normalize, xy_data):
+        """
+        Normalize a (heterocardinal) array of lists of variable length
+        down to a numpy array of shape (49,n).
+        
+        Parameters
+        --------------
+        prop_to_normalize: numpy array of lists ??
+        xy_data: numpy array
+        
+        Returns
+        --------------
+        numpy array of shape (49,n)
+            prop_to_normalize, now normalized down to 49 points per frame
+        
+        """        
+        shape_as_list = [x for x in np.shape(prop_to_normalize)]
+        # Start with an empty numpy array
+        norm_data = np.full([config.N_POINTS_NORMALIZED]+shape_as_list, np.NaN)
+        for iFrame, (cur_frame_value, cur_xy) in \
+                                enumerate(zip(prop_to_normalize, xy_data)):
+            if cur_xy is not None:
+                # We need cur_xy to have shape (k,2), not (2,k)
+                cur_xy2 = np.rollaxis(cur_xy, axis=1)
+                cc = WormParsing.chain_code_lengths_cum_sum(cur_xy2)
+                norm_data[:,iFrame] = \
+                            WormParsing.normalize_parameter(cur_frame_value, 
+                                                            cc)
+        
+        return norm_data 
+    
+    #%%
+    @staticmethod
+    def normalize_parameter(prop_to_normalize, old_lengths):
         """
         This function finds where all of the new points will be when evenly
         sampled (in terms of chain code length) from the first to the last 
@@ -430,15 +437,29 @@ class WormParsing(object):
         old points, then linear interpolation is used to determine the new 
         value based on the neighboring old values.
 
-        NOTE: For better or worse, this approach does not smooth the new data.
+        NOTE: This method should be called for just one frame's data at a time.
+
+        NOTE: For better or worse, this approach does not smooth the new data,
+        since it just linearly interpolates.
+
+        See http://docs.scipy.org/doc/numpy/reference/generated/
+            numpy.interp.html
 
         Parameters
         -----------
-        orig_data:
-        old_lengths: 
+        prop_to_normalize: numpy array of shape (k,) or (2,k)
+            The parameter to be interpolated, where k is the number of
+            points.
+        old_lengths: numpy array of shape (k)
+            The positions along the worm where the property was
+            calculated.  It is these positions that are to be "normalized",
+            or made to be evenly spaced.  The parameter will then be 
+            calculated at the new, evenly spaced, positions.
 
         Returns
         -----------
+        Numpy array of shape (k,) or (k,2) depending on the provided
+        shape of prop_to_normalize
         
         Notes
         ------------
@@ -452,8 +473,17 @@ class WormParsing(object):
         new_lengths = np.linspace(old_lengths[0], old_lengths[-1],
                                   config.N_POINTS_NORMALIZED)
 
-        # Interpolate                 
-        return np.interp(new_lengths, old_lengths, orig_data)
+        # Interpolate in both the 2-d and 1-d cases
+        if len(np.shape(prop_to_normalize)) == 2:
+            # Assume shape is (2,k,n)
+            interp_x = np.interp(new_lengths, old_lengths, prop_to_normalize[0,:])
+            interp_y = np.interp(new_lengths, old_lengths, prop_to_normalize[1,:])
+            # Compbine interp_x and interp_y together in shape ()
+            return np.rollaxis(np.array([interp_x, interp_y]), axis=1)
+        else:
+            # Assume shape is (k,n)
+            return np.interp(new_lengths, old_lengths, prop_to_normalize)
+
 
 class SkeletonCalculatorType1(object):
     
@@ -548,6 +578,11 @@ class SkeletonCalculatorType1(object):
             if s1 is None:
                 continue
 
+            if len(s1) > 250:
+                # Allow downsampling if the # of points is ridiculous
+                # 200 points seems to be a good number
+                # TODO
+                pass
             #Smoothing of the contour
             #------------------------------------------            
             start = utils.timing_function()
