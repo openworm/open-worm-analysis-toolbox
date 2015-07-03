@@ -23,6 +23,8 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
 """
 
+import csv
+import os
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
@@ -93,21 +95,7 @@ class WormMorphology(object):
         
         self.width = morphology_features.Widths(features_ref)
 
-        #TODO: This should eventually be calculated from the contour
-        #      and skeleton
-        #
-        # This work is currently ongoing in the constructor for NormalizedWorm
-        #
-        # Eventually those methods will probably move to here ...
-        if hasattr(nw, 'area'):
-            self.area = nw.area
-        else:
-            hasattr(self, 'area')
-            print(self)
-            self.area = nw.tail_area + \
-                nw.head_area + \
-                nw.vulva_area + \
-                nw.non_vulva_area
+        self.area = nw.area
 
         self.area_per_length = self.area / self.length
         self.width_per_length = self.width.midbody / self.length
@@ -658,3 +646,95 @@ class WormFeatures(object):
              same_posture and \
              same_path
                       
+
+class WormFeaturesDos(object):
+
+    """
+    This is the new features class. It will eventually replace the old class
+    when things are all ready.
+    """
+    def __init__(self, nw, processing_options=None):
+        """
+        
+        Parameters
+        ----------
+        nw: NormalizedWorm object
+        processing_options: movement_validation.features.feature_processing_options
+
+        """
+        if processing_options is None:
+            processing_options = \
+                            fpo.FeatureProcessingOptions()
+
+        # These are saved locally for reference by others when processing
+        self.video_info = nw.video_info
+        
+        self.options = processing_options
+        self.nw = nw
+        self.timer = utils.ElementTimer()    
+
+        #Old code
+        #------------------
+        #self.morphology = WormMorphology(self)
+        #self.locomotion = WormLocomotion(self)
+        #self.posture = \
+        #    WormPosture(self, self.locomotion.velocity.get_midbody_distance())
+        #self.path = WormPath(self)
+
+        f_specs = get_feature_processing_specs()
+
+        self.features = {}
+
+        modules = {'morphology_features':morphology_features} 
+
+        for spec in f_specs:
+            module = modules[spec.module_name]
+            method_to_call = getattr(module,spec.class_name)
+            temp = method_to_call(self)
+            self.features[temp.name] = temp   
+
+        import pdb
+        pdb.set_trace()
+
+    def __getitem__(self,key):
+        #TODO: We should add on error checking here ...
+        return self.features[key]
+
+    def __repr__(self):
+        return utils.print_object(self)    
+        
+def get_feature_processing_specs():
+    
+    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'features_list.csv')        
+    
+    f_specs = []    
+    
+    with open(csv_path) as feature_metadata_file:
+        feature_metadata = csv.DictReader(feature_metadata_file)
+        
+        for row in feature_metadata: 
+            f_specs.append(FeatureProcessingSpec(row))
+            
+    return f_specs
+
+
+class FeatureProcessingSpec(object):
+    
+    """
+    Information on how to get the feature
+    """
+    def __init__(self,d):
+        """
+        Parameters
+        ----------
+        d: dict
+            Data in a row of the features_list file
+        """
+        self.name = d['Feature Name']
+        self.module_name = d['Module']
+        self.class_name = d['Class Name']
+        
+    def __repr__(self):
+        return utils.print_object(self)       
