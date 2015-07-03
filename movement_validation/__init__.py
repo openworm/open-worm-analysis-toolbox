@@ -14,15 +14,16 @@ License
 https://github.com/openworm/movement_validation/LICENSE.md
 
 """
-from .normalized_worm import NormalizedWorm
-from .video_info import VideoInfo
-from .features.worm_features import WormFeatures
+from .prefeatures.video_info import VideoInfo
+from .prefeatures.basic_worm import BasicWorm
+from .prefeatures.normalized_worm import NormalizedWorm
+from .prefeatures.worm_plotter import NormalizedWormPlottable
+
+
 #This is temporary, we will eventually remove it when the code is ready
 #to become WormFeatures
 from .features.worm_features import WormFeaturesDos
-from .worm_plotter import NormalizedWormPlottable
-from .basic_worm import BasicWorm
-
+from .features.worm_features import WormFeatures
 from .features.feature_processing_options import FeatureProcessingOptions
 
 from .statistics.histogram_manager import HistogramManager
@@ -40,7 +41,6 @@ except ImportError:
 __all__ = ['BasicWorm',
            'NormalizedWorm',
 		'VideoInfo',
-           'WormFeaturesDos',
            'WormFeatures',
            'FeatureProcessingOptions',
            'NormalizedWormPlottable',

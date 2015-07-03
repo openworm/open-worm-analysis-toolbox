@@ -14,7 +14,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 sys.path.append('..')
-
 import movement_validation as mv
 
 

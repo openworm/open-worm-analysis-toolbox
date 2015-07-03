@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import json
 from collections import namedtuple, Iterable, OrderedDict
 
-from . import utils
+from .. import utils
 from .pre_features import WormParsing
 from .video_info import VideoInfo
 
