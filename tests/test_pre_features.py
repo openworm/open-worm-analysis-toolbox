@@ -30,11 +30,11 @@ def test_pre_features():
     # and contains more "primitive", non-normalized contour and skeleton data
     schafer_bw_file_path = os.path.join(base_path, 
                                      "example_contour_and_skeleton_info.mat")  
-    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    #bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
     # Run our tests on the loaded data.
     _test_nw_to_bw_to_nw(nw)
-    _test_bw_and_nw(bw, nw)
+    #_test_bw_and_nw(bw, nw)
 
 
 def _test_nw_to_bw_to_nw(nw):

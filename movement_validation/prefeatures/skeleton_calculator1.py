@@ -86,9 +86,9 @@ class SkeletonCalculatorType1(object):
         """
         FRACTION_WORM_SMOOTH = 1.0/12.0
         SMOOTHING_ORDER = 3
-        PERCENT_BACK_SEARCH = 0.3;
-        PERCENT_FORWARD_SEARCH = 0.3;
-        END_S1_WALK_PCT = 0.15;
+        PERCENT_BACK_SEARCH = 0.3
+        PERCENT_FORWARD_SEARCH = 0.3
+        END_S1_WALK_PCT = 0.15
 
         num_frames = len(h_ventral_contour) # == len(h_dorsal_contour)
 
@@ -113,25 +113,6 @@ class SkeletonCalculatorType1(object):
             if s1 is None:
                 continue
 
-            """
-            if s1.shape[1] < 50:
-                # Upsample if we have too few points
-                s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
-                                                      num_norm_points=75)[0]
-                s2 = WormParserHelpers.normalize_all_frames_xy([s2], 
-                                                      num_norm_points=75)[0]
-
-            if s1.shape[1] > 250:
-                # Downsample if the # of points is ridiculous
-                # 200 points seems to be a good number
-                # So let's set 250 as a maximum
-                # Upsample if we have too few points
-                s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
-                                                      num_norm_points=250)[0]
-                s2 = WormParserHelpers.normalize_all_frames_xy([s2], 
-                                                      num_norm_points=250)[0]
-            """
-
             #Smoothing of the contour
             #------------------------------------------            
             start = utils.timing_function()
@@ -146,30 +127,100 @@ class SkeletonCalculatorType1(object):
             s2[0, :] = sgolay(s2[0, :], filter_width_s2, SMOOTHING_ORDER)
             s2[1, :] = sgolay(s2[1, :], filter_width_s2, SMOOTHING_ORDER)
             profile_times['sgolay'] += utils.timing_function()-start
-            
-            
+
+            """
+            # We require the contours to be coincident at the beginning 
+            # and end.  If they are not, add a middle point that joins them.
+            if (s1[:,0] - s2[:,0] != 0).any():
+                new_first_point = (s1[:,0] + s2[:,0]) / 2
+                # We must have same dimensions to concatenate, so go from
+                # shape (2,) to shape (2,1)
+                new_first_point = new_first_point[:, None]
+                # Now concatenate shape (2,1) with shape (2,k) along the 
+                # second axis, for a new array of shape (2,k+1)
+                s1 = np.concatenate([new_first_point, s1], axis=1)
+                s2 = np.concatenate([new_first_point, s2], axis=1)
+
+            if (s1[:,-1] - s2[:,-1] != 0).any():
+                new_last_point = (s1[:,-1] + s2[:,-1]) / 2
+                # We must have same dimensions to concatenate, so go from
+                # shape (2,) to shape (2,1)
+                new_last_point = new_last_point[:, None]
+
+                s1 = np.concatenate([s1, new_last_point], axis=1)
+                s2 = np.concatenate([s2, new_last_point], axis=1)
+            """
+
+            # UP/DOWNSAMPLE if number of points is not betwen 50 and 250,
+            # which seem like reasonable numbers.
+            if s1.shape[1] < 20 or s1.shape[1] > 250:
+                if s1.shape[1] < 50:
+                    num_norm_points = 75
+                else:
+                    num_norm_points = 200
+                # DEBUG
+                #print("Frame {0} has shape {1}".format(frame_index, str(s1.shape)))
+                #print("Upsampling to 75 points")
+                # Upsample if we have too few points
+                s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
+                                        num_norm_points=num_norm_points)
+
+                # There is only one frame so let's take that dimension out,
+                # and transform s1 and s2 from having shape (k,2,n) to (k,2)
+                s1 = s1[:,:,0] 
+
+                # normalized_all_frames_xy rolls the axis so let's roll it back                
+                s1 = np.rollaxis(s1, 1)
+
+            if s2.shape[1] < 20 or s2.shape[1] > 250:
+                if s1.shape[1] < 50:
+                    num_norm_points = 75
+                else:
+                    num_norm_points = 200                
+                # For documentation see the above for s1
+                s2 = WormParserHelpers.normalize_all_frames_xy([s2], 
+                                        num_norm_points=num_norm_points)
+                s2 = s2[:,:,0]
+                s2 = np.rollaxis(s2, 1)
+
+            # DEBUG
+            """
+            if frame_index == 3353:
+                plt.plot(s1[0,:], s1[1,:], 'bs')
+                plt.plot(h_ventral_contour[frame_index][0,:],
+                         h_ventral_contour[frame_index][1,:], 'g')
+
+                plt.plot(s2[0,:], s2[1,:], 'bs')
+                plt.plot(h_dorsal_contour[frame_index][0,:],
+                         h_dorsal_contour[frame_index][1,:], 'g')
+
+                plt.show()
+            """
             
             #Calculation of distances
             #-----------------------------------
-            start = utils.timing_function()
-            # TODO: Allow downsampling if the # of points is ridiculous
-            # 200 points seems to be a good #
-            # This operation gives us a matrix that is len(s1) x len(s2)
-            dx_across = np.transpose(s1[0:1, :]) - s2[0, :]
-            dy_across = np.transpose(s1[1:2, :]) - s2[1, :]
-            d_across = np.sqrt(dx_across**2 + dy_across**2)
+            # Find the distance from each point in s1 to EVERY point in s2
+            # Thus dx_across[0,5] gives the x-distance from point 0 on s1 to
+            # point 5 on s2. The operation gives us an array of shape 
+            # (s1.shape[1],s2.shape[1])
+            dx_across = np.transpose(s1[0, :][None,:]) - s2[0, :]
+            dy_across = np.transpose(s1[1, :][None,:]) - s2[1, :]
+            
+            # d_across_partials has shape (ki, ji, 2)
+            d_across_partials = np.dstack([dx_across, dy_across])
+            d_across = np.linalg.norm(d_across_partials, axis=2)
             dx_across = dx_across / d_across
             dy_across = dy_across / d_across
-            profile_times['transpose'] += utils.timing_function()-start
-            
-            
-            #Determining bounds for possible projection pairs
+
+
+            # Determine search bounds for possible "projection pairs"
             #------------------------------------------------
             start = utils.timing_function()
-            left_I, right_I = SkeletonCalculatorType1.h__getBounds(s1.shape[1],
-                                                       s2.shape[1],
-                                                       PERCENT_BACK_SEARCH,
-                                                       PERCENT_FORWARD_SEARCH)
+            left_indices, right_indices = \
+                SkeletonCalculatorType1.h__getBounds(s1.shape[1],
+                                                     s2.shape[1],
+                                                     PERCENT_BACK_SEARCH,
+                                                     PERCENT_FORWARD_SEARCH)
 
             profile_times['h__getBounds'] += utils.timing_function()-start
             start = utils.timing_function()
@@ -184,49 +235,46 @@ class SkeletonCalculatorType1(object):
                    
             # For each point on side 1, find which side 2 the point pairs with
             dp_values1, match_I1 = \
-                            SkeletonCalculatorType1.h__getMatches(s1, s2,
+                SkeletonCalculatorType1.h__getMatches(s1, s2,
                                                       norm_x, norm_y,
                                                       dx_across, dy_across,
                                                       d_across,
-                                                      left_I, right_I)
+                                                      left_indices, 
+                                                      right_indices)
 
             profile_times['h__getMatches'] += utils.timing_function()-start
             start = utils.timing_function()
 
 
-            I_1, I_2 = SkeletonCalculatorType1.h__updateEndsByWalking(d_across,
-                                                          match_I1,
-                                                          s1, s2,
-                                                          END_S1_WALK_PCT)
+            I_1, I_2 = \
+                SkeletonCalculatorType1.h__updateEndsByWalking(d_across,
+                                                               match_I1,
+                                                               s1, s2,
+                                                               END_S1_WALK_PCT)
 
             profile_times['h__updateEndsByWalking'] += utils.timing_function()-start
-            start = utils.timing_function()
 
-            # TODO: Make this a function
-            # ------------------------------------
             # We're looking to the left and to the right to ensure that
             # things are ordered
-
             #                                    current is before next    
             is_good = np.hstack((True, np.array((I_2[1:-1] <= I_2[2:]) & \
             #                                    current after previous            
                                                 (I_2[1:-1] >= I_2[:-2])), 
                                                  True))
-
-            profile_times['hstack'] += utils.timing_function()-start
-            start = utils.timing_function()
-            
-            I_1 = I_1[is_good]
+            # Filter out invalid entries
+            I_1 = I_1[is_good]  
             I_2 = I_2[is_good]
+
             
-            s1_x  = s1[0, I_1]
-            s1_y  = s1[1, I_1]
-            s1_px = s2[0, I_2] #s1_pair x
-            s1_py = s2[1, I_2]
+            
+            s1_x  = s1[0, I_1] # The x coord of the s1 entries with partners
+            s1_y  = s1[1, I_1] # """ y """""
+            s1_px = s2[0, I_2] # The x coordinate of the partners of s1
+            s1_py = s2[1, I_2] # """ y """""
         
-            #Final calculations
+            # Final calculations
             #-----------------------
-            #TODO: Allow smoothing on x & y
+            # TODO: Allow smoothing on x & y
             widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
             h_widths[frame_index] = widths1
             
@@ -234,9 +282,10 @@ class SkeletonCalculatorType1(object):
             skeleton_y = 0.5 * (s1_y + s1_py)
             h_skeleton[frame_index] = np.vstack((skeleton_x, skeleton_y))
 
-            profile_times['final calculations'] += utils.timing_function()-start
 
-
+            print("Final skeleton shape of frame %d: %s" % 
+                  (frame_index, str(h_skeleton[frame_index].shape)))
+            
             # Optional plotting code
             if frame_index in frames_to_plot:
                 fig = plt.figure()
@@ -295,42 +344,64 @@ class SkeletonCalculatorType1(object):
         print(profile_times)
         return (h_widths, h_skeleton)    
 
+
     #%%
     @staticmethod
-    def h__getBounds(n1, n2, p_left, p_right):
+    def h__getBounds(n1, n2, percent_left_search, percent_right_search):
         """
-        Returns slice starts and stops
-        #TODO: Rename everything to start and stop
+        Get contour "partner" search boundaries.
+        
+        Given two contour sides, having n1 and n2 points respectively, we
+        want to pair off points on side n1 with points on side n2.  This
+        method has a narrower goal: just to return the search boundaries
+        for each point on n1 in its search for a match on the other side.
+        
+        For this, for each point i from 0 to n1-1 on the first side, we 
+        want start_indices[i] to be an integer giving the point index
+        on the other side to start searching, and stop_indices[i], to be 
+        the final point searched on the other side.
 
         Parameters
         ---------------
-        n1:
-        n2:
-        p_left:
-        p_right:
+        n1: int
+            number of points along one side of the contour
+        n2: int
+            number of points along the other side of the contour
+        percent_left_search: float
+            percent to search backward
+        percent_right_search: float
+            percent to search forward
 
         Returns
         ---------------
-        left_I, right_I
+        (start_indices, stop_indices): Two integer numpy arrays of shape (n1,)
+            Giving the appropriate start and stop indices for a search
+            through the other contour.  We only want to search for points
+            along the opposing contour that are within 
+            [-percent_left_search, percent_right_search] of the point on 
+            the first contour.
 
         """
-        pct = np.linspace(0, 1, n1)
-        left_pct = pct - p_left
-        right_pct = pct + p_right
+        # Create array of n1 evenly spaced numbers from 0 to 1 inclusive
+        percentiles = np.linspace(0, 1, n1)
+        start_percentiles = percentiles - percent_left_search
+        stop_percentiles = percentiles + percent_right_search
 
-        left_I = np.floor(left_pct*n2)
-        right_I = np.ceil(right_pct*n2)
-        left_I[left_I < 0] = 0;
-        right_I[right_I >= n2] = n2 - 1
+        # An integer array giving the leftmost to navigate before stopping,
+        # for each point along n2.
+        start_indices = np.floor(start_percentiles * n2)
+        stop_indices = np.ceil(stop_percentiles * n2)
+        # Truncate any indices pointing outside the range between 0 and n2-1
+        start_indices[start_indices < 0] = 0
+        stop_indices[stop_indices >= n2] = n2 - 1
         
-        return left_I, right_I
+        return start_indices, stop_indices
     
     #%%
     @staticmethod
     def h__getMatches(s1, s2, 
                       norm_x, norm_y, 
-                      dx_across, dy_across, 
-                      d_across, 
+                      dx_across, dy_across, d_across,
                       left_I, right_I):
         """
         For a given frame,        
@@ -354,16 +425,15 @@ class SkeletonCalculatorType1(object):
         
         """
         n_s1 = s1.shape[1]
-        match_I = np.zeros(n_s1,dtype=np.int)
+        match_I = np.zeros(n_s1, dtype=int)
         match_I[0] = 0
         match_I[-1] = s2.shape[1]
         
         dp_values = np.zeros(n_s1)
         all_signs_used = np.zeros(n_s1)
 
-        #There is no need to do the first and last point
+        # There is no need to do the first and last point
         for I, (lb, rb) in enumerate(zip(left_I[1:-1], right_I[1:-1])):
-
             I = I + 1
             [abs_dp_value, dp_I, sign_used] = SkeletonCalculatorType1.\
                 h__getProjectionIndex(norm_x[I], norm_y[I],
@@ -489,8 +559,8 @@ class SkeletonCalculatorType1(object):
         n_s2 = s2.shape[1]
         
         
-        end_s1_walk_I = np.ceil(n_s1*END_S1_WALK_PCT)
-        end_s2_walk_I = 2*end_s1_walk_I
+        end_s1_walk_I = np.ceil(n_s1 * END_S1_WALK_PCT)
+        end_s2_walk_I = 2 * end_s1_walk_I
         p1_I, p2_I = SkeletonCalculatorType1.h__getPartnersViaWalk(
                                                        0, end_s1_walk_I,
                                                        0, end_s2_walk_I,
@@ -507,8 +577,7 @@ class SkeletonCalculatorType1(object):
         end_s2_walk_backwards = n_s2 - end_s2_walk_I + 1
         
         
-        p1_I,p2_I = \
-            SkeletonCalculatorType1.h__getPartnersViaWalk(
+        p1_I, p2_I = SkeletonCalculatorType1.h__getPartnersViaWalk(
                                               n_s1-1, end_s1_walk_backwards,
                                               n_s2-1, end_s2_walk_backwards,
                                               d_across,
@@ -533,7 +602,7 @@ class SkeletonCalculatorType1(object):
         I_1 = utils.find(keep_mask)
         I_2 = match_I1[keep_mask]
 
-        return (I_1,I_2)
+        return (I_1, I_2)
         
     #%%
     @staticmethod
@@ -579,7 +648,7 @@ class SkeletonCalculatorType1(object):
         
         Algorithm
         ---------
-        More on this can be found in Ev Yemini's thesis. The basic ideas is
+        More on this can be found in Ev Yemini's thesis. The basic idea is
         we start with pairs on both sides of the contour and ask whether or
         not each point on one side of the contour should partner with its
         current point or the next point on the other side, given the widths

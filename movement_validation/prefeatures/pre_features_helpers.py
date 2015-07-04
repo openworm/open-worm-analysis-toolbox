@@ -100,9 +100,9 @@ class WormParserHelpers:
 
         Parameters
         --------------
-        prop_to_normalize: list of numpy arrays
+        heterocardinal_property: list of numpy arrays
             the outermost dimension, that of the lists, has length n
-            the numpy arrays are of shape 
+            the numpy arrays are of shape (2,ki)
         num_norm_points: int
             The number of points to normalize to.
             
