@@ -153,7 +153,7 @@ class SkeletonCalculatorType1(object):
 
             # UP/DOWNSAMPLE if number of points is not betwen 50 and 250,
             # which seem like reasonable numbers.
-            if s1.shape[1] < 20 or s1.shape[1] > 250:
+            if s1.shape[1] < 50 or s1.shape[1] > 250:
                 if s1.shape[1] < 50:
                     num_norm_points = 75
                 else:
@@ -172,7 +172,7 @@ class SkeletonCalculatorType1(object):
                 # normalized_all_frames_xy rolls the axis so let's roll it back                
                 s1 = np.rollaxis(s1, 1)
 
-            if s2.shape[1] < 20 or s2.shape[1] > 250:
+            if s2.shape[1] < 50 or s2.shape[1] > 250:
                 if s1.shape[1] < 50:
                     num_norm_points = 75
                 else:
