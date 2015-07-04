@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """
+The Histogram class.
+
 Notes
 -------------------------
 Formerly SegwormMatlabClasses / +seg_worm / +stats / @hist / hist.m
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/%40hist/hist.m
+https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+%2Bseg_worm/%2Bstats/%40hist/hist.m
 
 """
 import numpy as np
-from .. import config
-from .. import utils
 import matplotlib.pyplot as plt
 
+from .. import config, utils
+
+#%%
 class Histogram(object):
     """    
     Encapsulates the notion of a histogram for features.
@@ -278,13 +282,18 @@ class Histogram(object):
         # (though this bound could probably be greatly improved)
         assert(min_data >= self.bin_boundaries[0] - self.bin_width)
         assert(max_data <= self.bin_boundaries[-1] + self.bin_width)
-
-        return None
     
     
     def compute_histogram_counts(self):
         """
         Compute the actual counts for the bins given the data
+        
+        Returns
+        ----------------
+        None
+            But assigns values to:
+                self.counts and
+                self.pdf
        
         """
         self.counts = np.histogram(self.data, bins = self.bin_boundaries)[0]
@@ -302,10 +311,13 @@ class Histogram(object):
         Assign these to member data self.mean_per_video and 
         self.std_per_video, respectively.
 
-        Returns 
-        ------------------
+        Returns
+        ----------------
         None
-        
+            But assigns values to:
+                self.mean_per_video and
+                self.std_per_video
+       
         """
         self.mean_per_video = np.mean(self.data)
         
@@ -321,20 +333,28 @@ class Histogram(object):
                                 sum((self.data - self.mean_per_video)**2)
                             )
 
-
-    def plot_versus(exp_hist, ctl_hist):
+    @classmethod
+    def plot_versus(cls, ax, exp_hist, ctl_hist):
         """
+        Use matplotlib to plot a Histogram instance against another.  
+        Plots one histogram against another with the same long_field.
         
         TODO: The inputs should be renamed        
         TODO: Add support for passing in labels
-        
-        Use matplotlib to plot a Histogram instance.
-        
+
         Note: You must still call plt.show() after calling this function.
         
+        Usage
+        -----------------------
+        
+
         Parameters
         -----------------------
-        expt_hist : 
+        ax: A
+        exp_hist: A Histogram object
+            The "experiment"
+        ctl_hist: A Histogram object
+            The "control"
         
         """
         # Verify that we are comparing the same feature
@@ -349,22 +369,20 @@ class Histogram(object):
         max_x = min([h.bin_midpoints[-1] for h in [ctl_hist, exp_hist]])
     
     
-        plt.figure(figsize=(12, 9))
-        plt.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
-        plt.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
+        #plt.figure(figsize=(12, 9))
+        ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
+        ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
     
-        plt.xlabel(exp_hist.long_field, fontsize=16)
-        plt.ylabel('bin pdf', fontsize = 16)
-        plt.title(exp_hist.description, fontsize = 25)
-        plt.xlim(min_x, max_x)
-    
-    
-        ax = plt.gca()
+        ax.set_xlabel(exp_hist.long_field, fontsize=16)
+        ax.set_ylabel('bin pdf', fontsize=16)
+        ax.set_title(exp_hist.description, fontsize = 12)
+        ax.set_xlim(min_x, max_x)
+
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         # ticks only needed at bottom and right
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.legend(loc='upper left')
-        
-        plt.show()
+
+        return ax

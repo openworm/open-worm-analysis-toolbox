@@ -19,15 +19,16 @@ from .prefeatures.basic_worm import BasicWorm
 from .prefeatures.normalized_worm import NormalizedWorm
 from .prefeatures.worm_plotter import NormalizedWormPlottable
 
-
-#This is temporary, we will eventually remove it when the code is ready
-#to become WormFeatures
+# This is temporary; we will eventually remove it when the code is ready
+# to become WormFeatures
 from .features.worm_features import WormFeaturesDos
+
 from .features.worm_features import WormFeatures
 from .features.feature_processing_options import FeatureProcessingOptions
 
 from .statistics.histogram_manager import HistogramManager
 from .statistics.manager import StatisticsManager
+from .statistics.histogram import Histogram
 
 try:
     from . import user_config
@@ -45,4 +46,5 @@ __all__ = ['BasicWorm',
            'FeatureProcessingOptions',
            'NormalizedWormPlottable',
            'HistogramManager',
-           'StatisticsManager']
+           'StatisticsManager',
+           'Histogram']

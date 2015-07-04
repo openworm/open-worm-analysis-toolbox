@@ -11,6 +11,7 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 
 """
 import sys, os, pickle
+import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -26,10 +27,17 @@ def main():
     experiment_histograms, control_histograms = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
-
+    fig = plt.figure(1)
+    
+    cols = 4; rows = 6
     #for i in range(0, 700, 100):
-    for i in range(1):
-        experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
+    for i in range(rows * cols):
+        ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
+        mv.Histogram.plot_versus(ax,
+                                 experiment_histograms.hists[i],
+                                 control_histograms.hists[i])
+                                 
+    #plt.tight_layout()
 
     print('Done with stats generation')
 
