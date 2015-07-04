@@ -234,18 +234,18 @@ class SkeletonCalculatorType1(object):
 
                    
             # For each point on side 1, find which side 2 the point pairs with
-            dp_values1, match_I1 = \
-                SkeletonCalculatorType1.h__getMatches(s1, s2,
-                                                      norm_x, norm_y,
-                                                      dx_across, dy_across,
-                                                      d_across,
-                                                      left_indices, 
-                                                      right_indices)
+            match_I1 = SkeletonCalculatorType1.h__getMatches(s1, s2,
+                                                             norm_x, norm_y,
+                                                             dx_across, 
+                                                             dy_across,
+                                                             d_across,
+                                                             left_indices, 
+                                                             right_indices)
 
             profile_times['h__getMatches'] += utils.timing_function()-start
             start = utils.timing_function()
 
-
+            # Pair off the points from one contour to the other
             I_1, I_2 = \
                 SkeletonCalculatorType1.h__updateEndsByWalking(d_across,
                                                                match_I1,
@@ -266,21 +266,27 @@ class SkeletonCalculatorType1(object):
             I_2 = I_2[is_good]
 
             
-            
-            s1_x  = s1[0, I_1] # The x coord of the s1 entries with partners
-            s1_y  = s1[1, I_1] # """ y """""
-            s1_px = s2[0, I_2] # The x coordinate of the partners of s1
-            s1_py = s2[1, I_2] # """ y """""
+            # Create the skeleton sides
+            s1   = s1[:, I_1]
+            s1_p = s2[:, I_2]
+            #s1_x  = s1[0, I_1] # The x coord of the s1 entries with partners
+            #s1_y  = s1[1, I_1] # """ y """""
+            #s1_px = s2[0, I_2] # The x coordinate of the partners of s1
+            #s1_py = s2[1, I_2] # """ y """""
+        
+            h_widths[frame_index] = np.linalg.mean(s1_p - s1, axis=0)
+            h_skeleton[frame_index] = (s1 + s1_p) / 2
         
             # Final calculations
             #-----------------------
             # TODO: Allow smoothing on x & y
-            widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
-            h_widths[frame_index] = widths1
+            #widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
+            #h_widths[frame_index] = widths1
             
-            skeleton_x = 0.5 * (s1_x + s1_px)
-            skeleton_y = 0.5 * (s1_y + s1_py)
-            h_skeleton[frame_index] = np.vstack((skeleton_x, skeleton_y))
+            # The skeleton is the midpoint between s1 and s1_p
+            #skeleton_x = 0.5 * (s1_x + s1_px)
+            #skeleton_y = 0.5 * (s1_y + s1_py)
+            #h_skeleton[frame_index] = np.vstack((skeleton_x, skeleton_y))
 
 
             print("Final skeleton shape of frame %d: %s" % 
@@ -307,15 +313,18 @@ class SkeletonCalculatorType1(object):
                 
                 # To plot the widths, we need to run
                 # plot([x1,x2],[y1,y2]), for each line segment
-                for i in range(np.shape(s1_px)[0]):
-                    ax1.plot([s1_px[i], s1_x[i]], [s1_py[i], s1_y[i]], 
+                for i in range(s1_p.shape[1]):
+                    ax1.plot([s1_p[0,i], s1[0,i]], [s1_p[1, i], s1[1, i]], 
+
+#                    ax1.plot([s1_px[i], s1_x[i]], [s1_py[i], s1_y[i]], 
                              color='g')
 
+                skeleton = h_skeleton[frame_index]
                 # The skeleton points
-                ax1.scatter(skeleton_x, skeleton_y, marker='D', 
+                ax1.scatter(skeleton[0,:], skeleton[1,:], marker='D', 
                             edgecolors='b', facecolors='none')
                 # The skeleton points, connected
-                ax1.plot(skeleton_x, skeleton_y, color='navy')
+                ax1.plot(skeleton[0,:], skeleton[1,:], color='navy')
 
                 """
                 # TODO: Jim's original method for plotting this was:
@@ -421,7 +430,7 @@ class SkeletonCalculatorType1(object):
         
         Returns
         ---------------        
-        (dp_values, match_I)
+        match_I
         
         """
         n_s1 = s1.shape[1]
@@ -465,7 +474,7 @@ class SkeletonCalculatorType1(object):
                 match_I[I] = dp_I    
 
 
-        return (dp_values, match_I)
+        return match_I
     
     #%%
     @staticmethod
@@ -541,14 +550,17 @@ class SkeletonCalculatorType1(object):
         
         Parameters
         ----------
-        d_across:
+        d_across: 2d numpy array of shape (ki, ji)
+            A lookup table giving the distance from a point on one 
+            of the contour to any point on the other side.
         match_I1:
         s1: list of numpy arrays, with the arrays having shape (2,ki)
             One side of the contour.  ki is the number of points in frame i
-        s2: list of numpy arrays, with the arrays having shape (2,ki)
-            The other side of the contour.  ki is the number of points in 
+        s2: list of numpy arrays, with the arrays having shape (2,ji)
+            The other side of the contour.  ji is the number of points in 
             frame i
-        END_S1_WALK_PCT:
+        END_S1_WALK_PCT: float
+            At what % to end the walk along the first contour
         
         Returns
         -------
