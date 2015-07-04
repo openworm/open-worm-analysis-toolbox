@@ -95,8 +95,6 @@ class WormParserHelpers:
         """
         Normalize a "heterocardinal" skeleton or contour into a "homocardinal"
         one, where each frame has the same number of points.
-        
-        We always normalize to config.N_POINTS_NORMALIZED points per frame.
 
         Parameters
         --------------
@@ -133,10 +131,10 @@ class WormParserHelpers:
     @staticmethod
     def normalize_all_frames(property_to_normalize, xy_data, num_norm_points):
         """
-        We have a skeleton
+        Normalize a property as it articulates along a skeleton.
         
         Normalize a (heterocardinal) array of lists of variable length
-        down to a numpy array of shape (49,n).
+        down to a numpy array of shape (num_norm_points,n).
         
         Parameters
         --------------

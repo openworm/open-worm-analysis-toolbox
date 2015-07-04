@@ -53,20 +53,35 @@ def imagesc(data):
     plt.imshow(data, aspect='auto')
     plt.show()
 
-def find(data,n=None):
+def find(data, num_indices_to_return=None):
+    """
+    Find the indices of the first n entries of data that evaluate to True
+
+    Parameters
+    ------------
+    data: numpy array
+    num_indices_to_return: int (optional)
+        the number of indices to return
+    
+    Returns
+    ------------
+    numpy array of integers
+        The indices of the first n entries of data that evaluate to True
+
+    Notes
+    ------------
+    Similar to Matlab's find() function
 
     """
-    Similar to Matlab's find() function
-    TODO: Finish documentation
-    """
-    temp = np.flatnonzero(data)
-    if n is not None:
-        if n >= temp.size:
-            return temp
+    all_indices = np.flatnonzero(data)
+    
+    if num_indices_to_return is not None:
+        if num_indices_to_return >= all_indices.size:
+            return all_indices
         else:
-            return temp[0:n]
+            return all_indices[0:num_indices_to_return]
     else:
-        return temp
+        return all_indices
 
 def separated_peaks(x, dist, use_max, value_cutoff):
     """
@@ -767,7 +782,8 @@ def correlation(x, y, variable_name, high_corr_value=0.999,
         return return_value
 
 
-def compare_attributes(obj1, obj2, attribute_list, high_corr_value=0.999):
+def compare_attributes(obj1, obj2, attribute_list, high_corr_value=0.999, 
+                       merge_nans_list=None):
     """
     Compare all attributes in attribute_list belonging to obj
     
@@ -779,18 +795,24 @@ def compare_attributes(obj1, obj2, attribute_list, high_corr_value=0.999):
         A list of the attributes to compare
     high_corr_value: float
         The threshold below which an error will be thrown.  Default 0.999.
-    
+    merge_nans_list: list of strings
+        Attributes to merge_nans for.  Default None.
+   
     Returns
     ------------
     bool
         True if comparison passed on all attributes.  False otherwise.
     
     """
+    if merge_nans_list is None:
+        merge_nans_list = []
+        
     is_equal = True
     for attribute in attribute_list:
+        merge_nans = attribute in merge_nans_list
         attrib_equal = correlation(getattr(obj1, attribute), 
                                    getattr(obj2, attribute), 
-                                   attribute, high_corr_value)
+                                   attribute, high_corr_value, merge_nans)
         if not attrib_equal:
             is_equal = False
 

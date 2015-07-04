@@ -151,16 +151,13 @@ class SkeletonCalculatorType1(object):
                 s2 = np.concatenate([s2, new_last_point], axis=1)
             """
 
-            # UP/DOWNSAMPLE if number of points is not betwen 50 and 250,
+            # UP/DOWNSAMPLE if number of points is not betwen 49 and 250,
             # which seem like reasonable numbers.
-            if s1.shape[1] < 50 or s1.shape[1] > 250:
-                if s1.shape[1] < 50:
+            if s1.shape[1] < 49 or s1.shape[1] > 250:
+                if s1.shape[1] < 49:
                     num_norm_points = 75
                 else:
                     num_norm_points = 200
-                # DEBUG
-                #print("Frame {0} has shape {1}".format(frame_index, str(s1.shape)))
-                #print("Upsampling to 75 points")
                 # Upsample if we have too few points
                 s1 = WormParserHelpers.normalize_all_frames_xy([s1], 
                                         num_norm_points=num_norm_points)
@@ -172,8 +169,8 @@ class SkeletonCalculatorType1(object):
                 # normalized_all_frames_xy rolls the axis so let's roll it back                
                 s1 = np.rollaxis(s1, 1)
 
-            if s2.shape[1] < 50 or s2.shape[1] > 250:
-                if s1.shape[1] < 50:
+            if s2.shape[1] < 49 or s2.shape[1] > 250:
+                if s1.shape[1] < 49:
                     num_norm_points = 75
                 else:
                     num_norm_points = 200                
@@ -182,20 +179,6 @@ class SkeletonCalculatorType1(object):
                                         num_norm_points=num_norm_points)
                 s2 = s2[:,:,0]
                 s2 = np.rollaxis(s2, 1)
-
-            # DEBUG
-            """
-            if frame_index == 3353:
-                plt.plot(s1[0,:], s1[1,:], 'bs')
-                plt.plot(h_ventral_contour[frame_index][0,:],
-                         h_ventral_contour[frame_index][1,:], 'g')
-
-                plt.plot(s2[0,:], s2[1,:], 'bs')
-                plt.plot(h_dorsal_contour[frame_index][0,:],
-                         h_dorsal_contour[frame_index][1,:], 'g')
-
-                plt.show()
-            """
             
             #Calculation of distances
             #-----------------------------------
@@ -246,11 +229,11 @@ class SkeletonCalculatorType1(object):
             start = utils.timing_function()
 
             # Pair off the points from one contour to the other
-            I_1, I_2 = \
-                SkeletonCalculatorType1.h__updateEndsByWalking(d_across,
-                                                               match_I1,
-                                                               s1, s2,
-                                                               END_S1_WALK_PCT)
+            I_1, I_2 = SkeletonCalculatorType1.h__updateEndsByWalking(
+                                                            d_across,
+                                                            match_I1,
+                                                            s1, s2,
+                                                            END_S1_WALK_PCT)
 
             profile_times['h__updateEndsByWalking'] += utils.timing_function()-start
 
@@ -265,33 +248,21 @@ class SkeletonCalculatorType1(object):
             I_1 = I_1[is_good]  
             I_2 = I_2[is_good]
 
+            # TODO: Allow smoothing on x & y
             
             # Create the skeleton sides
             s1   = s1[:, I_1]
             s1_p = s2[:, I_2]
-            #s1_x  = s1[0, I_1] # The x coord of the s1 entries with partners
-            #s1_y  = s1[1, I_1] # """ y """""
-            #s1_px = s2[0, I_2] # The x coordinate of the partners of s1
-            #s1_py = s2[1, I_2] # """ y """""
-        
-            h_widths[frame_index] = np.linalg.mean(s1_p - s1, axis=0)
+            # The widths are simply the distance between the sides
+            h_widths[frame_index] = np.linalg.norm(s1_p - s1, axis=0)
+            # The skeleton is simply the midpoint between the sides
             h_skeleton[frame_index] = (s1 + s1_p) / 2
-        
-            # Final calculations
-            #-----------------------
-            # TODO: Allow smoothing on x & y
-            #widths1 = np.sqrt((s1_px - s1_x)**2 + (s1_py - s1_y)**2) # Widths
-            #h_widths[frame_index] = widths1
-            
-            # The skeleton is the midpoint between s1 and s1_p
-            #skeleton_x = 0.5 * (s1_x + s1_px)
-            #skeleton_y = 0.5 * (s1_y + s1_py)
-            #h_skeleton[frame_index] = np.vstack((skeleton_x, skeleton_y))
 
-
-            print("Final skeleton shape of frame %d: %s" % 
-                  (frame_index, str(h_skeleton[frame_index].shape)))
+            # DEBUG
+            #print("Final skeleton shape of frame %d: %s" % 
+            #      (frame_index, str(h_skeleton[frame_index].shape)))
             
+            # DEBUG
             # Optional plotting code
             if frame_index in frames_to_plot:
                 fig = plt.figure()
@@ -349,8 +320,9 @@ class SkeletonCalculatorType1(object):
                              linewidth=2)
 
                 plt.show()
-            
-        print(profile_times)
+        
+        # DEBUG
+        #print(profile_times)
         return (h_widths, h_skeleton)    
 
 
@@ -418,19 +390,25 @@ class SkeletonCalculatorType1(object):
         
         Parameters
         ---------------
-        s1: a list of coordinates
-        s2: a list of coordinates
-        norm_x:
-        norm_y:
-        dx_across:
-        dy_across:
-        d_across:
+        s1: list of numpy arrays, with the arrays having shape (2,ki)
+            One side of the contour.  ki is the number of points in frame i
+        s2: list of numpy arrays, with the arrays having shape (2,ji)
+            The other side of the contour.  ji is the number of points in 
+            frame i
+        norm_x: 
+        norm_y: 
+        dx_across: 
+        dy_across: 
+        d_across: 2d numpy array of shape (ki, ji)
+            A lookup table giving the distance from a point on one 
+            of the contour to any point on the other side.
         left_I:
         right_I:
         
         Returns
         ---------------        
-        match_I
+        match_indices: numpy array of integers, of shape (ki) where
+            ki is the number of contour points in s1
         
         """
         n_s1 = s1.shape[1]
@@ -544,7 +522,6 @@ class SkeletonCalculatorType1(object):
     #%%
     @staticmethod
     def h__updateEndsByWalking(d_across, match_I1, s1, s2, END_S1_WALK_PCT):
-        
         """
         Update ends by walking.
         
@@ -553,7 +530,8 @@ class SkeletonCalculatorType1(object):
         d_across: 2d numpy array of shape (ki, ji)
             A lookup table giving the distance from a point on one 
             of the contour to any point on the other side.
-        match_I1:
+        match_I1: numpy array of shape (ki,)
+            current list of matches
         s1: list of numpy arrays, with the arrays having shape (2,ki)
             One side of the contour.  ki is the number of points in frame i
         s2: list of numpy arrays, with the arrays having shape (2,ji)
@@ -564,12 +542,11 @@ class SkeletonCalculatorType1(object):
         
         Returns
         -------
-        (I_1, I_2)
+        (I_1, I_2): tuple of numpy arrays 
         
         """
         n_s1 = s1.shape[1]
         n_s2 = s2.shape[1]
-        
         
         end_s1_walk_I = np.ceil(n_s1 * END_S1_WALK_PCT)
         end_s2_walk_I = 2 * end_s1_walk_I
@@ -579,15 +556,16 @@ class SkeletonCalculatorType1(object):
                                                        d_across,
                                                        s1, s2)
         
+        # Alter the matches somewhat
         match_I1[p1_I] = p2_I
         
+        # Keep all our alterations
         keep_mask = np.zeros(len(match_I1), dtype=np.bool)
         keep_mask[p1_I] = True
         
         # Add
         end_s1_walk_backwards = n_s1 - end_s1_walk_I + 1
         end_s2_walk_backwards = n_s2 - end_s2_walk_I + 1
-        
         
         p1_I, p2_I = SkeletonCalculatorType1.h__getPartnersViaWalk(
                                               n_s1-1, end_s1_walk_backwards,
@@ -598,20 +576,19 @@ class SkeletonCalculatorType1(object):
         match_I1[p1_I] = p2_I
         keep_mask[p1_I] = True
         
-        # Anything in between we'll use the projection appproach
+        # Anything in between we'll use the projection approach
         keep_mask[end_s1_walk_I+1:end_s1_walk_backwards] = True
         
         # Always keep ends
-        keep_mask[0]   = True
+        keep_mask[0]  = True
         keep_mask[-1] = True
     
         match_I1[0] = 0
         match_I1[-1] = n_s2-1
-        
     
         # This isn't perfect but it removes some back and forth behavior
         # of the matching. We'd rather drop points and smooth
-        I_1 = utils.find(keep_mask)
+        I_1 = np.flatnonzero(keep_mask)
         I_2 = match_I1[keep_mask]
 
         return (I_1, I_2)

@@ -87,53 +87,37 @@ class NormalizedWorm(WormPartition):
         nw = cls()
         bw = basic_worm
         nw.video_info = bw.video_info
-        timer = utils.ElementTimer()
         
         if bw.h_ventral_contour is not None:
             # 1. Derive skeleton and widths from contour
-            timer.tic()
             nw.widths, h_skeleton = \
                 WormParsing.compute_skeleton_and_widths(bw.h_ventral_contour, 
                                                         bw.h_dorsal_contour,
                                                         frames_to_plot_widths)
-            timer.toc("compute_skeleton_and_widths")
 
             # 2. Calculate the angles along the skeleton for each frame
-            timer.tic()
             nw.angles = WormParsing.compute_angles(h_skeleton)
-            timer.toc("angles")
 
             # 3. Normalize the skeleton, widths and contour to 49 points
             #    per frame
-            timer.tic()
             nw.skeleton = WormParserHelpers.\
                 normalize_all_frames_xy(h_skeleton, 
                                         config.N_POINTS_NORMALIZED)
-            timer.toc("normalize_all_frames_xy(h_skeleton)")
 
-            timer.tic()
             nw.widths = WormParserHelpers.\
-                normalize_all_frames(nw.widths, 
-                                     h_skeleton,
+                normalize_all_frames(nw.widths, h_skeleton,
                                      config.N_POINTS_NORMALIZED)
-            timer.toc("normalize_all_frames(nw.widths, h_skeleton)")
 
-            timer.tic()
             nw.ventral_contour = WormParserHelpers.\
                 normalize_all_frames_xy(bw.h_ventral_contour,
                                         config.N_POINTS_NORMALIZED)
-            timer.toc("normalize_all_frames_xy(bw.ventral_contour)")
 
-            timer.tic()
             nw.dorsal_contour = WormParserHelpers.\
                 normalize_all_frames_xy(bw.h_dorsal_contour,
                                         config.N_POINTS_NORMALIZED)
-            timer.toc("normalize_all_frames_xy(bw.dorsal_contour)")
 
             # 4. Calculate area for each frame
-            timer.tic()
             nw.area = WormParsing.compute_area(nw.contour)
-            timer.toc("compute_area")
 
         else:
             # With no contour, let's assume we have a skeleton.
@@ -141,18 +125,14 @@ class NormalizedWorm(WormPartition):
             # marked None.
             nw.angles = WormParsing.compute_angles(bw.skeleton)
             nw.skeleton = WormParserHelpers.\
-                normalize_all_frames_xy(bw.skeleton,
+                normalize_all_frames_xy(bw.h_skeleton,
                                         config.N_POINTS_NORMALIZED)
             nw.ventral_contour = None
             nw.dorsal_contour = None
             nw.area = None
         
         # 6. Calculate length
-        timer.tic()
         nw.length = WormParsing.compute_skeleton_length(nw.skeleton)
-        timer.toc("length")
-        
-        timer.summarize()        
         
         return nw
 
@@ -629,7 +609,8 @@ class NormalizedWorm(WormPartition):
                           'angles', 'widths', 'length', 'area']
 
         return utils.compare_attributes(self, other, attribute_list,
-                                        high_corr_value=0.94)
+                                        high_corr_value=0.94,
+                                        merge_nans_list=['angles'])
 
 
     def __repr__(self):

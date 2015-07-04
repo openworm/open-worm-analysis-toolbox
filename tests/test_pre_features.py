@@ -9,9 +9,6 @@ they are the same:   i.e. nw == nw_calculated
 
 """
 import sys, os
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 
 sys.path.append('..')
 import movement_validation as mv
@@ -30,15 +27,27 @@ def test_pre_features():
     # and contains more "primitive", non-normalized contour and skeleton data
     schafer_bw_file_path = os.path.join(base_path, 
                                      "example_contour_and_skeleton_info.mat")  
-    #bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
 
     # Run our tests on the loaded data.
-    _test_nw_to_bw_to_nw(nw)
-    #_test_bw_and_nw(bw, nw)
+    is_test_passed = _test_nw_to_bw_to_nw(nw)
+    print("\nTest result: " + str(is_test_passed))
+    assert(is_test_passed)
+
+    is_test_passed = _test_bw_and_nw(bw, nw)
+    print("\nTest result: " + str(is_test_passed))
+    assert(is_test_passed)
 
 
 def _test_nw_to_bw_to_nw(nw):
-    print("Testing that we can load the normalized worm, then lop off "
+    """
+    Returns
+    -----------
+    bool
+        True if passed, False if not.
+        
+    """
+    print("\nTesting that we can load the normalized worm, then lop off "
           "all the calculated normalized worm measurements, i.e. "
           "angles, areas, length, widths, skeleton, and then re-calculate "
           "using our pre-features code, and the recalculated normalized "
@@ -46,19 +55,29 @@ def _test_nw_to_bw_to_nw(nw):
           "a tolerance threshold.")
     bw_from_nw = nw.get_BasicWorm()
     nw_calculated = mv.NormalizedWorm.from_BasicWorm_factory(bw_from_nw)
-    nw == nw_calculated
 
+    return nw == nw_calculated
+
+    
 def _test_bw_and_nw(bw, nw):
-    print("Testing that normalized worm, calculated from the Schafer basic "
+    """
+    Returns
+    -----------
+    bool
+        True if passed, False if not.
+        
+    """
+    print("\nTesting that normalized worm, calculated from the Schafer basic "
           "worm using our pre-features code, is the same as the Schafer "
           "normalized worm")
     nw_calculated = mv.NormalizedWorm.from_BasicWorm_factory(bw)
-    nw == nw_calculated
+
+    return nw == nw_calculated
 
         
 if __name__ == '__main__':
     start_time = mv.utils.timing_function()
     test_pre_features()
-    print("Time elapsed: %.2fs" % 
+    print("\nTime elapsed: %.2fs" % 
           (mv.utils.timing_function() - start_time))
     
