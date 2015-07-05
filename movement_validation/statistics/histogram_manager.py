@@ -137,6 +137,14 @@ class HistogramManager(object):
         # Put all these histograms together into one single-dim numpy array.
         return np.hstack((m_hists, s_hists, e_hists))
 
+    @property
+    def valid_means_array(self):
+        valid_means = []
+        for hist in self.hists:
+            if hist is not None:
+                valid_means.append(hist.mean_per_video)
+        
+        return np.array(valid_means)
 
     ###########################################################################
     ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:

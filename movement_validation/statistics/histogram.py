@@ -209,13 +209,16 @@ class Histogram(object):
         # Note that each of these is now no longer a scalar as in the
         # single-video case; it is now a numpy array
         # ---------------------------------------------------------------
-        merged_hist._bin_midpoints  = new_bin_midpoints
-        merged_hist._counts         = new_counts
-        merged_hist._num_samples    = [x.num_samples for x in histograms]
-        merged_hist._mean_per_video = [x.mean_per_video for x in histograms]
-        merged_hist._std_per_video  = [x.std_per_video for x in histograms]
-        merged_hist._pdf            = (sum(merged_hist.counts, 0) /
-                                       sum(merged_hist.num_samples))
+        merged_hist._bin_midpoints = new_bin_midpoints
+        merged_hist._counts = new_counts
+        merged_hist._num_samples = \
+                        np.array([x.num_samples for x in histograms])
+        merged_hist._mean_per_video = \
+                        np.array([x.mean_per_video for x in histograms])
+        merged_hist._std_per_video = \
+                        np.array([x.std_per_video for x in histograms])
+        merged_hist._pdf = (sum(merged_hist.counts, 0) /
+                            sum(merged_hist.num_samples))
             
         return merged_hist
 
@@ -258,7 +261,7 @@ class Histogram(object):
                 # Matlab Central: http://www.mathworks.com/matlabcentral/
                 # fileexchange/46548-hockey-stick-and-climate-change/
                 # content/Codes_data_publish/Codes/swtest.m
-                _, self.p_normal = sp.stats.shapiro(self.mean_per_video)
+                _, self._p_normal = sp.stats.shapiro(self.mean_per_video)
 
             return self._p_normal
             
@@ -283,9 +286,13 @@ class Histogram(object):
     @property
     def valid_means(self):
         """
-        Return mean_per_video, excluding NaN
+        Returns
+        --------------
+        numpy array
+            self.mean_per_video, excluding NaN
+        
         """
-        return self.mean_per_video(~np.isnan(self.mean_per_video))
+        return self.mean_per_video[~np.isnan(self.mean_per_video)]
 
     @property
     def mean(self):

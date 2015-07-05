@@ -943,9 +943,11 @@ def compute_q_values(pvalues,
                      robust=False, smooth_df=3,
                      smooth_log_pi0=False, pi0=None):
     """
-    Compute qvalues after the method by Storey et al. (2002)
+    Compute false discovery rate (qvalues) qvalues after the method by 
+    Storey et al. (2002).  
+    Paper link: http://www.genomine.org/papers/directfdr.pdf
 
-    The python code derives from the R implementation at 
+    The Python code derives from the R implementation at 
     http://genomics.princeton.edu/storeylab/qvalue/linux.html.
     
     Code from http://genomic-association-tester.googlecode.com/hg-history/
@@ -975,7 +977,7 @@ def compute_q_values(pvalues,
 
     if vlambda == None: vlambda = np.arange(0,0.95,0.05)
 
-    if pi0 == None:
+    if pi0 is None:
         if type(vlambda) == float:
             vlambda = (vlambda,)
 
@@ -987,7 +989,7 @@ def compute_q_values(pvalues,
             raise ValueError( "vlambda must be within [0, 1).")
 
         # estimate pi0
-        if len(vlambda)==1: 
+        if len(vlambda) == 1: 
             vlambda = vlambda[0]
             if  vlambda < 0 or vlambda >=1 :
                 raise ValueError( "vlambda must be within [0, 1).")
@@ -1003,7 +1005,7 @@ def compute_q_values(pvalues,
                 pi0[i] = (np.mean([x >= vlambda[i] for x in pvalues])
                           / (1.0 - vlambda[i]))
 
-            if pi0_method=="smoother":
+            if pi0_method == "smoother":
                 if smooth_log_pi0:
                     pi0 = np.log(pi0)
                 tck = sp.interpolate.splrep(vlambda, pi0, k = smooth_df,
@@ -1013,7 +1015,7 @@ def compute_q_values(pvalues,
                 if smooth_log_pi0:
                     pi0 = np.exp(pi0)
                 
-            elif pi0_method=="bootstrap":
+            elif pi0_method == "bootstrap":
                 minpi0 = min(pi0)
 
                 mse = np.zeros( len(vlambda), np.float )
@@ -1042,16 +1044,16 @@ def compute_q_values(pvalues,
 
     # Compute qvalues
     #--------------------------------------
-    idx = np.argsort( pvalues )
+    idx = np.argsort(pvalues)
     # Monotonically decreasing bins, so that bins[i-1] > x >=  bins[i]
-    bins = np.unique( pvalues )[::-1]
+    bins = np.unique(pvalues)[::-1]
 
     # v[i] = number of observations less than or equal to pvalue[i]
-    # could this be done more elegantly?
-    val2bin = len(bins) - np.digitize( pvalues, bins )
+    # Could this be done more elegantly?
+    val2bin = len(bins) - np.digitize(pvalues, bins)
     v = np.zeros( m, dtype = np.int )
     lastbin = None
-    for x in range( m-1, -1, -1 ):
+    for x in range(m-1, -1, -1):
         bin = val2bin[idx[x]]
         if bin != lastbin: c = x
         v[idx[x]] = c+1
@@ -1059,11 +1061,11 @@ def compute_q_values(pvalues,
 
     qvalues = pvalues * pi0 * m / v
     if robust:
-        qvalues /= ( 1.0 - ( 1.0 - pvalues)**m )
+        qvalues /= (1.0 - (1.0 - pvalues)**m)
 
     # Bound qvalues by 1 and make them monotonic
-    qvalues[idx[m-1]] = min(qvalues[idx[m-1]],1.0)
+    qvalues[idx[m-1]] = min(qvalues[idx[m-1]], 1.0)
     for i in range(m-2,-1,-1):
-        qvalues[idx[i]] = min(min(qvalues[idx[i]],qvalues[idx[i+1]]),1.0)
+        qvalues[idx[i]] = min(min(qvalues[idx[i]], qvalues[idx[i+1]]), 1.0)
 
     return qvalues

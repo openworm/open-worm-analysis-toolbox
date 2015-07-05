@@ -70,8 +70,14 @@ class StatisticsManager(object):
         # PValues = mattest(DataX, DataY)
         # p_t_all is a 726x1 matrix with values between 0 and 1.
 
-        t_statistics, p_values = sp.stats.ttest_ind(exp_hists.mean_per_video,
-                                                    ctl_hists.mean_per_video)
+        # (From SciPy docs:)
+        # Calculates the T-test for the means of TWO INDEPENDENT samples 
+        # of scores.
+        # This is a two-sided test for the null hypothesis that 2
+        # independent samples have identical average (expected) values. 
+        # This test assumes that the populations have identical variances.
+        t_statistics, p_values = sp.stats.ttest_ind(exp_hists.valid_means_array,
+                                                    ctl_hists.valid_means_array)
         # Removed this line: [stats_objs.p_t] = sl.struct.dealArray(p_t_all)
 
         # This is the main call to initialize each object
@@ -79,21 +85,34 @@ class StatisticsManager(object):
         self.worm_statistics_objects = [None]*num_histograms
         for histogram_index in range(num_histograms):
             cur_worm_stats = WormStatistics(exp_hists.hists[histogram_index],
-                                            ctl_hists.hists[histogram_index],
-                                            p_values[histogram_index])
+                                            ctl_hists.hists[histogram_index])
+                #REMOVED:
+               #, p_values) 
+                # since len(p_values) == 10 but num_histograms == 726!
+                                        
 
-            self.worm_statistics[histogram_index] = cur_worm_stats
+            self.worm_statistics_objects[histogram_index] = cur_worm_stats
     
         # Initialize properties that depend on the aggregate
         #----------------------------------------------------------------------
-        self.p_t = [x.p_t for x in self.worm_statistics_objects]
-        self.p_w = [x.p_w for x in self.worm_statistics_objects]
+        self.p_t = np.array([x.p_t for x in self.worm_statistics_objects])
+        self.p_w = np.array([x.p_w for x in self.worm_statistics_objects])
+        
+        # Filter the NaN entries 
+        # I added this to get the code to work.  This puts the p's and q's 
+        # out of order so it's not possible to know from what histogram they
+        # are from after we do this, but it's necessary for compute_q_values
+        # to work, since it needs a NaN-free array.
+        # - @MichaelCurrie
+        self.p_t = self.p_t[~np.isnan(self.p_t)]
+        self.p_w = self.p_w[~np.isnan(self.p_w)]
     
-        self.q_t = utils.compute_q_values(self.p_t)
-        self.q_w = utils.compute_q_values(self.p_w)
+        # TODO: DEBUG these four lines.
+        #self.q_t = utils.compute_q_values(self.p_t)
+        #self.q_w = utils.compute_q_values(self.p_w)
 
-        self.p_worm = min(self.p_w)
-        self.q_worm = min(self.q_w)
+        #self.p_worm = min(self.p_w)
+        #self.q_worm = min(self.q_w)
 
 
 #%%
@@ -124,7 +143,7 @@ class WormStatistics(object):
          hist_type
          motion_type
          data_type 
-
+    
          #New properties
          #-------------------------------------------------------------------
          p_normal_experiment
@@ -138,30 +157,30 @@ class WormStatistics(object):
          #- present in 2+ controls, -Inf
          #Technically, this is incorrect
          #
-
+    
          z_score_control    = 0 #By definition ...
-
+    
          p_t  #Differential expression ...
          #    - function: mattest (bioinformatics toolbox)
          #    This doesn't seem like it is used ...
-
+    
          p_w = NaN #NaN Default value, if all videos have a valid value 
          #then this is not set
-
+    
          #NOTE: For the following, the corrections can be per strain or
          #across strains. I think the current implementation is per strain.
          #I'd like to go with the values used in the paper ...
-
+    
          q_t
          #In the old code corrections were per strain or across all strains. 
-
+    
          q_w
          #In the old code corrections were per strain or across all strains. 
          #Current implementation is per strain, not across strains ...
-
+    
          p_significance
-
-
+    
+    
          #pTValue
          #pWValue
          #qTValue
@@ -178,12 +197,6 @@ class WormStatistics(object):
   #        #    seg_worm.fex.swtest(data(i).dataMeans, 0.05, 0)
   #        q_normal  #
       """
-
-    #def __init__(self):
-    #    """
-    #    blank initializer I believe.
-    #    """
-    #    pass
 
     #%%
     def __init__(self, exp_histogram, ctl_histogram, USE_OLD_CODE=False):
@@ -216,6 +229,14 @@ class WormStatistics(object):
         self.p_t = p_t
         del(p_t)
         """
+        if exp_histogram is None or ctl_histogram is None:
+            self.z_score_experiment = np.NaN
+            self.p_normal_experiment = np.NaN
+            self.p_normal_control = np.NaN
+            self.p_w = np.NaN
+            self.p_t = np.NaN
+            return
+            
         self.specs       = exp_histogram.specs
         self.hist_type   = exp_histogram.hist_type
         self.motion_type = exp_histogram.motion_type
@@ -292,9 +313,18 @@ class WormStatistics(object):
             self.p_t = self.p_w
 
         # We need a few valid values from both ...
-        elif ~(exp_histogram.none_valid | ctl_histogram.none_valid):
+        elif not (exp_histogram.no_valid_means or 
+                  ctl_histogram.no_valid_means):
             _, self.p_w = sp.stats.ranksums(exp_histogram.valid_means, 
                                             ctl_histogram.valid_means)
+                           
+            # I added this so p_t would be defined. - @MichaelCurrie
+            self.p_t = np.NaN
+        
+        else: 
+            # I added this so p_w and p_t would be defined. - @MichaelCurrie
+            self.p_t = np.NaN
+            self.p_w = np.NaN
 
         # NOTE: This code is for an individual object, the corrections
         #       are done in the manager which is aware of all objects ...

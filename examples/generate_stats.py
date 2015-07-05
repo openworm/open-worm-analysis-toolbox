@@ -118,8 +118,8 @@ def obtain_histograms(root_path, pickle_file_path):
         assert(len(control_files) >= 10)
 
         # Compute histograms on our files
-        experiment_histograms = mv.HistogramManager(experiment_files)
-        control_histograms = mv.HistogramManager(control_files)
+        experiment_histograms = mv.HistogramManager(experiment_files[:10])
+        control_histograms = mv.HistogramManager(control_files[:10])
         
         # Store a pickle file in the same folder as this script 
         # (i.e. movement_validation/examples/)

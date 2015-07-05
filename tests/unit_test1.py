@@ -10,6 +10,7 @@ import sys
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 import movement_validation as mv
+import scipy as sp
 
 def test_simple():
     # Simple test to verify our test harness works
@@ -30,3 +31,13 @@ def test_round_to_odd():
     assert(round_to_odd(4) in (3,5))
     assert(round_to_odd(-12) in (-11,-13))    
 
+def test_ttest():
+    # From http://docs.scipy.org/doc/scipy-0.15.1/reference/generated/
+    # scipy.stats.ttest_ind.html
+    # TODO
+    #rvs1 = sp.stats.norm.rvs(loc=5,scale=10,size=500)
+    #rvs2 = sp.stats.norm.rvs(loc=5,scale=10,size=500)
+    #p1 = sp.stats.ttest_ind(rvs1, rvs2)
+    #p2 = sp.stats.ttest_ind(rvs1, rvs2)
+    
+    assert(True)
