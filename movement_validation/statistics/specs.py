@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 """
+"Specs" or "Specifications", i.e. feature specifications.
+
+This module defines the following classes:
+
+- Specs
+- MovementSpecs(Specs)
+- SimpleSpecs(Specs)
+- EventSpecs(Specs)
 
 Instances of these classes define how a feature should be quantized into a
 histogram as well as some additional informaton (see csv files and class 
@@ -11,6 +19,9 @@ The raw information is actually located in csv files in:
 
 These classes instantiate each row of these files as instances.
 
+
+Notes
+--------------
 This is the Python port of:
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
     %2Bseg_worm/%2Bstats/specs.m
@@ -22,28 +33,21 @@ https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
     %2Bseg_worm/%2Bstats/event_specs.m
 
-This module defines the following classes:
-
-- Specs
-- MovementSpecs(Specs)
-- SimpleSpecs(Specs)
-- EventSpecs(Specs)
 
 """
-import os
-import csv
+import os, csv
 import numpy as np
 
 from .. import utils
 
 class Specs(object):
     """
+    Base class for worm feature specification.  Contains metadata about
+    a feature of the worm's behaviour.
     
     Attributes
     ----------
-    long_field : string
-        
-    
+    long_field: string
     
     Notes
     -----
@@ -81,7 +85,7 @@ class Specs(object):
         return value
     
     
-    def getData(self, worm_features):
+    def get_data(self, worm_features):
         """
         Drill down into the nested data structure of worm_features to obtain
         the numpy array with the data specific to this specification.
@@ -115,8 +119,8 @@ class Specs(object):
         return data
 
     
-    @staticmethod
-    def specs_factory(csv_path, class_function_handle):
+    @classmethod
+    def specs_factory(cls, csv_path, class_function_handle):
         """
         Factory for creating Specs subclasses for every extended feature
         in a CSV file
@@ -203,24 +207,27 @@ class Specs(object):
 
 class SimpleSpecs(Specs):
     """
-    %
-    %   Class:
-    %   seg_worm.stats.simple_specs
-    %
+    
+    Notes
+    ---------------
+    Formerly class: seg_worm.stats.simple_specs
+
     """
     def __init__(self):
         pass
     
-    
-    @staticmethod
-    def getSpecs():
-        """    
+    @classmethod
+    def specs_factory(cls):
+        """
+        Returns
+        ---------------------
+        A list of SimpleSpecs objects
+
+        Notes
+        ---------------------
         Formerly function objs = getSpecs()
-            %
-            %
-            %   s_specs = seg_worm.stats.simple_specs.getSpecs();
-            %
-            %
+        s_specs = seg_worm.stats.simple_specs.getSpecs();
+
         """
         csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'feature_metadata',
@@ -228,7 +235,7 @@ class SimpleSpecs(Specs):
         
         # Return a list of SimpleSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.specs_factory(csv_path, SimpleSpecs)
+        return super(SimpleSpecs, cls).specs_factory(csv_path, SimpleSpecs)
 
 
 class MovementSpecs(Specs):
@@ -251,20 +258,40 @@ class MovementSpecs(Specs):
     short_name :
     units : 
 
-    Created via static method, getSpecs()
+    Notes
+    ----------------
+    From Matlab comments:
+    TODO:
+    - might need to incorporate seg_worm.w.stats.wormStatsInfo
+    - remove is_time_series entry ...
 
-    %From Matlab comments:
-    %
-    %   TODO:
-    %   - might need to incorporate seg_worm.w.stats.wormStatsInfo
-    %   - remove is_time_series entry ...
     """
-
     def __init__(self):
         pass
 
+    @classmethod
+    def specs_factory(cls):
+        """
+        Returns
+        ---------------------
+        A list of MovementSpecs objects
 
-    def getData(self, worm_features):
+        Notes
+        ---------------------
+        Formerly objs = getSpecs()
+        %seg_worm.stats.movement_specs.getSpecs();
+        
+        """
+        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'movement_features.csv')
+        
+        # Return a list of MovementSpecs instances, one instance for each
+        # row in the csv_path CSV file.  Each row represents a feature. 
+        return super(MovementSpecs, cls).specs_factory(csv_path, MovementSpecs)
+    
+
+    def get_data(self, worm_features):
         """
         Parameters
         ----------
@@ -278,7 +305,7 @@ class MovementSpecs(Specs):
         Formerly data = getData(obj,feature_obj)
         
         """
-        data = super(MovementSpecs,self).getData(worm_features)
+        data = super(MovementSpecs, self).get_data(worm_features)
         
         # NOTE: We can't filter data here because the data is 
         #       filtered according to the value of the data, not 
@@ -296,30 +323,16 @@ class MovementSpecs(Specs):
         return data
 
 
-    @staticmethod
-    def getSpecs():
-        """
-        Formerly objs = getSpecs()
-        %seg_worm.stats.movement_specs.getSpecs();
-        
-        Returns
-        ---------------------
-
-        """
-        csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                'feature_metadata',
-                                'movement_features.csv')
-        
-        # Return a list of MovementSpecs instances, one instance for each
-        # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.specs_factory(csv_path, MovementSpecs)
-    
-
 class EventSpecs(Specs):
     """
 
+
+    Returns
+    -------------------
+    A list of EventSpecs objects
+
     Notes
-    --------------------------
+    -------------------
     Formerly seg_worm.stats.event_specs
 
     """
@@ -327,15 +340,15 @@ class EventSpecs(Specs):
         pass
 
    
-    @staticmethod
-    def getSpecs():
-        """    
+    @classmethod
+    def specs_factory(cls):
+        """
+        
+        Notes
+        -----------
         Formerly function objs = getSpecs()
-            %
-            %
-            %   s_specs = seg_worm.stats.event_specs.getSpecs();
-            %
-            %
+        s_specs = seg_worm.stats.event_specs.getSpecs();
+            
         """
         csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'feature_metadata',
@@ -343,10 +356,10 @@ class EventSpecs(Specs):
       
         # Return a list of MovementSpecs instances, one instance for each
         # row in the csv_path CSV file.  Each row represents a feature. 
-        return Specs.specs_factory(csv_path, EventSpecs)
+        return super(EventSpecs, cls).specs_factory(csv_path, EventSpecs)
 
     
-    def getData(self, worm_features, num_samples=0):
+    def get_data(self, worm_features, num_samples=0):
         """
 
         Parameters
@@ -363,13 +376,15 @@ class EventSpecs(Specs):
 
         Returns
         ---------------------
-        
-        #https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bstats/event_specs.m#L55
+        data: numpy array?
 
         Notes
         ---------------------
         Formerly  SegwormMatlabClasses / +seg_worm / +stats / event_specs.m
                   function data = getData(obj,feature_obj,n_samples)
+
+        https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+        %2Bseg_worm/%2Bstats/event_specs.m#L55
 
         """
 
@@ -380,18 +395,15 @@ class EventSpecs(Specs):
             # Basically we want to drill to the bottom of the nested
             # heirarchy of data in worm_features.
 
-
-        #JAH: This will fail in Python 2.7
-        #???? super(Specs).getData(worm_features)
-
         if num_samples == 0:
             num_samples = worm_features.nw.length.size
             
-        parent_data = super(EventSpecs,self).getData(worm_features)
+        parent_data = super(EventSpecs,self).get_data(worm_features)
 
-        #JAH: The Matlab code would use an empty structure.
-        #Rather than just having an empty class, all events have a property 'is_null' which
-        #indicates if the event class is fully populated or if there are no events for the video.
+        # JAH: The Matlab code would use an empty structure.
+        # Rather than just having an empty class, all events have a 
+        # property 'is_null' which indicates if the event class is fully 
+        # populated or if there are no events for the video.
 
         if parent_data is None or parent_data.is_null:
             return None
@@ -452,9 +464,12 @@ class EventSpecs(Specs):
         else:
             import pdb
             pdb.set_trace()
-            raise Exception("The WormFeature contains no data for " + self.long_field)
+            raise Exception("The WormFeature contains no data for " +
+                            self.long_field)
         
-        if not isinstance(data, (float, int)) and data.size == 0 and self.make_zero_if_empty:
+        if (not isinstance(data, (float, int)) and 
+           data.size == 0 and 
+           self.make_zero_if_empty):
             data = 0
         
         return data

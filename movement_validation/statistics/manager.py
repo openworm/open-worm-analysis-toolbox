@@ -8,42 +8,14 @@ StatisticsManager
 WormStatistics
 
 A translation of Matlab code written by Jim Hokanson,
-in the SegwormMatlabClasses GitHub repo.  Original code paths:
-
-DONE:
-                                                              # of lines
-SegwormMatlabClasses / +seg_worm / +stats / +hist / @manager     410
-SegwormMatlabClasses / +seg_worm / +stats / event_specs.m        143
-SegwormMatlabClasses / +seg_worm / +stats / movement_specs.m      81
-SegwormMatlabClasses / +seg_worm / +stats / simple_specs.m        45
-SegwormMatlabClasses / +seg_worm / +stats / specs.m               70
-SegwormMatlabClasses / +seg_worm / +stats / +hist / docs         (several CSV files)
-SegwormMatlabClasses / +seg_worm / +stats / @hist                339
-
-ALMOST COMPLETE:
-SegwormMatlabClasses / +seg_worm / @stats                        231 
-SegwormMatlabClasses / +seg_worm / +stats / @manager              61
-
-
-
-MIGHT NOT BE NEEDED:
-SegwormMatlabClasses / +seg_worm / +stats / +helpers / fexact.m  405
-SegwormMatlabClasses / +seg_worm / +stats / +helpers / swtest.m  260
-SegwormMatlabClasses / +seg_worm / +stats / @hist_specs           50 (unknown how used - @JimHokanson)
-SegwormMatlabClasses / +seg_worm / +w / *                         38 files, lots of lines of code... is this necessary?
-
-
-                                                          TOTAL 2095 lines + several CSV files
-                                                               unclear so far if the CSV files
-                                                               are being loaded and used by the
-                                                               code or if they are just docs
+in the SegwormMatlabClasses GitHub repo.
 
 """
-from scipy import stats
+import numpy as np
+import scipy as sp
 
-
+#%%
 class StatisticsManager(object):
-
     """
 
     Properties
@@ -91,23 +63,23 @@ class StatisticsManager(object):
         # mattest([exp_hists.mean_per_video]',[ctl_hists.mean_per_video]')
         # http://www.mathworks.com/help/bioinfo/ref/mattest.html
         # perform an unpaired t-test for differential expression with
-        # a standard two-tailed and two-sample t-test on every gene in DataX and DataY
-        # and return a p-value for each gene.
+        # a standard two-tailed and two-sample t-test on every gene in 
+        # DataX and DataY and return a p-value for each gene.
         # PValues = mattest(DataX, DataY)
         # p_t_all is a 726x1 matrix with values between 0 and 1.
 
-        t_statistics, p_values = stats.ttest_ind(exp_hists.mean_per_video,
-                                                 ctl_hists.mean_per_video)
+        t_statistics, p_values = sp.stats.ttest_ind(exp_hists.mean_per_video,
+                                                    ctl_hists.mean_per_video)
         # Removed this line: [stats_objs.p_t] = sl.struct.dealArray(p_t_all)
 
         # This is the main call to initialize each object
         #----------------------------------------------------------------------
-        self.stats = []
+        self.worm_statistics_objs = []
         for iObj in range(n_objs):
             # seg_worm.stats.initObject
-            self.stats.append(WormStatistics(exp_hists[iObj],
-                                    ctl_hists[iObj],
-                                    p_values[iObj]))
+            self.worm_statistics_objs.append(WormStatistics(exp_hists[iObj],
+                                                            ctl_hists[iObj],
+                                                            p_values[iObj]))
         """
         # Followup with properties that depend on the aggregate
         #----------------------------------------------------------------------
@@ -121,8 +93,10 @@ class StatisticsManager(object):
         self.q_worm = min([stats_objs.q_w])
         """
 
+#%%
 class WormStatistics(object):
     """
+    WormStatistics class.
 
     Notes
     --------------------
@@ -150,8 +124,8 @@ class WormStatistics(object):
 
          #New properties
          #-------------------------------------------------------------------
-         p_normal_experiment
-         p_normal_control
+         p_normal_experiment  TODO (grab from exp_histogram.p_normal)
+         p_normal_control      TODO (same)
          q_normal_experiment
          q_normal_control
          z_score_experiment
@@ -202,76 +176,76 @@ class WormStatistics(object):
   #        q_normal  #
       """
 
-    def __init__(self):
-        """
-        blank initializer I believe.
-        """
-        pass
+    #def __init__(self):
+    #    """
+    #    blank initializer I believe.
+    #    """
+    #    pass
 
-
-    def initObject(self, exp_hist, ctl_hist, p_t):
+    #%%
+    def __init__(self, exp_histogram, ctl_histogram, USE_OLD_CODE=False):
         """
         I added p_t as a parameter because I think this is needed, but in the 
         code it seems not!  Then why were the p-values calculated in Manager 
         at all???  - @MichaelCurrie
 
+        Parameters
+        ---------------------
+        exp_histogram: Histogram object
+            "experiment"
+        ctl_histogram: Histogram object
+            "control"
+        USE_OLD_CODE: bool
+            Use old code (i.e. Schafer Lab code)
 
-        Formerly seg_worm.stats.initObject(obj,exp_hist,ctl_hist)
+        Notes
+        ------------------        
+        Formerly:
+        seg_worm.stats.initObject(obj,exp_hist,ctl_hist)
+        worm2StatsInfo  
+        "Compute worm statistics information and save it to a file."
 
-        worm2StatsInfo  Compute worm statistics information and save it to a file.
-
-           seg_worm.stats.initObject
-
-           See Also:
-           seg_worm.stats.helpers.swtest
+        See Also:
+        seg_worm.stats.helpers.swtest
 
         """
-        pass
         """
         self.p_t = p_t
         del(p_t)
+        """
+        self.specs       = exp_histogram.specs
+        self.hist_type   = exp_histogram.hist_type
+        self.motion_type = exp_histogram.motion_type
+        self.data_type   = exp_histogram.data_type
 
-        ALPHA = 0.05  # Not really used since we don't examine H, just p
-        TAIL = 0
-
-        # NOTE: This should be passed in instead of being changed here ...
-        USE_OLD_CODE = False
-
-        # TODO: I'm not a big fan of all of this copying. I'd rather just copy an
-        # object (use name: seg_worm.stats.description?)  - @JimHokanson
-        self.field = exp_hist.field
-        self.name = exp_hist.name
-        self.short_name = exp_hist.short_name
-        self.units = exp_hist.units
-        self.feature_category = exp_hist.feature_category
-        self.hist_type = exp_hist.hist_type
-        self.motion_type = exp_hist.motion_type
-        self.data_type = exp_hist.data_type
-
-        is_exclusive = (exp_hist.none_valid & & ctl_hist.all_valid) \
-            | | (exp_hist.all_valid & & ctl_hist.none_valid)
-
+        # A flag indicating if either experiment has all valid means but
+        # control has none, or vice versa.
+        is_exclusive = (
+            (exp_histogram.no_valid_means and ctl_histogram.all_means_valid) or
+            (ctl_histogram.no_valid_means and exp_histogram.all_means_valid))
+        
         # zscore
         #----------------------------------------------------------------------
-        # This definition is slightly different than the old version, but matches
-        # the textual description (in code, what about in published paper?)
+        # This definition is slightly different than the old version, 
+        # but matches the textual description
+        # TODO: it does in code, but what about in published paper?
 
         # From Nature Methods 2013 Supplemental Description:
         #----------------------------------------------------------------------
-        # Measurements exclusively found in the experimental group have a zScore of
-        # infinity and those found exclusively found in the control are
-        # -infinity.
+        # Measurements exclusively found in the experimental group have 
+        # a zScore of infinity and those found exclusively found in the 
+        # control are -infinity.
 
-        if np.isnan(exp_hist.mean):
-            if (USE_OLD_CODE and is_exclusive) or
-                (~USE_OLD_CODE and ctl_hist.n_valid_measurements > 1):
+        if np.isnan(exp_histogram.mean):
+            if ((USE_OLD_CODE and is_exclusive) or
+                (~USE_OLD_CODE and ctl_histogram.n_valid_measurements > 1)):
                 self.z_score_experiment = -np.Inf
             else:
                 self.z_score_experiment = np.NaN
 
-        elif np.isnan(ctl_hist.mean):
-            if (USE_OLD_CODE and is_exclusive) or
-                (~USE_OLD_CODE and exp_hist.n_valid_measurements > 1):
+        elif np.isnan(ctl_histogram.mean):
+            if ((USE_OLD_CODE and is_exclusive) or
+                (~USE_OLD_CODE and exp_histogram.n_valid_measurements > 1)):
                 self.z_score_experiment = np.Inf
             else:
                 self.z_score_experiment = np.NaN
@@ -280,31 +254,16 @@ class WormStatistics(object):
             # This might need to be means_per_video, not the mean ...
             # - @JimHokanson
             self.z_score_experiment = (
-                exp_hist.mean - ctl_hist.mean) / ctl_hist.std
+                (exp_histogram.mean - ctl_histogram.mean) / ctl_histogram.std)
 
-        # TODO: Move this to the histogram, not here!  These are properties of how
-        # normal the distributions of the histograms are, and have nothing to do
-        # with the comparative statistics between the two groups
-        # - @JimHokanson
-        #----------------------------------------------------------------------
-        p_fields  = {'p_normal_experiment' 'p_normal_control'};
-        hist_objs = {exp_hist ctl_hist};
-        
-        for iObj = 1:2
-            cur_field    = p_fields{iObj};
-            cur_hist_obj = hist_objs{iObj};
-            if cur_hist_obj.n_valid_measurements < 3
-                obj.(cur_field) = NaN;
-            else
-                obj.(cur_field) = seg_worm.stats.helpers.swtest(cur_hist_obj.mean_per_video,ALPHA,TAIL);
-            end
-        end
+        self.p_normal_experiment = exp_histogram.p_normal
+        self.p_normal_control    = ctl_histogram.p_normal
 
         # Rules are:
         # --------------------------------------
         # p_t
         #
-        # - not in one, but all in the other - use fexact (Fishers Exact)
+        # - not in one, but all in the other - use fexact (Fisher's Exact)
         # - otherwise use mattest
         #
         # p_w
@@ -315,14 +274,24 @@ class WormStatistics(object):
         if is_exclusive:
             # This is a literal translation of the code (I think)
             # I'm a bit confused by it ...  - @JimHokanson
-            n_expt = exp_hist.n_videos
-            n_total = n_expt + ctl_hist.n_videos
-            self.p_w = seg_worm.stats.helpers.fexact(
-                n_expt, n_total, n_expt, n_expt)
+            n_exp_videos = exp_histogram.n_videos
+            n_videos = n_exp_videos + ctl_histogram.n_videos
+
+            # This is a strange step, I don't know what it means...
+            # Why this specific list of values, it's strange.
+            # -@MichaelCurrie
+            params = \
+                np.array([n_exp_videos, n_videos, n_exp_videos, n_exp_videos])
+            _,self.p_w = stats.fisher_exact(params)
+            # ORIGINAL MATLAB VERSION:
+            #self.p_w = seg_worm.stats.helpers.fexact(*params)
+
             self.p_t = self.p_w
-        elif ~(exp_hist.none_valid | | ctl_hist.none_valid):
-            # We need a few valid values from both ...
-            self.p_w = ranksum(exp_hist.valid_means, ctl_hist.valid_means)
+
+        # We need a few valid values from both ...
+        elif ~(exp_histogram.none_valid | ctl_histogram.none_valid):
+            _, self.p_w = sp.stats.ranksums(exp_histogram.valid_means, 
+                                            ctl_histogram.valid_means)
 
         # NOTE: This code is for an individual object, the corrections
         #       are done in the manager which is aware of all objects ...
@@ -330,5 +299,3 @@ class WormStatistics(object):
         # pWValues - these seem to be the real statistics used ...
         # - exclusive - fexact  seg_worm.stats.helpers.fexact
         # - ranksum
-        """
-        pass

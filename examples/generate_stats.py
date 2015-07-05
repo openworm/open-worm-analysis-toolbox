@@ -29,7 +29,7 @@ def main():
 
     fig = plt.figure(1)
     
-    cols = 4; rows = 6
+    rows = 5; cols = 4
     #for i in range(0, 700, 100):
     for i in range(rows * cols):
         ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
