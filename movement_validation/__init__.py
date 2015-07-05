@@ -27,7 +27,7 @@ from .features.worm_features import WormFeatures
 from .features.feature_processing_options import FeatureProcessingOptions
 
 from .statistics.histogram_manager import HistogramManager
-from .statistics.manager import StatisticsManager
+from .statistics.statistics_manager import StatisticsManager
 from .statistics.histogram import Histogram
 
 try:

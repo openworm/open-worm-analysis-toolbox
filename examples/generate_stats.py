@@ -27,8 +27,11 @@ def main():
     experiment_histograms, control_histograms = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
+    print('Done with stats generation')
+
+    # Plot some histograms
+    """
     fig = plt.figure(1)
-    
     rows = 5; cols = 4
     #for i in range(0, 700, 100):
     for i in range(rows * cols):
@@ -36,13 +39,10 @@ def main():
         mv.Histogram.plot_versus(ax,
                                  experiment_histograms.hists[i],
                                  control_histograms.hists[i])
-                                 
     #plt.tight_layout()
+    """                                 
 
-    print('Done with stats generation')
-
-    # TODO: test this:
-    #stats = mv.StatisticsManager(experiment_histograms, control_histograms)
+    stats = mv.StatisticsManager(experiment_histograms, control_histograms)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!

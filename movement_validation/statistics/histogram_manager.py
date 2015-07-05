@@ -453,5 +453,4 @@ class HistogramManager(object):
             merged_histograms[feature_index] = merged_histogram
        
         return merged_histograms
-
-
+        

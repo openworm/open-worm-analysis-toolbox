@@ -14,6 +14,8 @@ in the SegwormMatlabClasses GitHub repo.
 import numpy as np
 import scipy as sp
 
+from .. import utils
+
 #%%
 class StatisticsManager(object):
     """
@@ -46,7 +48,7 @@ class StatisticsManager(object):
         Formerly seg_worm.stats.manager.initObject
 
         """
-        n_objs = len(exp_hists.hists)
+        num_histograms = len(exp_hists.hists)
 
         # p_t Initialization
         #----------------------------------------------------------------------
@@ -74,24 +76,25 @@ class StatisticsManager(object):
 
         # This is the main call to initialize each object
         #----------------------------------------------------------------------
-        self.worm_statistics_objs = []
-        for iObj in range(n_objs):
-            # seg_worm.stats.initObject
-            self.worm_statistics_objs.append(WormStatistics(exp_hists[iObj],
-                                                            ctl_hists[iObj],
-                                                            p_values[iObj]))
-        """
-        # Followup with properties that depend on the aggregate
+        self.worm_statistics_objects = [None]*num_histograms
+        for histogram_index in range(num_histograms):
+            cur_worm_stats = WormStatistics(exp_hists.hists[histogram_index],
+                                            ctl_hists.hists[histogram_index],
+                                            p_values[histogram_index])
+
+            self.worm_statistics[histogram_index] = cur_worm_stats
+    
+        # Initialize properties that depend on the aggregate
         #----------------------------------------------------------------------
-        [~, q_t_all] = mafdr([stats_objs.p_t])
-        [stats_objs.q_t] = sl.struct.dealArray(q_t_all)
+        self.p_t = [x.p_t for x in self.worm_statistics_objects]
+        self.p_w = [x.p_w for x in self.worm_statistics_objects]
+    
+        self.q_t = utils.compute_q_values(self.p_t)
+        self.q_w = utils.compute_q_values(self.p_w)
 
-        [~, q_w_all] = mafdr([stats_objs.p_w])
-        [stats_objs.q_w] = sl.struct.dealArray(q_w_all)
+        self.p_worm = min(self.p_w)
+        self.q_worm = min(self.q_w)
 
-        self.p_worm = min([stats_objs.p_w])
-        self.q_worm = min([stats_objs.q_w])
-        """
 
 #%%
 class WormStatistics(object):
@@ -124,8 +127,8 @@ class WormStatistics(object):
 
          #New properties
          #-------------------------------------------------------------------
-         p_normal_experiment  TODO (grab from exp_histogram.p_normal)
-         p_normal_control      TODO (same)
+         p_normal_experiment
+         p_normal_control
          q_normal_experiment
          q_normal_control
          z_score_experiment
@@ -282,7 +285,7 @@ class WormStatistics(object):
             # -@MichaelCurrie
             params = \
                 np.array([n_exp_videos, n_videos, n_exp_videos, n_exp_videos])
-            _,self.p_w = stats.fisher_exact(params)
+            _, self.p_w = sp.stats.fisher_exact(params)
             # ORIGINAL MATLAB VERSION:
             #self.p_w = seg_worm.stats.helpers.fexact(*params)
 
