@@ -240,8 +240,7 @@ class SimpleSpecs(Specs):
 
 class MovementSpecs(Specs):
     """
-
-    This class specifies how to treat each movement related feature when doing
+    This class specifies how to treat each movement-related feature when doing
     histogram processing.
 
     Attributes

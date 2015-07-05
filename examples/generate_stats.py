@@ -42,7 +42,13 @@ def main():
     #plt.tight_layout()
     """                                 
 
-    stats = mv.StatisticsManager(experiment_histograms, control_histograms)
+    stat = mv.StatisticsManager(experiment_histograms, control_histograms)
+
+    print("Comparison p and q values are %.2f and %.2f, respectively." %
+    #     (stat.p_worm, stat.q_worm))
+          (stat.p_worm, 0))
+
+    # TODO: plot stats.p_w
 
     # TODO:
     # now somehow display the stats to prove that we generated them!
@@ -93,7 +99,8 @@ def obtain_histograms(root_path, pickle_file_path):
     
     Returns
     -------
-    Two items: experiment_histograms and control_histograms    
+    experiment_histograms, control_histograms
+        Both instances of HistogramManager
     
     """
     if os.path.isfile(pickle_file_path):

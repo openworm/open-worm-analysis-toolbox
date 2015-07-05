@@ -19,12 +19,28 @@ from .. import utils
 #%%
 class StatisticsManager(object):
     """
+    A class that encapsulates a statistical comparison between two
+    arrays of histograms, experiment histograms and control histograms.
+    
+    This class stores WormStatistics objects for each of the 726 features,
+    and some shared statistical properties.
 
-    Properties
+    Attributes
     ---------------------------------------    
-    stats
-    p_worm
-    q_worm
+    worm_statistics_objects: list of WormStatistics objects
+        one object for each of 726 features
+    p_t: numpy array
+        each non-null p_t from worm_statistics_objects
+    p_w: numpy array
+        each non-null p_w from worm_statistics_objects
+    q_t: numpy array
+        False Discovery Rate (FDR) (i.e. q-values) for p_t
+    q_w: numpy array
+        False Discovery Rate (FDR) (i.e. q-values) for p_w
+    p_worm: float
+        minimum p_w
+    q_worm: float
+        minimum q_w
 
     Notes
     ---------------------------------------    
@@ -61,6 +77,8 @@ class StatisticsManager(object):
         #
         # How much of an impact do we get if we move this to being computed
         # for each object, instead of all of them at once?
+
+
         # Formerly: p_t_all =
         # mattest([exp_hists.mean_per_video]',[ctl_hists.mean_per_video]')
         # http://www.mathworks.com/help/bioinfo/ref/mattest.html
@@ -76,9 +94,10 @@ class StatisticsManager(object):
         # This is a two-sided test for the null hypothesis that 2
         # independent samples have identical average (expected) values. 
         # This test assumes that the populations have identical variances.
-        t_statistics, p_values = sp.stats.ttest_ind(exp_hists.valid_means_array,
-                                                    ctl_hists.valid_means_array)
+        t_statistics, p_t = sp.stats.ttest_ind(exp_hists.valid_means_array,
+                                               ctl_hists.valid_means_array)
         # Removed this line: [stats_objs.p_t] = sl.struct.dealArray(p_t_all)
+                                               
 
         # This is the main call to initialize each object
         #----------------------------------------------------------------------
@@ -111,17 +130,34 @@ class StatisticsManager(object):
         #self.q_t = utils.compute_q_values(self.p_t)
         #self.q_w = utils.compute_q_values(self.p_w)
 
-        #self.p_worm = min(self.p_w)
-        #self.q_worm = min(self.q_w)
+    @property
+    def p_worm(self):
+        return min(self.p_w)
+    
+    @property
+    def q_worm(self):
+        return min(self.q_w)
 
+    def __repr__(self):
+        return utils.print_object(self)
 
 #%%
 class WormStatistics(object):
     """
     WormStatistics class.
 
+    Attributes
+    --------------------
+    z_score_experiment
+    exp_p_normal
+    ctl_p_normal
+    p_w
+    p_t
+
     Notes
     --------------------
+    All attributes are set to np.NaN if one or both of ctl or exp are None.    
+
     Formerly: seg_worm.stats
 
     Some of the statistics are aggegrate:
@@ -231,16 +267,20 @@ class WormStatistics(object):
         """
         if exp_histogram is None or ctl_histogram is None:
             self.z_score_experiment = np.NaN
-            self.p_normal_experiment = np.NaN
-            self.p_normal_control = np.NaN
+            self.exp_p_normal = np.NaN
+            self.ctl_p_normal = np.NaN
             self.p_w = np.NaN
             self.p_t = np.NaN
             return
-            
-        self.specs       = exp_histogram.specs
-        self.hist_type   = exp_histogram.hist_type
-        self.motion_type = exp_histogram.motion_type
-        self.data_type   = exp_histogram.data_type
+
+        # Ensure that we are comparing the same feature!        
+        assert(exp_histogram.specs.long_field == ctl_histogram.specs.long_field)
+        assert(exp_histogram.hist_type == ctl_histogram.hist_type)
+        assert(exp_histogram.motion_type == ctl_histogram.motion_type)
+        assert(exp_histogram.data_type == ctl_histogram.data_type)
+        
+        self.exp_histogram = exp_histogram
+        self.ctl_histogram = ctl_histogram
 
         # A flag indicating if either experiment has all valid means but
         # control has none, or vice versa.
@@ -280,8 +320,8 @@ class WormStatistics(object):
             self.z_score_experiment = (
                 (exp_histogram.mean - ctl_histogram.mean) / ctl_histogram.std)
 
-        self.p_normal_experiment = exp_histogram.p_normal
-        self.p_normal_control    = ctl_histogram.p_normal
+        self.exp_p_normal = exp_histogram.p_normal
+        self.ctl_p_normal = ctl_histogram.p_normal
 
         # Rules are:
         # --------------------------------------
@@ -332,3 +372,31 @@ class WormStatistics(object):
         # pWValues - these seem to be the real statistics used ...
         # - exclusive - fexact  seg_worm.stats.helpers.fexact
         # - ranksum
+
+
+
+    @property    
+    def specs(self):
+        assert(self.exp_histogram.specs == self.ctl_histogram.specs)
+        return self.exp_histogram.specs
+
+    @property    
+    def hist_type(self):
+        assert(self.exp_histogram.hist_type == self.ctl_histogram.hist_type)
+        return self.exp_histogram.specs
+
+    @property    
+    def motion_type(self):
+        assert(self.exp_histogram.motion_type == 
+               self.ctl_histogram.motion_type)
+        self.motion_type = self.exp_histogram.motion_type
+
+    @property    
+    def data_type(self):
+        assert(self.exp_histogram.data_type == self.ctl_histogram.data_type)
+        self.data_type = self.exp_histogram.data_type
+
+    def __repr__(self):
+        return utils.print_object(self)
+
+

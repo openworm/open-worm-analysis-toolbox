@@ -27,29 +27,20 @@ class Histogram(object):
         2. merged_histogram_factory method, which accepts a list of
            histograms and then returns a new, merged, histogram from them.
     
-    
-
     Attributes
-    ----------
-    specs.long_field
-    specs.name
-    specs.short_name
-    specs.units
-    specs.feature_category
-    specs.bin_width
-    specs.is_zero_bin
-    specs.is_signed
-    hist_type
-    motion_type
-    data_type
-    data
-    num_samples
-    bin_boundaries
-    bin_midpoints
+    -----------------
+    data: numpy array
+    specs: Specs object
+    hist_type: str
+    motion_type: str
+    data_type: str
+    num_samples: int
+    bin_boundaries: numpy array
+    bin_midpoints: numpy array
 
-
-    TODO:  Missing Features:
-    -----------------------------------------
+    Notes
+    -----------------
+    TODO: Missing Features:
         - saving to disk
         - version comparison
         - allow loading from a saved file
