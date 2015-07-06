@@ -22,7 +22,7 @@ import six # For compatibility between Python 2 and 3 in case we have to revert
 from .. import utils
 from ..features.worm_features import WormFeatures
 
-from .histogram import Histogram
+from .histogram import Histogram, MergedHistogram
 from .specs import SimpleSpecs, EventSpecs, MovementSpecs
 
 #%%
@@ -33,7 +33,7 @@ class HistogramManager(object):
     
     Attributes
     ------------- 
-    hists: list
+    merged_histograms: numpy array of MergedHistogram objects
 
     Notes
     -------------
@@ -79,9 +79,9 @@ class HistogramManager(object):
         # At this point hist_cell_array is a list, with one element for 
         # each video.
         # Each element is a numpy array of 700+ Histogram instances.
-        # Here we merge them and we assign to self.hists a numpy array
+        # Here we merge them and we assign to self.merged_histograms a numpy array
         # of 700+ Histogram instances, for the merged video
-        self.hists = HistogramManager.merge_histograms(hist_cell_array)
+        self.merged_histograms = HistogramManager.merge_histograms(hist_cell_array)
 
 
     #%%
@@ -138,13 +138,16 @@ class HistogramManager(object):
         return np.hstack((m_hists, s_hists, e_hists))
 
     @property
+    def valid_histograms_mask(self):
+        return np.array([h is not None for h in self.merged_histograms])
+
+    @property
+    def valid_histograms_array(self):
+        return self.merged_histograms[self.valid_histograms_mask]
+    
+    @property
     def valid_means_array(self):
-        valid_means = []
-        for hist in self.hists:
-            if hist is not None:
-                valid_means.append(hist.mean_per_video)
-        
-        return np.array(valid_means)
+        return np.array([hist.mean for hist in self.valid_histograms_array])
 
     ###########################################################################
     ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
@@ -403,9 +406,11 @@ class HistogramManager(object):
 
         Notes
         -------------------------
-        Currently each histogram object should only contain a single 
-        "video", i.e. a single set of data, and thus a single mean. 
-        Perhaps in the future this could be changed.
+        Currently each histogram object to be merged should only contain 
+        a single "video", i.e. a single set of data, and thus a single mean. 
+        Perhaps in the future this could be changed so we can merge
+        MergedHistogram objects, but for now we can only merge an array
+        of (not merged) Histogram objects.
 
         Formerly objs = seg_worm.stats.hist.mergeObjects(hist_cell_array)
 
@@ -418,20 +423,19 @@ class HistogramManager(object):
         hist_cell_array = np.array(hist_cell_array)
 
         # Check that we don't have any multiple videos in any histogram,
-        # since that's not yet implemented
-        num_videos_per_histogram = [hist.num_videos for hist
-                                    in hist_cell_array.flatten() 
-                                    if hist is not None]
-        if any(num_videos_per_histogram !=
-               np.ones(len(num_videos_per_histogram))):
-            raise Exception("Multiple videos per histogram not (yet) "
+        # since it's not implemented to merge already-merged histograms
+        num_videos_per_histogram = np.array([hist.num_videos for hist
+                                             in hist_cell_array.flatten() 
+                                             if hist is not None])
+        if np.count_nonzero(num_videos_per_histogram != 1) > 0:
+            raise Exception("Merging already-merged histograms is not yet "
                             "implemented")
 
         # Let's assign some nicer names to the dimensions of hist_cell_array
         (num_histograms_per_feature, num_features) = hist_cell_array.shape
         
         # Pre-allocate space for the 700+ Histogram objects
-        merged_histograms = [None]*num_features
+        merged_histograms = np.array([None]*num_features)
 
         # Go through each feature and create a merged histogram
         for feature_index in range(num_features):
@@ -457,8 +461,8 @@ class HistogramManager(object):
                           
                 continue
             
-            merged_histogram = Histogram.merged_histogram_factory(histograms)
-            merged_histograms[feature_index] = merged_histogram
-       
+            merged_histograms[feature_index] = \
+                MergedHistogram.merged_histogram_factory(histograms)
+
         return merged_histograms
         

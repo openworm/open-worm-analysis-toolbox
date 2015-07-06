@@ -27,7 +27,7 @@ class StatisticsManager(object):
 
     Attributes
     ---------------------------------------    
-    worm_statistics_objects: list of WormStatistics objects
+    worm_statistics_objects: numpy array of WormStatistics objects
         one object for each of 726 features
     p_t: numpy array
         each non-null p_t from worm_statistics_objects
@@ -48,111 +48,98 @@ class StatisticsManager(object):
 
     """
 
-    def __init__(self, exp_hists, ctl_hists):
+    def __init__(self, exp_histogram_manager, ctl_histogram_manager):
         """
         Initializes the Manager class.    
 
         Parameters
         ---------------------------------------    
-        exp_hists
-          An array of exp_hist entries
-        ctl_hists
-          An array of ctl_hist entries
+        exp_histogram_manager: HistogramManager object
+            Experiment
+        ctl_histogram_manager: HistogramManager object
+            Control
 
         Notes
         ---------------------------------------    
         Formerly seg_worm.stats.manager.initObject
 
         """
-        num_histograms = len(exp_hists.hists)
+        assert(len(exp_histogram_manager.merged_histograms) == 
+               len(ctl_histogram_manager.merged_histograms))
+        num_features = len(exp_histogram_manager.merged_histograms)
 
-        # p_t Initialization
-        #----------------------------------------------------------------------
-        # @JimHokanson comments
-        # :/ Sadly this needs to be done beforehand to be the same ...
-        # It might be updated during object initialization ...
-        #
-        # TODO: This looks nicely vectorized, but it breaks the organization
-        #       significantly ...
-        #
-        # How much of an impact do we get if we move this to being computed
-        # for each object, instead of all of them at once?
-
-
-        # Formerly: p_t_all =
-        # mattest([exp_hists.mean_per_video]',[ctl_hists.mean_per_video]')
-        # http://www.mathworks.com/help/bioinfo/ref/mattest.html
-        # perform an unpaired t-test for differential expression with
-        # a standard two-tailed and two-sample t-test on every gene in 
-        # DataX and DataY and return a p-value for each gene.
-        # PValues = mattest(DataX, DataY)
-        # p_t_all is a 726x1 matrix with values between 0 and 1.
-
-        # (From SciPy docs:)
-        # Calculates the T-test for the means of TWO INDEPENDENT samples 
-        # of scores.
-        # This is a two-sided test for the null hypothesis that 2
-        # independent samples have identical average (expected) values. 
-        # This test assumes that the populations have identical variances.
-        t_statistics, p_t = sp.stats.ttest_ind(exp_hists.valid_means_array,
-                                               ctl_hists.valid_means_array)
-        # Removed this line: [stats_objs.p_t] = sl.struct.dealArray(p_t_all)
-                                               
-
-        # This is the main call to initialize each object
-        #----------------------------------------------------------------------
-        self.worm_statistics_objects = [None]*num_histograms
-        for histogram_index in range(num_histograms):
-            cur_worm_stats = WormStatistics(exp_hists.hists[histogram_index],
-                                            ctl_hists.hists[histogram_index])
-                #REMOVED:
-               #, p_values) 
-                # since len(p_values) == 10 but num_histograms == 726!
-                                        
-
-            self.worm_statistics_objects[histogram_index] = cur_worm_stats
+        # Initialize a WormStatistics object for each of 726 features,
+        # comparing experiment and control.
+        self.worm_statistics_objects = np.array([None] * num_features)
+        for feature_index in range(num_features):
+            self.worm_statistics_objects[feature_index] = WormStatistics(
+                    exp_histogram_manager.merged_histograms[feature_index],
+                    ctl_histogram_manager.merged_histograms[feature_index])
     
         # Initialize properties that depend on the aggregate
         #----------------------------------------------------------------------
-        self.p_t = np.array([x.p_t for x in self.worm_statistics_objects])
-        self.p_w = np.array([x.p_w for x in self.worm_statistics_objects])
-        
-        # Filter the NaN entries 
-        # I added this to get the code to work.  This puts the p's and q's 
-        # out of order so it's not possible to know from what histogram they
-        # are from after we do this, but it's necessary for compute_q_values
-        # to work, since it needs a NaN-free array.
-        # - @MichaelCurrie
-        self.p_t = self.p_t[~np.isnan(self.p_t)]
-        self.p_w = self.p_w[~np.isnan(self.p_w)]
-    
-        # TODO: DEBUG these four lines.
-        #self.q_t = utils.compute_q_values(self.p_t)
-        #self.q_w = utils.compute_q_values(self.p_w)
 
     @property
+    def valid_p_t_array(self):
+        p_t_array = np.array([x.p_t for x in self.worm_statistics_objects])
+
+        # Filter the NaN entries 
+        return p_t_array[~np.isnan(p_t_array)]
+
+    @property        
+    def valid_p_w_array(self):
+        p_w_array = np.array([x.p_w for x in self.worm_statistics_objects])
+
+        # Filter the NaN entries 
+        return p_w_array[~np.isnan(p_w_array)]
+        
+    @property
+    def q_t(self):
+        return utils.compute_q_values(self.p_t)
+
+    @property
+    def q_w(self):
+        return utils.compute_q_values(self.p_w)
+        
+    @property
     def p_worm(self):
-        return min(self.p_w)
+        p_w_array = np.array([x.p_w for x in self.worm_statistics_objects])
+        
+        return np.nanmin(p_w_array)
     
     @property
     def q_worm(self):
-        return min(self.q_w)
+        q_w_array = np.array([x.q_w for x in self.worm_statistics_objects])
+        
+        return np.nanmin(q_w_array)
 
     def __repr__(self):
         return utils.print_object(self)
 
+
 #%%
 class WormStatistics(object):
     """
-    WormStatistics class.
+    WormStatistics class.  Statistical comparison of two MergedHistogram 
+    objects.
 
     Attributes
     --------------------
+    exp_histogram  (the underlying histogram)
+    ctl_histogram  (the underlying histogram)  
+    
     z_score_experiment
     exp_p_normal
+        Probability of the data given a normality assumption
     ctl_p_normal
+        Probability of the data given a normality assumption
     p_w
     p_t
+    
+    specs
+    hist_type
+    motion_type
+    data_type
 
     Notes
     --------------------
@@ -160,92 +147,18 @@ class WormStatistics(object):
 
     Formerly: seg_worm.stats
 
-    Some of the statistics are aggegrate:
-    - p_value
-    - q_value
-
-    List of exclusive features:
-     properties
-
-         #TODO: Move to object that both hist and stats display
-         #
-         #ALSO: We need two, one for experiment and one for controls
-         #Definitions in: seg_worm.stats.hist
-         field
-         name
-         short_name
-         units
-         feature_category
-         hist_type
-         motion_type
-         data_type 
-    
-         #New properties
-         #-------------------------------------------------------------------
-         p_normal_experiment
-         p_normal_control
-         q_normal_experiment
-         q_normal_control
-         z_score_experiment
-         #From documentation:
-         #- no controls, this is empty
-         #- absent in controls, but 2+ experiments, Inf
-         #- present in 2+ controls, -Inf
-         #Technically, this is incorrect
-         #
-    
-         z_score_control    = 0 #By definition ...
-    
-         p_t  #Differential expression ...
-         #    - function: mattest (bioinformatics toolbox)
-         #    This doesn't seem like it is used ...
-    
-         p_w = NaN #NaN Default value, if all videos have a valid value 
-         #then this is not set
-    
-         #NOTE: For the following, the corrections can be per strain or
-         #across strains. I think the current implementation is per strain.
-         #I'd like to go with the values used in the paper ...
-    
-         q_t
-         #In the old code corrections were per strain or across all strains. 
-    
-         q_w
-         #In the old code corrections were per strain or across all strains. 
-         #Current implementation is per strain, not across strains ...
-    
-         p_significance
-    
-    
-         #pTValue
-         #pWValue
-         #qTValue
-         #qWValue
-
-
-         #-------------------------------------------------------------------
-  #        z_score   #not populated if no controls are provided ...
-  #        mean      #mean of the mean hist values
-  #        std       #std of the hist values
-  #        n_samples ## of videos where the mean is not NaN
-  #        p_normal = NaN  #probability of being a normal distribution
-  #        #
-  #        #    seg_worm.fex.swtest(data(i).dataMeans, 0.05, 0)
-  #        q_normal  #
-      """
+    """
 
     #%%
     def __init__(self, exp_histogram, ctl_histogram, USE_OLD_CODE=False):
         """
-        I added p_t as a parameter because I think this is needed, but in the 
-        code it seems not!  Then why were the p-values calculated in Manager 
-        at all???  - @MichaelCurrie
+        Initializer for StatisticsManager
 
         Parameters
         ---------------------
-        exp_histogram: Histogram object
+        exp_histogram: MergedHistogram object
             "experiment"
-        ctl_histogram: Histogram object
+        ctl_histogram: MergedHistogram object
             "control"
         USE_OLD_CODE: bool
             Use old code (i.e. Schafer Lab code)
@@ -256,125 +169,182 @@ class WormStatistics(object):
         seg_worm.stats.initObject(obj,exp_hist,ctl_hist)
         worm2StatsInfo  
         "Compute worm statistics information and save it to a file."
-
         See Also:
         seg_worm.stats.helpers.swtest
 
         """
-        """
-        self.p_t = p_t
-        del(p_t)
-        """
         if exp_histogram is None or ctl_histogram is None:
-            self.z_score_experiment = np.NaN
-            self.exp_p_normal = np.NaN
-            self.ctl_p_normal = np.NaN
-            self.p_w = np.NaN
-            self.p_t = np.NaN
+            self._z_score_experiment = np.NaN
+            self._p_w = np.NaN
+            self._p_t = np.NaN
+            self._t_statistic = np.NaN
+            self._fisher_p = np.NaN
+            
             return
 
-        # Ensure that we are comparing the same feature!        
-        assert(exp_histogram.specs.long_field == ctl_histogram.specs.long_field)
+        # Ensure that we are comparing the same feature!
+        assert(exp_histogram.specs.long_field == 
+               ctl_histogram.specs.long_field)
         assert(exp_histogram.hist_type == ctl_histogram.hist_type)
         assert(exp_histogram.motion_type == ctl_histogram.motion_type)
         assert(exp_histogram.data_type == ctl_histogram.data_type)
-        
+
         self.exp_histogram = exp_histogram
         self.ctl_histogram = ctl_histogram
+        self.USE_OLD_CODE = USE_OLD_CODE
 
-        # A flag indicating if either experiment has all valid means but
-        # control has none, or vice versa.
-        is_exclusive = (
-            (exp_histogram.no_valid_means and ctl_histogram.all_means_valid) or
-            (ctl_histogram.no_valid_means and exp_histogram.all_means_valid))
+    #%%
+    @property
+    def z_score_experiment(self):
+        """
+        Calculate the z-score experiment value.
         
-        # zscore
-        #----------------------------------------------------------------------
-        # This definition is slightly different than the old version, 
-        # but matches the textual description
-        # TODO: it does in code, but what about in published paper?
+        Returns
+        ------------
+        float
+            the z_score_experiment value
 
-        # From Nature Methods 2013 Supplemental Description:
-        #----------------------------------------------------------------------
-        # Measurements exclusively found in the experimental group have 
-        # a zScore of infinity and those found exclusively found in the 
-        # control are -infinity.
-
-        if np.isnan(exp_histogram.mean):
-            if ((USE_OLD_CODE and is_exclusive) or
-                (~USE_OLD_CODE and ctl_histogram.n_valid_measurements > 1)):
-                self.z_score_experiment = -np.Inf
+        Notes
+        ------------
+        This definition is slightly different than the old version, 
+        but matches the textual description
+        
+        TODO: it does in code, but what about in published paper?
+    
+        From Nature Methods 2013 Supplemental Description:
+        "Measurements exclusively found in the experimental group have 
+        a zScore of infinity and those found exclusively found in the 
+        control are -infinity."
+        
+        """
+        try:
+            return self._z_score_experiment
+        except AttributeError:
+            USE_OLD_CODE = self.USE_OLD_CODE
+            
+            if np.isnan(self.exp_histogram.mean):
+                if ((USE_OLD_CODE and self.is_exclusive) or
+                    (~USE_OLD_CODE and self.ctl_histogram.num_valid_videos>1)):
+                    self._z_score_experiment = -np.Inf
+                else:
+                    self.z_score_experiment = np.NaN
+    
+            elif np.isnan(self.ctl_histogram.mean):
+                if ((USE_OLD_CODE and self.is_exclusive) or
+                    (~USE_OLD_CODE and self.exp_histogram.num_valid_videos>1)):
+                    self._z_score_experiment = np.Inf
+                else:
+                    self._z_score_experiment = np.NaN
+    
             else:
-                self.z_score_experiment = np.NaN
+                # This might need to be means_per_video, not the mean ...
+                # - @JimHokanson
+                self._z_score_experiment = (
+                    (self.exp_histogram.mean - self.ctl_histogram.mean) / 
+                    self.ctl_histogram.std)
+    
+            return self._z_score_experiment
 
-        elif np.isnan(ctl_histogram.mean):
-            if ((USE_OLD_CODE and is_exclusive) or
-                (~USE_OLD_CODE and exp_histogram.n_valid_measurements > 1)):
-                self.z_score_experiment = np.Inf
-            else:
-                self.z_score_experiment = np.NaN
-
+    #%%
+    @property
+    def exp_p_normal(self):
+        if self.exp_histogram is None:
+            return np.NaN
         else:
-            # This might need to be means_per_video, not the mean ...
-            # - @JimHokanson
-            self.z_score_experiment = (
-                (exp_histogram.mean - ctl_histogram.mean) / ctl_histogram.std)
-
-        self.exp_p_normal = exp_histogram.p_normal
-        self.ctl_p_normal = ctl_histogram.p_normal
-
-        # Rules are:
-        # --------------------------------------
-        # p_t
-        #
-        # - not in one, but all in the other - use fexact (Fisher's Exact)
-        # - otherwise use mattest
-        #
-        # p_w
-        # - not in one, but all in the other - use fexact
-        # - partial in both - use Wilcoxon rank-sum test
-        # - if in both, set to NaN
-
-        if is_exclusive:
-            # This is a literal translation of the code (I think)
-            # I'm a bit confused by it ...  - @JimHokanson
-            n_exp_videos = exp_histogram.n_videos
-            n_videos = n_exp_videos + ctl_histogram.n_videos
-
-            # This is a strange step, I don't know what it means...
-            # Why this specific list of values, it's strange.
-            # -@MichaelCurrie
-            params = \
-                np.array([n_exp_videos, n_videos, n_exp_videos, n_exp_videos])
-            _, self.p_w = sp.stats.fisher_exact(params)
-            # ORIGINAL MATLAB VERSION:
-            #self.p_w = seg_worm.stats.helpers.fexact(*params)
-
-            self.p_t = self.p_w
-
-        # We need a few valid values from both ...
-        elif not (exp_histogram.no_valid_means or 
-                  ctl_histogram.no_valid_means):
-            _, self.p_w = sp.stats.ranksums(exp_histogram.valid_means, 
-                                            ctl_histogram.valid_means)
-                           
-            # I added this so p_t would be defined. - @MichaelCurrie
-            self.p_t = np.NaN
+            return self.exp_histogram.p_normal
         
-        else: 
-            # I added this so p_w and p_t would be defined. - @MichaelCurrie
-            self.p_t = np.NaN
-            self.p_w = np.NaN
+    @property
+    def ctl_p_normal(self):
+        if self.ctl_histogram is None:
+            return np.NaN
+        else:
+            return self.ctl_histogram.p_normal
 
-        # NOTE: This code is for an individual object, the corrections
-        #       are done in the manager which is aware of all objects ...
+    #%%
+    @property
+    def p_t(self):
+        """
+        p_t
+        
+        Rules:
+        
+        1. If no valid means exist in one, but all exist in the order:
+            Use Fisher's exact test.
 
-        # pWValues - these seem to be the real statistics used ...
-        # - exclusive - fexact  seg_worm.stats.helpers.fexact
-        # - ranksum
+        2. Otherwise use Student's t-test
+        
+        Notes
+        ----------
+        mattest (bioinformatics toolbox)
 
+        mattest([exp_histogram_manager.mean_per_video]',
+                [ctl_histogram_manager.mean_per_video]')
+        http://www.mathworks.com/help/bioinfo/ref/mattest.html
+        perform an unpaired t-test for differential expression with
+        a standard two-tailed and two-sample t-test on every gene in 
+        DataX and DataY and return a p-value for each gene.
+        PValues = mattest(DataX, DataY)
+        p_t_all is a 726x1 matrix with values between 0 and 1.
 
+        (From SciPy docs:)
+        Calculates the T-test for the means of TWO INDEPENDENT samples 
+        of scores.
+        This is a two-sided test for the null hypothesis that 2
+        independent samples have identical average (expected) values. 
+        This test assumes that the populations have identical variances.
 
+        """
+        try:
+            return self._p_t
+        except AttributeError:
+            # Scenario 1
+            if self.is_exclusive:
+                return self.fisher_p
+                
+            # Scenario 2
+            else:
+                _, self._p_t = \
+                    sp.stats.ttest_ind(self.exp_histogram.valid_means_array,
+                                       self.ctl_histogram.valid_means_array)
+            
+            return self._p_t
+    
+    @property
+    def p_w(self):
+        """
+        p_w.
+        
+        Rules:
+
+        1. If no valid means exist in one, but all exist in the other:
+            Use Fisher's exact test.
+            
+        2. If at least one mean exists in both:
+            Use the Wilcoxon signed-rank test.
+        
+        3. If no valid means exist in either:
+            NaN.
+
+        """
+        try:
+            return self._p_w
+        except AttributeError:
+            # Scenario 1
+            if self.is_exclusive:
+                return self.fisher_p
+
+            # Scenario 2    
+            elif not (self.exp_histogram.no_valid_videos or 
+                      self.ctl_histogram.no_valid_videos):
+                _, self._p_w = \
+                    sp.stats.ranksums(self.exp_histogram.valid_mean_per_video, 
+                                      self.ctl_histogram.valid_mean_per_video)
+            # Scenario 3              
+            else: 
+                self._p_w = np.NaN
+
+            return self._p_w
+    #%%     
     @property    
     def specs(self):
         assert(self.exp_histogram.specs == self.ctl_histogram.specs)
@@ -396,7 +366,67 @@ class WormStatistics(object):
         assert(self.exp_histogram.data_type == self.ctl_histogram.data_type)
         self.data_type = self.exp_histogram.data_type
 
+    #%%
+    # Internal methods: not really intended for others to consume.     
+
+    @property
+    def fisher_p(self):
+        """
+        Return Fisher's exact method
+
+        Notes
+        ---------------
+        Original Matlab version
+        self.p_w = seg_worm.stats.helpers.fexact(*params)
+        
+        """
+        try:
+            return self._fisher_p
+        except AttributeError:
+            # This is a literal translation of the code (I think)
+            # I'm a bit confused by it ...  - @JimHokanson
+            num_exp_videos = self.exp_histogram.num_videos
+            num_ctl_videos = self.ctl_histogram.num_videos
+            num_videos = num_exp_videos + num_ctl_videos
+    
+            # This is a strange step, I don't know what it means...
+            # Why this specific list of values, it's strange.
+            # -@MichaelCurrie
+            params = np.array([num_exp_videos, num_videos, 
+                               num_exp_videos, num_exp_videos])
+
+            _, self._fisher_p = sp.stats.fisher_exact(params)
+        
+            return self._fisher_p
+
+    @property
+    def t_statistic(self):
+        try:
+            return self._t_statistic
+        except AttributeError:
+            self._t_statistic, _ = \
+                sp.stats.ttest_ind(self.exp_histogram.valid_means_array,
+                                   self.ctl_histogram.valid_means_array)
+            
+            return self._t_statistic
+
+    @property    
+    def is_exclusive(self):
+        """
+        A flag indicating if either experiment has all valid means but
+        control has none, or vice versa.
+        
+        """
+        try:
+            return self._is_exclusive
+        except AttributeError:
+            self._is_exclusive = ((self.exp_histogram.no_valid_videos and 
+                                   self.ctl_histogram.all_videos_valid) or
+                                  (self.ctl_histogram.no_valid_videos and 
+                                   self.exp_histogram.all_videos_valid))
+
+            return self._is_exclusive       
+
     def __repr__(self):
         return utils.print_object(self)
-
 

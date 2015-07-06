@@ -598,9 +598,11 @@ class NormalizedWorm(WormPartition):
         """
         Compare this Normalized worm against another.
 
-        # Idea from @JimHokanson:
-        # TODO: Do this on a frame by frame basis, do some sort of distance 
-        # computation rather than all together. This might hide bad frames        
+        TODO: Idea from @JimHokanson:
+        Do this on a frame by frame basis, do some sort of distance 
+        computation rather than all together. This might hide bad frames        
+        i.e. besides using correlation for comparison, a normalized distance 
+        comparison that could catch extreme outliers would also be useful        
         
         """
         attribute_list = ['skeleton_x', 'skeleton_y',

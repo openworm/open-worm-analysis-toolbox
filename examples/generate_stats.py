@@ -24,7 +24,7 @@ def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     root_path = os.path.join(base_path, '30m_wait')
 
-    experiment_histograms, control_histograms = \
+    exp_histogram_manager, ctl_histogram_manager = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
     print('Done with stats generation')
@@ -42,7 +42,7 @@ def main():
     #plt.tight_layout()
     """                                 
 
-    stat = mv.StatisticsManager(experiment_histograms, control_histograms)
+    stat = mv.StatisticsManager(exp_histogram_manager, ctl_histogram_manager)
 
     print("Comparison p and q values are %.2f and %.2f, respectively." %
     #     (stat.p_worm, stat.q_worm))
@@ -99,7 +99,7 @@ def obtain_histograms(root_path, pickle_file_path):
     
     Returns
     -------
-    experiment_histograms, control_histograms
+    exp_histogram_manager, ctl_histogram_manager
         Both instances of HistogramManager
     
     """
@@ -108,8 +108,8 @@ def obtain_histograms(root_path, pickle_file_path):
               "at:\n%s\n" % pickle_file_path + "Let's attempt to "
               "unpickle rather than re-calculate, to save time...")
         with open(pickle_file_path, "rb") as pickle_file:
-            experiment_histograms = pickle.load(pickle_file)
-            control_histograms = pickle.load(pickle_file)
+            exp_histogram_manager = pickle.load(pickle_file)
+            ctl_histogram_manager = pickle.load(pickle_file)
     else:
         print("Could not find a pickled version of the histogram "
               "managers so let's calculate from scratch and then pickle")
@@ -125,19 +125,19 @@ def obtain_histograms(root_path, pickle_file_path):
         assert(len(control_files) >= 10)
 
         # Compute histograms on our files
-        experiment_histograms = mv.HistogramManager(experiment_files[:10])
-        control_histograms = mv.HistogramManager(control_files[:10])
+        exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
+        ctl_histogram_manager = mv.HistogramManager(control_files[:10])
         
         # Store a pickle file in the same folder as this script 
         # (i.e. movement_validation/examples/)
         with open(pickle_file_path, "wb") as pickle_file:
-            pickle.dump(experiment_histograms, pickle_file)
-            pickle.dump(control_histograms, pickle_file)
+            pickle.dump(exp_histogram_manager, pickle_file)
+            pickle.dump(ctl_histogram_manager, pickle_file)
 
     print("Experiment has a total of " + \
-          str(len(experiment_histograms.hists)) + " histograms")
+          str(len(exp_histogram_manager.merged_histograms)) + " histograms")
 
-    return experiment_histograms, control_histograms
+    return exp_histogram_manager, ctl_histogram_manager
 
 
 if __name__ == '__main__':

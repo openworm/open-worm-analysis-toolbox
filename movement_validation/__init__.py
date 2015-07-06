@@ -28,7 +28,7 @@ from .features.feature_processing_options import FeatureProcessingOptions
 
 from .statistics.histogram_manager import HistogramManager
 from .statistics.statistics_manager import StatisticsManager
-from .statistics.histogram import Histogram
+from .statistics.histogram import Histogram, MergedHistogram
 
 try:
     from . import user_config
@@ -47,4 +47,5 @@ __all__ = ['BasicWorm',
            'NormalizedWormPlottable',
            'HistogramManager',
            'StatisticsManager',
-           'Histogram']
+           'Histogram',
+           'MergedHistogram']

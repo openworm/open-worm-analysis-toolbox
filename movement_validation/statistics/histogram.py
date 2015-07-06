@@ -18,7 +18,7 @@ from .. import config, utils
 #%%
 class Histogram(object):
     """    
-    Encapsulates the notion of a histogram for features.
+    Encapsulates the notion of a signle histogram for a single feature.
     
     All bins in this histogram have an equal bin width.
     
@@ -34,9 +34,15 @@ class Histogram(object):
     hist_type: str
     motion_type: str
     data_type: str
+    
+    counts: numpy array of ints
+    pdf: numpy array of floats
+    mean: float
     num_samples: int
     bin_boundaries: numpy array
     bin_midpoints: numpy array
+    first_bin_midpoint: float
+    last_bin_midpoint: float
 
     Notes
     -----------------
@@ -121,6 +127,335 @@ class Histogram(object):
         else:
             return cls(data, specs, hist_type, motion_type, data_type)
 
+    @property
+    def num_samples(self):
+        try:
+            return self._num_samples
+        except AttributeError:
+            self._num_samples = len(self.data)
+            
+            return self._num_samples
+
+    def __repr__(self):
+        return utils.print_object(self)
+
+    @property
+    def description(self):
+        """
+        A longer version of the name, suitable for use as the title
+        of a histogram plot.
+        
+        """
+        return (self.specs.long_field + ' ' +
+               ', motion_type:' + self.motion_type + 
+               ', data_type: ' + self.data_type)
+        
+
+    @property
+    def first_bin_midpoint(self):
+        return self.bin_midpoints[0]
+
+    @property
+    def last_bin_midpoint(self):
+        return self.bin_midpoints[-1]
+
+    @property
+    def num_bins(self):
+        """
+        An integer; the number of bins.
+
+        """
+        return len(self.bin_midpoints)
+
+    def compute_covering_bins(self):
+        """
+        Compute histogram bin boundaries that will be enough to cover 
+        the given data
+        
+        Parameters
+        ----------
+        None, but we will use member variables:
+        self.data: numpy array
+            This is the data for which we must have enough bins to cover
+        self.bin_width: float
+            The width of the bins
+
+        Returns
+        -------
+        None
+            However, self.bin_boundaries, a numpy array, is populated.
+            The bin_boundaries are the boundaries of the bins that will 
+            accomodate the data given.
+            All bins are right half-open except the last, which is closed.
+            i.e. if the array edges = (a1, a2, ..., a(n+1) was returned, 
+                 there are n bins and  
+                 bin #1 = [a1, a2)
+                 bin #2 = [a2, a3)
+                 ...
+                 bin #n = [an, an+1]
+
+        Notes
+        -----
+        This version may have an extra bin than the previous version but
+        this one is MUCH simpler and merging should be much simpler as edges
+        should always align ...
+        -   min -65.4
+        -   max 20.01
+        -   bin_width 1
+        -   Old:
+            -   boundaries -65.5 to 20.5
+        -   New:
+            -   boundaries -70 to 21
+
+        Formerly: 
+        function [bins,edges] = h__computeBinInfo(data,bin_width)
+
+        """
+        # Compute the data range.  We apply np.ravel because for some reason
+        # with posture.bends.head.mean the data was coming in like:
+        # >> self.data
+        # array([[-33.1726576 ], [-33.8501644 ],[-32.60058523], ...])
+        # Applying ravel removes any extraneous array structure so it becomes:
+        # array([-33.1726576, -33.8501644, -32.60058523, ...])
+        min_data = min(np.ravel(self.data))
+        max_data = max(np.ravel(self.data))
+        
+        bin_width = self.specs.bin_width
+        
+        # Let's "snap the bins to a grid" if you will, so that they will
+        # line up when we try to merge multiple histograms later.
+        # so if the bin_width = 2 and the min_data = 11, we will
+        # start the first bin at 10, since that is a multiple of the 
+        # bin width.
+        min_boundary = np.floor(min_data / bin_width) * bin_width
+        max_boundary = np.ceil(max_data / bin_width) * bin_width
+        
+        # If we have a singular value, then we will get a singular edge, 
+        # which isn't good for binning. We always need to make sure that 
+        # our data is bounded by a high and low end. Given how hist works 
+        # (it is inclusive on the low end, when we only have one edge we 
+        # add a second edge by increasing the high end, NOT by decreasing 
+        # the low end.
+        #
+        # i.e. In Matlab you can't bound 3 by having edges at 2 & 3, the 
+        #      edges would need to be at 3 & 4
+        if min_boundary == max_boundary:
+            max_boundary = min_boundary + bin_width
+        
+        num_bins = (max_boundary - min_boundary) / bin_width
+        
+        if num_bins > config.MAX_NUMBER_BINS:
+            raise Exception("Given the specified resolution of " +
+                            str(bin_width) + ", the number of data " +
+                            "bins exceeds the maximum, which has been " +
+                            "set to MAX_NUMBER_BINS = " +
+                            str(config.MAX_NUMBER_BINS))
+        
+        self.bin_boundaries = np.arange(min_boundary, 
+                                        max_boundary + bin_width, 
+                                        step=bin_width)
+
+        # Because of the nature of floating point figures we can't guarantee
+        # that these asserts work without the extra buffer of + self.bin_width
+        # (though this bound could probably be greatly improved)
+        assert(min_data >= self.bin_boundaries[0] - bin_width)
+        assert(max_data <= self.bin_boundaries[-1] + bin_width)
+    
+    @property
+    def bin_width(self):
+        """
+        float
+        
+        """
+        return self.specs.bin_width
+    
+    @property
+    def bin_midpoints(self):
+        """
+        Return a numpy array of the midpoints of all the bins.
+
+        """
+        try:
+            return self._bin_midpoints
+        except AttributeError:
+            self._bin_midpoints = (self.bin_boundaries[:-1] + 
+                                   self.specs.bin_width/2)
+            
+            return self._bin_midpoints
+    
+    @property
+    def counts(self):
+        """
+        The actual counts for the bins given the data.
+        
+        Returns
+        ----------------
+        numpy array of int
+            The values of the histogram
+
+        """
+        try:
+            return self._counts
+        except AttributeError:
+            self._counts,_ = np.histogram(self.data, 
+                                          bins=self.bin_boundaries)
+
+            return self._counts
+
+    @property
+    def pdf(self):
+        """
+        The probability distribution function (PDF).
+        
+        A numpy array.
+        
+        """
+        try:
+            return self._pdf
+        except AttributeError:
+            if sum(self.counts) == 0:
+                # Handle the divide-by-zero case
+                self._pdf = None
+            else:
+                self._pdf = self.counts / sum(self.counts)
+            
+            return self._pdf
+
+    
+    @property
+    def mean(self):
+        """
+        A float.  The mean of the data.
+        
+        """
+        try:
+            return self._mean
+        except AttributeError:
+            self._mean = np.mean(self.data)
+            
+            return self._mean
+
+    
+    @property
+    def std(self):
+        """
+        The standard deviation
+        
+        """
+        try:
+            return self._std
+        except AttributeError:
+            num_samples = len(self.data)
+            if num_samples == 1:
+                self._std = 0
+            else:
+                # We can optimize standard deviation computation
+                # since we've already calculated the mean above
+                self._std = np.sqrt \
+                                (
+                                    (1/(num_samples-1)) * 
+                                    sum((self.data - self.mean)**2)
+                                )            
+    
+            return self._std
+        
+    @property
+    def num_videos(self):
+        """
+        Return 1 since this is a simple Histogram, not one created from
+        the merging of multiple underlying Histograms.
+        
+        """
+        return 1
+
+    #%%
+    @classmethod
+    def plot_versus(cls, ax, exp_hist, ctl_hist):
+        """
+        Use matplotlib to plot a Histogram instance against another.  
+        Plots one histogram against another with the same long_field.
+        
+        TODO: The inputs should be renamed        
+        TODO: Add support for passing in labels
+
+        Note: You must still call plt.show() after calling this function.
+        
+        Usage example
+        -----------------------
+        import matplotlib.pyplot as plt
+        
+        fig = plt.figure(1)
+        ax = fig.gca()
+        Histogram.plot_versus(ax, hist1, hist2)
+        plt.show()
+
+        Parameters
+        -----------------------
+        ax: A
+        exp_hist: A Histogram object
+            The "experiment"
+        ctl_hist: A Histogram object
+            The "control"
+        
+        """
+        # Verify that we are comparing the same feature
+        if exp_hist.specs.long_field != ctl_hist.specs.long_field:
+            return None
+        #assert(exp_hist.long_field == ctl_hist.long_field)
+    
+        ctl_bins = ctl_hist.bin_midpoints
+        ctl_y_values = ctl_hist.pdf
+    
+        exp_bins = exp_hist.bin_midpoints
+        exp_y_values = exp_hist.pdf
+        min_x = min([h[0] for h in [ctl_bins, exp_bins]])
+        max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
+    
+    
+        #plt.figure(figsize=(12, 9))
+        ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
+        ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
+    
+        ax.set_xlabel(exp_hist.specs.long_field, fontsize=16)
+        ax.set_ylabel('bin pdf', fontsize=16)
+        ax.set_title(exp_hist.description, fontsize = 12)
+        ax.set_xlim(min_x, max_x)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        # ticks only needed at bottom and right
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.legend(loc='upper left')
+
+        return ax
+
+
+
+
+class MergedHistogram(Histogram):
+    """
+    A Histogram, plus some extra data about the individual histograms
+    that make it up.
+    
+    Extra attributes:
+    --------------------
+    mean_per_video: numpy array of floats
+        The means of the original constituent histograms making up 
+        this merged histogram.
+    std_per_video: numpy array of floats
+        Same as mean_per_video but for standard deviation.
+    num_samples_per_video: numpy array of ints
+    num_videos: int
+    num_valid_videos: int
+    all_videos_valid: bool
+    no_valid_videos: bool
+    p_normal: float
+    
+    """
+    def __init__(self, data, specs, hist_type, motion_type, data_type):
+        super(MergedHistogram, self).__init__(data, specs, hist_type, 
+                                              motion_type, data_type)
 
     #%%
     @classmethod
@@ -196,43 +531,127 @@ class Histogram(object):
                 cur_end   = end_indices[i]
                 new_counts[i, cur_start:cur_end] = histograms[i].counts
         
+        
+        num_samples_array = np.array([x.num_samples for x in histograms])
+        
         # Update final properties
         # Note that each of these is now no longer a scalar as in the
         # single-video case; it is now a numpy array
         # ---------------------------------------------------------------
         merged_hist._bin_midpoints = new_bin_midpoints
         merged_hist._counts = new_counts
-        merged_hist._num_samples = \
+        merged_hist._pdf = (sum(merged_hist._counts, 0) /
+                            sum(num_samples_array))
+
+        merged_hist.mean_per_video = \
+                        np.array([x.mean for x in histograms])
+
+        merged_hist.std_per_video = \
+                        np.array([x.std for x in histograms])
+
+        merged_hist.num_samples_per_video = \
                         np.array([x.num_samples for x in histograms])
-        merged_hist._mean_per_video = \
-                        np.array([x.mean_per_video for x in histograms])
-        merged_hist._std_per_video = \
-                        np.array([x.std_per_video for x in histograms])
-        merged_hist._pdf = (sum(merged_hist.counts, 0) /
-                            sum(merged_hist.num_samples))
-            
+
+        merged_hist._num_samples = sum(merged_hist.num_samples_per_video)
+
         return merged_hist
 
 
     @property
-    def num_samples(self):
+    def mean(self):
         try:
-            return self._num_samples
+            return self._mean
         except AttributeError:
-            self._num_samples = len(self.data)
+            self._mean = np.mean(self.mean_per_video)
             
-            return self._num_samples
+            return self._mean  
+
+    @property
+    def std(self):
+        try:
+            return self._std
+        except AttributeError:
+            # TODO            
+            # I'm pretty sure this is not very good; we should be calculating
+            # standard deviation from a concatenation of the underlying data,
+            # not from just the means of the videos. - @MichaelCurrie
+            self._mean = np.std(self.mean_per_video)
+            
+            return self._std
+
+    @property
+    def valid_videos_mask(self):
+        return ~np.isnan(self.mean_per_video)
+
+    @property
+    def valid_mean_per_video(self):
+        return self.mean_per_video[self.valid_videos_mask]
+
+    @property
+    def num_videos(self):
+        """
+        The number of videos that this instance contains.
+        
+        """
+        len(self.mean_per_video)
+
+
+    @property
+    def num_valid_videos(self):
+        """
+        
+        Returns
+        -----------
+        int
+            The number of non-NaN means across all stored video means.
+
+        Notes
+        -----------
+        Also known as num_samples, or n_samples.
+
+        """
+        return sum(~np.isnan(self.mean_per_video))
+
+    @property
+    def all_videos_valid(self):
+        """
+        Returns
+        ------------------
+        boolean
+            True if there are no NaN means
+            False if there is even one NaN mean
+        """
+        return all(~np.isnan(self.mean_per_video))
+
+    @property
+    def no_valid_videos(self):
+        """
+        Returns
+        -----------
+        bool
+            True if there was at least one video that wasn't NaN for this
+            Histogram.
+        """
+        return self.num_valid_videos == 0 
+
 
 
     @property
     def p_normal(self):
         """
-        The probability that the video means were drawn from a normal 
-        distribution.
+        Shapiro-Wilk normality test:
+        
+        Estimate of the probability that the video means were drawn from 
+        a normal distribution.
 
         Returns
         -----------
         float
+
+        Notes
+        -----------
+        Formerly:
+        seg_worm.fex.swtest(data(i).dataMeans, 0.05, 0)
         
         """
         # The try-except structure allows for lazy evaluation: we only
@@ -256,348 +675,3 @@ class Histogram(object):
 
             return self._p_normal
             
-
-
-
-    def __repr__(self):
-        return utils.print_object(self)
-
-    @property
-    def description(self):
-        """
-        Give a longer version of the name, suitable for use as the title
-        of a histogram plot.
-        
-        """
-        return (self.specs.long_field + ' ' +
-               ', motion_type:' + self.motion_type + 
-               ', data_type: ' + self.data_type)
-        
-
-    @property
-    def valid_means(self):
-        """
-        Returns
-        --------------
-        numpy array
-            self.mean_per_video, excluding NaN
-        
-        """
-        return self.mean_per_video[~np.isnan(self.mean_per_video)]
-
-    @property
-    def mean(self):
-        """
-        The mean of the means across all non-nan video means.
-        """
-        return np.nanmean(self.mean_per_video)
-
-    @property
-    def std(self):
-        """
-        Standard deviation of means
-        """
-        return np.nanstd(self.mean_per_video)
-
-    @property
-    def num_valid_measurements(self):
-        return sum(~np.isnan(self.mean_per_video))
-
-    @property
-    def num_videos(self):
-        """
-        The number of  of videos that this instance contains.
-        """
-        try:
-            return len(self.mean_per_video)
-        except TypeError:
-            # If mean_per_video is just a float, then calling len on it will
-            # throw a TypeError, since you can't take the len of a float.
-            # This will therefore tell us that we just have one video:
-            return 1
-
-    @property
-    def first_bin_midpoint(self):
-        return self.bin_midpoints[0]
-
-    @property
-    def last_bin_midpoint(self):
-        return self.bin_midpoints[-1]
-
-    @property
-    def num_bins(self):
-        return len(self.bin_midpoints)
-
-    @property
-    def all_means_valid(self):
-        """
-        Returns
-        ------------------
-        boolean
-            True if there are no NaN means
-            False if there is even one NaN mean
-        """
-        return all(~np.isnan(self.mean_per_video))
-
-    @property
-    def no_valid_means(self):
-        """
-        Returns
-        -----------
-        bool
-            True if there was at least one video that wasn't NaN for this
-            Histogram.
-        """
-        return self.num_valid_measurements == 0 
-
-   
-    def compute_covering_bins(self):
-        """
-        Compute histogram bin boundaries that will be enough to cover 
-        the given data
-        
-        Parameters
-        ----------
-        None, but we will use member variables:
-        self.data: numpy array
-            This is the data for which we must have enough bins to cover
-        self.bin_width: float
-            The width of the bins
-
-        Returns
-        -------
-        None
-            However, self.bin_boundaries, a numpy array, is populated.
-            The bin_boundaries are the boundaries of the bins that will 
-            accomodate the data given.
-            All bins are right half-open except the last, which is closed.
-            i.e. if the array edges = (a1, a2, ..., a(n+1) was returned, 
-                 there are n bins and  
-                 bin #1 = [a1, a2)
-                 bin #2 = [a2, a3)
-                 ...
-                 bin #n = [an, an+1]
-
-        Notes
-        -----
-        This version may have an extra bin than the previous version but
-        this one is MUCH simpler and merging should be much simpler as edges
-        should always align ...
-        %   min -65.4
-        %   max 20.01
-        %   bin_width 1
-        %   Old:
-        %   boundaries -65.5 to 20.5
-        %   New:
-        %   boundaries -70 to 21
-
-        Formerly: 
-        function [bins,edges] = h__computeBinInfo(data,bin_width)
-
-        """
-        # Compute the data range.  We apply np.ravel because for some reason
-        # with posture.bends.head.mean the data was coming in like:
-        # >> self.data
-        # array([[-33.1726576 ], [-33.8501644 ],[-32.60058523], ...])
-        # Applying ravel removes any extraneous array structure so it becomes:
-        # array([-33.1726576, -33.8501644, -32.60058523, ...])
-        min_data = min(np.ravel(self.data))
-        max_data = max(np.ravel(self.data))
-        
-        bin_width = self.specs.bin_width
-        
-        # Let's "snap the bins to a grid" if you will, so that they will
-        # line up when we try to merge multiple histograms later.
-        # so if the bin_width = 2 and the min_data = 11, we will
-        # start the first bin at 10, since that is a multiple of the 
-        # bin width.
-        min_boundary = np.floor(min_data / bin_width) * bin_width
-        max_boundary = np.ceil(max_data / bin_width) * bin_width
-        
-        # If we have a singular value, then we will get a singular edge, 
-        # which isn't good for binning. We always need to make sure that 
-        # our data is bounded by a high and low end. Given how hist works 
-        # (it is inclusive on the low end, when we only have one edge we 
-        # add a second edge by increasing the high end, NOT by decreasing 
-        # the low end.
-        #
-        # i.e. In Matlab you can't bound 3 by having edges at 2 & 3, the 
-        #      edges would need to be at 3 & 4
-        if min_boundary == max_boundary:
-            max_boundary = min_boundary + bin_width
-        
-        num_bins = (max_boundary - min_boundary) / bin_width
-        
-        if num_bins > config.MAX_NUMBER_BINS:
-            raise Exception("Given the specified resolution of " +
-                            str(bin_width) + ", the number of data " +
-                            "bins exceeds the maximum, which has been " +
-                            "set to MAX_NUMBER_BINS = " +
-                            str(config.MAX_NUMBER_BINS))
-        
-        self.bin_boundaries = np.arange(min_boundary, 
-                                        max_boundary + bin_width, 
-                                        step=bin_width)
-
-        # Because of the nature of floating point figures we can't guarantee
-        # that these asserts work without the extra buffer of + self.bin_width
-        # (though this bound could probably be greatly improved)
-        assert(min_data >= self.bin_boundaries[0] - bin_width)
-        assert(max_data <= self.bin_boundaries[-1] + bin_width)
-    
-    @property
-    def bin_width(self):
-        return self.specs.bin_width
-    
-    @property
-    def bin_midpoints(self):
-        """
-        Return an array of the midpoints of all the bins.
-
-        """
-        try:
-            return self._bin_midpoints
-        except AttributeError:
-            self._bin_midpoints = (self.bin_boundaries[:-1] + 
-                                   self.specs.bin_width/2)
-            
-            return self._bin_midpoints
-    
-    @property
-    def counts(self):
-        """
-        The actual counts for the bins given the data
-        
-        Returns
-        ----------------
-        numpy array
-            The values of the histogram
-
-        """
-        try:
-            return self._counts
-        except AttributeError:
-            self._counts,_ = np.histogram(self.data, 
-                                          bins=self.bin_boundaries)
-
-            return self._counts
-
-    @property
-    def pdf(self):
-        """
-        The pdf
-        
-        """
-        try:
-            return self._pdf
-        except AttributeError:
-            if sum(self.counts) == 0:
-                # Handle the divide-by-zero case
-                self._pdf = None
-            else:
-                self._pdf = self.counts / sum(self.counts)
-            
-            return self._pdf
-
-    
-    @property
-    def mean_per_video(self):
-        """
-        The mean per video
-        
-        """
-        try:
-            return self._mean_per_video
-        except AttributeError:
-            self._mean_per_video = np.mean(self.data)
-            
-            return self._mean_per_video
-    
-    @property
-    def std_per_video(self):
-        """
-        The standard deviation per video
-        
-        """
-        try:
-            return self._std_per_video
-        except AttributeError:
-            num_samples = len(self.data)
-            if num_samples == 1:
-                self._std_per_video = 0
-            else:
-                # We can optimize std dev computationsince we've already 
-                # calculated the mean above
-                self._std_per_video = np.sqrt \
-                                (
-                                    (1/(num_samples-1)) * 
-                                    sum((self.data - self.mean_per_video)**2)
-                                )            
-    
-            return self._std_per_video    
-    
-
-    #%%
-    @classmethod
-    def plot_versus(cls, ax, exp_hist, ctl_hist):
-        """
-        Use matplotlib to plot a Histogram instance against another.  
-        Plots one histogram against another with the same long_field.
-        
-        TODO: The inputs should be renamed        
-        TODO: Add support for passing in labels
-
-        Note: You must still call plt.show() after calling this function.
-        
-        Usage example
-        -----------------------
-        import matplotlib.pyplot as plt
-        
-        fig = plt.figure(1)
-        ax = fig.gca()
-        Histogram.plot_versus(ax, hist1, hist2)
-        plt.show()
-
-        Parameters
-        -----------------------
-        ax: A
-        exp_hist: A Histogram object
-            The "experiment"
-        ctl_hist: A Histogram object
-            The "control"
-        
-        """
-        # Verify that we are comparing the same feature
-        if exp_hist.specs.long_field != ctl_hist.specs.long_field:
-            return None
-        #assert(exp_hist.long_field == ctl_hist.long_field)
-    
-        ctl_bins = ctl_hist.bin_midpoints
-        ctl_y_values = ctl_hist.pdf
-    
-        exp_bins = exp_hist.bin_midpoints
-        exp_y_values = exp_hist.pdf
-        min_x = min([h[0] for h in [ctl_bins, exp_bins]])
-        max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
-    
-    
-        #plt.figure(figsize=(12, 9))
-        ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
-        ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
-    
-        ax.set_xlabel(exp_hist.specs.long_field, fontsize=16)
-        ax.set_ylabel('bin pdf', fontsize=16)
-        ax.set_title(exp_hist.description, fontsize = 12)
-        ax.set_xlim(min_x, max_x)
-
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        # ticks only needed at bottom and right
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
-        ax.legend(loc='upper left')
-
-        return ax
-
-
-
