@@ -63,6 +63,10 @@ class Widths(object):
 #======================================================================
 #                       NEW CODE 
 #======================================================================
+#
+#
+#   Still need to handle equality comparison and loading from disk
+#   
 class Length(Feature):
     
     def __init__(self,wf):

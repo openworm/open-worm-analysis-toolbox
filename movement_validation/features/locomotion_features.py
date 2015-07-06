@@ -13,6 +13,7 @@ import numpy as np
 
 from .. import utils
 
+from .generic_features import Feature
 from . import events
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
@@ -364,3 +365,33 @@ class MotionEvents(object):
     @property   
     def is_paused(self):
         return self._mode == 0
+        
+#==============================================================================
+#                               NEW CODE
+#==============================================================================
+class AverageBodyAngle(object):
+    pass        
+        
+class VelocitySpeed(Feature):
+    pass
+
+class VelocityDirection(Feature):
+    pass        
+
+class HeadTip(object):
+    #TODO: If we can pass a parameter into here this can become much more
+    #generic
+    #This should store the values until used by HeadTipSpeed and HeadTipDirection        
+    pass
+        
+class HeadTipSpeed(Feature):
+
+    def __init__(self,wf):
+        self.name = 'locomotion.velocity.head_tip.speed'
+        self.value = None
+        
+class HeadTipDirection(Feature):
+
+    def __init__(self,wf):
+        self.name = 'locomotion.velocity.head_tip.direction'
+        self.value = None

@@ -1,8 +1,12 @@
-Feature Name,Module,Class Name,Dependencies
-morphology.length,morphology_features,Length,
-morphology.width.head,morphology_features,HeadWidth,
-morphology.width.midbody,morphology_features,MidbodyWidth,
-morphology.width.tail,morphology_features,TailWidth,
-morphology.area,morphology_features,Area,
-morphology.area_per_length,morphology_features,AreaPerLength,NYI
-morphology.width_per_length,morphology_features,WidthPerLength,NYI
+is_feature,Feature Name,Module,Class Name,Dependencies
+y,morphology.length,morphology_features,Length,
+y,morphology.width.head,morphology_features,HeadWidth,
+y,morphology.width.midbody,morphology_features,MidbodyWidth,
+y,morphology.width.tail,morphology_features,TailWidth,
+y,morphology.area,morphology_features,Area,
+y,morphology.area_per_length,morphology_features,AreaPerLength,NYI
+y,morphology.width_per_length,morphology_features,WidthPerLength,NYI
+n,locomotion.velocity.avg_body_angle,locomotion_features,AverageBodyAngle,
+n,locomotion.velocity.head_tip,locomotion_features,HeadTip,locomotion.velocity.avg_body_angle
+y,locomotion.velocity.head_tip.speed,locomotion_features,HeadTipSpeed,locomotion.velocity.head_tip
+y,locomotion.velocity.head_tip.direction,locomotion_features,HeadTipDirection,locomotion.velocity.head_tip

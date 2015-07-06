@@ -16,10 +16,11 @@ __ALL__ = ['get_angles',
 
 
 def get_angles(segment_x, segment_y, head_to_tail=False):
-    """ Obtain the "angle" of a subset of the 49 points
-        of a worm, for each frame.
+    """ 
+    
+    Obtain the "angle" of a subset of the 49 points of a worm, for each frame.
         
-        #TODO: Implement the explain function check here ...
+    #TODO: Implement the explain function check here ...
 
     Parameters
     ----------
@@ -349,6 +350,7 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
     Returns
     -------
+    (speed, angular_speed, motion_direction)
     Three numpy arrays of shape (n), speed, angular_speed, motion_direction
 
     Known Callers
@@ -387,6 +389,11 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
     # NOTE: In Matlab this is done only over a certain range of the body
     # TODO: Who calls this, can we just hard code mimic old behavior here???
+    #
+    #   ??? What are the old behaviors?
+    #
+    # Caller List (not necessarily complete):
+    # - locomotion.velocity entries
 
     x_mean = np.mean(sx, 0)
     y_mean = np.mean(sy, 0)
