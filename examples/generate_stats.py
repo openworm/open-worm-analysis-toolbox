@@ -48,7 +48,7 @@ def main():
     #     (stat.p_worm, stat.q_worm))
           (stat.p_worm, 0))
 
-    # TODO: plot stats.p_w
+    plt.plot(stat.p_w_array)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!

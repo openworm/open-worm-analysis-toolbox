@@ -80,15 +80,23 @@ class StatisticsManager(object):
         #----------------------------------------------------------------------
 
     @property
+    def p_t_array(self):
+        return np.array([x.p_t for x in self.worm_statistics_objects])
+
+    @property
+    def p_w_array(self):
+        return np.array([x.p_w for x in self.worm_statistics_objects])
+
+    @property
     def valid_p_t_array(self):
-        p_t_array = np.array([x.p_t for x in self.worm_statistics_objects])
+        p_t_array = self.p_t_array
 
         # Filter the NaN entries 
         return p_t_array[~np.isnan(p_t_array)]
 
     @property        
     def valid_p_w_array(self):
-        p_w_array = np.array([x.p_w for x in self.worm_statistics_objects])
+        p_w_array = self.p_w_array
 
         # Filter the NaN entries 
         return p_w_array[~np.isnan(p_w_array)]
@@ -304,8 +312,8 @@ class WormStatistics(object):
             # Scenario 2
             else:
                 _, self._p_t = \
-                    sp.stats.ttest_ind(self.exp_histogram.valid_means_array,
-                                       self.ctl_histogram.valid_means_array)
+                    sp.stats.ttest_ind(self.exp_histogram.valid_mean_per_video,
+                                       self.ctl_histogram.valid_mean_per_video)
             
             return self._p_t
     
@@ -405,8 +413,8 @@ class WormStatistics(object):
             return self._t_statistic
         except AttributeError:
             self._t_statistic, _ = \
-                sp.stats.ttest_ind(self.exp_histogram.valid_means_array,
-                                   self.ctl_histogram.valid_means_array)
+                sp.stats.ttest_ind(self.exp_histogram.valid_mean_per_video,
+                                   self.ctl_histogram.valid_mean_per_video)
             
             return self._t_statistic
 
