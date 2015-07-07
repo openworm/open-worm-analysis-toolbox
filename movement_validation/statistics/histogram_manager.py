@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 
-The current processing approach is to take a set of features from an experiment
-and to summarize each of these features as a binned data set (i.e. a histogram) 
-where for each bin of a given width the # of values occupying each bin is
-logged.
+The current processing approach is to take a set of features from an
+experiment and to summarize each of these features as a binned data set 
+(i.e. a histogram) where for each bin of a given width the # of values 
+occupying each bin is logged.
 
 The histogram manager holds histograms for all computed features. Besides
 helping to instantiate these histograms, it also holds any information
 that is common to all of the histograms (e.g. experiment sources). By holding
-the histograms it serves as a nice entry point for the histograms, rather than 
-just having a list of histograms.
+the histograms it serves as a nice entry point for the histograms, rather
+than just having a list of histograms.
 
 Formerly SegwormMatlabClasses/+seg_worm/+stats/@hist/manager.m
 
 """
 import h5py
 import numpy as np
-import six # For compatibility between Python 2 and 3 in case we have to revert
+import six # For compatibility with Python 2.x
 
 from .. import utils
 from ..features.worm_features import WormFeatures
@@ -34,6 +34,7 @@ class HistogramManager(object):
     Attributes
     ------------- 
     merged_histograms: numpy array of MergedHistogram objects
+        This can be accessed via the overloaded [] operator
 
     Notes
     -------------
@@ -52,8 +53,8 @@ class HistogramManager(object):
         """
         print("Number of feature files passed into the histogram manager:", 
               len(feature_path_or_object_list))
-        
-        #For each ...
+
+        # This will have shape (len(feature_path_or_object_list), 726)
         hist_cell_array = []
         
         # Loop over all feature files and get histogram objects for each
@@ -79,9 +80,28 @@ class HistogramManager(object):
         # At this point hist_cell_array is a list, with one element for 
         # each video.
         # Each element is a numpy array of 700+ Histogram instances.
-        # Here we merge them and we assign to self.merged_histograms a numpy array
-        # of 700+ Histogram instances, for the merged video
-        self.merged_histograms = HistogramManager.merge_histograms(hist_cell_array)
+        # Here we merge them and we assign to self.merged_histograms a 
+        # numpy array of 700+ Histogram instances, for the merged video
+        self.merged_histograms = \
+            HistogramManager.merge_histograms(hist_cell_array)
+
+    def __getitem__(self, index):
+        return self.merged_histograms[index]
+    
+    def __len__(self):
+        return len(self.merged_histograms)
+
+    @property
+    def valid_histograms_mask(self):
+        return np.array([h is not None for h in self.merged_histograms])
+
+    @property
+    def valid_histograms_array(self):
+        return self.merged_histograms[self.valid_histograms_mask]
+    
+    @property
+    def valid_means_array(self):
+        return np.array([hist.mean for hist in self.valid_histograms_array])
 
 
     #%%
@@ -136,18 +156,6 @@ class HistogramManager(object):
 
         # Put all these histograms together into one single-dim numpy array.
         return np.hstack((m_hists, s_hists, e_hists))
-
-    @property
-    def valid_histograms_mask(self):
-        return np.array([h is not None for h in self.merged_histograms])
-
-    @property
-    def valid_histograms_array(self):
-        return self.merged_histograms[self.valid_histograms_mask]
-    
-    @property
-    def valid_means_array(self):
-        return np.array([hist.mean for hist in self.valid_histograms_array])
 
     ###########################################################################
     ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
@@ -378,8 +386,9 @@ class HistogramManager(object):
 
         return temp_hists
 
-
+    
     #%%
+    ###########################################################################
     @staticmethod
     def merge_histograms(hist_cell_array):
         """            

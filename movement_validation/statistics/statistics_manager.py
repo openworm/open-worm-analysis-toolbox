@@ -64,20 +64,18 @@ class StatisticsManager(object):
         Formerly seg_worm.stats.manager.initObject
 
         """
-        assert(len(exp_histogram_manager.merged_histograms) == 
-               len(ctl_histogram_manager.merged_histograms))
-        num_features = len(exp_histogram_manager.merged_histograms)
+        assert(len(exp_histogram_manager) == 
+               len(ctl_histogram_manager))
+        num_features = len(exp_histogram_manager)
 
         # Initialize a WormStatistics object for each of 726 features,
         # comparing experiment and control.
         self.worm_statistics_objects = np.array([None] * num_features)
         for feature_index in range(num_features):
             self.worm_statistics_objects[feature_index] = WormStatistics(
-                    exp_histogram_manager.merged_histograms[feature_index],
-                    ctl_histogram_manager.merged_histograms[feature_index])
+                    exp_histogram_manager[feature_index],
+                    ctl_histogram_manager[feature_index])
     
-        # Initialize properties that depend on the aggregate
-        #----------------------------------------------------------------------
 
     @property
     def p_t_array(self):

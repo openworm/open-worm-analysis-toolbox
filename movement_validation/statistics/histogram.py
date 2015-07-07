@@ -370,7 +370,7 @@ class Histogram(object):
 
     #%%
     @classmethod
-    def plot_versus(cls, ax, exp_hist, ctl_hist):
+    def plot_versus(cls, ax, exp_histogram, ctl_histogram, use_legend=False):
         """
         Use matplotlib to plot a Histogram instance against another.  
         Plots one histogram against another with the same long_field.
@@ -379,6 +379,10 @@ class Histogram(object):
         TODO: Add support for passing in labels
 
         Note: You must still call plt.show() after calling this function.
+        
+        Parameters
+        -----------        
+        exp_histogram
         
         Usage example
         -----------------------
@@ -391,7 +395,8 @@ class Histogram(object):
 
         Parameters
         -----------------------
-        ax: A
+        ax: A matplotlib.axes.Axes object
+            This is the handle where we'll make the plot
         exp_hist: A Histogram object
             The "experiment"
         ctl_hist: A Histogram object
@@ -399,26 +404,29 @@ class Histogram(object):
         
         """
         # Verify that we are comparing the same feature
-        if exp_hist.specs.long_field != ctl_hist.specs.long_field:
-            return None
-        #assert(exp_hist.long_field == ctl_hist.long_field)
+        if exp_histogram.specs.long_field != ctl_histogram.specs.long_field:
+            raise AssertionError("It only makes sense to plot "
+                                 "comparable histograms.")
+            return
     
-        ctl_bins = ctl_hist.bin_midpoints
-        ctl_y_values = ctl_hist.pdf
+        ctl_bins = ctl_histogram.bin_midpoints
+        ctl_y_values = ctl_histogram.pdf
     
-        exp_bins = exp_hist.bin_midpoints
-        exp_y_values = exp_hist.pdf
+        exp_bins = exp_histogram.bin_midpoints
+        exp_y_values = exp_histogram.pdf
         min_x = min([h[0] for h in [ctl_bins, exp_bins]])
         max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
     
+        # Plot the Control histogram
+        ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
+                        label='Control')
+        # Plot the Experiment histogram
+        ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
+                        label='Experiment')
     
-        #plt.figure(figsize=(12, 9))
-        ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', label='Control')
-        ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', label='Experiment')
-    
-        ax.set_xlabel(exp_hist.specs.long_field, fontsize=16)
-        ax.set_ylabel('bin pdf', fontsize=16)
-        ax.set_title(exp_hist.description, fontsize = 12)
+        ax.set_xlabel(exp_histogram.specs.units, fontsize=12)
+        ax.set_ylabel('bin pdf', fontsize=12)
+        ax.set_title(exp_histogram.description, fontsize = 12)
         ax.set_xlim(min_x, max_x)
 
         ax.spines["top"].set_visible(False)
@@ -426,9 +434,12 @@ class Histogram(object):
         # ticks only needed at bottom and right
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
-        ax.legend(loc='upper left')
-
-        return ax
+        
+        # If this is just one sub plot out of many, it's possible the caller
+        # may want to make her own legend.  If not, this plot can display
+        # its own legend.
+        if use_legend:
+            ax.legend(loc='upper left', fontsize=12)
 
 
 
