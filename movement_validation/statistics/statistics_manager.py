@@ -14,7 +14,12 @@ in the SegwormMatlabClasses GitHub repo.
 import numpy as np
 import scipy as sp
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib as mpl
+
 from .. import utils
+from .histogram import Histogram
 
 #%%
 class StatisticsManager(object):
@@ -86,6 +91,10 @@ class StatisticsManager(object):
         return np.array([x.p_w for x in self.worm_statistics_objects])
 
     @property
+    def q_w_array(self):
+        return np.array([x.q_w for x in self.worm_statistics_objects])
+
+    @property
     def valid_p_t_array(self):
         p_t_array = self.p_t_array
 
@@ -109,18 +118,52 @@ class StatisticsManager(object):
         
     @property
     def p_worm(self):
-        p_w_array = np.array([x.p_w for x in self.worm_statistics_objects])
-        
-        return np.nanmin(p_w_array)
+        return np.nanmin(self.p_w_array)
     
     @property
     def q_worm(self):
-        q_w_array = np.array([x.q_w for x in self.worm_statistics_objects])
-        
-        return np.nanmin(q_w_array)
+        return np.nanmin(self.q_w_array)
 
     def __repr__(self):
         return utils.print_object(self)
+
+    def plot(self):
+        # Set the font and enable Tex
+        #mpl.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+        ## for Palatino and other serif fonts use:
+        #rc('font',**{'family':'serif','serif':['Palatino']})
+        #mpl.rc('text', usetex=True)
+        
+        
+        # Plot some histograms
+        fig = plt.figure(figsize=(12, 9))
+        fig.suptitle("Histogram Plots for all Features")
+        fig.text(1,1,s="SUBTITLE", fontdict={'weight':'bold','size':8}, 
+                 horizontalalignment='center')
+        rows = 5; cols = 4
+        #for i in range(0, 700, 100):
+        for i in range(rows * cols):
+            exp_histogram = self.worm_statistics_objects[i].exp_histogram
+            ctl_histogram = self.worm_statistics_objects[i].ctl_histogram
+            
+            ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
+            Histogram.plot_versus(ax, exp_histogram, ctl_histogram)
+    
+        # From http://matplotlib.org/users/legend_guide.html#using-proxy-artist
+        # I learned to make a figure legend:
+        green_patch = mpatches.Patch(color='g', label='Experiment')
+        grey_patch  = mpatches.Patch(color='0.85', label='Control')
+        
+        #plt.legend(handles=[green_patch, grey_patch],
+        #           loc='upper left', 
+        #           fontsize=12, bbox_to_anchor = (0,-0.1,1,1),
+        #           bbox_transform = plt.gcf().transFigure)
+
+        #plt.tight_layout()
+        plt.subplots_adjust(left=0.125, right=0.9, 
+                            bottom=0.1, top=0.9,
+                            wspace=0.8, hspace=0.6)# blank space between plots
+
 
 
 #%%

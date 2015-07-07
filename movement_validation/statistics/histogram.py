@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-The Histogram class.
+The Histogram class, and its subclass, MergedHistogram:
+
+MergedHistoram contains a constructor that accepts a list
+of Histogram objects
 
 Notes
 -------------------------
@@ -339,7 +342,7 @@ class Histogram(object):
     @property
     def std(self):
         """
-        The standard deviation
+        The standard deviation.
         
         """
         try:
@@ -408,6 +411,8 @@ class Histogram(object):
             raise AssertionError("It only makes sense to plot "
                                  "comparable histograms.")
             return
+
+
     
         ctl_bins = ctl_histogram.bin_midpoints
         ctl_y_values = ctl_histogram.pdf
@@ -423,10 +428,25 @@ class Histogram(object):
         # Plot the Experiment histogram
         ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
                         label='Experiment')
-    
-        ax.set_xlabel(exp_histogram.specs.units, fontsize=12)
-        ax.set_ylabel('bin pdf', fontsize=12)
-        ax.set_title(exp_histogram.description, fontsize = 12)
+
+        exp_worms = exp_histogram.num_videos
+        ctl_worms = ctl_histogram.num_videos
+        exp_samples = exp_histogram.num_samples
+        ctl_samples = ctl_histogram.num_samples
+        
+        title = (exp_histogram.specs.name.upper() + '\n' +
+                 'WORMS = ' + str(exp_worms) + ' [' + str(ctl_worms) + '] o '
+                 'SAMPLES = ' + str(exp_samples) + ' [' + str(ctl_samples) + 
+                 ']' + '\n' +
+                 'ALL = ' + str(exp_histogram.mean) + '+/-' + str(exp_histogram.std) +
+                 ' <<< [' + str(ctl_histogram.mean) + '+/-' + str(ctl_histogram.std) + ']')
+        
+        #title = left(exp_histogram.description,10)
+        #title = r"""\Huge{Big title !} \newline \tiny{Small subtitle !}"""
+        
+        ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
+        ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
+        ax.set_title(title, fontsize = 12)
         ax.set_xlim(min_x, max_x)
 
         ax.spines["top"].set_visible(False)
@@ -442,8 +462,8 @@ class Histogram(object):
             ax.legend(loc='upper left', fontsize=12)
 
 
-
-
+###############################################################################
+#%%
 class MergedHistogram(Histogram):
     """
     A Histogram, plus some extra data about the individual histograms
@@ -586,7 +606,7 @@ class MergedHistogram(Histogram):
             # I'm pretty sure this is not very good; we should be calculating
             # standard deviation from a concatenation of the underlying data,
             # not from just the means of the videos. - @MichaelCurrie
-            self._mean = np.std(self.mean_per_video)
+            self._std = np.std(self.mean_per_video)
             
             return self._std
 

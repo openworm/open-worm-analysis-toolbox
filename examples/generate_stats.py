@@ -11,8 +11,8 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 
 """
 import sys, os, pickle
+
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -28,29 +28,7 @@ def main():
     exp_histogram_manager, ctl_histogram_manager = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
-    print('Done with stats generation')
-
-    # Plot some histograms
-    fig = plt.figure(figsize=(12, 9))
-    rows = 5; cols = 4
-    #for i in range(0, 700, 100):
-    for i in range(rows * cols):
-        ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
-        mv.Histogram.plot_versus(ax, exp_histogram_manager[i],
-                                     ctl_histogram_manager[i])
-
-    # From http://matplotlib.org/users/legend_guide.html#using-proxy-artist
-    # I learned to make a figure legend:
-    green_patch = mpatches.Patch(color='g', label='Experiment')
-    grey_patch  = mpatches.Patch(color='0.85', label='Control')
-    
-    plt.legend(handles=[green_patch, grey_patch],
-#              labels
-               loc='upper left', 
-               fontsize=12, bbox_to_anchor = (0,-0.1,1,1),
-               bbox_transform = plt.gcf().transFigure)
-
-    #plt.legend((l1,l2) lines, labels, loc = 'lower center',  )
+    print("Done with Histogram generation.  Now let's calculate statistics.")
 
     stat = mv.StatisticsManager(exp_histogram_manager, ctl_histogram_manager)
 
@@ -58,7 +36,9 @@ def main():
     #     (stat.p_worm, stat.q_worm))
           (stat.p_worm, 0))
 
-    plt.plot(stat.p_w_array)
+    stat.plot()
+
+    #plt.plot(stat.p_w_array)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!
