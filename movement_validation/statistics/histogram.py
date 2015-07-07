@@ -430,23 +430,36 @@ class Histogram(object):
         ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
                         label='Experiment')
 
-        exp_worms = exp_histogram.num_videos
-        ctl_worms = ctl_histogram.num_videos
-        exp_samples = exp_histogram.num_samples
-        ctl_samples = ctl_histogram.num_samples
+        title = "{0}\nWORMS = {1} [{2}] \u00A4 SAMPLES = {3:,} [{4:,}]\n".\
+                format(exp_histogram.specs.name.upper(),
+                       exp_histogram.num_videos, ctl_histogram.num_videos,
+                       exp_histogram.num_samples, ctl_histogram.num_samples)
+
+        title += ("ALL = {0:.2f} +/- {1:.2f} <<< [{2:.2f} +/- {3:.2f}] "
+                 "\u00A4 (p={4:.4f}, q={5:.4f})").format(
+                 exp_histogram.mean, exp_histogram.std,
+                 ctl_histogram.mean, ctl_histogram.std,
+                 0.05, 0.05)
+
+        plt.ticklabel_format(style='plain', useOffset=True)
+        # TODO: ADD a line for mean, and then another for std dev.
+        # TODO: Do this for both experiment and control!
+        # http://www.widecodes.com/CzVkXUqXPj/average-line-for-bar-chart-in-matplotlib.html        
         
-        title = (exp_histogram.specs.name.upper() + '\n' +
-                 'WORMS = ' + str(exp_worms) + ' [' + str(ctl_worms) + '] o '
-                 'SAMPLES = ' + str(exp_samples) + ' [' + str(ctl_samples) + 
-                 ']' + '\n' +
-                 'ALL = ' + str(exp_histogram.mean) + '+/-' + str(exp_histogram.std) +
-                 ' <<< [' + str(ctl_histogram.mean) + '+/-' + str(ctl_histogram.std) + ']')
+        # TODO: add exp_histogram.specs.data_type, motion_type, hist_type
+        # somehow to the titl.
         
-        #title = left(exp_histogram.description,10)
-        #title = r"""\Huge{Big title !} \newline \tiny{Small subtitle !}"""
+        # TODO: figure out how to get p and q values.
+        #       AHA!  This function should be moved to WormStatistics.
+        
+        # TODO: switch to a relative axis for x-axis
+        # http://stackoverflow.com/questions/3677368
+        # 
         
         ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
         ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
+        ax.yaxis.set_ticklabels([])
+        ax.yaxis.set_ticks([])
         ax.set_title(title, fontsize = 12)
         ax.set_xlim(min_x, max_x)
 

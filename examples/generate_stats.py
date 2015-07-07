@@ -36,15 +36,16 @@ def main():
     #     (stat.p_worm, stat.q_worm))
           (stat.p_worm, 0))
 
-    #stat.plot()
-
+    stat.plot()
+    plt.show()
+    
     # Plot the p-values, ranked.
     # TODO: add a line at the 0.01 and 0.05 thresholds, with annotation for
     #       the intercept.
     plt.plot(np.sort(stat.p_w_array))
     plt.ylabel("Probability", fontsize=10)
     plt.xlabel("Feature", fontsize=10)
-
+    plt.show()
     # TODO:
     # now somehow display the stats to prove that we generated them!
 
