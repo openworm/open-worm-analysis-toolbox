@@ -55,6 +55,7 @@ class Histogram(object):
         - allow loading from a saved file
 
     """    
+    #%%
     def __init__(self, data, specs, hist_type, motion_type, data_type):
         """
         Initializer
@@ -129,7 +130,7 @@ class Histogram(object):
             return None
         else:
             return cls(data, specs, hist_type, motion_type, data_type)
-
+    #%%
     @property
     def num_samples(self):
         try:
@@ -169,7 +170,7 @@ class Histogram(object):
 
         """
         return len(self.bin_midpoints)
-
+    #%%
     def compute_covering_bins(self):
         """
         Compute histogram bin boundaries that will be enough to cover 
@@ -324,7 +325,7 @@ class Histogram(object):
             
             return self._pdf
 
-    
+    #%%
     @property
     def mean(self):
         """

@@ -11,7 +11,7 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 
 """
 import sys, os, pickle
-
+import numpy as np
 import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
@@ -36,9 +36,14 @@ def main():
     #     (stat.p_worm, stat.q_worm))
           (stat.p_worm, 0))
 
-    stat.plot()
+    #stat.plot()
 
-    #plt.plot(stat.p_w_array)
+    # Plot the p-values, ranked.
+    # TODO: add a line at the 0.01 and 0.05 thresholds, with annotation for
+    #       the intercept.
+    plt.plot(np.sort(stat.p_w_array))
+    plt.ylabel("Probability", fontsize=10)
+    plt.xlabel("Feature", fontsize=10)
 
     # TODO:
     # now somehow display the stats to prove that we generated them!

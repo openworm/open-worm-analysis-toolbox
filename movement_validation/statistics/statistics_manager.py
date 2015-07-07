@@ -92,6 +92,8 @@ class StatisticsManager(object):
 
     @property
     def q_w_array(self):
+        # TODO: THIS MAKES NO SENSE, SINCE Q-VALUES ARE CALCULATED NOT
+        # PER HISTOGRAM BUT ACROSS ALL FEATURE HISTOGRAMS.
         return np.array([x.q_w for x in self.worm_statistics_objects])
 
     @property
@@ -122,6 +124,7 @@ class StatisticsManager(object):
     
     @property
     def q_worm(self):
+
         return np.nanmin(self.q_w_array)
 
     def __repr__(self):
@@ -154,10 +157,10 @@ class StatisticsManager(object):
         green_patch = mpatches.Patch(color='g', label='Experiment')
         grey_patch  = mpatches.Patch(color='0.85', label='Control')
         
-        #plt.legend(handles=[green_patch, grey_patch],
-        #           loc='upper left', 
-        #           fontsize=12, bbox_to_anchor = (0,-0.1,1,1),
-        #           bbox_transform = plt.gcf().transFigure)
+        plt.legend(handles=[green_patch, grey_patch],
+                   loc='upper left', 
+                   fontsize=12, bbox_to_anchor = (0,-0.1,1,1),
+                   bbox_transform = plt.gcf().transFigure)
 
         #plt.tight_layout()
         plt.subplots_adjust(left=0.125, right=0.9, 
@@ -317,7 +320,7 @@ class WormStatistics(object):
         
         Rules:
         
-        1. If no valid means exist in one, but all exist in the order:
+        1. If no valid means exist in one, but all exist in the other:
             Use Fisher's exact test.
 
         2. Otherwise use Student's t-test
