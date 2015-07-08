@@ -685,13 +685,17 @@ class WormFeaturesDos(object):
 
         self.features = {}
 
-        modules = {'morphology_features':morphology_features} 
+        modules = {'morphology_features':morphology_features,'locomotion_features':locomotion_features} 
 
         for spec in f_specs:
+            #Some of this logic should move to the specs themselves
             module = modules[spec.module_name]
             method_to_call = getattr(module,spec.class_name)
-            temp = method_to_call(self)
-            self.features[temp.name] = temp   
+            if len(spec.flags) == 0:
+                temp = method_to_call(self)
+            else:
+                temp = method_to_call(self,spec.flags)
+            self.features[temp.name] = temp
 
         import pdb
         pdb.set_trace()
@@ -735,6 +739,15 @@ class FeatureProcessingSpec(object):
         self.name = d['Feature Name']
         self.module_name = d['Module']
         self.class_name = d['Class Name']
+        
+        #We don't really need the dependencies if we lazy load ...
+        temp = d['Dependencies']
+        
+        #I'm not sure how I want to handle this yet
+        self.flags = d['Flags']
+        
+        
+        #TODO: Build module retrieval and code into here
         
     def __repr__(self):
         return utils.print_object(self)       

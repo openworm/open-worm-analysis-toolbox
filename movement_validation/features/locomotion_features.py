@@ -370,7 +370,14 @@ class MotionEvents(object):
 #                               NEW CODE
 #==============================================================================
 class AverageBodyAngle(object):
-    pass        
+    
+    def __init__(self,wf):
+        nw = wf.nw
+        self.name = 'locomotion.velocity.avg_body_angle'
+        self.value = velocity_module.get_partition_angles(nw, 
+                                  partition_key='body',
+                                  data_key='skeleton',
+                                  head_to_tail=False)    
         
 class VelocitySpeed(Feature):
     pass
@@ -378,11 +385,61 @@ class VelocitySpeed(Feature):
 class VelocityDirection(Feature):
     pass        
 
-class HeadTip(object):
-    #TODO: If we can pass a parameter into here this can become much more
-    #generic
-    #This should store the values until used by HeadTipSpeed and HeadTipDirection        
-    pass
+class LocomotionVelocitySection(object):
+    
+    """
+    This is effectively HeadTip,Head,Midbody,etc.
+    asdf = {            
+    'head_tip': locomotion_options.velocity_tip_diff,
+    'head':     locomotion_options.velocity_body_diff,
+    'midbody':  locomotion_options.velocity_body_diff,
+    'tail':     locomotion_options.velocity_body_diff,
+    'tail_tip': locomotion_options.velocity_tip_diff}   
+    """
+    
+    def __init__(self,wf,segment):
+
+
+        #Unpacking
+        #-------------------------
+        nw = wf.nw
+        ventral_mode = nw.video_info.ventral_mode
+        fps          = nw.video_info.fps
+        locomotion_options = wf.options.locomotion
+        
+        #TODO: Redo as checking for tip, otherwise body diff
+        if segment == 'head_tip':
+            sample_time = locomotion_options.velocity_tip_diff
+        elif segment == 'head':
+            sample_time = locomotion_options.velocity_body_diff
+        elif segment == 'midbody':
+            sample_time = locomotion_options.velocity_body_diff
+        elif segment == 'tail':
+            sample_time = locomotion_options.velocity_body_diff
+        else:
+            sample_time =  locomotion_options.velocity_tip_diff                   
+                
+        if segment == 'midbody' and wf.options.mimic_old_behaviour:
+            data_key = 'old_midbody_velocity'
+        else:
+            data_key = segment
+            
+
+        self.name = 'locomotion.velocity.' + segment
+        temp = wf['locomotion.velocity.avg_body_angle']
+        avg_body_angle = temp.value
+        
+        x, y = nw.get_partition(data_key, 'skeleton', True)
+        speed, direction = velocity_module.compute_velocity(fps, x, y,
+                                            avg_body_angle,
+                                            sample_time,
+                                            ventral_mode)[0:2]        
+
+        self.speed = speed
+        self.direction = direction
+
+        import pdb
+        pdb.set_trace()        
         
 class HeadTipSpeed(Feature):
 
