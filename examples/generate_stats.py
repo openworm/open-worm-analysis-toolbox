@@ -30,31 +30,44 @@ def main():
 
     print("Done with Histogram generation.  Now let's calculate statistics.")
 
-    stat = mv.StatisticsManager(exp_histogram_manager, ctl_histogram_manager)
+    statistics_manager = \
+        mv.StatisticsManager(exp_histogram_manager, ctl_histogram_manager)
 
     print("Comparison p and q values are %.2f and %.2f, respectively." %
-    #     (stat.p_worm, stat.q_worm))
-          (stat.p_worm, 0))
+          (statistics_manager.min_p_wilcoxon, 
+           statistics_manager.min_q_wilcoxon))
 
-    stat.plot()
+    statistics_manager.plot()
     plt.show()
     
+    """
     # Plot the p-values, ranked.
     # TODO: add a line at the 0.01 and 0.05 thresholds, with annotation for
     #       the intercept.
-    plt.plot(np.sort(stat.p_w_array))
+    plt.plot(np.sort(statistics_manager.p_wilcoxon_array), 
+             label="Sorted p-values by Wilcoxon's signed rank test")
+    plt.plot(np.sort(statistics_manager.q_wilcoxon_array),
+             label="Sorted q-values by Wilcoxon's signed rank test")
     plt.ylabel("Probability", fontsize=10)
     plt.xlabel("Feature", fontsize=10)
+    plt.legend(loc='best', shadow=True)
+    #plt.gca().set_axis_bgcolor('m')
     plt.show()
-    # TODO:
-    # now somehow display the stats to prove that we generated them!
-
+    """    
+    
     # TODO:
     # maybe compare to the segwormmatlabclasses-generated stats somehow?
 
     # TODO:
     # visualize the data in a grid
     # http://stackoverflow.com/questions/19407950
+
+    # Y-axis is features, labeled
+    # X-axis is worm videos
+    # then list the p and q values
+    # List if the mean is vailable or golor red if not.
+
+
 
 def get_matlab_filepaths(root_path):
     """
