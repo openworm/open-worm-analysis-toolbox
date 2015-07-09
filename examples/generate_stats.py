@@ -11,10 +11,9 @@ the statistics generated from comparing a set of 20 Feature .mat Files:
 
 """
 import sys, os, pickle
-import numpy as np
 import matplotlib.pyplot as plt
 
-# We must add .. to the path so that we can perform the 
+# We must add .. to the path so that we can perform the
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')

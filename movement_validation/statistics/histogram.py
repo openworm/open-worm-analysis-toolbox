@@ -33,7 +33,7 @@ class Histogram(object):
     -----------------
     data: numpy array
     specs: Specs object
-    hist_type: str
+    histogram_type: str
     motion_type: str
     data_type: str
     
@@ -55,7 +55,7 @@ class Histogram(object):
 
     """    
     #%%
-    def __init__(self, data, specs, hist_type, motion_type, data_type):
+    def __init__(self, data, specs, histogram_type, motion_type, data_type):
         """
         Initializer
         
@@ -64,7 +64,7 @@ class Histogram(object):
         data: numpy array
             The data to be counted for the histogram
         specs: instance of Specs class
-        hist_type: string
+        histogram_type: string
             histogram type  # 'motion', 'simple', 'event
         motion_type: string
              # 'all', 'forward', 'paused', 'backward'
@@ -84,7 +84,7 @@ class Histogram(object):
         self.specs       = specs
 
         # "Expanded" features specifications
-        self.hist_type   = hist_type
+        self.histogram_type   = histogram_type
         self.motion_type = motion_type
         self.data_type   = data_type
 
@@ -96,7 +96,7 @@ class Histogram(object):
 
     #%%
     @classmethod
-    def create_histogram(cls, data, specs, hist_type, 
+    def create_histogram(cls, data, specs, histogram_type, 
                          motion_type, data_type):
         """
         Factory method to create a Histogram instance.
@@ -108,7 +108,7 @@ class Histogram(object):
         ------------------
         data: numpy array
         specs: instance of Specs class
-        hist_type:
+        histogram_type:
         motion_type:
         data_type:
 
@@ -121,14 +121,14 @@ class Histogram(object):
         ------------------
         Formerly located in HistogramManager, and called:
         function obj = h__createIndividualObject(self, data, specs, 
-                                                 hist_type, motion_type, 
+                                                 histogram_type, motion_type, 
                                                  data_type)
         
         """
         if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
-            return cls(data, specs, hist_type, motion_type, data_type)
+            return cls(data, specs, histogram_type, motion_type, data_type)
     #%%
     @property
     def num_samples(self):
@@ -395,8 +395,8 @@ class MergedHistogram(Histogram):
     p_normal: float
     
     """
-    def __init__(self, data, specs, hist_type, motion_type, data_type):
-        super(MergedHistogram, self).__init__(data, specs, hist_type, 
+    def __init__(self, data, specs, histogram_type, motion_type, data_type):
+        super(MergedHistogram, self).__init__(data, specs, histogram_type, 
                                               motion_type, data_type)
 
     #%%
@@ -406,7 +406,7 @@ class MergedHistogram(Histogram):
         Given a list of histograms, return a new Histogram instance
         with all the bin counts merged.
         
-        This method assumes the specs and hist_type, motion_type and 
+        This method assumes the specs and histogram_type, motion_type and 
         data_type for all the histograms in histograms are the same.
 
         This method can merge histograms that are computed using different
@@ -436,7 +436,7 @@ class MergedHistogram(Histogram):
         # Create an output object with same meta properties
         merged_hist = cls(data=None,
                           specs=histograms[0].specs,
-                          hist_type=histograms[0].hist_type,
+                          histogram_type=histograms[0].histogram_type,
                           motion_type=histograms[0].motion_type,
                           data_type=histograms[0].data_type)
 
@@ -535,7 +535,7 @@ class MergedHistogram(Histogram):
         The number of videos that this instance contains.
         
         """
-        len(self.mean_per_video)
+        return len(self.mean_per_video)
 
 
     @property

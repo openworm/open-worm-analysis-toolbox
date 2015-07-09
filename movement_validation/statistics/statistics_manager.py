@@ -3,10 +3,12 @@
 manager.py
 
 Classes
----------------------------------------    
+-----------------------
 StatisticsManager
 WormStatistics
 
+Notes
+-----------------------
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.
 
@@ -199,7 +201,7 @@ class WormStatistics(object):
         drawn from the same distribution (Using Student's t test)
     
     specs
-    hist_type
+    histogram_type
     motion_type
     data_type
 
@@ -247,7 +249,7 @@ class WormStatistics(object):
         # Ensure that we are comparing the same feature!
         assert(exp_histogram.specs.long_field == 
                ctl_histogram.specs.long_field)
-        assert(exp_histogram.hist_type == ctl_histogram.hist_type)
+        assert(exp_histogram.histogram_type == ctl_histogram.histogram_type)
         assert(exp_histogram.motion_type == ctl_histogram.motion_type)
         assert(exp_histogram.data_type == ctl_histogram.data_type)
 
@@ -409,24 +411,25 @@ class WormStatistics(object):
     #%%     
     @property    
     def specs(self):
-        assert(self.exp_histogram.specs == self.ctl_histogram.specs)
+        assert(self.exp_histogram.specs.long_field == 
+               self.ctl_histogram.specs.long_field)
         return self.exp_histogram.specs
 
     @property    
-    def hist_type(self):
-        assert(self.exp_histogram.hist_type == self.ctl_histogram.hist_type)
-        return self.exp_histogram.specs
+    def histogram_type(self):
+        assert(self.exp_histogram.histogram_type == self.ctl_histogram.histogram_type)
+        return self.exp_histogram.histogram_type
 
     @property    
     def motion_type(self):
         assert(self.exp_histogram.motion_type == 
                self.ctl_histogram.motion_type)
-        self.motion_type = self.exp_histogram.motion_type
+        return self.exp_histogram.motion_type
 
     @property    
     def data_type(self):
         assert(self.exp_histogram.data_type == self.ctl_histogram.data_type)
-        self.data_type = self.exp_histogram.data_type
+        return self.exp_histogram.data_type
 
     #%%
     # Internal methods: not really intended for others to consume.     
@@ -497,12 +500,8 @@ class WormStatistics(object):
     #%%
     def plot(self, ax, use_legend=False):
         """
-        Use matplotlib to plot a Histogram instance against another.  
-        Plots one histogram against another with the same long_field.
+        Use matplotlib to plot the experiment histogram against the control.
         
-        TODO: The inputs should be renamed        
-        TODO: Add support for passing in labels
-
         Note: You must still call plt.show() after calling this function.
         
         Parameters
@@ -516,8 +515,11 @@ class WormStatistics(object):
         
         fig = plt.figure(1)
         ax = fig.gca()
-        Histogram.plot_versus(ax, hist1, hist2)
+        worm_statistics_object.plot(ax)
         plt.show()
+
+        # A more typical use would be this method being called by 
+        # a StatisticsManager object.
 
         Parameters
         -----------------------
@@ -540,8 +542,18 @@ class WormStatistics(object):
         min_x = min([h[0] for h in [ctl_bins, exp_bins]])
         max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
     
-        title = "{0}\nWORMS = {1} [{2}] \u00A4 SAMPLES = {3:,} [{4:,}]\n".\
-                format(exp_histogram.specs.name.upper(),
+        # If data_type is just "all", don't bother showing it in the title
+        if self.data_type == 'all':
+            data_type_string = ''
+        else:
+            data_type_string = '- {0}'.format(self.data_type)
+    
+        title = ("{0} - {1}{2} (3)\n"
+                "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
+                format(self.specs.name.upper(),
+                       self.motion_type,
+                       data_type_string,
+                       self.histogram_type,
                        exp_histogram.num_videos, ctl_histogram.num_videos,
                        exp_histogram.num_samples, ctl_histogram.num_samples)
 
@@ -556,33 +568,33 @@ class WormStatistics(object):
         # TODO: Do this for both experiment and control!
         # http://www.widecodes.com/CzVkXUqXPj/average-line-for-bar-chart-in-matplotlib.html        
         
-        # TODO: add exp_histogram.specs.data_type, motion_type, hist_type
-        # somehow to the title.
-        
         # TODO: switch to a relative axis for x-axis
         # http://stackoverflow.com/questions/3677368
-        # 
+    
+        # Decide on a background colour based on the statistical significance
+        # of the particular feature.
+        # The precise colour values were obtained MS Paint's eyedropper tool
+        # on the background colours of the original Schafer worm PDFs
         if self.q_wilcoxon <= 0.0001:
-            bgcolor = 'm' # Magenta
+            bgcolour = (229,204,255)  # 'm' # Magenta
         elif self.q_wilcoxon <= 0.001:
-            bgcolor = 'r' # Red
+            bgcolour = (255,204,204)  # 'r' # Red
         elif self.q_wilcoxon <= 0.01:
-            bgcolor = 'darkorange' # Dark orange
+            bgcolour = (255,229,178)  # 'darkorange' # Dark orange
         elif self.q_wilcoxon <= 0.05:
-            bgcolor = 'y' # Yellow
-        else:
-            bgcolor = 'w' # White
-            
-        # TODO: use a color picker to specify the exact RGB values used
-        # in the Schafer paper
-        
+            bgcolour = (255,255,178)  # 'y' # Yellow
+        else:            
+            bgcolour = (255,255,255)  # 'w' # White
+        # Scale each of the R,G,and B entries to be between 0 and 1:
+        bgcolour = np.array(bgcolour) / 255
+
         # Plot the Control histogram
         ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
                         label='Control')
         # Plot the Experiment histogram
         ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
                         label='Experiment')
-        ax.set_axis_bgcolor(bgcolor)
+        ax.set_axis_bgcolor(bgcolour)
         ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
         ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
         ax.yaxis.set_ticklabels([])
