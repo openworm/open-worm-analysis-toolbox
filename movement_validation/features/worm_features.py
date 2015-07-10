@@ -687,6 +687,7 @@ class WormFeaturesDos(object):
 
         modules = {'morphology_features':morphology_features,'locomotion_features':locomotion_features} 
 
+        self.feature_list = []
         for spec in f_specs:
             #Some of this logic should move to the specs themselves
             module = modules[spec.module_name]
@@ -695,7 +696,12 @@ class WormFeaturesDos(object):
                 temp = method_to_call(self)
             else:
                 temp = method_to_call(self,spec.flags)
+            self.feature_list.append(temp)
             self.features[temp.name] = temp
+
+        #Wanted order, didn't feel like messsing with ordered_dict
+        #This will all likely change
+        #self.feature_list = [v for k,v in self.features.items()]
 
         import pdb
         pdb.set_trace()

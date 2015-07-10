@@ -668,6 +668,11 @@ class EventList(object):
             mask[self.start_frames[i_event]:self.end_frames[i_event] + 1] = True
 
         #??? Why are we slicing the output?
+        #This appears to be because last_event_frame+1 could be larger
+        #than num_frames
+        #TODO: This should be fixed, let's make this truncation more explicit
+        #in the documentation. We should also consider embedding the #
+        #of frames into the event
         return mask[0:num_frames]
 
 
@@ -913,7 +918,7 @@ class EventListWithFeatures(EventList):
         accept it as a parameter.
 
         """
-        EventList.get_event_mask(self.num_video_frames)
+        return EventList.get_event_mask(self,self.num_video_frames)
 
 
     @classmethod

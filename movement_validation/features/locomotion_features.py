@@ -371,6 +371,15 @@ class MotionEvents(object):
 #==============================================================================
 class AverageBodyAngle(object):
     
+    """
+    This is a temporary feature that is needed for
+    locomotion.velocity features
+    
+    See Also
+    --------
+    LocomotionVelocitySection
+    
+    """
     def __init__(self,wf):
         nw = wf.nw
         self.name = 'locomotion.velocity.avg_body_angle'
@@ -378,16 +387,16 @@ class AverageBodyAngle(object):
                                   partition_key='body',
                                   data_key='skeleton',
                                   head_to_tail=False)    
-        
-class VelocitySpeed(Feature):
-    pass
-
-class VelocityDirection(Feature):
-    pass        
-
+      
+      
 class LocomotionVelocitySection(object):
     
     """
+    
+    This is a generic temporary class that implements:
+    locomotion.velocity.head_tip,
+    locomotion.velocity.head, etc.
+    
     This is effectively HeadTip,Head,Midbody,etc.
     asdf = {            
     'head_tip': locomotion_options.velocity_tip_diff,
@@ -407,18 +416,11 @@ class LocomotionVelocitySection(object):
         fps          = nw.video_info.fps
         locomotion_options = wf.options.locomotion
         
-        #TODO: Redo as checking for tip, otherwise body diff
-        if segment == 'head_tip':
+        if segment == 'head_tip' or segment == 'tail_tip':
             sample_time = locomotion_options.velocity_tip_diff
-        elif segment == 'head':
-            sample_time = locomotion_options.velocity_body_diff
-        elif segment == 'midbody':
-            sample_time = locomotion_options.velocity_body_diff
-        elif segment == 'tail':
-            sample_time = locomotion_options.velocity_body_diff
         else:
-            sample_time =  locomotion_options.velocity_tip_diff                   
-                
+            sample_time = locomotion_options.velocity_body_diff
+        
         if segment == 'midbody' and wf.options.mimic_old_behaviour:
             data_key = 'old_midbody_velocity'
         else:
@@ -429,6 +431,9 @@ class LocomotionVelocitySection(object):
         temp = wf['locomotion.velocity.avg_body_angle']
         avg_body_angle = temp.value
         
+        
+        #The actual computation
+        #----------------------        
         x, y = nw.get_partition(data_key, 'skeleton', True)
         speed, direction = velocity_module.compute_velocity(fps, x, y,
                                             avg_body_angle,
@@ -436,19 +441,270 @@ class LocomotionVelocitySection(object):
                                             ventral_mode)[0:2]        
 
         self.speed = speed
-        self.direction = direction
+        self.direction = direction   
+     
+class VelocitySpeed(Feature):
 
-        import pdb
-        pdb.set_trace()        
+    def __init__(self,wf,segment):
+        self.name = 'locomotion.velocity.' + segment + '.speed'
+        temp = wf['locomotion.velocity.head_tip']
+        self.value = temp.speed
+
+class VelocityDirection(Feature):
+
+    def __init__(self,wf,segment):
+        self.name = 'locomotion.velocity.' + segment + '.direction'
+        temp = wf['locomotion.velocity.head_tip']
+        self.value = temp.direction
         
-class HeadTipSpeed(Feature):
+#New motion events code
+#=====================================================
 
-    def __init__(self,wf):
-        self.name = 'locomotion.velocity.head_tip.speed'
-        self.value = None
+"""
+    forward : movement_validation.features.events.EventListWithFeatures
+    paused : movement_validation.features.events.EventListWithFeatures
+    backward : movement_validation.features.events.EventListWithFeatures
+    mode : numpy.array
+        - shape num_frames
+        - Values are:
+            -1, backward locomotion
+            0, no locomotion (the worm is paused)
+            1, forward locomotion
+ """
+
+class MotionEvent(Feature):
+
+    """
+    Implements:
+    locomotion.
+    """
+
+
+    def __init__(self,wf,motion_type):
         
-class HeadTipDirection(Feature):
+        self.name = 'locomotion.motion_events.' + motion_type        
+        
+        fps = wf.video_info.fps
+        locomotion_options = wf.options.locomotion
+        
+        temp = wf['locomotion.velocity.midbody.speed']
+        midbody_speed = temp.value
+    
+        #TODO: Move this to the video_info object
+        num_frames = len(midbody_speed)
+    
+        # Compute the midbody's "instantaneous" distance travelled at each frame,
+        # distance per second / (frames per second) = distance per frame
+        distance_per_frame = abs(midbody_speed / fps)
+    
+        #Interpolate the missing lengths.
+        #------------------------------------
+        #TODO: This process should be saved as an intermediate feature
+        temp = wf['morphology.length']
+        skeleton_lengths = temp.value
+    
+        skeleton_lengths = utils.interpolate_with_threshold(
+                               skeleton_lengths,
+                               locomotion_options.motion_codes_longest_nan_run_to_interpolate)
+    
+    
+        #Set Event filter parameters
+        #--------------------------------
+        # Make the speed and distance thresholds a fixed proportion of the
+        # worm's length at the given frame:
+        worm_speed_threshold = skeleton_lengths * locomotion_options.motion_codes_speed_threshold_pct
+        worm_distance_threshold = skeleton_lengths * locomotion_options.motion_codes_distance_threshold_pct
+        worm_pause_threshold = skeleton_lengths * locomotion_options.motion_codes_pause_threshold_pct
+    
+        
+        #   Event Constraints -------
+        # The minimum number of frames an event had to be taking place for
+        # to be considered a legitimate event
+        min_frames_threshold = \
+            fps * locomotion_options.motion_codes_min_frames_threshold
+        # Maximum number of contiguous contradicting frames within the event
+        # before the event is considered to be over.
+        max_interframes_threshold = \
+            fps * locomotion_options.motion_codes_max_interframes_threshold    
+    
+    
+        if motion_type == 'forward':
+            min_speed_threshold = worm_speed_threshold
+            max_speed_threshold = None
+            min_distance_threshold = worm_distance_threshold
+        elif motion_type == 'backward':
+            min_speed_threshold = None
+            max_speed_threshold = -worm_speed_threshold
+            min_distance_threshold = worm_distance_threshold
+        else: #paused
+            min_speed_threshold = -worm_pause_threshold
+            max_speed_threshold = worm_pause_threshold
+            min_distance_threshold = None
 
-    def __init__(self,wf):
-        self.name = 'locomotion.velocity.head_tip.direction'
-        self.value = None
+        # We will use EventFinder to determine when the
+        # event type "motion_type" occurred
+        ef = events.EventFinder()
+
+        # "Space and time" constraints
+        ef.min_distance_threshold = min_distance_threshold
+        ef.max_distance_threshold = None  # we are not constraining max dist
+        ef.min_speed_threshold = min_speed_threshold
+        ef.max_speed_threshold = max_speed_threshold
+
+        # "Time" constraints
+        ef.min_frames_threshold = min_frames_threshold
+        ef.max_inter_frames_threshold = max_interframes_threshold
+
+        event_list = ef.get_events(midbody_speed, distance_per_frame)
+
+        # Take the start and stop indices and convert them to the structure
+        # used in the feature files
+        m_event = events.EventListWithFeatures(fps,
+                                               event_list,
+                                               distance_per_frame,
+                                               compute_distance_during_event=True)
+            
+        #This is temporary until a bug is fixed, at which point in time
+        #it will likeely need to move into the method directly above
+        m_event.num_video_frames = num_frames                       
+        
+        
+        self.value = m_event                                      
+        
+
+class MotionMode(Feature):
+
+    """
+    This is a temporary feature. For each frame it indicates whether that
+    frame is part of a forward, backward, or paused event. Some frames
+    may not be part of any event type, as is indicated by a NaN value.
+    """
+    
+    frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+ 
+    def  __init__(self,wf):
+        
+        self.name = 'locomotion.motion_mode'
+        
+        #Hack to get num_frames
+        temp = wf['morphology.length']
+        skeleton_lengths = temp.value
+        #TODO: Get this from video_info
+        num_frames = len(skeleton_lengths)
+        
+        #TODO: Can't we initialize NaN directly?
+        self.value = np.empty(num_frames, dtype='float') * np.NaN
+        
+        for key,value in self.frame_values.items():
+            feature_name = 'locomotion.motion_events.' + key            
+            temp = wf[feature_name]
+            event_feature = temp.value
+            
+            event_mask = event_feature.get_event_mask()
+            self.value[event_mask] = value
+
+
+"""                                             
+        timer = features_ref.timer
+        timer.tic()
+
+        fps = features_ref.video_info.fps        
+        
+        locomotion_options = features_ref.options.locomotion        
+        
+        # Initialize the worm speed and video frames.
+        num_frames = len(midbody_speed)
+    
+        # Compute the midbody's "instantaneous" distance travelled at each frame,
+        # distance per second / (frames per second) = distance per frame
+        distance_per_frame = abs(midbody_speed / fps)
+    
+        #  Interpolate the missing lengths.
+        skeleton_lengths = utils.interpolate_with_threshold(
+                               skeleton_lengths,
+                               locomotion_options.motion_codes_longest_nan_run_to_interpolate)
+    
+        #===================================
+        # SPACE CONSTRAINTS
+        # Make the speed and distance thresholds a fixed proportion of the
+        # worm's length at the given frame:
+        worm_speed_threshold = skeleton_lengths * locomotion_options.motion_codes_speed_threshold_pct
+        worm_distance_threshold = skeleton_lengths * locomotion_options.motion_codes_distance_threshold_pct
+        worm_pause_threshold = skeleton_lengths * locomotion_options.motion_codes_pause_threshold_pct
+    
+        # Minimum speed and distance required for movement to
+        # be considered "forward"
+        min_forward_speed = worm_speed_threshold
+        min_forward_distance = worm_distance_threshold
+    
+        # Minimum speed and distance required for movement to
+        # be considered "backward"
+        max_backward_speed = -worm_speed_threshold
+        min_backward_distance = worm_distance_threshold
+    
+        # Boundaries between which the movement would be considered "paused"
+        min_paused_speed = -worm_pause_threshold
+        max_paused_speed = worm_pause_threshold
+    
+        # Note that there is no maximum forward speed nor minimum backward speed.
+        #TODO: This might be better as a class attribute
+        frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
+        
+        min_speeds = {'forward': min_forward_speed,
+                      'backward': None,
+                      'paused': min_paused_speed}
+        max_speeds = {'forward': None,
+                      'backward': max_backward_speed,
+                      'paused': max_paused_speed}
+        min_distance = {'forward': min_forward_distance,
+                        'backward': min_backward_distance,
+                        'paused': None}
+    
+        #===================================
+        # TIME CONSTRAINTS
+        # The minimum number of frames an event had to be taking place for
+        # to be considered a legitimate event
+        min_frames_threshold = \
+            fps * locomotion_options.motion_codes_min_frames_threshold
+        # Maximum number of contiguous contradicting frames within the event
+        # before the event is considered to be over.
+        max_interframes_threshold = \
+            fps * locomotion_options.motion_codes_max_interframes_threshold
+        
+        # Start with a blank numpy array, full of NaNs:
+        self._mode = np.empty(num_frames, dtype='float') * np.NaN
+    
+        for motion_type in frame_values:
+            # We will use EventFinder to determine when the
+            # event type "motion_type" occurred
+            ef = events.EventFinder()
+    
+            # "Space and time" constraints
+            ef.min_distance_threshold = min_distance[motion_type]
+            ef.max_distance_threshold = None  # we are not constraining max dist
+            ef.min_speed_threshold = min_speeds[motion_type]
+            ef.max_speed_threshold = max_speeds[motion_type]
+    
+            # "Time" constraints
+            ef.min_frames_threshold = min_frames_threshold
+            ef.max_inter_frames_threshold = max_interframes_threshold
+    
+            event_list = ef.get_events(midbody_speed, distance_per_frame)
+
+            # Take the start and stop indices and convert them to the structure
+            # used in the feature files
+            m_event = events.EventListWithFeatures(fps,
+                                                   event_list,
+                                                   distance_per_frame,
+                                                   compute_distance_during_event=True)
+    
+            setattr(self,motion_type,m_event)      
+    
+            #Assign motion modes
+            #------------------------------------------------------------------
+            event_mask = event_list.get_event_mask(num_frames)
+            self._mode[event_mask] = frame_values[motion_type]
+              
+
+        timer.toc('locomotion.motion_events')
+ """
