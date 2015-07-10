@@ -105,7 +105,9 @@ class StatisticsManager(object):
             self.worm_statistics_objects[feature_index].q_wilcoxon = \
                                     self.q_wilcoxon_array[feature_index]
     
-
+    def __getitem__(self, index):
+        return self.worm_statistics_objects[index]
+    
     @property
     def p_studentst_array(self):
         return np.array([x.p_studentst for x in self.worm_statistics_objects])
@@ -548,6 +550,7 @@ class WormStatistics(object):
         else:
             data_type_string = '- {0}'.format(self.data_type)
     
+        
         title = ("{0} - {1}{2} (3)\n"
                 "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
                 format(self.specs.name.upper(),
@@ -563,6 +566,8 @@ class WormStatistics(object):
                  ctl_histogram.mean, ctl_histogram.std,
                  self.p_wilcoxon, self.q_wilcoxon)
 
+        title = (self.specs.name.upper())
+        
         plt.ticklabel_format(style='plain', useOffset=True)
         # TODO: ADD a line for mean, and then another for std dev.
         # TODO: Do this for both experiment and control!
@@ -587,19 +592,19 @@ class WormStatistics(object):
             bgcolour = (255,255,255)  # 'w' # White
         # Scale each of the R,G,and B entries to be between 0 and 1:
         bgcolour = np.array(bgcolour) / 255
-
+        
         # Plot the Control histogram
-        ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
-                        label='Control')
+        h1 = ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
+                             label='Control')
         # Plot the Experiment histogram
-        ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
-                        label='Experiment')
+        h2 = ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', 
+                             label='Experiment')
         ax.set_axis_bgcolor(bgcolour)
         ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
         ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
         ax.yaxis.set_ticklabels([])
         ax.yaxis.set_ticks([])
-        ax.set_title(title, fontsize = 12)
+        ax.set_title(title, fontsize = 10)
         ax.set_xlim(min_x, max_x)
 
         ax.spines["top"].set_visible(False)
@@ -612,4 +617,8 @@ class WormStatistics(object):
         # may want to make her own legend.  If not, this plot can display
         # its own legend.
         if use_legend:
-            ax.legend(loc='upper left', fontsize=12)
+            #handles, labels = ax.get_legend_handles_labels()
+            #print("hi")
+            ax.legend(handles=[h1, h2], 
+                      labels=['Control', 'Experiment'],
+                      loc='upper left', fontsize=12)

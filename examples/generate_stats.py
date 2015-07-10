@@ -37,7 +37,7 @@ def main():
            statistics_manager.min_q_wilcoxon))
 
     statistics_manager.plot()
-    plt.show()
+    plt.savefig('michael.png')
     
     """
     # Plot the p-values, ranked.
