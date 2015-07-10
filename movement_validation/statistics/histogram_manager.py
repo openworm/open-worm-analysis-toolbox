@@ -23,7 +23,7 @@ from .. import utils
 from ..features.worm_features import WormFeatures
 
 from .histogram import Histogram, MergedHistogram
-from .specs import SimpleSpecs, EventSpecs, MovementSpecs
+from .specifications import SimpleSpecs, EventSpecs, MovementSpecs
 
 #%%
 class HistogramManager(object):

@@ -14,7 +14,6 @@ https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
 """
 import scipy as sp
 import numpy as np
-import matplotlib.pyplot as plt
 
 from .. import config, utils
 
@@ -34,7 +33,7 @@ class Histogram(object):
     -----------------
     data: numpy array
     specs: Specs object
-    hist_type: str
+    histogram_type: str
     motion_type: str
     data_type: str
     
@@ -56,7 +55,7 @@ class Histogram(object):
 
     """    
     #%%
-    def __init__(self, data, specs, hist_type, motion_type, data_type):
+    def __init__(self, data, specs, histogram_type, motion_type, data_type):
         """
         Initializer
         
@@ -65,7 +64,7 @@ class Histogram(object):
         data: numpy array
             The data to be counted for the histogram
         specs: instance of Specs class
-        hist_type: string
+        histogram_type: string
             histogram type  # 'motion', 'simple', 'event
         motion_type: string
              # 'all', 'forward', 'paused', 'backward'
@@ -85,7 +84,7 @@ class Histogram(object):
         self.specs       = specs
 
         # "Expanded" features specifications
-        self.hist_type   = hist_type
+        self.histogram_type   = histogram_type
         self.motion_type = motion_type
         self.data_type   = data_type
 
@@ -97,7 +96,7 @@ class Histogram(object):
 
     #%%
     @classmethod
-    def create_histogram(cls, data, specs, hist_type, 
+    def create_histogram(cls, data, specs, histogram_type, 
                          motion_type, data_type):
         """
         Factory method to create a Histogram instance.
@@ -109,7 +108,7 @@ class Histogram(object):
         ------------------
         data: numpy array
         specs: instance of Specs class
-        hist_type:
+        histogram_type:
         motion_type:
         data_type:
 
@@ -122,14 +121,14 @@ class Histogram(object):
         ------------------
         Formerly located in HistogramManager, and called:
         function obj = h__createIndividualObject(self, data, specs, 
-                                                 hist_type, motion_type, 
+                                                 histogram_type, motion_type, 
                                                  data_type)
         
         """
         if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
-            return cls(data, specs, hist_type, motion_type, data_type)
+            return cls(data, specs, histogram_type, motion_type, data_type)
     #%%
     @property
     def num_samples(self):
@@ -372,108 +371,6 @@ class Histogram(object):
         """
         return 1
 
-    #%%
-    @classmethod
-    def plot_versus(cls, ax, exp_histogram, ctl_histogram, use_legend=False):
-        """
-        Use matplotlib to plot a Histogram instance against another.  
-        Plots one histogram against another with the same long_field.
-        
-        TODO: The inputs should be renamed        
-        TODO: Add support for passing in labels
-
-        Note: You must still call plt.show() after calling this function.
-        
-        Parameters
-        -----------        
-        exp_histogram
-        
-        Usage example
-        -----------------------
-        import matplotlib.pyplot as plt
-        
-        fig = plt.figure(1)
-        ax = fig.gca()
-        Histogram.plot_versus(ax, hist1, hist2)
-        plt.show()
-
-        Parameters
-        -----------------------
-        ax: A matplotlib.axes.Axes object
-            This is the handle where we'll make the plot
-        exp_hist: A Histogram object
-            The "experiment"
-        ctl_hist: A Histogram object
-            The "control"
-        
-        """
-        # Verify that we are comparing the same feature
-        if exp_histogram.specs.long_field != ctl_histogram.specs.long_field:
-            raise AssertionError("It only makes sense to plot "
-                                 "comparable histograms.")
-            return
-
-
-    
-        ctl_bins = ctl_histogram.bin_midpoints
-        ctl_y_values = ctl_histogram.pdf
-    
-        exp_bins = exp_histogram.bin_midpoints
-        exp_y_values = exp_histogram.pdf
-        min_x = min([h[0] for h in [ctl_bins, exp_bins]])
-        max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
-    
-        # Plot the Control histogram
-        ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
-                        label='Control')
-        # Plot the Experiment histogram
-        ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
-                        label='Experiment')
-
-        title = "{0}\nWORMS = {1} [{2}] \u00A4 SAMPLES = {3:,} [{4:,}]\n".\
-                format(exp_histogram.specs.name.upper(),
-                       exp_histogram.num_videos, ctl_histogram.num_videos,
-                       exp_histogram.num_samples, ctl_histogram.num_samples)
-
-        title += ("ALL = {0:.2f} +/- {1:.2f} <<< [{2:.2f} +/- {3:.2f}] "
-                 "\u00A4 (p={4:.4f}, q={5:.4f})").format(
-                 exp_histogram.mean, exp_histogram.std,
-                 ctl_histogram.mean, ctl_histogram.std,
-                 0.05, 0.05)
-
-        plt.ticklabel_format(style='plain', useOffset=True)
-        # TODO: ADD a line for mean, and then another for std dev.
-        # TODO: Do this for both experiment and control!
-        # http://www.widecodes.com/CzVkXUqXPj/average-line-for-bar-chart-in-matplotlib.html        
-        
-        # TODO: add exp_histogram.specs.data_type, motion_type, hist_type
-        # somehow to the titl.
-        
-        # TODO: figure out how to get p and q values.
-        #       AHA!  This function should be moved to WormStatistics.
-        
-        # TODO: switch to a relative axis for x-axis
-        # http://stackoverflow.com/questions/3677368
-        # 
-        
-        ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
-        ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
-        ax.yaxis.set_ticklabels([])
-        ax.yaxis.set_ticks([])
-        ax.set_title(title, fontsize = 12)
-        ax.set_xlim(min_x, max_x)
-
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        # ticks only needed at bottom and right
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
-        
-        # If this is just one sub plot out of many, it's possible the caller
-        # may want to make her own legend.  If not, this plot can display
-        # its own legend.
-        if use_legend:
-            ax.legend(loc='upper left', fontsize=12)
 
 
 ###############################################################################
@@ -498,8 +395,8 @@ class MergedHistogram(Histogram):
     p_normal: float
     
     """
-    def __init__(self, data, specs, hist_type, motion_type, data_type):
-        super(MergedHistogram, self).__init__(data, specs, hist_type, 
+    def __init__(self, data, specs, histogram_type, motion_type, data_type):
+        super(MergedHistogram, self).__init__(data, specs, histogram_type, 
                                               motion_type, data_type)
 
     #%%
@@ -509,7 +406,7 @@ class MergedHistogram(Histogram):
         Given a list of histograms, return a new Histogram instance
         with all the bin counts merged.
         
-        This method assumes the specs and hist_type, motion_type and 
+        This method assumes the specs and histogram_type, motion_type and 
         data_type for all the histograms in histograms are the same.
 
         This method can merge histograms that are computed using different
@@ -539,7 +436,7 @@ class MergedHistogram(Histogram):
         # Create an output object with same meta properties
         merged_hist = cls(data=None,
                           specs=histograms[0].specs,
-                          hist_type=histograms[0].hist_type,
+                          histogram_type=histograms[0].histogram_type,
                           motion_type=histograms[0].motion_type,
                           data_type=histograms[0].data_type)
 
@@ -638,7 +535,7 @@ class MergedHistogram(Histogram):
         The number of videos that this instance contains.
         
         """
-        len(self.mean_per_video)
+        return len(self.mean_per_video)
 
 
     @property

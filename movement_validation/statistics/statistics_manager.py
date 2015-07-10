@@ -3,10 +3,12 @@
 manager.py
 
 Classes
----------------------------------------    
+-----------------------
 StatisticsManager
 WormStatistics
 
+Notes
+-----------------------
 A translation of Matlab code written by Jim Hokanson,
 in the SegwormMatlabClasses GitHub repo.
 
@@ -34,18 +36,27 @@ class StatisticsManager(object):
     ---------------------------------------    
     worm_statistics_objects: numpy array of WormStatistics objects
         one object for each of 726 features
-    p_t: numpy array
-        each non-null p_t from worm_statistics_objects
-    p_w: numpy array
-        each non-null p_w from worm_statistics_objects
-    q_t: numpy array
-        False Discovery Rate (FDR) (i.e. q-values) for p_t
-    q_w: numpy array
-        False Discovery Rate (FDR) (i.e. q-values) for p_w
-    p_worm: float
-        minimum p_w
-    q_worm: float
-        minimum q_w
+    min_p_wilcoxon: float
+        minimum p_wilcoxon from all objects in worm_statistics_objects
+    min_q_wilcoxon: float
+        minimum q_wilcoxon from all objects in worm_statistics_objects
+
+    (HELPER ATTRIBUTES:)
+    valid_p_studentst_array: numpy array
+        each non-null p_studentst from worm_statistics_objects
+    valid_p_wilcoxon_array: numpy array
+        each non-null p_wilcoxon from worm_statistics_objects
+    q_studentst_array: numpy array
+        False Discovery Rate (FDR) (i.e. q-values) for p_studentst
+    q_wilcoxon_array: numpy array
+        False Discovery Rate (FDR) (i.e. q-values) for p_wilcoxon
+
+    Methods
+    ---------------------------------------    
+    __init__
+        Initializer
+    plot
+        Plot the histograms against each other and display statistics
 
     Notes
     ---------------------------------------    
@@ -80,52 +91,50 @@ class StatisticsManager(object):
             self.worm_statistics_objects[feature_index] = WormStatistics(
                     exp_histogram_manager[feature_index],
                     ctl_histogram_manager[feature_index])
+                    
+        # Q-values, as introduced by Storey et al. (2002), attempt to 
+        # account for the False Discovery Rate from multiple hypothesis 
+        # testing on the same subjects.  So we must calculate here across 
+        # all WormStatistics objects, then assign the values to the 
+        # individual WormStatistics objects.
+        self.q_studentst_array = utils.compute_q_values(self.p_studentst_array)
+        self.q_wilcoxon_array = utils.compute_q_values(self.p_wilcoxon_array)
+        for feature_index in range(num_features):
+            self.worm_statistics_objects[feature_index].q_studentst = \
+                                    self.q_studentst_array[feature_index]
+            self.worm_statistics_objects[feature_index].q_wilcoxon = \
+                                    self.q_wilcoxon_array[feature_index]
     
 
     @property
-    def p_t_array(self):
-        return np.array([x.p_t for x in self.worm_statistics_objects])
+    def p_studentst_array(self):
+        return np.array([x.p_studentst for x in self.worm_statistics_objects])
 
     @property
-    def p_w_array(self):
-        return np.array([x.p_w for x in self.worm_statistics_objects])
+    def p_wilcoxon_array(self):
+        return np.array([x.p_wilcoxon for x in self.worm_statistics_objects])
 
     @property
-    def q_w_array(self):
-        # TODO: THIS MAKES NO SENSE, SINCE Q-VALUES ARE CALCULATED NOT
-        # PER HISTOGRAM BUT ACROSS ALL FEATURE HISTOGRAMS.
-        return np.array([x.q_w for x in self.worm_statistics_objects])
-
-    @property
-    def valid_p_t_array(self):
-        p_t_array = self.p_t_array
+    def valid_p_studentst_array(self):
+        p_studentst_array = self.p_studentst_array
 
         # Filter the NaN entries 
-        return p_t_array[~np.isnan(p_t_array)]
+        return p_studentst_array[~np.isnan(p_studentst_array)]
 
     @property        
-    def valid_p_w_array(self):
-        p_w_array = self.p_w_array
+    def valid_p_wilcoxon_array(self):
+        p_wilcoxon_array = self.p_wilcoxon_array
 
         # Filter the NaN entries 
-        return p_w_array[~np.isnan(p_w_array)]
+        return p_wilcoxon_array[~np.isnan(p_wilcoxon_array)]
         
     @property
-    def q_t(self):
-        return utils.compute_q_values(self.p_t)
-
-    @property
-    def q_w(self):
-        return utils.compute_q_values(self.p_w)
-        
-    @property
-    def p_worm(self):
-        return np.nanmin(self.p_w_array)
+    def min_p_wilcoxon(self):
+        return np.nanmin(self.p_wilcoxon_array)
     
     @property
-    def q_worm(self):
-
-        return np.nanmin(self.q_w_array)
+    def min_q_wilcoxon(self):
+        return np.nanmin(self.q_wilcoxon_array)
 
     def __repr__(self):
         return utils.print_object(self)
@@ -146,11 +155,9 @@ class StatisticsManager(object):
         rows = 5; cols = 4
         #for i in range(0, 700, 100):
         for i in range(rows * cols):
-            exp_histogram = self.worm_statistics_objects[i].exp_histogram
-            ctl_histogram = self.worm_statistics_objects[i].ctl_histogram
-            
             ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
-            Histogram.plot_versus(ax, exp_histogram, ctl_histogram)
+
+            self.worm_statistics_objects[i].plot(ax)
     
         # From http://matplotlib.org/users/legend_guide.html#using-proxy-artist
         # I learned to make a figure legend:
@@ -180,16 +187,21 @@ class WormStatistics(object):
     exp_histogram  (the underlying histogram)
     ctl_histogram  (the underlying histogram)  
     
-    z_score_experiment
-    exp_p_normal
-        Probability of the data given a normality assumption
-    ctl_p_normal
-        Probability of the data given a normality assumption
-    p_w
-    p_t
+    z_score_experiment: float
+    exp_p_normal: float
+        Probability of the experiment data given a normality assumption
+            (Using Shapiro-Wilk)
+    ctl_p_normal: float
+        Same as exp_p_normal, but for the control.
+    p_wilcoxon: float
+        Probability of the data given a null hypothesis that all data are
+        drawn from the same distribution (Using Wilcoxon signed-rank test)
+    p_studentst: float
+        Probability of the data given a null hypothesis that all data are
+        drawn from the same distribution (Using Student's t test)
     
     specs
-    hist_type
+    histogram_type
     motion_type
     data_type
 
@@ -227,8 +239,8 @@ class WormStatistics(object):
         """
         if exp_histogram is None or ctl_histogram is None:
             self._z_score_experiment = np.NaN
-            self._p_w = np.NaN
-            self._p_t = np.NaN
+            self._p_wilcoxon = np.NaN
+            self._p_studentst = np.NaN
             self._t_statistic = np.NaN
             self._fisher_p = np.NaN
             
@@ -237,7 +249,7 @@ class WormStatistics(object):
         # Ensure that we are comparing the same feature!
         assert(exp_histogram.specs.long_field == 
                ctl_histogram.specs.long_field)
-        assert(exp_histogram.hist_type == ctl_histogram.hist_type)
+        assert(exp_histogram.histogram_type == ctl_histogram.histogram_type)
         assert(exp_histogram.motion_type == ctl_histogram.motion_type)
         assert(exp_histogram.data_type == ctl_histogram.data_type)
 
@@ -314,9 +326,9 @@ class WormStatistics(object):
 
     #%%
     @property
-    def p_t(self):
+    def p_studentst(self):
         """
-        p_t
+        p-value calculated using the Student's t-test.
         
         Rules:
         
@@ -336,7 +348,7 @@ class WormStatistics(object):
         a standard two-tailed and two-sample t-test on every gene in 
         DataX and DataY and return a p-value for each gene.
         PValues = mattest(DataX, DataY)
-        p_t_all is a 726x1 matrix with values between 0 and 1.
+        p_studentst_all is a 726x1 matrix with values between 0 and 1.
 
         (From SciPy docs:)
         Calculates the T-test for the means of TWO INDEPENDENT samples 
@@ -347,7 +359,7 @@ class WormStatistics(object):
 
         """
         try:
-            return self._p_t
+            return self._p_studentst
         except AttributeError:
             # Scenario 1
             if self.is_exclusive:
@@ -355,16 +367,16 @@ class WormStatistics(object):
                 
             # Scenario 2
             else:
-                _, self._p_t = \
+                _, self._p_studentst = \
                     sp.stats.ttest_ind(self.exp_histogram.valid_mean_per_video,
                                        self.ctl_histogram.valid_mean_per_video)
             
-            return self._p_t
+            return self._p_studentst
     
     @property
-    def p_w(self):
+    def p_wilcoxon(self):
         """
-        p_w.
+        p-value calculated using the Wilcoxon signed-rank test.
         
         Rules:
 
@@ -379,7 +391,7 @@ class WormStatistics(object):
 
         """
         try:
-            return self._p_w
+            return self._p_wilcoxon
         except AttributeError:
             # Scenario 1
             if self.is_exclusive:
@@ -388,35 +400,36 @@ class WormStatistics(object):
             # Scenario 2    
             elif not (self.exp_histogram.no_valid_videos or 
                       self.ctl_histogram.no_valid_videos):
-                _, self._p_w = \
+                _, self._p_wilcoxon = \
                     sp.stats.ranksums(self.exp_histogram.valid_mean_per_video, 
                                       self.ctl_histogram.valid_mean_per_video)
             # Scenario 3              
             else: 
-                self._p_w = np.NaN
+                self._p_wilcoxon = np.NaN
 
-            return self._p_w
+            return self._p_wilcoxon
     #%%     
     @property    
     def specs(self):
-        assert(self.exp_histogram.specs == self.ctl_histogram.specs)
+        assert(self.exp_histogram.specs.long_field == 
+               self.ctl_histogram.specs.long_field)
         return self.exp_histogram.specs
 
     @property    
-    def hist_type(self):
-        assert(self.exp_histogram.hist_type == self.ctl_histogram.hist_type)
-        return self.exp_histogram.specs
+    def histogram_type(self):
+        assert(self.exp_histogram.histogram_type == self.ctl_histogram.histogram_type)
+        return self.exp_histogram.histogram_type
 
     @property    
     def motion_type(self):
         assert(self.exp_histogram.motion_type == 
                self.ctl_histogram.motion_type)
-        self.motion_type = self.exp_histogram.motion_type
+        return self.exp_histogram.motion_type
 
     @property    
     def data_type(self):
         assert(self.exp_histogram.data_type == self.ctl_histogram.data_type)
-        self.data_type = self.exp_histogram.data_type
+        return self.exp_histogram.data_type
 
     #%%
     # Internal methods: not really intended for others to consume.     
@@ -429,7 +442,7 @@ class WormStatistics(object):
         Notes
         ---------------
         Original Matlab version
-        self.p_w = seg_worm.stats.helpers.fexact(*params)
+        self.p_wilcoxon = seg_worm.stats.helpers.fexact(*params)
         
         """
         try:
@@ -482,3 +495,121 @@ class WormStatistics(object):
     def __repr__(self):
         return utils.print_object(self)
 
+
+
+    #%%
+    def plot(self, ax, use_legend=False):
+        """
+        Use matplotlib to plot the experiment histogram against the control.
+        
+        Note: You must still call plt.show() after calling this function.
+        
+        Parameters
+        -----------        
+        ax: An matplotlib.axes.Axes object
+            The place where the plot occurs.
+        
+        Usage example
+        -----------------------
+        import matplotlib.pyplot as plt
+        
+        fig = plt.figure(1)
+        ax = fig.gca()
+        worm_statistics_object.plot(ax)
+        plt.show()
+
+        # A more typical use would be this method being called by 
+        # a StatisticsManager object.
+
+        Parameters
+        -----------------------
+        ax: A matplotlib.axes.Axes object
+            This is the handle where we'll make the plot
+        exp_hist: A Histogram object
+            The "experiment"
+        ctl_hist: A Histogram object
+            The "control"
+        
+        """
+        exp_histogram = self.exp_histogram
+        ctl_histogram = self.ctl_histogram
+    
+        ctl_bins = ctl_histogram.bin_midpoints
+        ctl_y_values = ctl_histogram.pdf
+    
+        exp_bins = exp_histogram.bin_midpoints
+        exp_y_values = exp_histogram.pdf
+        min_x = min([h[0] for h in [ctl_bins, exp_bins]])
+        max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
+    
+        # If data_type is just "all", don't bother showing it in the title
+        if self.data_type == 'all':
+            data_type_string = ''
+        else:
+            data_type_string = '- {0}'.format(self.data_type)
+    
+        title = ("{0} - {1}{2} (3)\n"
+                "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
+                format(self.specs.name.upper(),
+                       self.motion_type,
+                       data_type_string,
+                       self.histogram_type,
+                       exp_histogram.num_videos, ctl_histogram.num_videos,
+                       exp_histogram.num_samples, ctl_histogram.num_samples)
+
+        title += ("ALL = {0:.2f} +/- {1:.2f} <<< [{2:.2f} +/- {3:.2f}] "
+                 "\u00A4 (p={4:.4f}, q={5:.4f})").format(
+                 exp_histogram.mean, exp_histogram.std,
+                 ctl_histogram.mean, ctl_histogram.std,
+                 self.p_wilcoxon, self.q_wilcoxon)
+
+        plt.ticklabel_format(style='plain', useOffset=True)
+        # TODO: ADD a line for mean, and then another for std dev.
+        # TODO: Do this for both experiment and control!
+        # http://www.widecodes.com/CzVkXUqXPj/average-line-for-bar-chart-in-matplotlib.html        
+        
+        # TODO: switch to a relative axis for x-axis
+        # http://stackoverflow.com/questions/3677368
+    
+        # Decide on a background colour based on the statistical significance
+        # of the particular feature.
+        # The precise colour values were obtained MS Paint's eyedropper tool
+        # on the background colours of the original Schafer worm PDFs
+        if self.q_wilcoxon <= 0.0001:
+            bgcolour = (229,204,255)  # 'm' # Magenta
+        elif self.q_wilcoxon <= 0.001:
+            bgcolour = (255,204,204)  # 'r' # Red
+        elif self.q_wilcoxon <= 0.01:
+            bgcolour = (255,229,178)  # 'darkorange' # Dark orange
+        elif self.q_wilcoxon <= 0.05:
+            bgcolour = (255,255,178)  # 'y' # Yellow
+        else:            
+            bgcolour = (255,255,255)  # 'w' # White
+        # Scale each of the R,G,and B entries to be between 0 and 1:
+        bgcolour = np.array(bgcolour) / 255
+
+        # Plot the Control histogram
+        ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
+                        label='Control')
+        # Plot the Experiment histogram
+        ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
+                        label='Experiment')
+        ax.set_axis_bgcolor(bgcolour)
+        ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
+        ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
+        ax.yaxis.set_ticklabels([])
+        ax.yaxis.set_ticks([])
+        ax.set_title(title, fontsize = 12)
+        ax.set_xlim(min_x, max_x)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        # ticks only needed at bottom and right
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        
+        # If this is just one sub plot out of many, it's possible the caller
+        # may want to make her own legend.  If not, this plot can display
+        # its own legend.
+        if use_legend:
+            ax.legend(loc='upper left', fontsize=12)
