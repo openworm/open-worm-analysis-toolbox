@@ -28,12 +28,10 @@ Classes:
 
 Usage
 -----
-Not exhaustive ...
-locomotion_features.MotionEvents
-posture_features.get_worm_coils
-locomotion_turns.LocomotionTurns
-
-
+Places used (Not exhaustive):
+- locomotion_features.MotionEvents
+- posture_features.get_worm_coils
+- locomotion_turns.LocomotionTurns
 
 One usage is in locomotion features.
   
@@ -78,10 +76,7 @@ from .. import utils
 
 
 class EventFinder:
-
     """
-    class EventFinder
-
     To use this, create an instance, then specify the options.  Default
     options are initialized in __init__.
 
@@ -115,13 +110,12 @@ class EventFinder:
 
         Parameters
         ----------
-        speed_data : numpy.array
-            - length n
-          Gives the per-frame instantaneous speed as % of skeleton length
+        speed_data : 1-d numpy array of length n
+            The per-frame instantaneous speed as % of skeleton length
         distance_data   : 1-d numpy array of length n (optional)
-          Gives the per-frame distance travelled as % of skeleton length
-          If not specified, speed_data will be used to derive distance_data,
-          since speed = distance x time.
+            The per-frame distance travelled as % of skeleton length
+            If not specified, speed_data will be used to derive distance_data,
+            since speed = distance x time.
 
         Returns
         -------
@@ -292,11 +286,11 @@ class EventFinder:
         # group consecutive integers together
         # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
         # list(group)
-        x_grouped = [list(group) for key, group in groupby(enumerate(x),
-                                                           lambda i:i[0] - i[1])]
+        x_grouped = [list(group) for key, group in 
+                                groupby(enumerate(x),lambda i:i[0] - i[1])]
 
-        # We want to know the first element from each "run", and the last element
-        # e.g. [[3, 4], [5, 7]]
+        # We want to know the first element from each "run", and the 
+        # last element e.g. [[3, 4], [5, 7]]
         event_candidates = [(i[0][1], i[-1][1]) for i in x_grouped]
 
         # Early exit if we have no starts and stops at all
@@ -304,8 +298,8 @@ class EventFinder:
             return np.array(event_candidates)
 
         # If a run of NaNs precedes the first start index, all the way back to
-        # the first element, then revise our first (start, stop) entry to include
-        # all those NaNs.
+        # the first element, then revise our first (start, stop) entry to
+        # include all those NaNs.
         if np.all(np.isnan(event_data[:event_candidates[0][0]])):
             event_candidates[0] = (0, event_candidates[0][1])
 
@@ -490,13 +484,12 @@ class EventFinder:
 
 
 class EventList(object):
-
     """
     The EventList class is a relatively straightforward class specifying
     when "events" start and stop.
     
-    The EventListWithFeatures class on the other hand computes other statistics
-    on the data over which the event occurs.
+    The EventListWithFeatures class, on the other hand, computes other 
+    statistics on the data over which the event occurs.
 
     An event is a contiguous subset of frame indices.
 
@@ -512,7 +505,6 @@ class EventList(object):
         Frames when each event ends (is inclusive, i.e. the last frame is
         a part of the event)
     starts_and_stops : 2-d numpy.array
-        A 
     num_events : int
     num_events_for_stats : int
     last_frame : int
@@ -546,7 +538,8 @@ class EventList(object):
         self.end_frames = None
 
         # Check if our events array exists and there is at least one event
-        if event_starts_and_stops is not None and event_starts_and_stops.size != 0:
+        if (event_starts_and_stops is not None and 
+            event_starts_and_stops.size != 0):
             self.start_frames = event_starts_and_stops[:, 0]
             self.end_frames = event_starts_and_stops[:, 1]
 
@@ -832,10 +825,19 @@ class EventListWithFeatures(EventList):
         # has been provided, flag the self.is_null variable as such
         self.is_null = make_null or (self.__len__ == 0)
 
-        # Only calculate the extra features is this is not a "null" instance
+        # Only calculate the extra features if this is not a "null" instance
         if not self.is_null:
             # Calculate the features
             self.calculate_features(fps, compute_distance_during_event)
+        else:
+            # Otherwise, populate with blanks
+            self.event_durations = np.array([], dtype=float)
+            self.distance_during_events = np.array([], dtype=float)
+            self.time_between_events = np.array([], dtype=float)
+            self.distance_between_events = np.array([], dtype=float)
+            self.frequency = np.NaN
+            self.time_ratio = np.NaN
+            self.data_ratio = np.NaN
 
 
     def calculate_features(self, fps, compute_distance_during_event):

@@ -207,7 +207,7 @@ class MotionEvents(object):
     
     attribute_keys = ['forward','backward','paused']
     
-    def __init__(self,features_ref,midbody_speed,skeleton_lengths):
+    def __init__(self, features_ref, midbody_speed, skeleton_lengths):
         """ 
         Calculate motion codes of the locomotion events
         
@@ -222,9 +222,6 @@ class MotionEvents(object):
             [n_frames]
         skeleton_lengths: numpy.array
             [n_frames]
-    
-
-
     
         Notes
         -----
@@ -308,7 +305,7 @@ class MotionEvents(object):
     
             # "Space and time" constraints
             ef.min_distance_threshold = min_distance[motion_type]
-            ef.max_distance_threshold = None  # we are not constraining max dist
+            ef.max_distance_threshold = None  #We are not constraining max dist
             ef.min_speed_threshold = min_speeds[motion_type]
             ef.max_speed_threshold = max_speeds[motion_type]
     
@@ -320,12 +317,9 @@ class MotionEvents(object):
 
             # Take the start and stop indices and convert them to the structure
             # used in the feature files
-            m_event = events.EventListWithFeatures(fps,
-                                                   event_list,
-                                                   distance_per_frame,
-                                                   compute_distance_during_event=True)
+            m_event = events.EventListWithFeatures(fps, event_list, distance_per_frame, compute_distance_during_event=True)
     
-            setattr(self,motion_type,m_event)      
+            setattr(self, motion_type, m_event)      
     
             #Assign motion modes
             #------------------------------------------------------------------

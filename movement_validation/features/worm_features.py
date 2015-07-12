@@ -23,11 +23,11 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
 """
 
-import csv
-import os
+import csv, os, warnings
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple
+import pandas as pd
 
 from .. import utils
 
@@ -344,6 +344,46 @@ class WormPosture(object):
 
         self.eigen_projection = posture_features.get_eigenworms(features_ref)
 
+
+    """
+    We need these six @property methods because otherwise eigen_projections
+    are the only first-class sub-extended features that are not fully 
+    addressable by nested object references.  Without these, I'd have to say:
+
+    worm_features_object.posture.eigen_projection[0]
+
+    Instead I can say:
+    
+    worm_features_object.posture.eigen_projection0
+    
+    ...which is crucial for the object-data mapping, for example when 
+    pulling a pandas DataFrame via WormFeatures.getDataFrame.
+    """    
+    @property
+    def eigen_projection0(self):
+        return self.eigen_projection[0]
+
+    @property
+    def eigen_projection1(self):
+        return self.eigen_projection[1]
+
+    @property
+    def eigen_projection2(self):
+        return self.eigen_projection[2]
+
+    @property
+    def eigen_projection3(self):
+        return self.eigen_projection[3]
+
+    @property
+    def eigen_projection4(self):
+        return self.eigen_projection[4]
+
+    @property
+    def eigen_projection5(self):
+        return self.eigen_projection[5]
+
+
     @classmethod
     def from_disk(cls, p_var):
 
@@ -628,6 +668,49 @@ class WormFeatures(object):
         self.path = WormPath.from_disk(worm['path'])
 
         return self
+
+    def get_DataFrame(self):
+        """
+        Returns
+        ------------
+        A pandas.DataFrame object
+            Contains all the feature data in one table
+            
+        """
+        # Use pandas to load the features specification
+        feature_spec_path = os.path.join('..', 'documentation', 'database schema', 'Features Specifications.xlsx')
+
+        # Let's ignore a PendingDeprecationWarning here since my release of 
+        # pandas seems to be using tree.getiterator() instead of tree.iter()
+        # It's probably fixed in the latest pandas release already
+        # Here's an exmaple of the issue in a different repo, along with the 
+        # fix.  https://github.com/python-excel/xlrd/issues/104
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            excel_file = pd.ExcelFile(feature_spec_path)
+        
+
+        feature_spec = excel_file.parse('FeatureSpecifications')
+
+        feature_dataframe = pd.DataFrame(columns=['sub-extended feature ID', 
+                                                  'data_array'])
+        
+        for index, row in feature_spec.iterrows():
+            sub_extended_feature_ID = row['sub-extended feature ID']
+            nested_attributes = row['feature_field'].split('.')
+                
+           
+            attribute = self
+            for attribute_name in nested_attributes:
+                try:
+                    attribute = getattr(attribute, attribute_name)
+                except AttributeError:
+                    import pdb
+                    pdb.set_trace()
+
+            feature_dataframe.loc[index] = [sub_extended_feature_ID, attribute]
+
+        return feature_dataframe
 
     def __repr__(self):
         return utils.print_object(self)
