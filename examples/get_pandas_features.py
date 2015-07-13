@@ -38,7 +38,9 @@ def main():
 
     movement_df = openworm_features.get_movement_DataFrame()
 
-
+    
+        
+    #df[df.feature_type != 'movement']
 
 
     # TODO: add metadata to the feature specifications noting what length

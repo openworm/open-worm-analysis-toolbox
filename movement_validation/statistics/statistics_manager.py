@@ -566,7 +566,8 @@ class WormStatistics(object):
                  ctl_histogram.mean, ctl_histogram.std,
                  self.p_wilcoxon, self.q_wilcoxon)
 
-        title = (self.specs.name.upper())
+        # DEBUG: just use a short title for now:
+        #title = (self.specs.name.upper())
         
         plt.ticklabel_format(style='plain', useOffset=True)
         # TODO: ADD a line for mean, and then another for std dev.
@@ -594,10 +595,10 @@ class WormStatistics(object):
         bgcolour = np.array(bgcolour) / 255
         
         # Plot the Control histogram
-        h1 = ax.fill(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
+        h1 = ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
                              label='Control')
         # Plot the Experiment histogram
-        h2 = ax.fill(exp_bins, exp_y_values, alpha=0.5, color='g', 
+        h2 = ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
                              label='Experiment')
         ax.set_axis_bgcolor(bgcolour)
         ax.set_xlabel(exp_histogram.specs.units, fontsize=10)

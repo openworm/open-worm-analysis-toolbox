@@ -20,10 +20,6 @@ feature_spec_path = os.path.join('..', 'documentation', 'database schema',
 feature_spec = pd.ExcelFile(feature_spec_path).parse('FeatureSpecifications')
 
 
-
-
-# Calculate the number of histograms multiplier?  No...
-
 def prepare_plots():
 
     # Assigned numbers are the sub-extended feature ID.
@@ -322,7 +318,9 @@ def add_plots(pages, statistics_manager, plot_pdf=None):
             else:
                 plt.show()
         page_count += 1
-    plot_pdf.close()
+    
+    if plot_pdf:
+        plot_pdf.close()
 
 def obtain_histograms(root_path, pickle_file_path):
     """
@@ -399,6 +397,7 @@ def main(output_filename=None):
           (statistics_manager.min_p_wilcoxon, 
            statistics_manager.min_q_wilcoxon))
 
+    plt.ioff()
     pages = prepare_pages()
 
     if output_filename:
@@ -408,12 +407,7 @@ def main(output_filename=None):
         add_plots(pages, statistics_manager)
 
 if __name__ == '__main__':
-    if sys.argv[1]:
+    if len(sys.argv) > 1:
         main(sys.argv[1])
     else:
-        main()
-
-
-
-
-    
+        main('test_pdf.pdf')
