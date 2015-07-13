@@ -140,7 +140,7 @@ def prepare_plots():
     return page
 
 def prepare_pages():
-    # Assigned numbers are the sub-extended feature ID.
+    # Assigned numbers are the 'sub-extended feature ID'
     # any features that have feature_type = 'movement' use the standard
     # 6-figure movement type plot.
 

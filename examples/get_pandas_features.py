@@ -6,6 +6,7 @@ Demonstrate capabilities of WormFeatures' pandas extension methods.
 import sys, os, warnings
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -38,16 +39,26 @@ def main():
 
     movement_df = openworm_features.get_movement_DataFrame()
 
+    # investigating path dwelling.
+    plt.plot(df.ix[0].data_array)
+    plt.plot(np.sort(df.ix[0].data_array))
+    plt.show()
     
-        
+    # TODO    
+    # Maybe it would be nice to extract a simpler event representation
+    # as an "extra" feature not in the canonical 93: event_starts and 
+    # event_ends.
+    # you can use this as your canonical NON-schafer feature.
+    
+    
+    # TODO: output movement_df to excel; look for errors or trends 
+    # that way!
+    
     #df[df.feature_type != 'movement']
 
 
-    # TODO: add metadata to the feature specifications noting what length
-    #       the data should have.  Figure out if there are errors.
-
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
 
 if __name__ == '__main__':
     start_time = mv.utils.timing_function()
