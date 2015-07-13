@@ -669,16 +669,19 @@ class WormFeatures(object):
 
         return self
 
-    def get_DataFrame(self):
+    @property
+    def feature_spec(self):
         """
         Returns
         ------------
         A pandas.DataFrame object
-            Contains all the feature data in one table
+            Contains all the feature specs in one table
             
         """
         # Use pandas to load the features specification
-        feature_spec_path = os.path.join('..', 'documentation', 'database schema', 'Features Specifications.xlsx')
+        feature_spec_path = os.path.join('..', 'documentation', 
+                                         'database schema', 
+                                         'Features Specifications.xlsx')
 
         # Let's ignore a PendingDeprecationWarning here since my release of 
         # pandas seems to be using tree.getiterator() instead of tree.iter()
@@ -688,14 +691,33 @@ class WormFeatures(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             excel_file = pd.ExcelFile(feature_spec_path)
-        
 
         feature_spec = excel_file.parse('FeatureSpecifications')
 
-        feature_dataframe = pd.DataFrame(columns=['sub-extended feature ID', 
+        return feature_spec
+
+
+    def get_DataFrame(self):
+        """
+        Returns
+        ------------
+        A pandas.DataFrame object
+            Contains all the feature data in one table
+            
+        """
+        feature_dataframe = pd.DataFrame(columns=['sub-extended feature ID',
                                                   'data_array'])
+
         
-        for index, row in feature_spec.iterrows():
+        #feature_dataframe = \
+        #    pd.DataFrame({'sub-extended feature ID': pd.Series(),
+        #                  'data_array': pd.Series()})
+        
+        #feature_dataframe = \
+        #    pd.DataFrame({'sub-extended feature ID': pd.Series(dtype=int),
+        #                  'data_array': pd.Series(dtype=object)})
+        
+        for index, row in self.feature_spec.iterrows():
             sub_extended_feature_ID = row['sub-extended feature ID']
             nested_attributes = row['feature_field'].split('.')
                 
@@ -710,7 +732,58 @@ class WormFeatures(object):
 
             feature_dataframe.loc[index] = [sub_extended_feature_ID, attribute]
 
+        # Add a column just for length    
+        def length(x):
+            if x is None:
+                return np.NaN
+            try:
+                return len(x)
+            except TypeError:
+                # e.g. len(5) will raise TypeError
+                if isinstance(x, (int, float, complex)):
+                    return 1
+                else:
+                    return np.NaN
+    
+        feature_dataframe['length'] = \
+                            feature_dataframe['data_array'].map(length)
+    
+        pd.set_option('display.max_rows', 500)
+        
+        # Left Outer Join: add columns for feature_field, feature_type.
+        fs = self.feature_spec[['sub-extended feature ID',
+                                'feature_field',
+                                'feature_type']]
+        feature_dataframe = \
+                feature_dataframe.merge(fs, how='left', 
+                                        on=['sub-extended feature ID'])
+    
         return feature_dataframe
+
+    def get_movement_DataFrame(self):
+        """
+        Just the movement features, but pivoted
+        so the rows are frames and the columns are the feature names
+
+        NOTE: This only works for movement features.  
+        
+        """
+        feature_df = self.get_DataFrame()
+        movement_df = feature_df[feature_df.feature_type == 'movement']
+
+        # All movement features must have same length
+        assert(np.all(movement_df.length == movement_df.length.iloc[0]))    
+    
+        # Pivot so rows are frames, and features are columns.
+        movement_data = np.array(movement_df.data_array.as_matrix().tolist())
+    
+        # Just the movement features, but pivoted
+        # so the rows are frames and the columns are the feature names
+        # shape (4642, 53)
+        movement_df_pivoted = pd.DataFrame(movement_data.transpose(), 
+                                           columns=movement_df.feature_field)
+        
+        return movement_df_pivoted
 
     def __repr__(self):
         return utils.print_object(self)

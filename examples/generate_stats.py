@@ -38,8 +38,11 @@ def main():
           (statistics_manager.min_p_wilcoxon, 
            statistics_manager.min_q_wilcoxon))
 
-    statistics_manager.plot()
-    plt.savefig('michael.png')
+    #statistics_manager.plot()
+    fig = plt.figure()
+    ax = fig.gca()
+    statistics_manager[5].plot(ax)
+    #plt.savefig('michael.png')
     
     """
     # Plot the p-values, ranked.
