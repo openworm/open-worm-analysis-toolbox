@@ -27,6 +27,7 @@ import scipy.ndimage.filters as filters
 
 import warnings
 
+from .generic_features import Feature
 from .. import utils
 
 #%%
@@ -781,6 +782,759 @@ class LocomotionForagingBends(object):
              utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
 
 #%%
+
+
+#==============================================================================
+#                       New Feature Organization
+#==============================================================================
+#self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
+#                                            features_ref,
+#                                            nw.angles,
+#                                            self.motion_events.is_paused,
+#                                            video_info.is_segmented)
+#
+#self.foraging_bends = locomotion_bends.LocomotionForagingBends(
+#                                            features_ref, 
+#                                            video_info.is_segmented, 
+#                                            video_info.ventral_mode)
+
+#locomotion.foraging_bends.amplitude
+#locomotion.foraging_bends.angle_speed
+#locomotion.crawling_bends.head.amplitude
+#locomotion.crawling_bends.midbody.amplitude
+#locomotion.crawling_bends.tail.amplitude
+#locomotion.crawling_bends.head.frequency
+#locomotion.crawling_bends.midbody.frequency
+#locomotion.crawling_bends.tail.frequency
+
+class ForagingBends(Feature):
+
+    """
+    temporary feature: locomotion.foraging_bends
+
+    Attributes
+    ----------    
+    amplitude
+    angle_speed
+
+
+    Methods
+    -------
+    __init__
+    h__computeNoseBends
+    h__computeAvgAngles
+    h__interpData
+    h__getNoseInterpolationIndices
+    h__foragingData
+    h__getAmps
+
+    Notes
+    ---------------------------------------    
+    Formerly +segworm/+features/@locomotion/getForaging
+
+    Originally, part of wormBends.m
+
+    """
+
+    def __init__(self, wf):
+        """
+        Initialize an instance of LocomotionForagingBends
+
+        Parameters
+        ----------  
+        nw: NormalizedWorm instance
+        is_segmented_mask: boolean numpy array [1 x n_frames]
+        ventral_mode: int
+            0, 1, or 2 depending on the orientation of the worm.
+
+        """
+                
+        #features_ref, is_segmented_mask, ventral_mode        
+        
+        self.name = 'locomotion.foraging_bends'
+        
+        options = wf.options.locomotion.foraging_bends   
+        video_info = wf.video_info
+        fps = video_info.fps
+        nw = wf.nw
+        ventral_mode = video_info.ventral_mode
+        is_segmented_mask = video_info.is_segmented
+    
+        
+        timer = wf.timer
+        timer.tic()
+        
+        
+        # self.amplitude  = None  # DEBUG
+        # self.angleSpeed = None # DEBUG
+
+        
+
+        nose_x, nose_y = \
+            nw.get_partition('head_tip', 
+                                          data_key='skeleton',
+                                          split_spatial_dimensions=True)
+
+        neck_x, neck_y = \
+            nw.get_partition('head_base', 
+                                          data_key='skeleton',
+                                          split_spatial_dimensions=True)
+
+        # TODO: Add "reversed" and "interpolated" options to the get_partition
+        # function, to replace the below blocks of code!
+        #----------------------------------------------------------------------
+
+        # We need to flip the orientation (i.e. reverse the entries along the
+        # first, or skeleton index, axis) for angles and consistency with old
+        # code:
+        nose_x = nose_x[::-1, :]
+        nose_y = nose_y[::-1, :]
+        neck_x = neck_x[::-1, :]
+        neck_y = neck_y[::-1, :]
+
+        # Step 1: Interpolation of skeleton indices
+        #---------------------------------------
+        # TODO: ensure that we are excluding the points at the beginning
+        # and ending of the second dimension (the frames list) of nose_x, etc.
+        # from being interpolated.  (this was a step in
+        # h__getNoseInterpolationIndices, that we no longer have since I've
+        # put the interpolation code into
+        # utils.interpolate_with_threshold_2D instead.  But we
+        # might be okay, since the beginning and end are going to be left alone
+        # since I've set left=np.NaN and right=np.NaN in the underlying
+        # utils.interpolate_with_threshold code.
+        interp = utils.interpolate_with_threshold_2D
+
+        max_samples_interp = options.max_samples_interp_nose(fps)
+
+        nose_xi = interp(nose_x, threshold=max_samples_interp)
+        nose_yi = interp(nose_y, threshold=max_samples_interp)
+        neck_xi = interp(neck_x, threshold=max_samples_interp)
+        neck_yi = interp(neck_y, threshold=max_samples_interp)
+        #----------------------------------------------------------------------
+
+
+        # Step 2: Calculation of the bend angles
+        #---------------------------------------
+        nose_bends = self.h__computeNoseBends(nose_xi, nose_yi, neck_xi, neck_yi)
+
+        # Step 3:
+        #---------------------------------------
+        [nose_amps, nose_freqs] = \
+            self.h__foragingData(fps, nose_bends, 
+                                 options.min_nose_window_samples(fps))
+
+        if ventral_mode > 1:
+            nose_amps = -nose_amps
+            nose_freqs = -nose_freqs
+
+        self.amplitude   = nose_amps
+        self.angle_speed = nose_freqs
+
+        timer.toc('locomotion.foraging_bends')
+
+
+    def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
+        """
+        Compute the difference in angles between the nose and neck (really the
+        head tip and head base).
+
+        Parameters
+        ----------    
+        nose_x: [4 x n_frames]
+        nose_y: [4 x n_frames]
+        neck_x: [4 x n_frames]
+        neck_y: [4 x n_frames]
+
+        Returns
+        -------
+        nose_bends_d
+
+        Notes
+        ---------------------------------------    
+        Formerly nose_bends_d = h__computeNoseBends(nose_x,nose_y,neck_x,neck_y)
+
+        """
+
+        nose_angles = self.h__computeAvgAngles(nose_x, nose_y)
+        neck_angles = self.h__computeAvgAngles(neck_x, neck_y)
+
+        # TODO: These three should be a method, calculating the difference
+        # in angles and ensuring all results are within +/- 180
+        nose_bends_d = (nose_angles - neck_angles) * (180 / np.pi)
+
+        # Suppress warnings so we can compare a numpy array that may contain NaNs
+        # without triggering a Runtime Warning
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            nose_bends_d[nose_bends_d > 180] -= 360
+            nose_bends_d[nose_bends_d < -180] += 360
+
+        return nose_bends_d
+
+    def h__computeAvgAngles(self, x, y):
+        """
+        Take average difference between successive x and y skeleton points, 
+        then compute the arc tangent from those averages.
+
+        Parameters
+        ----------
+        x : m x n float numpy array
+          m is the number of skeleton points
+          n is the number of frames
+        y : m x n float numpy array
+          (Same as x)
+
+        Returns
+        -------   
+        1-d float numpy array of length n
+          The angles
+
+        Notes
+        ---------------------------------------    
+        Simple helper for h__computeNoseBends
+
+        """
+        # Suppress RuntimeWarning: Mean of empty slice
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            avg_diff_x = np.nanmean(np.diff(x, n=1, axis=0), axis=0)
+            avg_diff_y = np.nanmean(np.diff(y, n=1, axis=0), axis=0)
+
+        angles = np.arctan2(avg_diff_y, avg_diff_x)
+
+        return angles
+
+    def h__foragingData(self, fps, nose_bend_angle_d, min_win_size):
+        """
+        Compute the foraging amplitude and angular speed.
+
+        Parameters
+        ----------
+        fps :
+        nose_bend_angle_d : [n_frames x 1]
+        min_win_size : (scalar)
+
+        Returns
+        ---------------------------------------    
+        amplitudes : [1 x n_frames]
+        speeds : [1 x n_frames]
+
+        Notes
+        ---------------------------------------    
+        Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, 
+                                                 min_win_size, fps)
+
+        """
+        if min_win_size > 0:
+            # Clean up the signal with a gaussian filter.
+            gauss_filter = utils.gausswin(2*min_win_size+1)/min_win_size
+            nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
+                                                   gauss_filter,
+                                                   cval=0,
+                                                   mode='constant')
+
+            # Remove partial data frames ...
+            nose_bend_angle_d[:min_win_size]  = np.NaN
+            nose_bend_angle_d[-min_win_size:] = np.NaN
+
+        # Calculate amplitudes
+        amplitudes = self.h__getAmplitudes(nose_bend_angle_d)
+        assert(np.shape(nose_bend_angle_d) == np.shape(amplitudes))
+
+        # Calculate angular speed
+        # Compute the speed centered between the back and front foraging movements.
+        #
+        #  0     1    2
+        #    d1    d2     d1 = 1 - 0,   d2 = 2 - 1
+        #       x        assign to x, avg of d1 and d2
+
+        #???? - why multiply and not divide by fps????
+
+        d_data = np.diff(nose_bend_angle_d) * fps
+        speeds = np.empty(amplitudes.size) * np.NaN
+        # This will leave the first and last frame's speed as NaN:
+        speeds[1:-1] = (d_data[:-1] + d_data[1:]) / 2
+
+        # Propagate NaN for speeds to amplitudes
+        amplitudes[np.isnan(speeds)] = np.NaN
+
+        return amplitudes, speeds
+
+    def h__getAmplitudes(self, nose_bend_angle_d):
+        """
+        In between all sign changes, get the maximum or minimum value and
+        apply to all indices that have the same sign within the stretch
+
+        Parameters
+        ---------------------------------------    
+        nose_bend_angle_d : 1-d numpy array of length n_frames
+
+        Returns
+        ---------------------------------------    
+        1-d numpy array of length n_frames
+
+        Notes
+        ---------------------------------------    
+        Formerly amps = h__getAmps(nose_bend_angle_d):
+
+        NOTE: This code is very similar to wormKinks
+
+        Example
+        ---------------------------------------    
+        >>> h__getAmps(np.array[1, 2, 3, 2, 1, -1, -2, -1, 1, 2, 2, 5])
+                          array[3, 3, 3, 3, 3, -2, -2, -2, 5, 5, 5, 5]
+        (indentation is used here to line up the returned array for clarity)
+
+        """
+        n_frames = len(nose_bend_angle_d)
+
+        # Suppress warnings related to finding the sign of a numpy array that
+        # may contain NaN values.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            data_sign = np.sign(nose_bend_angle_d)
+        sign_change_I = np.flatnonzero(data_sign[1:] != data_sign[:-1])
+
+        start_I = np.concatenate([[0], sign_change_I + 1])
+        stop_I = np.concatenate([sign_change_I, [n_frames - 1]])
+
+        # All NaN values are considered sign changes,
+        # but we don't want them considered that way.
+        # So create a mask of items to be removed:
+        mask = np.isnan(nose_bend_angle_d[start_I])
+        # Keep only those items NOT in the mask:
+        start_I = start_I[np.flatnonzero(~mask)]
+        stop_I = stop_I[np.flatnonzero(~mask)]
+
+        # Python's array index notation requires that we specify one PAST the
+        # index of the last entry in the "run"
+        end_I = stop_I + 1
+
+        amps = np.empty(n_frames) * np.NaN
+        # For each chunk, get max or min, depending on whether the data is positive
+        # or negative ...
+        for i_chunk in range(len(start_I)):
+            cur_start = start_I[i_chunk]
+            cur_end = end_I[i_chunk]
+
+            if nose_bend_angle_d[cur_start] > 0:
+                amps[cur_start:cur_end] = max(
+                    nose_bend_angle_d[cur_start:cur_end])
+            else:
+                amps[cur_start:cur_end] = min(
+                    nose_bend_angle_d[cur_start:cur_end])
+
+        return amps
+
+    @classmethod
+    def from_disk(cls, foraging_ref):
+
+        self = cls.__new__(cls)
+
+        self.amplitude = utils._extract_time_from_disk(foraging_ref,'amplitude')
+        self.angle_speed = utils._extract_time_from_disk(foraging_ref,'angleSpeed')
+        
+        return self
+        
+    def __repr__(self):
+        return utils.print_object(self)
+        
+    def __eq__(self, other):
+        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
+             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+
+class ForagingAmplitude(Feature):
+    
+    def __init__(self,wf):
+        self.name = 'locomotion.foraging_bends.amplitude'
+        temp = wf['locomotion.foraging_bends']
+        self.value = temp.amplitude
+
+class ForagingAngleSpeed(Feature):
+    
+    def __init__(self,wf):
+        self.name = 'locomotion.foraging_bends.angle_speed'
+        temp = wf['locomotion.foraging_bends']
+        self.value = temp.angle_speed
+
+class CrawlingBend(Feature):
+
+    """
+    Locomotion Crawling Bends Feature.
+
+
+    This new version just calculates the values for the head, midbody, and
+    tail classes
+
+
+    Attributes
+    ----------    
+    head : LocomotionBend
+    midbody : LocomotionBend
+    tail : LocomotionBend
+
+    Notes
+    ---------------------------------------    
+    Formerly +segworm/+features/@locomotion/getLocomotionBends
+
+    Originally, part of wormBends.m
+
+
+    Note from Ev Yemini on Setup Options
+    ---------------------------------------    
+    Empirically I've found the values below achieve good signal.
+
+    Furthermore:
+    The body bend frequency is much easier to see (than foraging). The N2
+    signal is clearly centered around 1/3Hz in both the literature and
+    through visual inspection.
+
+    I chose a high-frequency threshold of 4 frames. With 4 frames a 3-frame
+    tick, resulting from segmentation noise, will be diluted by the
+    additional frame.
+
+
+    Nature Methods Description
+    ---------------------------------------    
+
+    Worm crawling is expressed as both an amplitude and frequency
+    (Supplementary Fig. 4e). We measure these features instantaneously at
+    the head, midbody, and tail. The amplitude and frequency are signed
+    negatively whenever the worm’s ventral side is contained within the
+    concave portion of its instantaneous bend.
+
+    Crawling is only measured during forward and backward motion states.
+    The worm bend mean angles (described in the section on “Posture”) show
+    a roughly periodic signal as the crawling wave travels along the worm’s
+    body. This wave can be asymmetric due to differences in dorsal-ventral
+    flexibility or simply because the worm is executing a turn. Moreover
+    the wave dynamics can change abruptly to speed up or slow down.
+    Therefore, the signal is only roughly periodic and we measure its
+    instantaneous properties.
+
+    Worm bends are linearly interpolated across unsegmented frames. The
+    motion states criteria (described earlier in this section) guarantee
+    that interpolation is no more than 1/4 of a second long. For each
+    frame, we search both backwards and forwards for a zero crossing in the
+    bend angle mean – the location where the measured body part (head,
+    midbody, or tail) must have hit a flat posture (a supplementary bend
+    angle of 0°). This guarantees that we are observing half a cycle for
+    the waveform. Crawling is bounded between 1/30Hz (a very slow wave that
+    would not resemble crawling) and 1Hz (an impossibly fast wave on agar).
+
+    If the window between zero crossings is too small, the nearest zero
+    crossing is assumed to be noise and we search for the next available
+    zero crossing in its respective direction. If the window is too big,
+    crawling is marked undefined at the frame.
+
+    Once an appropriate window has been found, the window is extended in
+    order to center the frame and measure instantaneous crawling by
+    ensuring that the distance on either side to respective zero crossings
+    is identical. If the distances are not identical, the distance of the
+    larger side is used in place of the zero-crossing distance of the
+    smaller side in order to expand the small side and achieve a symmetric
+    window, centered at the frame of interest.
+
+    We use a Fourier transform to measure the amplitude and frequency
+    within the window described above. The largest peak within the
+    transform is chosen for the crawling amplitude and frequency. If the
+    troughs on either side of the peak exceed 1/2 its height, the peak is
+    rejected for being unclear and crawling is marked as undefined at the
+    frame. Similarly, if the integral between the troughs is less than half
+    the total integral, the peak is rejected for being weak.
+
+
+    """
+
+    #bend_names = ['head', 'midbody', 'tail']
+
+    def __init__(self, wf, bend_name):
+        """
+        Compute the temporal bending frequency at the head, midbody, and tail.    
+
+        Parameters:
+        -----------
+        features_ref : 
+        bend_angles : numpy.array
+            - [49 x n_frames]
+        is_paused : numpy.array
+            - [1 x n_frames]
+            Whether or not the worm is considered to be paused during the frame
+        is_segmented_mask : [1 x n_frames]
+
+        """
+
+        #features_ref, bend_angles, is_paused, is_segmented_mask
+
+        self.name = 'locomotion.crawling_bends.' + bend_name
+
+        options = wf.options.locomotion.crawling_bends
+        video_info = wf.video_info
+        fps = video_info.fps
+        is_segmented_mask = video_info.is_segmented               
+        is_paused = wf['locomotion.motion_events.is_paused'].value
+        bend_angles = wf.nw.angles
+
+
+        timer = wf.timer
+        timer.tic()
+
+
+
+        # Special Case: No worm data.
+        #------------------------------------
+        if ~np.any(is_segmented_mask):
+            self.amplitude = None
+            self.frequency = None
+            return
+
+        # Find the mean bend angle for the current partition, across all frames
+        s = slice(*options.bends_partitions[bend_name])
+
+        # Suppress RuntimeWarning: Mean of empty slice
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            avg_bend_angles = np.nanmean(bend_angles[s, :], axis=0)
+
+        #interpolate if:
+        #not all are segmented - if all present we don't need to interpolate
+        #some are segmented - segmented data provides basis for interpolation
+        if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
+            avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
+              
+        bound_info = CrawlingBendsBoundInfo(avg_bend_angles,is_paused,options,fps)      
+              
+        [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
+                                                     bound_info,
+                                                     options,
+                                                     bend_name,
+                                                     fps)
+        self.amplitude = amplitude
+        self.frequency = frequency
+        #setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
+
+        timer.toc('locomotion.crawling_bends')
+
+
+    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
+        """
+        Compute the bend amplitude and frequency.
+
+        Parameters
+        ----------
+        avg_bend_angles: numpy.array
+            - [1 x n_frames]
+        bound_info:
+        options: movement_validation.features.feature_processing_options.LocomotionCrawlingBends
+        cur_partition:
+        fps: float
+            Frames Per Second
+
+
+        Returns
+        -------
+
+        """
+        
+        # Compute the short-time Fourier transforms (STFT).
+        #--------------------------------------------------
+        # Unpack options ...
+        max_freq = options.max_frequency(fps)
+        min_freq = options.min_frequency
+        fft_n_samples = options.fft_n_samples
+        max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
+        peak_energy_threshold = options.peak_energy_threshold
+
+        fft_max_I   = int(fft_n_samples / 2)
+        # This gets multiplied by an index to compute the frequency at that index
+        freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
+
+        n_frames = len(avg_bend_angles)
+        amps  = np.empty(n_frames) * np.NaN
+        freqs = np.empty(n_frames) * np.NaN
+        
+        left_bounds  = bound_info.left_bounds
+        right_bounds = bound_info.right_bounds
+        is_bad_mask  = bound_info.is_bad_mask
+        
+        # This is a processing optimization that in general will speed 
+        # things up
+        max_freq_I = max_freq/freq_scalar
+        INIT_MAX_I_FOR_BANDWIDTH = \
+            round(options.initial_max_I_pct * max_freq_I)        
+        
+        # Convert each element from float to int
+        right_bounds = right_bounds.astype(int)
+        left_bounds = left_bounds.astype(int)
+                
+        for iFrame in np.flatnonzero(~is_bad_mask):
+            windowed_data   = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
+            data_win_length = len(windowed_data)
+
+            #
+            # fft frequency and bandwidth
+            #
+            # Compute the real part of the STFT.
+            # These two steps take a lot of time ...
+            
+            #Original Code:
+            #fft_data = np.fft.fft(windowed_data, fft_n_samples)
+            #fft_data = abs(fft_data[:fft_max_I])
+            #Ver code:
+            #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
+            #New code:
+            fft_data = abs(np.fft.rfft(windowed_data, fft_n_samples))
+            
+            # Find the peak frequency.
+            maxPeakI = np.argmax(fft_data)
+            maxPeak  = fft_data[maxPeakI]
+
+            # NOTE: If this is true, we'll never bound the peak on the left.
+            #We are looking for a hump with a peak, not just a decaying signal.
+            if maxPeakI == 0:
+                continue
+
+            unsigned_freq = freq_scalar * maxPeakI
+
+            if not (min_freq <= unsigned_freq <= max_freq):
+                continue
+
+            [peakStartI, peakEndI] = \
+                self.h__getBandwidth(data_win_length,
+                                     fft_data,
+                                     maxPeakI,
+                                     INIT_MAX_I_FOR_BANDWIDTH)
+                 
+            # Store data
+            #------------------------------------------------------------------
+            if not (peakStartI.size == 0 or
+                    peakEndI.size   == 0 or
+                    # The minimums can't be too big:
+                    fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakEndI]   > (max_amp_pct_bandwidth * maxPeak) or
+                    # Needs to have enough energy:
+                    (sum(fft_data[peakStartI:peakEndI] ** 2) <
+                     (peak_energy_threshold * sum(fft_data ** 2)))
+                    ):
+
+                # Convert the peak to a time frequency.
+                dataSign      = np.sign(np.nanmean(windowed_data))  # sign the data
+                amps[iFrame]  = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
+                freqs[iFrame] = unsigned_freq * dataSign
+
+        return [amps, freqs]
+
+    
+
+    def h__getBandwidth(self, data_win_length, fft_data,
+                        max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
+        """
+        The goal is to find minimum 'peaks' that border the maximal frequency
+        response.
+
+        Since this is a time-intensive process, we try and start with a small
+        range of frequencies, as execution time is proportional to the length
+        of the input data.  If this fails we use the full data set.
+
+        Called by: h__getBendData
+
+        Parameters
+        ----------
+        data_win_length
+          Length of real data (ignoring zero padding) that 
+          went into computing the FFT
+
+        fft_data
+          Output of the fft function
+
+        max_peak_I
+          Location (index) of the maximum of fft_data
+
+        INIT_MAX_I_FOR_BANDWIDTH
+          See code
+
+
+        Returns
+        -------
+        peak_start_I: scalar
+
+        peak_end_I: scalar
+
+
+        Notes
+        ---------------------------------------    
+        Formerly [peak_start_I,peak_end_I] = \
+               h__getBandwidth(data_win_length, fft_data, 
+                               max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
+
+        See also, formerly: seg_worm.util.maxPeaksDist
+
+        """
+
+        peakWinSize = round(np.sqrt(data_win_length))
+
+        # Find the peak bandwidth.
+        if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
+            # NOTE: It is incorrect to filter by the maximum here, as we want to
+            # allow matching a peak that will later be judged invalid. If we
+            # filter here we may find another smaller peak which will not be
+            # judged invalid later on.
+            [min_peaks, min_peaks_I] = utils.separated_peaks(
+                fft_data[:INIT_MAX_I_FOR_BANDWIDTH],
+                peakWinSize,
+                use_max=False,
+                value_cutoff=np.inf)
+
+            del min_peaks   # this part of max_peaks_dist's return is unused
+
+            #TODO: This is wrong, replace add find to utils ...
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+        else:
+            peak_start_I = np.array([])
+            peak_end_I = np.array([])
+
+        # NOTE: Besides checking for an empty value, we also need to ensure that
+        # the minimum didn't come too close to the data border, as more data
+        # could invalidate the result we have.
+        #
+        # NOTE: In order to save time we only look at a subset of the FFT data.
+        if (peak_end_I.size == 0) | \
+                (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
+            #If true, then rerun on the full set of data
+            [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data,
+                                                             peakWinSize,
+                                                             use_max=False,
+                                                             value_cutoff=np.inf)
+
+            del(min_peaks)  # This part of max_peaks_dist's return is unused
+
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
+            peak_end_I   = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+
+        #TODO: Why is this not a tuple - tuple would be more consistent
+        return [peak_start_I, peak_end_I]
+
+    @classmethod
+    def from_disk(cls, bend_ref):
+
+        self = cls.__new__(cls)
+        
+        self.head    = LocomotionBend.from_disk(bend_ref['head'],'head')
+        self.midbody = LocomotionBend.from_disk(bend_ref['midbody'],'midbody')
+        self.tail    = LocomotionBend.from_disk(bend_ref['tail'],'tail')        
+
+        return self
+
+    def __repr__(self):
+        return utils.print_object(self)
+        
+    def __eq__(self, other):
+        return self.head == other.head and \
+            self.midbody == other.midbody and \
+            self.tail == other.tail
+
 class CrawlingBendsBoundInfo(object):
     
     """
@@ -1083,17 +1837,20 @@ class CrawlingBendsBoundInfo(object):
 
         return [back_zeros_I, front_zeros_I]
 
-#==============================================================================
-#                       New Feature Organization
-#==============================================================================
-#self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
-#                                            features_ref,
-#                                            nw.angles,
-#                                            self.motion_events.is_paused,
-#                                            video_info.is_segmented)
-#
-#self.foraging_bends = locomotion_bends.LocomotionForagingBends(
-#                                            features_ref, 
-#                                            video_info.is_segmented, 
-#                                            video_info.ventral_mode)
+    def __repr__(self):
+        return utils.print_object(self)
 
+class BendAmplitude(Feature):
+    
+    def __init__(self,wf,bend_name):
+        parent_name = 'locomotion.crawling_bends.' + bend_name 
+        self.name = parent_name + '.amplitude'
+        self.value = wf[parent_name].amplitude
+        
+class BendFrequency(Feature):
+    
+    def __init__(self,wf,bend_name):
+        parent_name = 'locomotion.crawling_bends.' + bend_name 
+        self.name = parent_name + '.frequency'
+        self.value = wf[parent_name].frequency
+        

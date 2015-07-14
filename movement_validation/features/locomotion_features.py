@@ -569,8 +569,14 @@ class MotionMode(Feature):
 
     """
     This is a temporary feature. For each frame it indicates whether that
-    frame is part of a forward, backward, or paused event. Some frames
+    frame is part of a forward, backward, or paused event. 
+    
+    Some frames
     may not be part of any event type, as is indicated by a NaN value.
+    
+    forward: 1
+    backward: -1
+    paused: 0
     """
     
     frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
@@ -701,3 +707,19 @@ class MotionMode(Feature):
 
         timer.toc('locomotion.motion_events')
  """
+ 
+class IsPaused(Feature):
+
+    """
+    Temporary Feature: locomotion.motion_events.is_paused
+    """
+    
+    def __init__(self,wf):
+        
+        #TODO: We could eventually only compute the paused event
+        #rather than checking the mode. We would need to add on support for
+        #checking if a feature had been computed
+        self.name = 'locomotion.motion_events.is_paused'
+        temp = wf['locomotion.motion_mode']
+        self.value = temp.value == 0
+ 

@@ -251,7 +251,13 @@ class LocomotionCrawlingBends(object):
         
         # TODO: What are the units on these things ????
         # This is a spatial frequency
-        self.min_frequency = 0.25 * self.max_time_for_bend
+        
+        #The comment that went with this in the original code was:
+        #"require at least 50% of the wave"
+        self.min_frequency = 1/(4*self.max_time_for_bend)
+        
+        #This is wrong ...
+        #self.min_frequency = 0.25 * self.max_time_for_bend
         
         # This is a processing optimization.
         # How far into the maximum peaks should we look ...

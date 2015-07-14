@@ -842,19 +842,25 @@ class WormFeaturesDos(object):
 
         self.features = {}
 
+        #TODO: Move this to the spec class ...
         modules = {'morphology_features':morphology_features,
         'locomotion_features':locomotion_features,
-        'generic_features':generic_features} 
+        'generic_features':generic_features,
+        'locomotion_bends':locomotion_bends} 
 
         self.feature_list = []
         for spec in f_specs:
             #Some of this logic should move to the specs themselves
             module = modules[spec.module_name]
+
             method_to_call = getattr(module,spec.class_name)
+
             if len(spec.flags) == 0:
                 temp = method_to_call(self)
             else:
                 temp = method_to_call(self,spec.flags)
+
+                
             self.feature_list.append(temp)
             self.features[temp.name] = temp
 

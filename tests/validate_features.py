@@ -37,6 +37,9 @@ def test_features():
     # Generate the OpenWorm movement validation repo version of the features
     openworm_features = mv.WormFeatures(nw)
 
+    import pdb
+    pdb.set_trace()
+
     # SCHAFER LAB
     #----------------------
     # Load the Matlab codes generated features from disk
