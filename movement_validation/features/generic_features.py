@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul  2 20:26:27 2015
+generic_features
 
 @author: RNEL
 """
@@ -39,3 +39,71 @@ class Feature(object):
 #            widths_in_partition = utils._extract_time_from_disk(width_ref, 
 #                                                                partition)
 #            setattr(self, partition, widths_in_partition)
+        
+#event_durations
+#distance_during_events
+#time_between_events
+#distance_between_events
+#frequency
+#time_ratio
+#data_ratio
+
+def get_event_attribute(event_object,attribute_name):
+    
+    #We might want to place some logic in here
+
+    if event_object.is_null:
+        return None
+    else:
+        return getattr(event_object,attribute_name)
+
+class EventDuration(Feature):
+    
+    def __init__(self, wf, event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'event_durations')
+        self.name = event_name + '.event_durations'
+    
+class DistanceDuringEvents(Feature):
+    
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'distance_during_events')
+        self.name = event_name + '.distance_during_events'
+
+class TimeBetweenEvents(Feature):
+
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'time_between_events')
+        self.name = event_name + '.time_between_events'    
+
+class DistanceBetweenEvents(Feature):
+
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'distance_between_events')
+        self.name = event_name + '.distance_between_events'   
+    
+class Frequency(Feature):
+
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'frequency')
+        self.name = event_name + '.frequency'   
+
+class EventTimeRatio(Feature):
+
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'time_ratio')
+        self.name = event_name + '.time_ratio'   
+    
+class EventDataRatio(Feature):
+
+    def __init__(self,wf,event_name):
+        temp = wf[event_name]
+        self.value = get_event_attribute(temp.value,'data_ratio')
+        self.name = event_name + '.data_ratio'   
+    
+    

@@ -33,6 +33,7 @@ from .. import utils
 
 from . import feature_processing_options as fpo
 from . import events
+from . import generic_features
 from . import path_features
 from . import posture_features
 from . import locomotion_features
@@ -685,7 +686,9 @@ class WormFeaturesDos(object):
 
         self.features = {}
 
-        modules = {'morphology_features':morphology_features,'locomotion_features':locomotion_features} 
+        modules = {'morphology_features':morphology_features,
+        'locomotion_features':locomotion_features,
+        'generic_features':generic_features} 
 
         self.feature_list = []
         for spec in f_specs:

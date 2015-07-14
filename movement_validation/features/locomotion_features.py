@@ -567,8 +567,7 @@ class MotionEvent(Feature):
         #This is temporary until a bug is fixed, at which point in time
         #it will likeely need to move into the method directly above
         m_event.num_video_frames = num_frames                       
-        
-        
+
         self.value = m_event                                      
         
 

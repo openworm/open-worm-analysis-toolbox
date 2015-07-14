@@ -194,16 +194,22 @@ s2y_all{iFrame} = s1_py;
         %     end
         
         
+%         offsets = s1(1,:);
+%         
+%         s1 = bsxfun(@minus,s1,offsets);
+%         s2 = bsxfun(@minus,s2,offsets);
+%         s1_x = bsxfun(@minus,s1_x,offsets(1));
+        
         vc_raw  = s1;
         nvc_raw = s2;
     
         clf
-        subplot(2,3,[1 2 4 5])
+        subplot(1,3,[1 2])
         hold on
         
         %Raw
-        plot(vc_raw(:,1),vc_raw(:,2),'r.')
-        plot(nvc_raw(:,1),nvc_raw(:,2),'b.')
+%         plot(vc_raw(:,1),vc_raw(:,2),'r.')
+%         plot(nvc_raw(:,1),nvc_raw(:,2),'b.')
         
         %Smooth
         plot(s1(2:end-1,1),s1(2:end-1,2),'ro')
@@ -216,13 +222,13 @@ s2y_all{iFrame} = s1_py;
         for iPlot = 1:length(s1_x)
             %I2 = match_I(iPlot);
             
-            if iPlot == 5 %Start a bit in so we see it
-                c = 'm';
-            elseif abs(dp_values(iPlot)) > 0.99
+%             if iPlot == 5 %Start a bit in so we see it
+%                 c = 'm';
+%             elseif abs(dp_values(iPlot)) > 0.99
                 c = 'g';
-            else
-                c = 'k';
-            end
+%             else
+%                 c = 'k';
+%             end
             x = [s1_x(iPlot) s1_px(iPlot)];
             y = [s1_y(iPlot) s1_py(iPlot)];
             %midpoint = [0.5*(x(1)+x(2)),0.5*(y(1)+y(2))];
@@ -238,15 +244,15 @@ s2y_all{iFrame} = s1_py;
         %         plot(midpoint(1),midpoint(2),'ko')
         %     end
         
-        plot(nw_sx(:,iFrame),nw_sy(:,iFrame),'x','Color',[0.3 0.3 0.3])
+        %plot(nw_sx(:,iFrame),nw_sy(:,iFrame),'x','Color',[0.3 0.3 0.3])
         
         hold off
         axis equal
         
-        subplot(2,3,3)
-        
-        plot(dp_values,'o-')
-        set(gca,'ylim',[-1 -0.5])
+%         subplot(1,3,3)
+%         
+%         plot(dp_values,'o-')
+%         set(gca,'ylim',[-1 -0.5])
         
         
         %Width should really be plotted as a function of distance along the skeleton
@@ -254,13 +260,15 @@ s2y_all{iFrame} = s1_py;
         
         cum_dist = h__getSkeletonDistance(skeleton_x,skeleton_y);
         
-        subplot(2,3,6)
+        subplot(1,3,3)
         plot(cum_dist./cum_dist(end),widths1,'r.-')
-        hold on
-        plot(linspace(0,1,49),nw_widths(:,iFrame),'g.-')
-        hold off
+%         hold on
+%         plot(linspace(0,1,49),nw_widths(:,iFrame),'g.-')
+%         hold off
         
         title(sprintf('iFrame %d',iFrame))
+        xlabel('Normalized length')
+        ylabel('Width (uM)')
         
         if length(frame_values) > 1
             %pause

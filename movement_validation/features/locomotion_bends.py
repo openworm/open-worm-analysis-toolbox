@@ -1083,3 +1083,17 @@ class CrawlingBendsBoundInfo(object):
 
         return [back_zeros_I, front_zeros_I]
 
+#==============================================================================
+#                       New Feature Organization
+#==============================================================================
+#self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
+#                                            features_ref,
+#                                            nw.angles,
+#                                            self.motion_events.is_paused,
+#                                            video_info.is_segmented)
+#
+#self.foraging_bends = locomotion_bends.LocomotionForagingBends(
+#                                            features_ref, 
+#                                            video_info.is_segmented, 
+#                                            video_info.ventral_mode)
+
