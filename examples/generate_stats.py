@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-This should replicate the behaviour of the compute "new" histograms code from
-https://github.com/JimHokanson/SegwormMatlabClasses/
-blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
-
-We are just trying to achieve the creation of an in-memory object that contains
-the statistics generated from comparing a set of 20 Feature .mat Files:
+Create an in-memory object, statistics_manager, that contains the 
+statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Experiment" files and
 - 10 "Control" files.
+
+Notes
+--------------
+Formerly:
+https://github.com/JimHokanson/SegwormMatlabClasses/
+blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
 
 """
 import sys, os, pickle
@@ -36,8 +38,11 @@ def main():
           (statistics_manager.min_p_wilcoxon, 
            statistics_manager.min_q_wilcoxon))
 
-    statistics_manager.plot()
-    plt.show()
+    #statistics_manager.plot()
+    fig = plt.figure()
+    ax = fig.gca()
+    statistics_manager[5].plot(ax)
+    #plt.savefig('michael.png')
     
     """
     # Plot the p-values, ranked.

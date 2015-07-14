@@ -145,7 +145,7 @@ class PostureOptions(object):
         # Current value translation: 1/5 of a second
         #
         # Used by: posture_features.get_worm_coils
-        return round(1/5 * fps) 
+        return int(round(1/5 * fps)) 
 
 
 class PostureWavelengthOptions(object):
@@ -207,7 +207,7 @@ class LocomotionTurns(object):
         self.max_interpolation_gap_allowed = 9 #frames
     
     def min_omega_event_length(self, fps):
-        return round(fps/4)
+        return int(round(fps/4))
         
         
         #TODO: There is still a lot to put into here
@@ -222,7 +222,7 @@ class LocomotionForagingBends(object):
         pass
     
     def min_nose_window_samples(self, fps):
-        return round(0.1 * fps)
+        return int(round(0.1 * fps))
     
     def max_samples_interp_nose(self, fps):
         return 2*self.min_nose_window_samples(fps) - 1
