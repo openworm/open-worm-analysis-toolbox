@@ -52,5 +52,11 @@ y,locomotion.foraging_bends.amplitude,locomotion_bends,ForagingAmplitude,locomot
 y,locomotion.foraging_bends.angle_speed,locomotion_bends,ForagingAngleSpeed,locomotion.foraging_bends,,,,,,,,,,,,,,,,,,,,
 n,locomotion.motion_events.is_paused,locomotion_features,IsPaused,locomotion.motion_mode,,,,,,,,,,,,,,,,,,,,
 n,locomotion.crawling_bends.head,locomotion_bends,CrawlingBend,locomotion.motion_events.is_paused,head,,,,,,,,,,,,,,,,,,,
-n,locomotion.crawling_bends.head.amplitude,locomotion_bends,BendAmplitude,locomotion.crawling_bends.head,head,,,,,,,,,,,,,,,,,,,
-n,locomotion.crawling_bends.head.frequency,locomotion_bends,BendFrequency,locomotion.crawling_bends.head,head,,,,,,,,,,,,,,,,,,,q
+y,locomotion.crawling_bends.head.amplitude,locomotion_bends,BendAmplitude,locomotion.crawling_bends.head,head,,,,,,,,,,,,,,,,,,,
+y,locomotion.crawling_bends.head.frequency,locomotion_bends,BendFrequency,locomotion.crawling_bends.head,head,,,,,,,,,,,,,,,,,,,q
+n,locomotion.crawling_bends.midbody,locomotion_bends,CrawlingBend,locomotion.motion_events.is_paused,midbody,,,,,,,,,,,,,,,,,,,
+y,locomotion.crawling_bends.midbody.amplitude,locomotion_bends,BendAmplitude,locomotion.crawling_bends.midbody,midbody,,,,,,,,,,,,,,,,,,,
+y,locomotion.crawling_bends.midbody.frequency,locomotion_bends,BendFrequency,locomotion.crawling_bends.midbody,midbody,,,,,,,,,,,,,,,,,,,
+n,locomotion.crawling_bends.tail,locomotion_bends,CrawlingBend,locomotion.motion_events.is_paused,tail,,,,,,,,,,,,,,,,,,,
+y,locomotion.crawling_bends.tail.amplitude,locomotion_bends,BendAmplitude,locomotion.crawling_bends.tail,tail,,,,,,,,,,,,,,,,,,,
+y,locomotion.crawling_bends.tail.frequency,locomotion_bends,BendFrequency,locomotion.crawling_bends.tail,tail,,,,,,,,,,,,,,,,,,,

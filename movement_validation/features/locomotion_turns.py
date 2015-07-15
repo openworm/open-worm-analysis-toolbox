@@ -50,6 +50,8 @@ import warnings
 import operator
 import re
 
+from .generic_features import Feature
+
 from .. import utils
 
 from . import events
@@ -58,6 +60,7 @@ from . import events
 class LocomotionTurns(object):
 
     """
+        
     LocomotionTurns
 
     Attributes
@@ -878,3 +881,404 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     """
 
     return turn_event_output
+
+class TurnProcessor(Feature):
+
+    """
+        
+    LocomotionTurns
+
+    Attributes
+    ----------    
+    omegas : OmegaTurns
+    upsilons : UpsilonTurns
+
+    Methods
+    -------
+    __init__
+
+    """
+
+    def __init__(self, wf):
+        """
+        Initialiser for the LocomotionTurns class
+
+        Parameters
+        ----------
+        features_ref :
+        bend_angles :
+        is_stage_movement :
+        midbody_distance :
+        sx :
+        sy :
+
+        Notes
+        ---------------------------------------    
+        Formerly getOmegaAndUpsilonTurns
+
+        Old Name: 
+        - featureProcess.m
+        - omegaUpsilonDetectCurvature.m
+
+        """
+
+        #features_ref, bend_angles, is_stage_movement, midbody_distance, sx, sy
+
+
+        nw = wf.nw
+        options = wf.options.locomotion.locomotion_turns
+        fps = wf.video_info.fps
+
+        bend_angles = nw.angles
+
+#        features_ref, 
+#        ,
+#        is_stage_movement,
+#        self.velocity.get_midbody_distance(),
+#        nw.skeleton_x,
+#        nw.skeleton_y)
+
+
+
+        timer = wf.timer
+        timer.tic()
+
+        n_frames = bend_angles.shape[1]
+
+        angles = collections.namedtuple('angles',
+                                        ['head_angles',
+                                         'body_angles',
+                                         'tail_angles',
+                                         'body_angles_with_long_nans',
+                                         'is_stage_movement'])
+
+        first_third  = nw.get_subset_partition_mask('first_third')
+        second_third = nw.get_subset_partition_mask('second_third')
+        last_third   = nw.get_subset_partition_mask('last_third')
+
+        # NOTE: For some reason the first and last few angles are NaN, so we use
+        # nanmean instead of mean.  We could probably avoid this for the body.
+        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # that are ALL NaN.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            angles.head_angles = np.nanmean(bend_angles[first_third, :], axis=0)
+            angles.body_angles = np.nanmean(bend_angles[second_third, :], axis=0)
+            angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
+            angles.is_stage_movement = is_stage_movement
+
+        # Deep copy.
+        # To @JimHokanson from @MichaelCurrie: what does "ht" stand for?
+        #             consider expanding this variable name so it's clear
+        body_angles_for_ht_change = np.copy(angles.body_angles)
+
+        n_head = np.sum(~np.isnan(angles.head_angles))
+        n_body = np.sum(~np.isnan(angles.body_angles))
+        n_tail = np.sum(~np.isnan(angles.tail_angles))
+
+        # Only proceed if there are at least two non-NaN
+        # value in each angle vector
+        if n_head < 2 or n_body < 2 or n_tail < 2:
+            # Make omegas and upsilons into blank events lists and return
+            self.omegas   = events.EventListWithFeatures(fps, make_null=True)
+            self.upsilons = events.EventListWithFeatures(fps, make_null=True)
+            return
+
+        # Interpolate the angles.  angles is modified.
+        self.h__interpolateAngles(angles, options.max_interpolation_gap_allowed)
+
+        # Get frames for each turn type
+        #----------------------------------------------------------------------
+        # This doesn't match was is written in the supplemental material ...
+        # Am I working off of old code??????
+
+        #TODO: Move this all to options ...
+        consts = collections.namedtuple('consts',
+                                        ['head_angle_start_const',
+                                         'tail_angle_start_const',
+                                         'head_angle_end_const',
+                                         'tail_angle_end_const',
+                                         'body_angle_const'])
+
+        yuck = [[20, -20, 15, -15],
+                [30,  30, 30,  30],
+                [40,  40, 30,  30],
+                [20, -20, 15, -15],
+                [20, -20, 15, -15]]
+        """
+        OLD Matlab CODE:
+    
+        consts = struct(...
+            'head_angle_start_const',{20 -20 15 -15}, ...
+            'tail_angle_start_const',{30  30 30  30}, ...
+            'head_angle_end_const',  {40  40 30  30}, ...
+            'tail_angle_end_const',  {20 -20 15 -15}, ...
+            'body_angle_const'   ,   {20 -20 15 -15})
+        """
+
+        #NOTE: We need to run omegas first (false values) since upsilons are 
+        #more inclusive, but can not occur if an omega event occurs
+        is_upsilon = [False, False, True, True]
+
+        # NOTE: We assign different values based on the sign of the angles
+        values_to_assign = [1, -1,  1, -1]
+
+        frames = collections.namedtuple('frames',
+                                        ['omega_frames', 'upsilon_frames'])
+
+        frames.omega_frames   = np.zeros(n_frames)
+        frames.upsilon_frames = np.zeros(n_frames)
+
+        for i in range(4):
+            consts.head_angle_start_const = yuck[0][i]
+            consts.tail_angle_start_const = yuck[1][i]
+            consts.head_angle_end_const = yuck[2][i]
+            consts.tail_angle_end_const = yuck[3][i]
+            consts.body_angle_const     = yuck[4][i]
+            condition_indices = self.h__getConditionIndices(angles, consts)
+            self.h__populateFrames(angles,
+                                   condition_indices,
+                                   frames,
+                                   is_upsilon[i],
+                                   values_to_assign[i])
+
+
+
+        # Calculate the events from the frame values
+        self.omegas   = OmegaTurns.create(options,
+                                   frames.omega_frames,
+                                   nw,
+                                   body_angles_for_ht_change,
+                                   midbody_distance,
+                                   fps)
+
+        self.upsilons = UpsilonTurns.create(frames.upsilon_frames,
+                                     midbody_distance,
+                                     fps)
+
+        timer.toc('locomotion.turns')
+
+    def __repr__(self):
+        return utils.print_object(self)
+
+    @classmethod
+    def from_disk(cls, turns_ref):
+
+        self = cls.__new__(cls)
+
+        self.omegas   = OmegaTurns.from_disk(turns_ref)  
+        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
+        
+        return self
+
+    def __eq__(self, other):
+        return \
+            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
+            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
+
+    def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
+        """
+        Interpolate the angles in the head, body, and tail.
+        For the body, also interpolate with a threshold, and assign this
+        to body_angles_with_long_nans
+
+        Parameters
+        ---------------------------------------    
+        angles: a named tuple
+          angles = collections.namedtuple('angles', 
+                                          ['head_angles', 
+                                           'body_angles',
+                                           'tail_angles',
+                                           'body_angles_with_long_nans',
+                                           'is_stage_movement'])
+
+
+        Returns
+        ---------------------------------------    
+        None; instead the angles parameter has been modified in place
+
+        Notes
+        ---------------------------------------    
+        Formerly a = h__interpolateAngles(a, MAX_INTERPOLATION_GAP_ALLOWED)
+
+        TODO: Incorporate into the former
+        seg_worm.feature_helpers.interpolateNanData
+
+        """
+        # Let's use a shorter expression for clarity
+        interp = utils.interpolate_with_threshold
+
+        # This might not actually have been applied - SEGWORM_MC used BodyAngles
+        # - @JimHokanson
+        angles.body_angles_with_long_nans = interp(angles.body_angles,
+                                                   MAX_INTERPOLATION_GAP_ALLOWED +
+                                                   1,
+                                                   make_copy=True)
+
+        interp(angles.head_angles, make_copy=False)
+        interp(angles.body_angles, make_copy=False)
+        interp(angles.tail_angles, make_copy=False)
+
+    def h__getConditionIndices(self, a, c):
+        """
+        This function implements a filter on the frames for the different
+        conditions that we are looking for in order to get a particular turn.
+
+        It does not however provide any logic on their relative order, i.e.
+        that one condition occurs before another. This is done in a later
+        function, h__populateFrames.
+
+        Parameters
+        ---------------------------------------    
+        a:
+
+        c:
+
+
+        Notes
+        ---------------------------------------    
+        Formerly s = h__getConditionIndices(a, c)
+
+        """
+
+        # Determine comparison function
+        #----------------------------------------------------------
+        is_positive = c.head_angle_start_const > 0
+        if is_positive:
+            fh = operator.gt
+        else:
+            fh = operator.lt
+
+        # start: when the head exceeds its angle but the tail does not
+        # end  : when the tail exceeds its angle but the head does not
+
+        # TODO: Rename to convention ...
+        s = collections.namedtuple('stuffs',
+                                   ['startCond',
+                                    'startInds',
+                                    'midCond',
+                                    'midStarts',
+                                    'midEnds',
+                                    'endCond',
+                                    'endInds'])
+
+        def find_diff(array, value):
+            # diff on logical array doesn't work the same as it does in Matlab
+            return np.flatnonzero(np.diff(array.astype(int)) == value)
+
+        with np.errstate(invalid='ignore'):
+            s.startCond = fh(a.head_angles, c.head_angle_start_const) & \
+                (np.abs(a.tail_angles) < c.tail_angle_start_const)
+
+        # add 1 for shift due to diff
+        s.startInds = find_diff(s.startCond, 1) + 1
+
+        # NOTE: This is NaN check is a bit suspicious, as it implies that the
+        # head and tail are parsed, but the body is not. The original code puts
+        # NaN back in for long gaps in the body angle, so it is possible that
+        # the body angle is NaN but the others are not.
+        with np.errstate(invalid='ignore'):
+            s.midCond   = fh(a.body_angles, c.body_angle_const) | \
+                np.isnan(a.body_angles_with_long_nans)
+
+        # add 1 for shift due to diff
+        s.midStarts = find_diff(s.midCond, 1) + 1
+        s.midEnds = find_diff(s.midCond, -1)
+
+        with np.errstate(invalid='ignore'):
+            s.endCond = np.logical_and(fh(a.tail_angles, c.tail_angle_end_const),
+                                       np.abs(a.head_angles) <
+                                       c.head_angle_end_const)
+
+        s.endInds = find_diff(s.endCond, -1)
+
+        return s
+
+    def h__populateFrames(self, a, s, f, get_upsilon_flag, value_to_assign):
+        """
+
+        Algorithm
+        ---------------------------------------    
+        - For the middle angle range, ensure one frame is valid and that
+          the frame proceeding the start and following the end are valid
+        - Find start indices and end indices that bound this range
+        - For upsilons, exclude if they overlap with an omega bend ...
+
+
+        Parameters
+        ---------------------------------------    
+        a: named tuple
+               head_angles: [1x4642 double]
+               body_angles: [1x4642 double]
+               tail_angles: [1x4642 double]
+         is_stage_movement: [1x4642 logical]
+                 bodyAngle: [1x4642 double]
+
+        s: named tuple
+         startCond: [1x4642 logical]
+         startInds: [1x81 double]
+           midCond: [1x4642 logical]
+         midStarts: [268 649 881 996 1101 1148 1202 1963 3190 3241 4144 4189 4246 4346 4390 4457 4572 4626]
+           midEnds: [301 657 925 1009 1103 1158 1209 1964 3196 3266 4148 4200 4258 4350 4399 4461 4579]
+           endCond: [1x4642 logical]
+           endInds: [1x47 double]
+
+        f: named tuple
+           omegaFrames: [4642x1 double]
+         upsilonFrames: [4642x1 double]
+
+        get_upsilon_flag: bool
+          Toggled based on whether or not we are getting upsilon events 
+          or omega events
+
+        value_to_assign: 
+
+
+        Returns
+        ---------------------------------------    
+        None; modifies parameters in place.
+
+
+        Notes
+        ---------------------------------------    
+        Formerly f = h__populateFrames(a,s,f,get_upsilon_flag,value_to_assign)
+
+        """
+
+        for cur_mid_start_I in s.midStarts:
+
+            # JAH NOTE: This type of searching is inefficient in Matlab since
+            # the data is already sorted. It could be improved ...
+            temp = np.flatnonzero(s.midEnds > cur_mid_start_I)
+
+            # cur_mid_end_I   = s.midEnds[find(s.midEnds > cur_mid_start_I, 1))
+
+            if temp.size != 0:
+                cur_mid_end_I = s.midEnds[temp[0]]
+
+                if ~np.all(a.is_stage_movement[cur_mid_start_I:cur_mid_end_I + 1]) and \
+                        s.startCond[cur_mid_start_I - 1] and \
+                        s.endCond[cur_mid_end_I + 1]:
+
+                    temp2 = np.flatnonzero(s.startInds < cur_mid_start_I)
+                    temp3 = np.flatnonzero(s.endInds > cur_mid_end_I)
+
+                    if temp2.size != 0 and temp3.size != 0:
+                        cur_start_I = s.startInds[temp2[-1]]
+                        cur_end_I = s.endInds[temp3[0]]
+
+                        if get_upsilon_flag:
+                            # Don't populate upsilon if the data spans an omega
+                            if ~np.any(np.abs(f.omega_frames[cur_start_I:cur_end_I + 1])):
+                                f.upsilon_frames[
+                                    cur_start_I:cur_end_I + 1] = value_to_assign
+                        else:
+                            f.omega_frames[
+                                cur_start_I:cur_end_I + 1] = value_to_assign
+
+        # Nothing needs to be returned since we have modified our parameters
+        # in place
+        return None
+    
+class NewUpsilonTurns(Feature):
+    pass
