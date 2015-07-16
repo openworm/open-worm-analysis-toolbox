@@ -922,23 +922,26 @@ class TurnProcessor(Feature):
 
         """
 
-        #features_ref, bend_angles, is_stage_movement, midbody_distance, sx, sy
+        #features_ref, , , midbody_distance, sx, sy
+
+        self.name = 'locomotion.turn_processor'
 
 
-        nw = wf.nw
+        
         options = wf.options.locomotion.locomotion_turns
-        fps = wf.video_info.fps
-
+        
+        video_info = wf.video_info
+        fps = video_info.fps
+        is_stage_movement = video_info.is_stage_movement
+        
+        nw = wf.nw
         bend_angles = nw.angles
-
-#        features_ref, 
-#        ,
-#        is_stage_movement,
-#        self.velocity.get_midbody_distance(),
-#        nw.skeleton_x,
-#        nw.skeleton_y)
-
-
+        
+        #sx = nw.skeleton_x
+        #sy = nw.skeleton_y
+        
+        midbody_distance = wf['locomotion.velocity.mibdody.distance'].value
+        
 
         timer = wf.timer
         timer.tic()
@@ -967,10 +970,7 @@ class TurnProcessor(Feature):
             angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
             angles.is_stage_movement = is_stage_movement
 
-        # Deep copy.
-        # To @JimHokanson from @MichaelCurrie: what does "ht" stand for?
-        #             consider expanding this variable name so it's clear
-        body_angles_for_ht_change = np.copy(angles.body_angles)
+
 
         n_head = np.sum(~np.isnan(angles.head_angles))
         n_body = np.sum(~np.isnan(angles.body_angles))
@@ -983,6 +983,10 @@ class TurnProcessor(Feature):
             self.omegas   = events.EventListWithFeatures(fps, make_null=True)
             self.upsilons = events.EventListWithFeatures(fps, make_null=True)
             return
+
+
+        # Deep copy.
+        body_angles_for_head_tail_change = np.copy(angles.body_angles)
 
         # Interpolate the angles.  angles is modified.
         self.h__interpolateAngles(angles, options.max_interpolation_gap_allowed)
@@ -1048,7 +1052,7 @@ class TurnProcessor(Feature):
         self.omegas   = OmegaTurns.create(options,
                                    frames.omega_frames,
                                    nw,
-                                   body_angles_for_ht_change,
+                                   body_angles_for_head_tail_change,
                                    midbody_distance,
                                    fps)
 
@@ -1247,11 +1251,9 @@ class TurnProcessor(Feature):
 
         for cur_mid_start_I in s.midStarts:
 
-            # JAH NOTE: This type of searching is inefficient in Matlab since
-            # the data is already sorted. It could be improved ...
+            # JAH NOTE: This type of searching is inefficient since the data
+            #are sorted
             temp = np.flatnonzero(s.midEnds > cur_mid_start_I)
-
-            # cur_mid_end_I   = s.midEnds[find(s.midEnds > cur_mid_start_I, 1))
 
             if temp.size != 0:
                 cur_mid_end_I = s.midEnds[temp[0]]
@@ -1281,4 +1283,14 @@ class TurnProcessor(Feature):
         return None
     
 class NewUpsilonTurns(Feature):
-    pass
+    
+    def __init__(self,wf):
+        self.name = 'locomotion.upsilon_turns'
+        self.value = wf['locomotion.turn_processor'].upsilons
+
+
+class NewOmegaTurns(Feature):
+    
+    def __init__(self,wf):
+        self.name = 'locomotion.omega_turns'
+        self.value = wf['locomotion.turn_processor'].omegas

@@ -846,7 +846,10 @@ class WormFeaturesDos(object):
         modules = {'morphology_features':morphology_features,
         'locomotion_features':locomotion_features,
         'generic_features':generic_features,
-        'locomotion_bends':locomotion_bends} 
+        'locomotion_bends':locomotion_bends,
+        'locomotion_turns':locomotion_turns,
+        'path_features':path_features,
+        'posture_features':posture_features} 
 
         self.feature_list = []
         for spec in f_specs:
@@ -880,13 +883,25 @@ class WormFeaturesDos(object):
         
 def get_feature_processing_specs():
     
-    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    """
+
+    See Also
+    --------
+    FeatureProcessingSpec
+
+    Returns
+    -------
+    a list of FeatureProcessingSpec
+    
+    """    
+    
+    FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 'feature_metadata',
                                 'features_list.csv')        
     
     f_specs = []    
     
-    with open(csv_path) as feature_metadata_file:
+    with open(FEATURE_SPEC_CSV_PATH) as feature_metadata_file:
         feature_metadata = csv.DictReader(feature_metadata_file)
         
         for row in feature_metadata: 
@@ -899,6 +914,11 @@ class FeatureProcessingSpec(object):
     
     """
     Information on how to get the feature
+    
+    See Also
+    --------
+    get_feature_processing_specs    
+    
     """
     def __init__(self,d):
         """
@@ -911,10 +931,6 @@ class FeatureProcessingSpec(object):
         self.module_name = d['Module']
         self.class_name = d['Class Name']
         
-        #We don't really need the dependencies if we lazy load ...
-        temp = d['Dependencies']
-        
-        #I'm not sure how I want to handle this yet
         self.flags = d['Flags']
         
         

@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul  2 20:59:49 2015
-
-@author: RNEL
-"""
-
-# -*- coding: utf-8 -*-
-"""
 This code is testing moving features from a nested structure to being
 iterated over.
 

@@ -466,6 +466,20 @@ class VelocityDirection(Feature):
             1, forward locomotion
  """
 
+class MidbodyVelocityDistance(Feature):
+    """
+    Temporary feature that is used for turns
+    """
+    
+    def __init__(self,wf):
+        self.name = 'locomotion.velocity.mibdody.distance'
+
+        fps = wf.video_info.fps
+
+        midbody_speed = wf['locomotion.velocity.midbody.speed'].value
+        self.value = abs(midbody_speed/fps)
+        
+
 class MotionEvent(Feature):
 
     """

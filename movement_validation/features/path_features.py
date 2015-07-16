@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-path_features.py
+Path Features Include:
+----------------------
+TODO: Create basic list
 
 """
 
@@ -11,9 +13,9 @@ from .. import utils
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
+from .generic_features import Feature
 
-
-class Coordinates(object):
+class Coordinates(Feature):
     
     """
     Attributes
@@ -21,8 +23,10 @@ class Coordinates(object):
     x :
     y : 
     """
-    def __init__(self,features_ref):
-        nw = features_ref.nw
+    def __init__(self,wf):
+        
+        self.name = 'path.coordinates'
+        nw = wf.nw
         self.x = nw.contour_x.mean(axis=0)
         self.y = nw.contour_y.mean(axis=0) 
 
@@ -87,11 +91,14 @@ class Range(object):
         return utils.correlation(self.value, other.value, 'path.range', 0.99)
 
 
-class Duration(object):
+class Duration(Feature):
 
     """
-    Attributes:
-    -----------
+    
+    Temporary Feature: path.duration    
+    
+    Attributes
+    ----------
     arena : Arena
     worm  : DurationElement
     head  : DurationElement
@@ -100,17 +107,18 @@ class Duration(object):
 
     """
 
-    def __init__(self, features_ref):
+    def __init__(self, wf):
 
-        options = features_ref.options
+        self.name = 'path.duration'        
         
         #Inputs
         #------
-        nw = features_ref.nw
+        options = wf.options
+        nw = wf.nw
         sx = nw.skeleton_x
         sy = nw.skeleton_y
         widths = nw.widths
-        fps = features_ref.video_info.fps
+        fps = wf.video_info.fps
 
         s_points = [nw.worm_partitions[x]
                     for x in ('all', 'head', 'body', 'tail')]
@@ -139,7 +147,7 @@ class Duration(object):
         # Scale the skeleton and translate so that the minimum values are at 1
         #----------------------------------------------------------------------
         with np.errstate(invalid='ignore'):
-            # This is different between Matlab and Numpy
+            #Rounding rules are different between Matlab and Numpy
             scaled_sx = np.round(sx * scale)
             scaled_sy = np.round(sy * scale)
 
@@ -361,7 +369,12 @@ class Arena(object):
 
 
 def worm_path_curvature(features_ref):
+    
+    
     """
+
+    Delete this class after features refactoring is done    
+        
     Parameters:
     -----------
     x : 
@@ -427,3 +440,128 @@ def worm_path_curvature(features_ref):
         distance[distance < 1] = np.NAN
 
     return (diff_motion / distance) * (np.pi / 180)
+    
+#======================================================================
+#                   New Feature Reorganization
+#======================================================================
+#        nw = features_ref.nw
+#
+
+#
+#        #Curvature
+#        self.curvature = path_features.worm_path_curvature(features_ref)
+    
+class NewRange(Feature):
+
+    """
+    Attributes
+    ------------------
+    value :
+
+    """
+
+    def __init__(self, wf):
+
+        self.name = 'path.range'
+
+        nw = wf.nw
+        contour_x = nw.contour_x
+        contour_y = nw.contour_y
+
+        # Get average per frame
+        #------------------------------------------------
+        mean_cx = contour_x.mean(axis=0)
+        mean_cy = contour_y.mean(axis=0)
+
+        # Average over all frames for subtracting
+        #-------------------------------------------------
+        x_centroid_cx = np.nanmean(mean_cx)
+        y_centroid_cy = np.nanmean(mean_cy)
+
+        self.value = np.sqrt(
+            (mean_cx - x_centroid_cx) ** 2 + (mean_cy - y_centroid_cy) ** 2)
+    
+
+class NewDurationElement(Feature):
+    
+    """
+    This currently borrowing heavily from DurationElement. Eventually we'll
+    want to move that code here
+    
+    """
+    def __init__(self,wf,section_name):
+        
+        self.name = 'path.duration.' + section_name
+        duration_main = wf['path.duration']
+        duration_element = getattr(duration_main,section_name)
+        self.value = duration_element.times  
+
+class Curvature(Feature):
+
+    """
+    Feature: path.curvature
+    """
+    
+    def __init__(self,wf):
+        
+        self.name = 'path.curvature'
+        BODY_DIFF = 0.5
+    
+        nw = wf.nw
+        x = nw.skeleton_x
+        y = nw.skeleton_y
+        
+        video_info = wf.video_info
+        fps = video_info.fps
+        ventral_mode = video_info.ventral_mode    
+    
+        # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
+    
+        BODY_I = slice(44, 3, -1)
+    
+        # This was nanmean but I think mean will be fine. nanmean was
+        # causing the program to crash
+        diff_x = np.mean(np.diff(x[BODY_I, :], axis=0), axis=0)
+        diff_y = np.mean(np.diff(y[BODY_I, :], axis=0), axis=0)
+        avg_body_angles_d = np.arctan2(diff_y, diff_x) * 180 / np.pi
+    
+        # NOTE: This is what is in the MRC code, but differs from their description.
+        # In this case I think the skeleton filtering makes sense so we'll keep it.
+        speed, ignored_variable, motion_direction = \
+            velocity_module.compute_velocity(fps, x[BODY_I, :], y[BODY_I,:], \
+                                             avg_body_angles_d, BODY_DIFF, ventral_mode)
+    
+        frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
+        half_frame_scale = int((frame_scale - 1) / 2)
+    
+        # Compute the angle differentials and distances.
+        speed = np.abs(speed)
+    
+        # At each frame, we'll compute the differences in motion direction using
+        # some frame in the future relative to the current frame
+        #
+        #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
+        #------------------------------------------------
+        diff_motion = np.empty(speed.shape)
+        diff_motion[:] = np.NAN
+    
+        right_max_I = len(diff_motion) - frame_scale
+        diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1):] - motion_direction[0:(right_max_I + 1)]
+    
+        with np.errstate(invalid='ignore'):
+            diff_motion[diff_motion >= 180] -= 360
+            diff_motion[diff_motion <= -180] += 360
+    
+        distance_I_base = slice(half_frame_scale, -(frame_scale + 1), 1)
+        distance_I_shifted = slice(half_frame_scale + frame_scale, -1, 1)
+    
+        distance = np.empty(speed.shape)
+        distance[:] = np.NaN
+    
+        distance[distance_I_base] = speed[distance_I_base] + \
+            speed[distance_I_shifted] * BODY_DIFF / 2
+    
+        with np.errstate(invalid='ignore'):
+            distance[distance < 1] = np.NAN
+    
+        self.value = (diff_motion / distance) * (np.pi / 180)    

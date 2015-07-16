@@ -14,6 +14,7 @@ import os, inspect, h5py
 
 import cv2
 
+from .generic_features import Feature
 from .. import config, utils
 from . import events
 
@@ -321,21 +322,7 @@ class AmplitudeAndWavelength(object):
         worm_lengths
         
         """
-        #TODO: I think this would be better as a class
-        
-        
-        if not features_ref.options.should_compute_feature(
-                                'locomotion.amplitude_and_wavelength',
-                                features_ref):
-            self.amplitude_max = None
-            self.amplitude_ratio = None
-            self.primary_wavelength = None
-            self.secondary_wavelength = None
-            self.track_length = None
 
-            return
-        
-        
         timer = features_ref.timer;
         timer.tic()
         
@@ -606,7 +593,7 @@ def get_worm_kinks(features_ref):
             # The code for zero was a bit weird, it keeps counting if no sign
             # change i.e. + + + 0 + + + => all +
             #
-            # but if counts for both if sign change
+            # but it counts for both if sign change
             # + + 0 - - - => 3 +s and 4 -s
             raise Exception("Unhandled code case")
 
@@ -921,3 +908,553 @@ def get_eigenworms(features_ref):
     timer.toc('posture.eigenworms')
 
     return eigen_projections
+    
+#=====================================================================
+#
+#=====================================================================
+#        self.bends = posture_features.Bends.create(features_ref)
+#
+#
+#        self.directions = posture_features.Directions(features_ref)
+#
+#        #TODO: I'd rather this be a formal class
+#        self.skeleton = posture_features.Skeleton(features_ref)
+#
+#        self.eigen_projection = posture_features.get_eigenworms(features_ref)
+
+class EccentricityAndOrientationProcessor(Feature):
+    
+    """
+
+
+    Attributes
+    ----------
+    eccentricity
+    orientation    
+    """        
+    
+    def __init__(self,wf):
+        
+        """
+        Get the eccentricity and orientation of a contour using the moments
+    
+        http://en.wikipedia.org/wiki/Image_moment
+    
+        Calculated by opencv moments():
+        http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html
+         
+        """    
+
+        self.name = 'posture.eccentricity_and_orientation'
+    
+        wf.timer.tic()
+        
+        contour = wf.nw.contour_without_redundant_points
+        
+        # OpenCV does not like float64, this actually make sense for image 
+        # data where we do not require a large precition in the decimal part. 
+        # This could save quite a lot of space
+        contour = contour.astype(np.float32)
+        tot = contour.shape[-1]
+    
+        
+        eccentricity = np.full(tot, np.nan);
+        orientation = np.full(tot, np.nan);
+        for ii in range(tot):
+            worm_cnt = contour[:,:,ii];
+            if ~np.any(np.isnan(worm_cnt)):
+                moments  = cv2.moments(worm_cnt)
+            
+                a1 = (moments['mu20'] + moments['mu02']) / 2
+                a2 = np.sqrt(4*moments['mu11']**2 + 
+                             (moments['mu20'] - moments['mu02'])**2) / 2
+            
+                minor_axis = a1 - a2
+                major_axis = a1 + a2
+    
+                eccentricity[ii] = np.sqrt(1 - minor_axis/major_axis)
+                orientation[ii] = \
+                    np.arctan2(2*moments['mu11'], 
+                               (moments['mu20'] - moments['mu02'])) / 2
+                # Convert from radians to degrees
+                orientation[ii] *= 180 / np.pi
+                
+        wf.timer.toc('posture.eccentricity_and_orientation')
+        
+        self.eccentricity = eccentricity
+        self.orientation = orientation        
+
+class Eccentricity(Feature):
+    
+    def __init__(self,wf):
+        self.name = 'posture.eccentricity'
+        self.value = wf['posture.eccentricity_and_orientation'].eccentricity
+        
+class AmplitudeAndWavelengthProcessor(Feature):
+    
+    """
+    Temporary Feature: posture.amplitude_wavelength_processor
+
+    Attributes
+    ----------
+    amplitude_max
+    amplitude_ratio
+    primary_wavelength
+    secondary_wavelength
+    track_length
+    """
+    
+    def __init__(self, wf):
+
+        """
+        Calculates amplitude of rotated worm (relies on orientation
+        aka theta_d)
+        
+        Parameters
+        ----------
+        theta_d
+        sx
+        sy
+        worm_lengths
+        
+        """
+        
+        self.name = 'posture.amplitude_wavelength_processor'        
+        
+        theta_d = wf['posture.eccentricity_and_orientation'].orientation
+
+        timer = wf.timer
+        timer.tic()
+        
+        options = wf.options    
+                
+        nw = wf.nw    
+        sx = nw.skeleton_x
+        sy = nw.skeleton_y
+        worm_lengths = nw.length
+    
+        #TODO: Move these into posture options
+    
+        wave_options = wf.options.posture.wavelength
+    
+        # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
+        # %2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
+        N_POINTS_FFT = wave_options.n_points_fft
+        HALF_N_FFT = int(N_POINTS_FFT / 2)
+        MIN_DIST_PEAKS = wave_options.min_dist_peaks
+        WAVELENGTH_PCT_MAX_CUTOFF = wave_options.pct_max_cutoff
+        WAVELENGTH_PCT_CUTOFF = wave_options.pct_cutoff
+    
+        # TODO: Write in Python
+        # assert(size(sx,1) <= N_POINTS_FFT,'# of points used in the FFT 
+        # must be more than the # of points in the skeleton')
+    
+        #Rotate the worm so that it lies primarily along a single axis
+        #-------------------------------------------------------------
+        theta_r = theta_d * (np.pi / 180)
+        wwx = sx * np.cos(theta_r) + sy * np.sin(theta_r)
+        wwy = sx * -np.sin(theta_r) + sy * np.cos(theta_r)
+    
+        # Subtract mean
+        #-----------------------------------------------------------------
+        #??? - Why isn't this done before the rotation?
+        wwx = wwx - np.mean(wwx, axis=0)
+        wwy = wwy - np.mean(wwy, axis=0)
+    
+        # Calculate track amplitude
+        #-----------------------------------------------------------------
+        amp1 = np.amax(wwy, axis=0)
+        amp2 = np.amin(wwy, axis=0)
+        amplitude_max = amp1 - amp2
+        amp2 = np.abs(amp2)
+        
+        #Ignore NaN division warnings
+        with np.errstate(invalid='ignore'):
+            amplitude_ratio = np.divide(np.minimum(amp1, amp2), 
+                                        np.maximum(amp1, amp2))
+    
+        # Calculate track length
+        #-----------------------------------------------------------------
+        # This is the x distance after rotation, and is different from the
+        # worm length which follows the skeleton. This will always be smaller 
+        # than the worm length. If the worm were perfectly straight these 
+        # values would be the same.
+        track_length = np.amax(wwx, axis=0) - np.amin(wwx, axis=0)
+    
+        # Wavelength calculation
+        #-----------------------------------------------------------------
+        dwwx = np.diff(wwx, 1, axis=0)
+    
+        # Does the sign change? This is a check to make sure that the 
+        # change in x is always going one way or the other. Is sign of all 
+        # differences the same as the sign of the first, or rather, are any 
+        # of the signs not the same as the first sign, indicating a "bad 
+        # worm orientation".
+        #
+        # NOT: This means that within a frame, if the worm x direction 
+        #      changes, then it is considered a bad worm and is not 
+        #      evaluated for wavelength
+        #
+    
+        with np.errstate(invalid='ignore'):
+            bad_worm_orientation = np.any(
+                np.not_equal(np.sign(dwwx), np.sign(dwwx[0, :])), axis=0)
+    
+        n_frames = bad_worm_orientation.size
+    
+        primary_wavelength = np.zeros(n_frames)
+        primary_wavelength[:] = np.NaN
+        secondary_wavelength = np.zeros(n_frames)
+        secondary_wavelength[:] = np.NaN
+    
+        # NOTE: Right now this varies from worm to worm which means the 
+        # spectral resolution varies as well from worm to worm
+        spatial_sampling_frequency = (wwx.shape[0] - 1) / track_length
+    
+        ds = 1 / spatial_sampling_frequency
+    
+        frames_to_calculate = \
+            (np.logical_not(bad_worm_orientation)).nonzero()[0]
+    
+        for cur_frame in frames_to_calculate:
+    
+            # Create an evenly sampled x-axis, note that ds varies
+            x1 = wwx[0, cur_frame]
+            x2 = wwx[-1, cur_frame]
+            if x1 > x2:
+                iwwx = utils.colon(x1, -ds[cur_frame], x2)
+                iwwy = np.interp(iwwx, 
+                                 wwx[::-1, cur_frame], 
+                                 wwy[::-1, cur_frame])
+                iwwy = iwwy[::-1]
+            else:
+                iwwx = utils.colon(x1, ds[cur_frame], x2)
+                iwwy = np.interp(iwwx, 
+                                 wwx[:, cur_frame], 
+                                 wwy[:, cur_frame])
+                iwwy = iwwy[::-1]
+    
+            temp = np.fft.fft(iwwy, N_POINTS_FFT)
+    
+            if options.mimic_old_behaviour:
+                iY = temp[0:HALF_N_FFT]
+                iY = iY * np.conjugate(iY) / N_POINTS_FFT
+            else:
+                iY = np.abs(temp[0:HALF_N_FFT])
+    
+            # Find peaks that are greater than the cutoff
+            peaks, indx = utils.separated_peaks(iY, 
+                                                MIN_DIST_PEAKS, 
+                                                True, 
+                                                (WAVELENGTH_PCT_MAX_CUTOFF * 
+                                                 np.amax(iY)))
+    
+            # This is what the supplemental says, not what was done in 
+            # the previous code. I'm not sure what was done for the actual 
+            # paper, but I would guess they used power.
+            #
+            # This gets used when determining the secondary wavelength, as 
+            # it must be greater than half the maximum to be considered a 
+            # secondary wavelength.
+    
+            # NOTE: True Amplitude = 2*abs(fft)/
+            #                    (length_real_data i.e. 48 or 49, not 512)
+            #
+            # i.e. for a sinusoid of a given amplitude, the above formula 
+            # would give you the amplitude of the sinusoid
+    
+            # We sort the peaks so that the largest is at the first index 
+            # and will be primary, this was not done in the previous 
+            # version of the code
+            I = np.argsort(-1 * peaks)
+            indx = indx[I]
+    
+            frequency_values = (indx - 1) / N_POINTS_FFT * \
+                spatial_sampling_frequency[cur_frame]
+    
+            all_wavelengths = 1 / frequency_values
+    
+            p_temp = all_wavelengths[0]
+    
+            if indx.size > 1:
+                s_temp = all_wavelengths[1]
+            else:
+                s_temp = np.NaN
+    
+            worm_wavelength_max = (WAVELENGTH_PCT_CUTOFF * 
+                                   worm_lengths[cur_frame])
+    
+            # Cap wavelengths ...
+            if p_temp > worm_wavelength_max:
+                p_temp = worm_wavelength_max
+    
+            # ??? Do we really want to keep this as well if p_temp == worm_2x?
+            # i.e., should the secondary wavelength be valid if the primary is
+            # also limited in this way ?????
+            if s_temp > worm_wavelength_max:
+                s_temp = worm_wavelength_max
+    
+            primary_wavelength[cur_frame] = p_temp
+            secondary_wavelength[cur_frame] = s_temp
+    
+    
+        if options.mimic_old_behaviour:
+            # In the old code, the first peak (i.e. larger wavelength, 
+            # lower frequency) was always the primary wavelength, where as 
+            # the new definition is based on the amplitude of the peaks, 
+            # not their position along the frequency axis
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                mask = secondary_wavelength > primary_wavelength
+    
+            temp = secondary_wavelength[mask]
+            secondary_wavelength[mask] = primary_wavelength[mask]
+            primary_wavelength[mask] = temp
+
+        self.amplitude_max = amplitude_max
+        self.amplitude_ratio = amplitude_ratio
+        self.primary_wavelength = primary_wavelength
+        self.secondary_wavelength = secondary_wavelength
+        self.track_length = track_length
+    
+        timer.toc('posture.amplitude_and_wavelength')
+
+#        self.amplitude_max = amp_wave_track.amplitude_max
+#        self.amplitude_ratio = amp_wave_track.amplitude_ratio
+#        self.primary_wavelength = amp_wave_track.primary_wavelength
+#        self.secondary_wavelength = amp_wave_track.secondary_wavelength
+#        self.track_length = amp_wave_track.track_length
+
+class AmplitudeMax(Feature):
+    
+    def __init__(self,wf):
+        
+        self.name = 'posture.amplitude_max'
+        self.value = wf['posture.amplitude_wavelength_processor'].amplitude_max
+        
+class AmplitudeRatio(Feature):
+    
+    def __init__(self,wf):
+        
+        self.name = 'posture.amplitude_ratio'
+        self.value = wf['posture.amplitude_wavelength_processor'].amplitude_ratio
+        
+class PrimaryWavelength(Feature):
+    
+    def __init__(self,wf):
+        
+        self.name = 'posture.primary_wavelength'
+        self.value = wf['posture.amplitude_wavelength_processor'].primary_wavelength
+        
+class SecondaryWavelength(Feature):
+    
+    def __init__(self,wf):
+        
+        self.name = 'posture.secondary_wavelength'
+        self.value = wf['posture.amplitude_wavelength_processor'].secondary_wavelength
+        
+class TrackLength(Feature):
+    
+    def __init__(self,wf):
+        
+        self.name = 'posture.track_length'
+        self.value = wf['posture.amplitude_wavelength_processor'].track_length      
+        
+class Coils(Feature):
+
+    def __init__(self,wf):
+        
+        """
+        Get the worm's posture.coils.
+    
+    
+        """
+        
+        self.name = 'posture.coils'
+        
+        midbody_distance = wf['locomotion.velocity.mibdody.distance'].value       
+        
+        
+        options = wf.options
+        posture_options = options.posture
+        timer = wf.timer
+        
+        fps = wf.video_info.fps     
+        
+        timer.tic()
+        
+        frame_code = wf.video_info.frame_code
+        
+    
+        COIL_FRAME_THRESHOLD = posture_options.coiling_frame_threshold(fps)
+        
+        # These are values that are specific to the MRC processor
+        COIL_START_CODES = [105, 106]
+        # Code that indicates a frame was successfully segmented
+        FRAME_SEGMENTED = 1 
+        
+        # Algorithm: Whenever a new start is found, find the 
+        # first segmented frame; that's the end.
+    
+        # Add on a frame to allow closing a coil at the end ...
+        coil_start_mask = (frame_code == COIL_START_CODES[0]) | (
+            frame_code == COIL_START_CODES[1])
+        np_false = np.zeros((1,), dtype=bool)
+        coil_start_mask = np.concatenate((coil_start_mask, np_false))
+    
+        # NOTE: These are not guaranteed ends, just possible ends ...
+        end_coil_mask = frame_code == FRAME_SEGMENTED
+        np_true = ~np_false
+        end_coil_mask = np.concatenate((end_coil_mask, np_true))
+    
+        in_coil = False
+        coil_frame_start = -1
+        n_coils = 0
+        n_frames_plus1 = len(frame_code) + 1
+    
+        starts = []
+        ends = []
+    
+        for iFrame in range(n_frames_plus1):
+            if in_coil:
+                if end_coil_mask[iFrame]:
+                    n_coil_frames = iFrame - coil_frame_start
+                    if n_coil_frames >= COIL_FRAME_THRESHOLD:
+                        n_coils += 1
+    
+                        starts.append(coil_frame_start)
+                        ends.append(iFrame - 1)
+    
+                    in_coil = False
+            elif coil_start_mask[iFrame]:
+                in_coil = True
+                coil_frame_start = iFrame
+    
+        if options.mimic_old_behaviour:
+            if (len(starts) > 0) and (ends[-1] == len(frame_code) - 1):
+                ends[-1] += -1
+                starts[-1] += -1
+    
+        temp = events.EventList(np.transpose(np.vstack((starts, ends))))
+    
+        timer.toc('posture.coils')  
+    
+        self.value = events.EventListWithFeatures(fps, temp, midbody_distance)
+    
+class Kinks(Feature):
+    
+    def __init__(self,wf):
+        """
+        Parameters
+        ----------
+        features_ref : movement_validation.features.worm_features.WormFeatures
+        
+        Returns
+        -------
+        numpy.array
+    
+        """
+    
+        self.name = 'posture.kinks'
+        
+        nw = wf.nw
+        timer = wf.timer
+        timer.tic()
+    
+        options = wf.options
+    
+        KINK_LENGTH_THRESHOLD_PCT = options.posture.kink_length_threshold_pct
+    
+        bend_angles = nw.angles
+    
+        # Determine the bend segment length threshold.
+        n_angles = bend_angles.shape[0]
+        length_threshold = np.round(n_angles * KINK_LENGTH_THRESHOLD_PCT)
+    
+        # Compute a gaussian filter for the angles.
+        #--------------------------------------------------------------------------
+        # JAH NOTE: This is a nice way of getting the appropriate odd value
+        # unlike the other code with so many if statements ...
+        #- see window code which tries to get an odd value ...
+        #- I'd like to go back and fix that code ...
+        half_length_thr = np.round(length_threshold / 2)
+        gauss_filter = utils.gausswin(half_length_thr * 2 + 1) / half_length_thr
+    
+        # Compute the kinks for the worms.
+        n_frames = bend_angles.shape[1]
+        n_kinks_all = np.zeros(n_frames, dtype=float)
+        n_kinks_all[:] = np.NaN
+    
+        #(np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
+    
+        nan_mask = np.isnan(bend_angles)
+    
+        for iFrame in (~np.all(nan_mask, axis=0)).nonzero()[0]:
+            smoothed_bend_angles = filters.convolve1d(
+                bend_angles[:, iFrame], gauss_filter, cval=0, mode='constant')
+    
+            # This code is nearly identical in getForaging
+            #-------------------------------------------------------
+            n_frames = smoothed_bend_angles.shape[0]
+    
+            with np.errstate(invalid='ignore'):
+                dataSign = np.sign(smoothed_bend_angles)
+    
+            if np.any(np.equal(dataSign, 0)):
+                # I don't expect that we'll ever actually reach 0
+                # The code for zero was a bit weird, it keeps counting if no sign
+                # change i.e. + + + 0 + + + => all +
+                #
+                # but it counts for both if sign change
+                # + + 0 - - - => 3 +s and 4 -s
+                raise Exception("Unhandled code case")
+    
+            sign_change_I = (
+                np.not_equal(dataSign[1:], dataSign[0:-1])).nonzero()[0]
+    
+            end_I = np.concatenate(
+                (sign_change_I, 
+                 n_frames * np.ones(1, dtype=np.result_type(sign_change_I))))
+    
+            wtf1 = np.zeros(1, dtype=np.result_type(sign_change_I))
+            wtf2 = sign_change_I + 1
+            start_I = np.concatenate((wtf1, wtf2))  # +2? due to inclusion rules???
+    
+            # All NaN values are considered sign changes, remove these ...
+            keep_mask = np.logical_not(np.isnan(smoothed_bend_angles[start_I]))
+    
+            start_I = start_I[keep_mask]
+            end_I = end_I[keep_mask]
+    
+            # The old code had a provision for having NaN values in the middle
+            # of the worm. I have not translated that feature to the newer code. I
+            # don't think it will ever happen though for a valid frame, only on the
+            # edges should you have NaN values.
+            if start_I.size != 0 and \
+               np.any(np.isnan(smoothed_bend_angles[start_I[0]:end_I[-1]])):
+                raise Exception("Unhandled code case")
+    
+            #-------------------------------------------------------
+            # End of identical code ...
+    
+            lengths = end_I - start_I + 1
+    
+            # Adjust lengths for first and last:
+            # Basically we allow NaN values to count towards the length for the
+            # first and last stretches
+            if lengths.size != 0:
+                if start_I[0] != 0:  # Due to leading NaNs
+                    lengths[0] = end_I[0] + 1
+                if end_I[-1] != n_frames:  # Due to trailing NaNs
+                    lengths[-1] = n_frames - start_I[-1]
+    
+            n_kinks_all[iFrame] = np.sum(lengths >= length_threshold)
+    
+        timer.toc('posture.kinks')
+    
+        self.value = n_kinks_all
+        
+class EigenProjectionProcess(Feature):
+    
+    def __init__(self,wf):
+        pass
