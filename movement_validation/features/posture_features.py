@@ -18,40 +18,7 @@ from .generic_features import Feature
 from .. import config, utils
 from . import events
 
-class Skeleton(object):
-    def __init__(self, features_ref):
-        
-        nw  = features_ref.nw         
-        
-        self.x = nw.skeleton_x
-        self.y = nw.skeleton_y
-        
-    @classmethod
-    def from_disk(cls, skeleton_ref):
-        self = cls.__new__(cls)      
-        
-        x_temp = utils._extract_time_from_disk(skeleton_ref, 'x',
-                                               is_matrix=True)
-        y_temp = utils._extract_time_from_disk(skeleton_ref, 'y',
-                                               is_matrix=True)
-        self.x = x_temp.transpose()
-        self.y = y_temp.transpose()
-        
-        return self
-     
-    def __repr__(self):
-        return utils.print_object(self) 
-    
-    
-    def __eq__(self, other):
-        eq_skeleton_x = utils.correlation(np.ravel(self.x), 
-                                          np.ravel(other.x), 
-                                          'posture.skeleton.x')
-        eq_skeleton_y = utils.correlation(np.ravel(self.y), 
-                                          np.ravel(other.y), 
-                                          'posture.skeleton.y')
 
-        return eq_skeleton_x and eq_skeleton_y
 
 class Bends(object):
     """
@@ -809,35 +776,16 @@ class Directions(object):
         return same_values    
 
 
-def load_eigen_worms():
-    """ 
-    Load the eigen_worms, which are stored in a Matlab data file
 
-    The eigenworms were computed by the Schafer lab based on N2 worms
-
-    Returns
-    ----------
-    eigen_worms: [7 x 48]
-
-    From http://stackoverflow.com/questions/50499/
-
-    """
-    current_module_path = inspect.getfile(inspect.currentframe())
-    package_path = os.path.dirname(os.path.abspath(current_module_path))
-    
-    repo_path        = os.path.split(package_path)[0]
-    eigen_worm_file_path = os.path.join(repo_path,
-                                        'features',
-                                        config.EIGENWORM_FILE)
-
-    h = h5py.File(eigen_worm_file_path,'r')
-    eigen_worms = h['eigenWorms'].value
-    
-    return np.transpose(eigen_worms)
 
 
 def get_eigenworms(features_ref):
     """
+
+
+    THIS WILL BE DELETED SOON: 
+    Moved to EigenProjectionProcessor    
+
 
     Parameters
     ----------
@@ -910,22 +858,14 @@ def get_eigenworms(features_ref):
     return eigen_projections
     
 #=====================================================================
-#
+#                           New Features
 #=====================================================================
-#        self.bends = posture_features.Bends.create(features_ref)
-#
-#
-#        self.directions = posture_features.Directions(features_ref)
-#
-#        #TODO: I'd rather this be a formal class
-#        self.skeleton = posture_features.Skeleton(features_ref)
-#
-#        self.eigen_projection = posture_features.get_eigenworms(features_ref)
+
 
 class EccentricityAndOrientationProcessor(Feature):
     
     """
-
+    Temporary Feature: posture.eccentricity_and_orientation
 
     Attributes
     ----------
@@ -979,7 +919,7 @@ class EccentricityAndOrientationProcessor(Feature):
                 # Convert from radians to degrees
                 orientation[ii] *= 180 / np.pi
                 
-        wf.timer.toc('posture.eccentricity_and_orientation')
+        wf.timer.toc(self.name)
         
         self.eccentricity = eccentricity
         self.orientation = orientation        
@@ -1453,8 +1393,266 @@ class Kinks(Feature):
         timer.toc('posture.kinks')
     
         self.value = n_kinks_all
+
+
+def load_eigen_worms():
+    """ 
+    Load the eigen_worms, which are stored in a Matlab data file
+
+    The eigenworms were computed by the Schafer lab based on N2 worms
+
+    Returns
+    ----------
+    eigen_worms: [7 x 48]
+
+    From http://stackoverflow.com/questions/50499/
+
+    """
+    current_module_path = inspect.getfile(inspect.currentframe())
+    package_path = os.path.dirname(os.path.abspath(current_module_path))
+    
+    repo_path        = os.path.split(package_path)[0]
+    eigen_worm_file_path = os.path.join(repo_path,
+                                        'features',
+                                        config.EIGENWORM_FILE)
+
+    h = h5py.File(eigen_worm_file_path,'r')
+    eigen_worms = h['eigenWorms'].value
+    
+    return np.transpose(eigen_worms)
+
         
-class EigenProjectionProcess(Feature):
+class EigenProjectionProcessor(Feature):
     
     def __init__(self,wf):
-        pass
+        """
+        Parameters
+        ----------
+        features_ref : movement_validation.features.worm_features.WormFeatures
+        
+        Returns
+        -------
+        eigen_projections: [N_EIGENWORMS_USE, n_frames]
+    
+        """
+        
+        self.name = 'posture.all_eigenprojections'        
+        
+        nw = wf.nw
+        sx = nw.skeleton_x
+        sy = nw.skeleton_y
+        posture_options = wf.options.posture
+        N_EIGENWORMS_USE = posture_options.n_eigenworms_use    
+        
+        timer = wf.timer
+        timer.toc    
+        
+        #eigen_worms: [7,48]  
+        eigen_worms = load_eigen_worms()    
+        
+        #???? How does this differ from nw.angles???
+        angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
+    
+        n_frames = sx.shape[1]
+    
+        # need to deal with cases where angle changes discontinuously from -pi
+        # to pi and pi to -pi.  In these cases, subtract 2pi and add 2pi
+        # respectively to all remaining points.  This effectively extends the
+        # range outside the -pi to pi range.  Everything is re-centred later
+        # when we subtract off the mean.
+        false_row = np.zeros((1, n_frames), dtype=bool)
+    
+        # NOTE: By adding the row of falses, we shift the trues
+        # to the next value, which allows indices to match. Otherwise after every
+        # find statement we would need to add 1, I think this is a bit faster ...
+    
+        with np.errstate(invalid='ignore'):
+            mask_pos = np.concatenate(
+                (false_row, np.diff(angles, n=1, axis=0) > np.pi), axis=0)
+            mask_neg = np.concatenate(
+                (false_row, np.diff(angles, n=1, axis=0) < -np.pi), axis=0)
+    
+        # Only fix the frames we need to, in which there is a jump in going
+        # from one segment to the next ...
+        fix_frames_I = (
+            np.any(np.logical_or(mask_pos, mask_neg), axis=0)).nonzero()[0]
+    
+        for cur_frame in fix_frames_I:
+    
+            positive_jump_I = (mask_pos[:, cur_frame]).nonzero()[0]
+            negative_jump_I = (mask_neg[:, cur_frame]).nonzero()[0]
+    
+            # subtract 2pi from remainging data after positive jumps
+            # Note that the jumps impact all subsequent frames
+            for cur_pos_jump in positive_jump_I:
+                angles[cur_pos_jump:, cur_frame] -= 2 * np.pi
+    
+            # add 2pi to remaining data after negative jumps
+            for cur_neg_jump in negative_jump_I:
+                angles[cur_neg_jump:, cur_frame] += 2 * np.pi
+    
+        angles = angles - np.mean(angles, axis=0)
+    
+        eigen_projections = np.dot(eigen_worms[0:N_EIGENWORMS_USE,:],angles)
+        timer.toc('posture.eigenworms')
+    
+        self.value =  eigen_projections
+    
+class EigenProjection(Feature):
+    
+    def __init__(self,wf,index_str):
+        self.name = 'posture.eigen_projection' + index_str
+        temp = wf['posture.all_eigenprojections'].value
+        self.value = temp[int(index_str),:]
+        
+class Bend(Feature):
+    
+    def __init__(self,wf,bend_name):
+
+        self.name = 'posture.bends.' + bend_name
+
+
+        nw  = wf.nw
+
+        # Retrieve the part of the worm we are currently looking at:
+        bend_angles = nw.get_partition(bend_name, 'angles')
+
+        # shape = (n):
+
+        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # that are ALL NaN.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)                
+
+            # Throws warning on taking the mean of an empty slice
+            temp_mean = np.nanmean(a=bend_angles, axis=0)
+            
+            # Throws warning when degrees of freedom <= 0 for slice
+            temp_std = np.nanstd(a=bend_angles, axis=0)
+
+            # Sign the standard deviation (to provide the bend's 
+            # dorsal/ventral orientation)
+            temp_std[temp_mean < 0] *= -1
+
+
+        self.mean = temp_mean
+        self.std_dev = temp_std
+                    
+class BendMean(Feature):
+
+    def __init__(self,wf,bend_name):
+
+        parent_name = 'posture.bends.' + bend_name
+        self.name = parent_name + '.mean'
+        self.value = wf[parent_name].mean
+        
+class BendStdDev(Feature):
+
+    def __init__(self,wf,bend_name):
+
+        parent_name = 'posture.bends.' + bend_name
+        self.name = parent_name + '.std_dev'
+        self.value = wf[parent_name].std_dev        
+
+class Skeleton(Feature):
+    
+    """
+    This just holds onto the skeleton x & y coordinates from normalized worm.
+    We don't do anything with these coordinates as far as feature processing.
+    """
+    def __init__(self, wf):
+        
+        nw  = wf.nw         
+        
+        self.name = 'posture.skeleton'
+        self.x = nw.skeleton_x
+        self.y = nw.skeleton_y
+        
+    @classmethod
+    def from_disk(cls, skeleton_ref):
+        self = cls.__new__(cls)      
+        
+        x_temp = utils._extract_time_from_disk(skeleton_ref, 'x',
+                                               is_matrix=True)
+        y_temp = utils._extract_time_from_disk(skeleton_ref, 'y',
+                                               is_matrix=True)
+        self.x = x_temp.transpose()
+        self.y = y_temp.transpose()
+        
+        return self
+     
+    def __repr__(self):
+        return utils.print_object(self) 
+    
+    
+    def __eq__(self, other):
+        eq_skeleton_x = utils.correlation(np.ravel(self.x), 
+                                          np.ravel(other.x), 
+                                          'posture.skeleton.x')
+        eq_skeleton_y = utils.correlation(np.ravel(self.y), 
+                                          np.ravel(other.y), 
+                                          'posture.skeleton.y')
+
+        return eq_skeleton_x and eq_skeleton_y
+        
+class Direction(Feature):
+
+    """
+
+    Implements Features:
+    --------------------
+    posture.directions.tail2head
+    posture.directions.tail
+    posture.directions.head
+
+    """
+
+    def __init__(self, wf, key_name):
+        
+        """
+
+        Parameters
+        ----------
+        wf : 
+
+        """
+
+        self.name = 'posture.directions.' + key_name
+
+        timer = wf.timer
+        timer.tic()
+
+        nw = wf.nw
+        
+        sx = nw.skeleton_x
+        sy = nw.skeleton_y
+        wp = nw.worm_partitions
+
+        if key_name == 'tail2head':
+            tip_I = wp['head'] # I - "indices" - really a tuple of start,stop
+            tail_I = wp['tail'] #tail is referencing a vector tail, not the worm's tail
+        elif key_name == 'head':
+            tip_I = wp['head_tip']
+            tail_I = wp['head_base']
+        else:
+            tip_I = wp['tail_tip']
+            tail_I = wp['tail_base']
+            
+        tip_slice = slice(*tip_I)
+        tail_slice = slice(*tail_I)
+
+        # Compute the centroids of the tip and tail
+        # then compute a direction vector between them (tip - tail)
+
+        tip_x = np.mean(sx[tip_slice, :], axis=0)
+        tip_y = np.mean(sy[tip_slice, :], axis=0)
+        tail_x = np.mean(sx[tail_slice, :], axis=0)
+        tail_y = np.mean(sy[tail_slice, :], axis=0)
+
+        dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, 
+                                             tip_x - tail_x)
+                                             
+        timer.toc(self.name)
+        
+        self.value = dir_value
+        
