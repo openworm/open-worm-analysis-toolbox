@@ -273,6 +273,7 @@ def add_plots(pages, statistics_manager, plot_pdf=None):
     >>> add_plots(pages) # doctest: +ELLIPSIS
     ...
     '''
+    figure_size = (17, 11)
 
     page_count = 0
     for page in pages:
@@ -280,41 +281,46 @@ def add_plots(pages, statistics_manager, plot_pdf=None):
         if page:
             #print page if it is a string
             if type(page) is type('string'):
-                plt.figure(figsize=(11, 8.5))
-                plt.text(0.5, 0.5, page)
-            #otherwise it should be a dictionary of for subplot position:feature which indicates plotting
+                fig = plt.figure(figsize=figure_size)
+                fig.suptitle(page)
+
+            #otherwise it should be a dictionary of for subplot position:feature which indicates plotting order
             elif type(page) is type({}):
-                #plt.figure(page_count)
                 subplot_tuples = sorted(page.keys())
                 subplot_rows = subplot_tuples[-1][0] + 1
                 subplot_cols = subplot_tuples[-1][1] + 1
-                f, axarr = plt.subplots(subplot_rows, subplot_cols)
-                plt.autoscale()
-                f.set_size_inches(11, 8.5)
-                for subplot_tuple in subplot_tuples:
+
+                fig = plt.figure(figsize=figure_size)
+                for subplot_tuple in reversed(subplot_tuples):
                     feature = page[subplot_tuple]
+                    subplot_num = (subplot_tuple[0])*subplot_cols + subplot_tuple[1] + 1 
+                    ax = fig.add_subplot(subplot_rows, subplot_cols, subplot_num)
+                    subplot_fontsize = int(round(10 - 0.2*(subplot_rows*subplot_cols)))
                     if type(feature) is type(1):
-                        try: 
-                            statistics_manager[feature].plot(axarr[subplot_tuple])
+                        try:
+                            statistics_manager[feature].plot(ax)
+                            for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
+                                item.set_fontsize(subplot_fontsize)
                         except AttributeError:
-                            axarr[subplot_tuple].text(0.5,0.5, 'Not Available')
+                            ax.text(0.5,0.5, 'Not Available')
                     elif type(feature) is type('string'):
-                        axarr[subplot_tuple].text(0.5,0.5, feature)
+                        ax.set_title(feature)
+                fig.subplots_adjust(wspace=0.4, hspace=0.4)
             elif type(page) is type(1):
                 feature = page
-                plt.figure(figsize=(11, 8.5))
-                plt.autoscale()
-                ax = plt.gca()
+                fig = plt.figure(figsize=figure_size)
+                ax = fig.gca()
                 if type(feature) is type(1):
                     try: 
                         statistics_manager[feature].plot(ax)
                     except AttributeError:
-                        axarr[subplot_tuple].text(0.5,0.5, 'Not Available')
+                        ax.text(0.5,0.5, 'Not Available')
                 elif type(feature) is type('string'):
-                    axarr[subplot_tuple].text(0.5,0.5, feature)
+                    ax.set_title(feature)
             
             if plot_pdf:
                 plt.savefig(plot_pdf, format='pdf')
+                plt.close()
             else:
                 plt.show()
         page_count += 1
