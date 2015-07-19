@@ -5,6 +5,7 @@ raw video .avi file to a fitness function result.
 
 """
 import sys, os
+import numpy as np
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -13,6 +14,36 @@ sys.path.append('..')
 import movement_validation as mv
 
 #%%
+
+def example_worm():
+    """
+    Construct a simple set of worm positions over time, for testing purposes.
+
+    Returns
+    ------------
+    A BasicWorm instance
+    
+    """
+    # Start the worm at position 10000 for 1000 microns.
+    skeleton_x = np.linspace(10000, 11000, mv.config.N_POINTS_NORMALIZED)
+    skeleton_y = np.linspace(5000, 5000, mv.config.N_POINTS_NORMALIZED)
+    # Shape is (49,2,1):
+    skeleton_frame1 = np.rollaxis(np.dstack([skeleton_x,
+                                             skeleton_y]),
+                                  axis=0, start=3)
+    # Shape is (49,2,1000):
+    skeleton_frames = np.repeat(skeleton_frame1, 1000, axis=2)
+    
+    # TODO: make ventral_contour != dorsal_contour by making them "bulge"
+    # in the middle, in a basic simulation of what a real worm looks like
+    ventral_contour = skeleton_frames
+    dorsal_contour = skeleton_frames
+    
+    bw = mv.BasicWorm.from_contour_factory(ventral_contour, 
+                                           dorsal_contour)
+
+    return bw
+
 def main():
     # TODO:
     #h_ventral_contour, h_dorsal_contour, video_info = \
@@ -44,23 +75,11 @@ def main():
     experiment_histograms = mv.HistogramManager(experiment_files)
     control_histograms = mv.HistogramManager(control_files)
 
-    # Plot some histograms
-    """
-    fig = plt.figure(1)
-    rows = 5; cols = 4
-    #for i in range(0, 700, 100):
-    for i in range(rows * cols):
-        ax = plt.subplot2grid((rows, cols), (i // cols, i % cols))
-        mv.Histogram.plot_versus(ax,
-                                 experiment_histograms.hists[i],
-                                 control_histograms.hists[i])
-    #plt.tight_layout()
-    """                                 
+    # Compute statistics
     stat = mv.StatisticsManager(experiment_histograms, control_histograms)
 
     print("Comparison p and q values are %.2f and %.2f, respectively." %
-    #     (stat.p_worm, stat.q_worm))
-          (stat.p_worm, 0))
+          (stat.p_worm, 0)) #stat.q_worm))
     
 
 
