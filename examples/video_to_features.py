@@ -6,6 +6,7 @@ raw video .avi file to a fitness function result.
 """
 import sys, os
 import numpy as np
+import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
 # import of movement_validation while running this as 
@@ -14,8 +15,7 @@ sys.path.append('..')
 import movement_validation as mv
 
 #%%
-
-def example_worm():
+def example_worm(num_frames=1000):
     """
     Construct a simple set of worm positions over time, for testing purposes.
 
@@ -32,18 +32,13 @@ def example_worm():
                                              skeleton_y]),
                                   axis=0, start=3)
     # Shape is (49,2,1000):
-    skeleton_frames = np.repeat(skeleton_frame1, 1000, axis=2)
+    skeleton = np.repeat(skeleton_frame1, num_frames, axis=2)
     
-    # TODO: make ventral_contour != dorsal_contour by making them "bulge"
-    # in the middle, in a basic simulation of what a real worm looks like
-    ventral_contour = skeleton_frames
-    dorsal_contour = skeleton_frames
-    
-    bw = mv.BasicWorm.from_contour_factory(ventral_contour, 
-                                           dorsal_contour)
+    bw = mv.BasicWorm.from_skeleton_factory(skeleton)
 
     return bw
 
+#%%
 def main():
     # TODO:
     #h_ventral_contour, h_dorsal_contour, video_info = \
@@ -61,6 +56,9 @@ def main():
     bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
     # -------------------------------------
 
+    # TODO: get this line to work:
+    #bw = example_worm()
+
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
 
     wf = mv.WormFeatures(nw)
@@ -68,19 +66,21 @@ def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')
     
-    experiment_files = [wf]
+    experiment_files = [wf, wf]
     control_files = get_matlab_filepaths(control_path)
 
     # Compute histograms on our files
     experiment_histograms = mv.HistogramManager(experiment_files)
     control_histograms = mv.HistogramManager(control_files)
+    control_histograms.plot_information()
+
+    fig.tight_layout()
 
     # Compute statistics
     stat = mv.StatisticsManager(experiment_histograms, control_histograms)
 
-    print("Comparison p and q values are %.2f and %.2f, respectively." %
-          (stat.p_worm, 0)) #stat.q_worm))
-    
+    print("Nonparametric p and q values are %.2f and %.2f, respectively." %
+          (stat.min_p_wilcoxon, stat.min_q_wilcoxon))
 
 
 #%%

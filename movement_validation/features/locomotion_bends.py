@@ -31,8 +31,7 @@ from .generic_features import Feature
 from .. import utils
 
 #%%
-class LocomotionBend(object):
-    
+class LocomotionBend(object):    
     """
     Element for LocomotionCrawlingBends
     
@@ -71,7 +70,6 @@ class LocomotionBend(object):
                                 merge_nans=True)   
 
 class LocomotionCrawlingBends(object):
-
     """
     Locomotion Crawling Bends Feature.
 
@@ -330,9 +328,12 @@ class LocomotionCrawlingBends(object):
                     ):
 
                 # Convert the peak to a time frequency.
-                dataSign      = np.sign(np.nanmean(windowed_data))  # sign the data
-                amps[iFrame]  = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
-                freqs[iFrame] = unsigned_freq * dataSign
+                                # sign the data
+                data_sign     = np.sign(np.nanmean(windowed_data))  
+                fft_data_real = np.real(fft_data[maxPeakI])
+                amps[iFrame]  = ((2 * fft_data_real / data_win_length)
+                                 * data_sign)
+                freqs[iFrame] = unsigned_freq * data_sign
 
         return [amps, freqs]
 

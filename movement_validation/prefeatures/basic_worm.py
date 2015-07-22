@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import json
 from collections import namedtuple, Iterable, OrderedDict
 
-from .. import utils
+from .. import config, utils
 from .pre_features import WormParsing
 from .video_info import VideoInfo
 
@@ -309,6 +309,44 @@ class BasicWorm(JSON_Serializer):
         return BasicWorm.from_h_contour_factory(h_ventral_contour, 
                                                 h_dorsal_contour)
         
+
+    @classmethod
+    def from_skeleton_factory(cls, skeleton):
+        """
+        Derives a contour from the skeleton
+
+        TODO: right now the method creates the bulge entirely in the y-axis,
+              across the x-axis.  Instead the bulge should be rotated to
+              apply across the head-tail orientation.
+              
+        TODO: the bulge should be more naturalistic than the simple sine wave
+              currently used.
+
+        """
+        # Make ventral_contour != dorsal_contour by making them "bulge"
+        # in the middle, in a basic simulation of what a real worm looks like
+        bulge_x = np.zeros((config.N_POINTS_NORMALIZED))
+        # Create the "bulge"
+        x = np.linspace(0, 1, config.N_POINTS_NORMALIZED)
+        bulge_y = np.sin(x*np.pi)*50
+
+        # Shape is (49,2,1):
+        bulge_frame1 = np.rollaxis(np.dstack([bulge_x, bulge_y]), 
+                                   axis=0, start=3)
+        # Repeat the bulge across all frames:
+        num_frames = skeleton.shape[2]
+        bulge_frames = np.repeat(bulge_frame1, num_frames, axis=2)
+        
+        # Apply the bulge above and below the skeleton
+        ventral_contour = skeleton + bulge_frames
+        dorsal_contour = skeleton - bulge_frames
+
+        #plt.plot(skeleton[:,0,0], skeleton[:,1,0])
+        #plt.plot(ventral_contour[:,0,0], ventral_contour[:,1,0])
+        #plt.plot(dorsal_contour[:,0,0], dorsal_contour[:,1,0])
+
+        # Now we are reduced to the contour factory case:
+        return BasicWorm.from_contour_factory(ventral_contour, dorsal_contour)
 
 
     @classmethod
