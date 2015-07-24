@@ -41,10 +41,7 @@ def main():
            statistics_manager.min_q_wilcoxon))
 
     #statistics_manager.plot()
-    #fig = plt.figure()
-    #statistics_manager[5].plot(ax=fig.gca(), use_alternate_plot=True)
-
-    statistics_manager[5].plot(ax=5, use_alternate_plot=True)
+    statistics_manager[5].plot(ax=plt.figure().gca(), use_alternate_plot=False)
     
     #plt.savefig('michael.png')
     
