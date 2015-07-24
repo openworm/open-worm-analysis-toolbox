@@ -15,13 +15,14 @@ sys.path.append('..')
 import movement_validation as mv
 
 #%%
-def example_worm(num_frames=1000):
+def example_worms(num_frames=1000):
     """
     Construct a simple set of worm positions over time, for testing purposes.
 
     Returns
     ------------
-    A BasicWorm instance
+    Tuple of BasicWorm objects    
+        One moving, one not
     
     """
     # Start the worm at position 10000 for 1000 microns.

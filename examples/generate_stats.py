@@ -29,6 +29,8 @@ def main():
     exp_histogram_manager, ctl_histogram_manager = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
+    # ctl_histogram_manager.plot_information()
+
     print("Done with Histogram generation.  Now let's calculate statistics.")
 
     statistics_manager = \
@@ -39,9 +41,11 @@ def main():
            statistics_manager.min_q_wilcoxon))
 
     #statistics_manager.plot()
-    fig = plt.figure()
-    ax = fig.gca()
-    statistics_manager[5].plot(ax)
+    #fig = plt.figure()
+    #statistics_manager[5].plot(ax=fig.gca(), use_alternate_plot=True)
+
+    statistics_manager[5].plot(ax=5, use_alternate_plot=True)
+    
     #plt.savefig('michael.png')
     
     """
@@ -61,10 +65,6 @@ def main():
     
     # TODO:
     # maybe compare to the segwormmatlabclasses-generated stats somehow?
-
-    # TODO:
-    # visualize the data in a grid
-    # http://stackoverflow.com/questions/19407950
 
     # Y-axis is features, labeled
     # X-axis is worm videos

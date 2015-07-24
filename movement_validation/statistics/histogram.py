@@ -84,9 +84,9 @@ class Histogram(object):
         self.specs       = specs
 
         # "Expanded" features specifications
-        self.histogram_type   = histogram_type
-        self.motion_type = motion_type
-        self.data_type   = data_type
+        self.histogram_type = histogram_type
+        self.motion_type    = motion_type
+        self.data_type      = data_type
 
         if self.data is not None:
             # Find a set of bins that will cover the data
@@ -440,10 +440,10 @@ class MergedHistogram(Histogram):
                           motion_type=histograms[0].motion_type,
                           data_type=histograms[0].data_type)
 
-        # This underlying data, which was just for the FIRST video, 
-        # will not be correct after the object is made to contain 
-        # the merged histogram information:
-        #merged_hist.data = None   
+        # Let's concatenate all the underlying data in case anyone downstream
+        # wants to see it.  It's not needed for the bin and count calculation,
+        # since we do that efficiently by aligning the bins.
+        merged_hist.data = np.concatenate([x.data for x in histograms])        
 
         # Align all bins
         # ---------------------------------------------------------------
@@ -495,7 +495,7 @@ class MergedHistogram(Histogram):
                         np.array([x.num_samples for x in histograms])
 
         merged_hist._num_samples = sum(merged_hist.num_samples_per_video)
-
+        
         return merged_hist
 
 

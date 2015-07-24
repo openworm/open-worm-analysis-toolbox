@@ -19,6 +19,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib as mpl
+import seaborn as sns
+import pandas as pd 
 
 from .. import utils
 from .histogram import Histogram
@@ -497,10 +499,48 @@ class WormStatistics(object):
     def __repr__(self):
         return utils.print_object(self)
 
+    #%%
+    @property
+    def plot_title(self):
+        """
+        Return the title for the plot, information about control
+        and experiment videos along with with p- and q- values.
+        
+        """
+        exp_histogram = self.exp_histogram
+        ctl_histogram = self.ctl_histogram
 
+        # If data_type is just "all", don't bother showing it in the title
+        if self.data_type == 'all':
+            data_type_string = ''
+        else:
+            data_type_string = '- {0}'.format(self.data_type)
+    
+        
+        title = ("{0} - {1}{2} (3)\n"
+                "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
+                format(self.specs.name.upper(),
+                       self.motion_type,
+                       data_type_string,
+                       self.histogram_type,
+                       exp_histogram.num_videos, ctl_histogram.num_videos,
+                       exp_histogram.num_samples, ctl_histogram.num_samples)
+
+        title += ("ALL = {0:.2f} +/- {1:.2f} <<< [{2:.2f} +/- {3:.2f}] "
+                 "\u00A4 (p={4:.4f}, q={5:.4f})").format(
+                 exp_histogram.mean, exp_histogram.std,
+                 ctl_histogram.mean, ctl_histogram.std,
+                 self.p_wilcoxon, self.q_wilcoxon)
+
+        # DEBUG: just use a short title for now:
+        #title = (self.specs.name.upper())
+
+        return title
+
+        
 
     #%%
-    def plot(self, ax, use_legend=False):
+    def plot(self, ax, use_legend=False, use_alternate_plot=False):
         """
         Use matplotlib to plot the experiment histogram against the control.
         
@@ -533,43 +573,14 @@ class WormStatistics(object):
             The "control"
         
         """
-        exp_histogram = self.exp_histogram
-        ctl_histogram = self.ctl_histogram
+        ctl_bins = self.ctl_histogram.bin_midpoints
+        ctl_y_values = self.ctl_histogram.pdf
     
-        ctl_bins = ctl_histogram.bin_midpoints
-        ctl_y_values = ctl_histogram.pdf
-    
-        exp_bins = exp_histogram.bin_midpoints
-        exp_y_values = exp_histogram.pdf
+        exp_bins = self.exp_histogram.bin_midpoints
+        exp_y_values = self.exp_histogram.pdf
         min_x = min([h[0] for h in [ctl_bins, exp_bins]])
         max_x = min([h[-1] for h in [ctl_bins, exp_bins]])
     
-        # If data_type is just "all", don't bother showing it in the title
-        if self.data_type == 'all':
-            data_type_string = ''
-        else:
-            data_type_string = '- {0}'.format(self.data_type)
-    
-        
-        title = ("{0} - {1}{2} (3)\n"
-                "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
-                format(self.specs.name.upper(),
-                       self.motion_type,
-                       data_type_string,
-                       self.histogram_type,
-                       exp_histogram.num_videos, ctl_histogram.num_videos,
-                       exp_histogram.num_samples, ctl_histogram.num_samples)
-
-        title += ("ALL = {0:.2f} +/- {1:.2f} <<< [{2:.2f} +/- {3:.2f}] "
-                 "\u00A4 (p={4:.4f}, q={5:.4f})").format(
-                 exp_histogram.mean, exp_histogram.std,
-                 ctl_histogram.mean, ctl_histogram.std,
-                 self.p_wilcoxon, self.q_wilcoxon)
-
-        # DEBUG: just use a short title for now:
-        #title = (self.specs.name.upper())
-        
-        plt.ticklabel_format(style='plain', useOffset=True)
         # TODO: ADD a line for mean, and then another for std dev.
         # TODO: Do this for both experiment and control!
         # http://www.widecodes.com/CzVkXUqXPj/average-line-for-bar-chart-in-matplotlib.html        
@@ -595,24 +606,42 @@ class WormStatistics(object):
         bgcolour = np.array(bgcolour) / 255
         
         # Plot the Control histogram
-        h1 = ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
-                             label='Control')
-        # Plot the Experiment histogram
-        h2 = ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
-                             label='Experiment')
-        ax.set_axis_bgcolor(bgcolour)
-        ax.set_xlabel(exp_histogram.specs.units, fontsize=10)
-        ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
-        ax.yaxis.set_ticklabels([])
-        ax.yaxis.set_ticks([])
-        ax.set_title(title, fontsize = 10)
-        ax.set_xlim(min_x, max_x)
+        if use_alternate_plot:
+            x = self.exp_histogram.data
+            y = self.ctl_histogram.data
+        
+            truncated_length = min(len(x), len(y))
+            
+            df = pd.DataFrame(data={'Experiment': x[:truncated_length], 
+                                    'Control': y[:truncated_length]})
+            # Seaborn hexbin plot            
+            g = sns.jointplot(x='Experiment', y='Control',
+                          data=df, kind="hex", stat_func=sp.stats.wilcoxon, 
+                          color="#4CB391")         
+            g.fig.gca().set_title(self.plot_title, fontsize = 10)
 
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        # ticks only needed at bottom and right
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
+            
+        else:
+            plt.ticklabel_format(style='plain', useOffset=True)
+
+            h1 = ax.fill_between(ctl_bins, ctl_y_values, alpha=1, color='0.85', 
+                                 label='Control')
+            # Plot the Experiment histogram
+            h2 = ax.fill_between(exp_bins, exp_y_values, alpha=0.5, color='g', 
+                                 label='Experiment')
+            ax.set_axis_bgcolor(bgcolour)
+            ax.set_xlabel(self.exp_histogram.specs.units, fontsize=10)
+            ax.set_ylabel('Probability ($\sum P(x)=1$)', fontsize=10)
+            ax.yaxis.set_ticklabels([])
+            ax.yaxis.set_ticks([])
+            ax.set_title(self.plot_title, fontsize = 10)
+            ax.set_xlim(min_x, max_x)
+    
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            # ticks only needed at bottom and right
+            ax.get_xaxis().tick_bottom()
+            ax.get_yaxis().tick_left()
         
         # If this is just one sub plot out of many, it's possible the caller
         # may want to make her own legend.  If not, this plot can display

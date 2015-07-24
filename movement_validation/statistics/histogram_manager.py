@@ -18,7 +18,7 @@ Formerly SegwormMatlabClasses/+seg_worm/+stats/@hist/manager.m
 import h5py
 import numpy as np
 import six # For compatibility with Python 2.x
-
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -109,12 +109,44 @@ class HistogramManager(object):
         return np.array([hist.mean for hist in self.valid_histograms_array])
 
     @property
+    def num_videos(self):
+        return self.hist_cell_array.shape[0]
+
+    @property
     def valid_2d_mask(self):
         """
         Return a mask showing which elements of hist_cell_array are null.
+
         """
         valid_mean_detector = lambda h: True if h is not None else False
         return np.vectorize(valid_mean_detector)(self.hist_cell_array)
+
+    @property
+    def means_2d_dataframe(self):
+        """
+        Returns
+        -----------
+        Pandas dataframe
+            Shape (10,726)
+        
+        """
+        valid_mean_detector = lambda h: h.mean if h is not None else np.NaN
+        means_array = np.vectorize(valid_mean_detector)(self.hist_cell_array)
+        
+        # Change shape to (726,10) since pandas wants the first axis 
+        # to be the rows of the dataframe
+        means_array = np.rollaxis(means_array, axis=1)
+        
+        df = pd.DataFrame(data=means_array)
+        # Give a more human-readable column name
+        df.columns = ['Video %d mean' % i for i in range(self.num_videos)]
+        
+        feature_spec = WormFeatures.get_feature_spec(extended=True)
+        feature_spec = feature_spec[['feature_field',
+                                     'data_type', 
+                                     'motion_type']]
+
+        return feature_spec.join(df)
 
     #%%
     def init_histograms(self, worm_features):
@@ -487,60 +519,60 @@ class HistogramManager(object):
 
         return merged_histograms
         
-    def plot_information():
+    def plot_information(self):
         """
         Plot diagnostic information about what histograms are available.
         
         """
-        
-        valid_2d_mask = control_histograms.valid_2d_mask
-        #import pdb
-        #pdb.set_trace()    
+        valid_2d_mask = self.valid_2d_mask
     
         # Cumulative chart of false entries (line chart)
         plt.figure()
         plt.plot(np.cumsum(np.sum(~valid_2d_mask,axis=0)))
+        plt.xlabel('Feature #')
+        plt.ylabel('Number of invalid histograms')
         plt.show()
     
         # False entries by video (bar chart)
         plt.figure()
         plt.bar(left=np.arange(valid_2d_mask.shape[0]),
                 height=np.sum(~valid_2d_mask,axis=1))
+        plt.xlabel('Video #')
         plt.ylabel('Number of unavailable histograms')
         plt.show()
     
-        # Set up the matplotlib figure
-        fig, ax = plt.subplots(figsize=(12, 9))
     
         # List of features with no histograms
         blank_feature_list = np.flatnonzero(np.all(~valid_2d_mask, axis=0))
+        valid_feature_list = np.flatnonzero(~np.all(~valid_2d_mask, axis=0))
     
-        #import pdb
-        #pdb.set_trace()    
-        
-        # This won't work because feature_spec only has 93 features but
-        # we are indexing the full 726.  We'll have to build an indexer that can
-        # handle this all.
-        #print(wf.feature_spec['feature_field'].iloc[blank_feature_list])
-        # Use pandas to filter and obtain the features
-    
+        feature_spec = WormFeatures.get_feature_spec(extended=True)
+        print('Features that had no histograms for any video:')
+        print(feature_spec.ix[blank_feature_list][['feature_field', 
+                                                   'data_type', 
+                                                   'motion_type']])
+            
         # Pie chart of features that are:
         # - totally good
         # - partially bad
         # - all bad    
-        all_bad = len(np.all(~valid_2d_mask, axis=0))
-        all_good = len(np.all(valid_2d_mask, axis=0))
-        partially_bad = len(valid_2d_mask) - all_bad - all_good
-        
+        all_bad = len(np.flatnonzero(np.all(~valid_2d_mask, axis=0)))
+        all_good = len(np.flatnonzero(np.all(valid_2d_mask, axis=0)))
+        partially_bad = valid_2d_mask.shape[1] - all_bad - all_good
+
+        print("%d, %d, %d" % (all_bad, all_good, partially_bad))
         plt.figure()
         plt.pie([all_good, partially_bad, all_bad], labels=['All Good',
                                                             'Partially bad',
                                                             'All Bad'])
-        plt.show()
         
         # CREATE A PANDAS DATAFRAME OF MEANS FOR EACH HISTOGRAM!!
+        print("Means of each histogram:")
+        print(self.means_2d_dataframe)
         
-    
+        # Set up the matplotlib figure
+        plt.figure()
+        #fig, ax = plt.subplots(figsize=(12, 9))
         # Draw the heatmap using seaborn
         # Heatmap (hard to read)
         sns.heatmap(valid_2d_mask, square=True)

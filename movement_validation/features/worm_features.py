@@ -670,9 +670,14 @@ class WormFeatures(object):
 
         return self
 
-    @property
-    def feature_spec(self):
+    @staticmethod
+    def get_feature_spec(extended=False):
         """
+        Parameters
+        ------------
+        extended: boolean
+            If True, return the full 726 features, not just the 93.
+        
         Returns
         ------------
         A pandas.DataFrame object
@@ -695,7 +700,34 @@ class WormFeatures(object):
 
         feature_spec = excel_file.parse('FeatureSpecifications')
 
-        return feature_spec
+        if not extended:
+            return feature_spec
+        else:
+            # Extend the 93 features into 726, then return that
+            all_data_types = ['all', 'absolute', 'positive', 'negative']
+            all_motion_types = ['all', 'forward', 'paused', 'backward']
+
+            motion_types = pd.DataFrame({'motion_type': 
+                                                ['All']+all_motion_types})
+            motion_types['is_time_series'] = [False, True, True, True, True]
+
+            data_types = pd.DataFrame({'data_type': ['All']+all_data_types})
+            data_types['is_signed'] = [False, True, True, True, True]
+
+            # The effect of these two left outer joins is to duplicate any
+            # feature rows where we have multiple data or motion types.
+            # Thus the number of rows expands from 93 to 726
+            feature_spec_expanded = feature_spec.merge(motion_types, 
+                                                       on='is_time_series', 
+                                                       how='left')
+
+            feature_spec_expanded = feature_spec_expanded.merge(data_types, 
+                                                                on='is_signed', 
+                                                                how='left')
+
+            return feature_spec_expanded
+            #MultiIndex.from_product(iterables=[motion_type, data_type], 
+            # names=['first', 'second'])
 
 
     def get_DataFrame(self):
@@ -717,8 +749,8 @@ class WormFeatures(object):
         #feature_dataframe = \
         #    pd.DataFrame({'sub-extended feature ID': pd.Series(dtype=int),
         #                  'data_array': pd.Series(dtype=object)})
-        
-        for index, row in self.feature_spec.iterrows():
+        feature_spec = WormFeatures.get_feature_spec()
+        for index, row in feature_spec.iterrows():
             sub_extended_feature_ID = row['sub-extended feature ID']
             nested_attributes = row['feature_field'].split('.')
                 
@@ -752,9 +784,9 @@ class WormFeatures(object):
         pd.set_option('display.max_rows', 500)
         
         # Left Outer Join: add columns for feature_field, feature_type.
-        fs = self.feature_spec[['sub-extended feature ID',
-                                'feature_field',
-                                'feature_type']]
+        fs = feature_spec[['sub-extended feature ID',
+                           'feature_field',
+                           'feature_type']]
         feature_dataframe = \
                 feature_dataframe.merge(fs, how='left', 
                                         on=['sub-extended feature ID'])
