@@ -864,13 +864,25 @@ class WormFeaturesDos(object):
 
         f_specs = get_feature_processing_specs()
 
+        #Make it so that we can go from a feature name to a specification
+        #(via creation of a dictionary)
+        self.feature_spec_dict = {}
+        for spec in f_specs:
+            self.feature_spec_dict[spec.name] = spec
+
+
         self.features = {}
         self.feature_list = []
-        for spec in f_specs:
-            temp = spec.get_feature(self)
 
-            self.feature_list.append(temp)
-            self.features[temp.name] = temp
+        #The current behavior is to calculate all features
+        #TODO: Add in support in which features are only compueted on demand
+        #   - This is basically present, we just need an if statement
+        #   and an optional input ... (use get_feature for on demand)
+
+        for spec in f_specs:
+            #TODO: We could pass in the spec instance ...
+            self.get_feature(spec.name)
+
 
         import pdb
         pdb.set_trace()
@@ -878,14 +890,33 @@ class WormFeaturesDos(object):
     def _get_feature_dependency(self,feature_name):
         #This should be used by features to get a feature that it depends on
         #We can log dependencies here ...
+        #1) log call
+        #2) call get_feature
         pass
     
     def get_feature(self,feature_name):
-        #This should be the public interface to the user
-        pass
+        """
+        This should be the public interface to the user for retrieving a feature.
+        """
+        
+        if feature_name in self.features:
+            return self.features[feature_name]
+        
+    
+        #TODO: This will need some better error handling
+        spec = self.feature_spec_dict[feature_name]
+        try:
+            temp = spec.get_feature(self)
+        except:
+            import pdb
+            pdb.set_trace()
+        self.feature_list.append(temp)
+        self.features[temp.name] = temp
+    
+        return temp
 
     def __getitem__(self,key):
-        #TODO: We should add on error checking here ...
+        #TODO: I think we are going to retire this method in favor of get_feature
         return self.features[key]
 
     def __repr__(self):
