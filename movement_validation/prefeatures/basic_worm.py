@@ -277,7 +277,7 @@ class BasicWorm(JSON_Serializer):
         # TODO: more validations, like that the nans are ligned up, etc.
 
         num_frames = np.shape(ventral_contour)[2]
-        
+
         # we need it to be shape (2,49,n) instead of (49,2,n) so we roll
         # axis 1 back to position 0.
         ventral_contour = np.rollaxis(ventral_contour, axis=1)
@@ -301,6 +301,7 @@ class BasicWorm(JSON_Serializer):
                                         ventral_contour[:,:,frame_index]
                 h_dorsal_contour[frame_index] = \
                                         dorsal_contour[:,:,frame_index]
+
 
         # Having converted our normalized contour to a heterocardinal-type
         # contour that just "happens" to have all its frames with the same
@@ -355,6 +356,16 @@ class BasicWorm(JSON_Serializer):
         
         bw.h_ventral_contour = h_ventral_contour
         bw.h_dorsal_contour = h_dorsal_contour
+
+        nan_mask_ventral = np.array([f is None for f in h_ventral_contour])
+        nan_mask_dorsal = np.array([f is None for f in h_dorsal_contour])
+        
+        assert(np.all(nan_mask_ventral == nan_mask_dorsal))
+
+        # Give frame code 1 if the frame is good and the general error
+        # code 100 if the frame is bad.        
+        bw.video_info.frame_code = np.array(1 * ~nan_mask_ventral +
+                                            100 * nan_mask_ventral)
         
         return bw
 
@@ -375,7 +386,11 @@ class BasicWorm(JSON_Serializer):
             # which makes for a one-dimensional worm.
             bw.h_ventral_contour = h_skeleton
             bw.h_dorsal_contour = h_skeleton
-
+        else:
+            raise Exception("Creating a basic worm from a heterocardinal "
+                            "skeleton without extrapolate_contour=True "
+                            "has not yet been implemented")
+        
         return bw
 
     @property

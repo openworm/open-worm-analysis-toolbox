@@ -37,6 +37,10 @@ def example_worms(num_frames=1000):
     
     bw = mv.BasicWorm.from_skeleton_factory(skeleton)
 
+    # have the worm move in a square
+    #motion_overlay = 
+
+
     return bw
 
 #%%
@@ -51,14 +55,14 @@ def main():
     #bw.video_info = video_info
 
     # TEMPORARY----------------------------
-    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
-    schafer_bw_file_path = os.path.join(base_path, 
-                                     "example_contour_and_skeleton_info.mat")  
-    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    #base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
+    #schafer_bw_file_path = os.path.join(base_path, 
+    #                                 "example_contour_and_skeleton_info.mat")  
+    #bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
     # -------------------------------------
 
     # TODO: get this line to work:
-    #bw = example_worm()
+    bw = example_worms()
 
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
 
@@ -73,12 +77,11 @@ def main():
     # Compute histograms on our files
     experiment_histograms = mv.HistogramManager(experiment_files)
     control_histograms = mv.HistogramManager(control_files)
-    control_histograms.plot_information()
-
-    fig.tight_layout()
+    experiment_histograms.plot_information()
 
     # Compute statistics
     stat = mv.StatisticsManager(experiment_histograms, control_histograms)
+    stat[0].plot(ax=None, use_alternate_plot=True)
 
     print("Nonparametric p and q values are %.2f and %.2f, respectively." %
           (stat.min_p_wilcoxon, stat.min_q_wilcoxon))

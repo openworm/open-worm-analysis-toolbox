@@ -562,7 +562,14 @@ def get_worm_kinks(features_ref):
             #
             # but it counts for both if sign change
             # + + 0 - - - => 3 +s and 4 -s
-            raise Exception("Unhandled code case")
+        
+            # I had to change this to a warning and returning NaNs
+            # to get my corner case unit tests working, i.e. the case
+            # of a perfectly straight worm.  - @MichaelCurrie
+            n_kinks_all[:] = np.NaN
+            #raise Warning("Unhandled code case")
+            return n_kinks_all
+            
 
         sign_change_I = (
             np.not_equal(dataSign[1:], dataSign[0:-1])).nonzero()[0]

@@ -616,7 +616,7 @@ class WormStatistics(object):
                                     'Control': y[:truncated_length]})
             # Seaborn hexbin plot            
             g = sns.jointplot(x='Experiment', y='Control',
-                          data=df, kind="hex", stat_func=sp.stats.wilcoxon, 
+                          data=df, kind='hex', stat_func=sp.stats.wilcoxon, 
                           color="#4CB391")         
             g.fig.gca().set_title(self.plot_title, fontsize = 10)
 
