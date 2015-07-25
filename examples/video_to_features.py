@@ -55,16 +55,22 @@ def main():
     #bw.video_info = video_info
 
     # TEMPORARY----------------------------
-    #base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
-    #schafer_bw_file_path = os.path.join(base_path, 
-    #                                 "example_contour_and_skeleton_info.mat")  
-    #bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
+    schafer_bw_file_path = os.path.join(base_path, 
+                                     "example_contour_and_skeleton_info.mat")  
+    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
     # -------------------------------------
 
     # TODO: get this line to work:
-    bw = example_worms()
+    #bw = example_worms()
 
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+    
+    # DEBUG
+    wp = mv.NormalizedWormPlottable(nw, interactive=False)
+    wp.show()
+    return
+
 
     wf = mv.WormFeatures(nw)
 

@@ -7,12 +7,12 @@ Usage
 ----------------------------
 
 Within the movement_validation repository, the plotting code is encapsulated 
-in the WormPlotter class.
+in the NormalizedWormPlottable class.
 
 If you already have an instance nw of the NormalizedWorm class, you could 
 plot it as follows:
 
-    wp = WormPlotter(nw, interactive=False)
+    wp = NormalizedWormPlottable(nw, interactive=False)
     wp.show()
 
 Another plotting function is the number of dropped frames in a given 
@@ -21,8 +21,8 @@ information, you could run the following:
 
     plot_frame_codes(nw)
 
-I note in the code for WormPlotter that the visualization module follows 
-the animated subplots example in inheriting from TimedAnimation rather 
+I note in the code for NormalizedWormPlottable that the visualization module 
+follows the animated subplots example in inheriting from TimedAnimation rather 
 than using PyLab shell-type calls to construct the animation, which is 
 the more typical approach. I used this approach so that it would be 
 extensible into other visualization possibilities.
@@ -65,9 +65,10 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         interactive: boolean (optional)
           if interactive is set to False, then:
             suppress the drawing of the figure, until an explicit plt.show()
-            is called.  this allows WormPlotter to be instantiated without 
-            just automatically being displayed.  Instead, the user must call
-            WormPlotter.show() to have plt.show() be called.
+            is called.  this allows NormalizedWormPlottable to be instantiated 
+            without just automatically being displayed.  Instead, the user 
+            must call NormalizedWormPlottable.show() to have plt.show() be 
+            called.
             
         interpolate_nan_frames: interpolate the flickering nan frames
             Note: this is currently not implemented
@@ -83,9 +84,10 @@ class NormalizedWormPlottable(animation.TimedAnimation):
           6. call the base class __init__
 
         """
-        # A WormPlotter instance can be instantiated to be interactive,
-        # or by default it is set to NOT interactive, which means that
-        # WormPlotter.show() must be called to get it to display.
+        # A NormalizedWormPlottable instance can be instantiated to be 
+        # interactive, or by default it is set to NOT interactive, which 
+        # means that NormalizedWormPlottable.show() must be called to get 
+        # it to display.
         plt.interactive(interactive)
 
         self._paused = False
@@ -193,6 +195,38 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.ax3.set_title('Orientation-free')
         # DON'T USE set_xbound, it changes dynmically
         self.ax3.set_aspect(aspect='equal', adjustable='datalim')
+
+        # CREATE TWO STATIC PLOTS
+        # Length over time
+        self.ax4 = plt.subplot2grid((3, 3), (1, 2))
+        self.ax4.plot(self.nw.length)
+        self.ax4.set_title('Length')
+
+
+        # TODO: turn this into an artist that can be modified over time
+        # so this fluctuates frame-by-frame
+
+        """
+        Full list is:
+        - Of shape (49,2,n):
+            ventral_contour
+            dorsal_contour
+            skeleton
+        - Of shape (49,n):
+            angles        
+            widths
+        - Of shape (n):
+            length
+            area
+        
+        But for features we care about head, midbody, tail width, etc., so
+        be smart about what you show in the plot.
+        """
+
+        # Widths over time??
+        self.ax5 = plt.subplot2grid((3, 3), (2, 2))
+        self.ax5.plot(self.nw.length)
+        self.ax5.set_title('Angles')
 
 
         # 4. create Artist objects
