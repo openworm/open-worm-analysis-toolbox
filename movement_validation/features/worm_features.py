@@ -862,49 +862,27 @@ class WormFeaturesDos(object):
         self.nw = nw
         self.timer = utils.ElementTimer()    
 
-        #Old code
-        #------------------
-        #self.morphology = WormMorphology(self)
-        #self.locomotion = WormLocomotion(self)
-        #self.posture = \
-        #    WormPosture(self, self.locomotion.velocity.get_midbody_distance())
-        #self.path = WormPath(self)
-
         f_specs = get_feature_processing_specs()
 
         self.features = {}
-
-        #TODO: Move this to the spec class ...
-        modules = {'morphology_features':morphology_features,
-        'locomotion_features':locomotion_features,
-        'generic_features':generic_features,
-        'locomotion_bends':locomotion_bends,
-        'locomotion_turns':locomotion_turns,
-        'path_features':path_features,
-        'posture_features':posture_features} 
-
         self.feature_list = []
         for spec in f_specs:
-            #Some of this logic should move to the specs themselves
-            module = modules[spec.module_name]
+            temp = spec.get_feature(self)
 
-            method_to_call = getattr(module,spec.class_name)
-
-            if len(spec.flags) == 0:
-                temp = method_to_call(self)
-            else:
-                temp = method_to_call(self,spec.flags)
-
-                
             self.feature_list.append(temp)
             self.features[temp.name] = temp
 
-        #Wanted order, didn't feel like messsing with ordered_dict
-        #This will all likely change
-        #self.feature_list = [v for k,v in self.features.items()]
-
         import pdb
         pdb.set_trace()
+
+    def _get_feature_dependency(self,feature_name):
+        #This should be used by features to get a feature that it depends on
+        #We can log dependencies here ...
+        pass
+    
+    def get_feature(self,feature_name):
+        #This should be the public interface to the user
+        pass
 
     def __getitem__(self,key):
         #TODO: We should add on error checking here ...
@@ -945,28 +923,84 @@ def get_feature_processing_specs():
 class FeatureProcessingSpec(object):
     
     """
-    Information on how to get the feature
+    Information on how to get a feature.
+    
+    These are all loaded from a csv specificaton file. See the function
+    get_feature_processing_specs which instatiates these specifications.        
+    
+    Attributes
+    ----------
+    name : string
+        Feature name   
+    module_name : string
+        Name of the module that contains the executing code
+    module : module
+        A module instance
+    class_name : string
+        Name of the class which should be called to create the feature
+    class_method : method
+        A method instance
+    flags : string
+        This is a string that can be passed to the class method
     
     See Also
     --------
     get_feature_processing_specs    
     
     """
+    
+    #This is how I am resolving a string to a module.
+    #Perhaps there is a better way ...
+    modules_dict = {'morphology_features':morphology_features,
+    'locomotion_features':locomotion_features,
+    'generic_features':generic_features,
+    'locomotion_bends':locomotion_bends,
+    'locomotion_turns':locomotion_turns,
+    'path_features':path_features,
+    'posture_features':posture_features}     
+    
     def __init__(self,d):
+        
         """
         Parameters
         ----------
         d: dict
-            Data in a row of the features_list file
+            Data in a row of the features file
         """
+
         self.name = d['Feature Name']
         self.module_name = d['Module']
+        
+        #TODO: Wrap this in a try clause with clear error if the module
+        #hasn't been specified in the dictionary
+        self.module = self.modules_dict[self.module_name]        
+        
         self.class_name = d['Class Name']
+
+        self.class_method = getattr(self.module,self.class_name) 
         
         self.flags = d['Flags']
+
+    def get_feature(self,wf):
         
+        """
+        This method takes care of the logic of retrieving a feature.
         
-        #TODO: Build module retrieval and code into here
+        Arguments
+        ---------
+        wf : WormFeaturesDos
+        
+        """
+        
+        #The flags input is optional, if no flag is present
+        #we currently assume that the constructor doesn't require
+        #the input
+        if len(self.flags) == 0:
+            temp = self.class_method(wf)
+        else:
+            temp = self.class_method(wf,self.flags)        
+
+        return temp
         
     def __repr__(self):
         return utils.print_object(self)       
