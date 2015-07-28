@@ -20,9 +20,10 @@ feature_spec_path = os.path.join('..', 'documentation', 'database schema',
 feature_spec = pd.ExcelFile(feature_spec_path).parse('FeatureSpecifications')
 
 DEBUG=False
+FEATURESPECS = {}
 
 class PlotPage(object):
-    def __init__(self, content, page_title='', grid_shape=None, page_legend=None):
+    def __init__(self, content, page_title='', grid_shape=None, page_legend=None, footer=None):
         self.content = content
         self.title = page_title
 
@@ -36,6 +37,13 @@ class PlotPage(object):
         else:
             self.type = 'Text'
             self.figure = plt.figure()
+
+        if footer:
+            self.footer = footer
+            self.figure.text(1,0, self.footer)
+
+        if page_legend:
+            self.figure.subplots_adjust(rspace=.3)
 
     def add_plots(self, statistics_manager, page_size=(17,11), plot_pdf=None):
         self.figure.set_size_inches(page_size)
@@ -73,10 +81,10 @@ class PlotPage(object):
                         ax.set_title(str(feature) + ' ' + str(feature_spec['feature_field'][feature])  + '\nNot Available')
 
         self.figure.subplots_adjust(wspace=0.4, hspace=0.4)
-         
+
         if plot_pdf:
             plot_pdf.savefig(self.figure)
-            #plt.close()
+            plt.close(self.figure)
         else:
             plt.show()
 
@@ -87,7 +95,7 @@ class PlotPage(object):
 
         if plot_pdf:
             plot_pdf.savefig(self.figure)
-            #plt.close()
+            plt.close(self.figure)
         else:
             plt.show()
 
@@ -132,6 +140,16 @@ class ShafferPlotDocument(PlotDocument):
 
         PlotDocument.__init__(self, pages=self.shaffer_pages(), statistics_manager=statistics_manager, pdf_filename=pdf_filename)
 
+        # print 'Feature,Name,MotionType,DataType'
+        # for i in range(len(exp_histogram_manager)):
+        #     try:
+        #         feature = statistics_manager[i]
+        #         FEATURESPECS[i] = {'name':feature.specs.name, 'motion_type':feature.motion_type, 'data_type':feature.data_type}
+        #         print str(i) + ',' + FEATURESPECS[i]['name'] + ',' + FEATURESPECS[i]['motion_type'] + ',' + FEATURESPECS[i]['data_type']
+        #     except AttributeError:
+        #         print str(i) + ',NA,NA,NA'
+        #         FEATURESPECS[i] = ',NA,NA,NA'
+
     def shaffer_pages(self):
         # Assigned numbers are the 'sub-extended feature ID'
         # any features that have feature_type = 'movement' use the standard
@@ -146,79 +164,100 @@ class ShafferPlotDocument(PlotDocument):
         pages[0] = PlotPage(content='Table of Contents.')
 
         # maps (row,col) to sub-extended feature ID
-        pages[1] = PlotPage(content={(0,0): 'legend', (0,1):  7, (0,2): 12, (0,3): 14, (0,4): 16,
-                   (1,0):  5, (1,1):  6, (1,2): 17, (1,3): 19, (1,4): 21,
-                   (2,0): 26, (2,1):  8, (2,2): 50, (2,3): 51, (2,4): 52,
-                   (3,0): 22, (3,1): 24, (3,2): 53, (3,3): 54, (3,4): 55}, grid_shape=(4,5))
+        pages[1] = PlotPage(content={(0,0): 'legend', (0,1):  8, (0,2): 28, (0,3): 60, (0,4): 92,
+                   (1,0):  0, (1,1):  4, (1,2): 108, (1,3): 140, (1,4): 172,
+                   (2,0): 204, (2,1):  12, (2,2): 552, (2,3): 568, (2,4): 584,
+                   (3,0): 188, (3,1): 196, (3,2): 600, (3,3): 616, (3,4): 632}, grid_shape=(4,5), footer='1 Summary')
 
-        pages[2] = PlotPage(content={(0,0): 48, (0,1): 49, (0,2): 39, (0,3): 40, (0,4): 41,
-                   (1,0): 32, (1,1): 33, (1,2): 44, (1,3): 45, (1,4): 46,
-                   (2,0): 34, (2,1): 35, (2,2): 63, (2,3): 64, (2,4): 65,
-                   (3,0): 36, (3,1): 37, (3,2): 68, (3,3): 69, (3,4): 70}, grid_shape=(4,5))
+        pages[2] = PlotPage(content={(0,0): 520, (0,1): 536, (0,2): 376, (0,3): 392, (0,4): 408,
+                   (1,0): 264, (1,1): 280, (1,2): 456, (1,3): 472, (1,4): 488,
+                   (2,0): 296, (2,1): 312, (2,2): 'Omega Turn Time', (2,3): 'Inter Omega Time', (2,4): 'Inter Omega Distance',
+                   (3,0): 328, (3,1): 344, (3,2): 'Upsilon Turn Time', (3,3): 'Inter Upsilon Time', (3,4): 'Inter Upsilon Distance'}, grid_shape=(4,5), footer='2 Summary')
 
-        pages[3] = PlotPage(content={(0,0): 56, (0,1): 28, (0,2): 58, (0,3): 59, (0,4): 60,
-                   (1,0):  2, (1,1): 73, (1,2): 74, (1,3): 75, (1,4): 76,
-                   (2,0):  3, (2,1): 80, (2,2): 81, (2,3): 82, (2,4): 83,
-                   (3,0):  4, (3,1): 87, (3,2): 88, (3,3): 89, (3,4): 90}, grid_shape=(4,5))
+        pages[3] = PlotPage(content={(0,0): 648, (0,1): 212, (0,2): 672, (0,3): 'Inter Coil Time', (0,4): 'Inter Coil Distance',
+                   (1,0):  669, (1,1): 'Forward Time', (1,2): 'Forward Distance', (1,3): 'Inter Forward Time', (1,4): 'Inter Forward Distance',
+                   (2,0):  670, (2,1): 712, (2,2): 714, (2,3): 714, (2,4): 715,
+                   (3,0):  671, (3,1): 'Backward Time', (3,2): 'Backward Distance', (3,3): 'Inter Backward Time', (3,4): 'Inter Backward Distance'}, grid_shape=(4,5), footer='3 Summary')
 
-        # THE SIX-FIGURE SECTIOIN    
+        # THE SIX-FIGURE SECTIION    
+
+        # Morphology
+        pages[4] = PlotPage(content={(0,0):0,(0,1):'N2: Length',(1,0):1,(1,1):2,(1,2):3}, grid_shape=(2,3), footer='4 Morphology: Length')
+        pages[5] = PlotPage(content={(0,0):4,(0,1):'N2: Head Width',(1,0):5,(1,1):6,(1,2):7}, grid_shape=(2,3), footer='5 Morphology: Head Width')
+        pages[6] = PlotPage(content={(0,0):8,(0,1):'N2: Midbody Width',(1,0):9,(1,1):10,(1,2):11}, grid_shape=(2,3), footer='6 Morphology: Midbody Width')
+        pages[7] = PlotPage(content={(0,0):12,(0,1):'N2: Tail Width',(1,0):13,(1,1):14,(1,2):15}, grid_shape=(2,3), footer='7 Morphology: Tail Width')
+        pages[8] = PlotPage(content={(0,0):16,(0,1):'N2: Area',(1,0):17,(1,1):18,(1,2):19}, grid_shape=(2,3), footer='8 Morphology: Area')
+        pages[9] = PlotPage(content={(0,0):20,(0,1):'N2: Area/Length',(1,0):21,(1,1):22,(1,2):23}, grid_shape=(2,3), footer='10 Morphology: Area/Length')
+        pages[10] = PlotPage(content={(0,0):24,(0,1):'N2: Width/Length',(1,0):25,(1,1):26,(1,2):27}, grid_shape=(2,3), footer='11 Morphology: Width/Length')
         
-        # pages[4] = {(0,0):5,(0,1):5,(1,0):5,(1,1):5,(1,2):5, 'gridshape':(2,3)} # length
-        # pages[5] = {(0,0):6,(0,1):6,(1,0):6,(1,1):6,(1,2):6, 'gridshape':(2,3)} # head width
-        # pages[6] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[7] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[8] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[9] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[10] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[11] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[12] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[13] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[14] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[15] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[16] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[17] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[18] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[19] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[20] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[21] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[23] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[24] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[25] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
-        # pages[26] = {(0,0):7,(0,1):7,(1,0):7,(1,1):7,(1,2):7, 'gridshape':(2,3)} # midbody width
+        # Posture
+        pages[11] = PlotPage(content={(0,0):28,(0,1):'N2: Head Bend Mean',(1,0):32,(1,1):36,(1,2):40}, grid_shape=(2,3), footer='11 Posture: Head Bend Mean')
+        pages[12] = PlotPage(content={(0,0):44,(0,1):'N2: Neck Bend Mean',(1,0):48,(1,1):52,(1,2):56}, grid_shape=(2,3), footer='12 Posture: Neck Bend Mean')
+        pages[13] = PlotPage(content={(0,0):60,(0,1):'N2: Midbody Bend Mean',(1,0):64,(1,1):68,(1,2):72}, grid_shape=(2,3), footer='13 Posture: Midbody Bend Mean')
+        pages[14] = PlotPage(content={(0,0):76,(0,1):'N2: Hips Bend Mean',(1,0):80,(1,1):84,(1,2):88}, grid_shape=(2,3), footer='14 Posture: Hips Bend Mean')
+        pages[15] = PlotPage(content={(0,0):92,(0,1):'N2: Tail Bend Mean',(1,0):96,(1,1):100,(1,2):104}, grid_shape=(2,3), footer='15 Posture: Tail Bend Mean')
 
+        pages[16] = PlotPage(content={(0,0):108,(0,1):'N2: Head Bend S.D.',(1,0):112,(1,1):116,(1,2):120}, grid_shape=(2,3), footer='16 Posture: Head Bend S.D.')
+        pages[17] = PlotPage(content={(0,0):124,(0,1):'N2: Neck Bend S.D.',(1,0):128,(1,1):132,(1,2):136}, grid_shape=(2,3), footer='17 Posture: Neck Bend S.D.')
+        pages[18] = PlotPage(content={(0,0):140,(0,1):'N2: Midbody Bend S.D.',(1,0):144,(1,1):148,(1,2):152}, grid_shape=(2,3), footer='18 Posture: Midbody Bend S.D.')
+        pages[19] = PlotPage(content={(0,0):156,(0,1):'N2: Hips Bend S.D',(1,0):160,(1,1):164,(1,2):168}, grid_shape=(2,3), footer='19 Posture: Hips Bend S.D.')
+        pages[20] = PlotPage(content={(0,0):172,(0,1):'N2: Tail Bend S.D',(1,0):176,(1,1):180,(1,2):184}, grid_shape=(2,3), footer='20 Posture: Tail Bend S.D.')
 
-        # pages[27] = 'bend count'   #(features[58:63])
-        # pages[28] = 'coil time'  #(features[58:63])
+        pages[21] = PlotPage(content={(0,0):188,(0,1):'N2: Max Amplitude',(1,0):189,(1,1):190,(1,2):191}, grid_shape=(2,3), footer='21 Posture: Max Amplitude')
+        pages[22] = PlotPage(content={(0,0):192,(0,1):'N2: Amplitude Ratio',(1,0):193,(1,1):194,(1,2):195}, grid_shape=(2,3), footer='22 Posture: Amplitude Ratio')
+        pages[23] = PlotPage(content={(0,0):196,(0,1):'N2: Primary Wavelength',(1,0):197,(1,1):198,(1,2):199}, grid_shape=(2,3), footer='23 Posture: Primary Wavelength')
+        pages[24] = PlotPage(content={(0,0):'Secondary Wavelength',(0,1):'N2: Secondary Wavelength',(1,0):'Forward',(1,1):'Paused',(1,2):'Backward'}, grid_shape=(2,3), footer='24 Posture: Secondary Wavelength')
 
-        # for i in range(29,38):
-        #     # More movement features
-        #     pages[i] = i
+        pages[25] = PlotPage(content={(0,0):204,(0,1):'N2: Track Length',(1,0):205,(1,1):206,(1,2):207}, grid_shape=(2,3), footer='25 Posture: Track Length')
+        pages[26] = PlotPage(content={(0,0):208,(0,1):'N2: Eccentricity',(1,0):209,(1,1):210,(1,2):211}, grid_shape=(2,3), footer='26 Posture: Eccentricity')
+        pages[27] = PlotPage(content={(0,0):212,(0,1):'N2: Bend Count',(1,0):213,(1,1):214,(1,2):215}, grid_shape=(2,3), footer='27 Posture: Bend Count')
+        pages[28] = PlotPage(content={(0,0):672,(0,1):'Inter Coil Time',(0,2):'Inter vs Coil Time',(1,0):'Inter Coil Distance'}, grid_shape=(2,3), footer='28 Posture: Coiling Events')
 
-        # pages[38] = 'locomotion.motion_events.forward'
-        # pages[39] = 'locomotion.motion_events.paused'
-        # pages[40] = 'locomotion.motion_events.backward'
+        pages[29] = PlotPage(content={(0,0):216,(0,1):'N2: Tail to Head Orientation',(1,0):220,(1,1):224,(1,2):228}, grid_shape=(2,3), footer='29 Posture: Tail to Head Orientation')
+        pages[30] = PlotPage(content={(0,0):232,(0,1):'N2: Head Orientation',(1,0):236,(1,1):240,(1,2):244}, grid_shape=(2,3), footer='30 Posture: Head Orientation')
+        pages[31] = PlotPage(content={(0,0):248,(0,1):'N2: Tail Orientation',(1,0):252,(1,1):256,(1,2):260}, grid_shape=(2,3), footer='31 Posture: Tail Orientation')
 
-        # for i in range(41,52):
-        #     # More movement features
-        #     pages[i] = i - 3
+        pages[32] = PlotPage(content={(0,0):264,(0,1):'N2: Eigen Projection 1',(1,0):268,(1,1):272,(1,2):276}, grid_shape=(2,3), footer='32 Posture: Eigen Projection 1')
+        pages[33] = PlotPage(content={(0,0):280,(0,1):'N2: Eigen Projection 2',(1,0):284,(1,1):288,(1,2):292}, grid_shape=(2,3), footer='33 Posture: Eigen Projection 2')
+        pages[34] = PlotPage(content={(0,0):296,(0,1):'N2: Eigen Projection 3',(1,0):300,(1,1):304,(1,2):308}, grid_shape=(2,3), footer='34 Posture: Eigen Projection 3')
+        pages[35] = PlotPage(content={(0,0):312,(0,1):'N2: Eigen Projection 4',(1,0):316,(1,1):320,(1,2):324}, grid_shape=(2,3), footer='35 Posture: Eigen Projection 4')
+        pages[36] = PlotPage(content={(0,0):328,(0,1):'N2: Eigen Projection 5',(1,0):332,(1,1):336,(1,2):340}, grid_shape=(2,3), footer='36 Posture: Eigen Projection 5')
+        pages[37] = PlotPage(content={(0,0):344,(0,1):'N2: Eigen Projection 6',(1,0):348,(1,1):352,(1,2):356}, grid_shape=(2,3), footer='37 Posture: Eigen Projection 6')
 
-        # pages[52] = 50 # Crawling amplitude
-        # pages[53] = 51
-        # pages[54] = 52
+        # Motion
+        pages[38] = PlotPage(content={(0,0):'Forward Time',(0,1):'Inter Forward Time',(0,2):'Inter vs. Forward Time',(1,0):'Forward Distance',(1,1):'Inter Forward Distance',(1,2):'Inter vs. Forward Distance'}, grid_shape=(2,3), footer='38 Motion: Forward Motion')
+        pages[39] = PlotPage(content={(0,0):'Paused Time',(0,1):714,(0,2):'Inter vs. Paused Time',(1,0):'Paused Distance',(1,1):715,(1,2):'Inter vs. Paused Distance'}, grid_shape=(2,3), footer='39 Motion: Paused Motion')
+        pages[40] = PlotPage(content={(0,0):'Backward Time',(0,1):'Inter Backward Time',(0,2):'Inter vs. Backward Time',(1,0):'Backward Distance',(1,1):'Inter Backward Distance',(1,2):'Inter vs. Backward Distance'}, grid_shape=(2,3), footer='40 Motion: Backward Motion')
 
-        # pages[55] = 49 # Foraging speed
+        pages[41] = PlotPage(content={(0,0):360,(0,1):'N2: Head Tip Speed',(1,0):364,(1,1):368,(1,2):372}, grid_shape=(2,3), footer='41 Motion: Head Tip Speed')
+        pages[42] = PlotPage(content={(0,0):376,(0,1):'N2: Head Speed',(1,0):380,(1,1):384,(1,2):388}, grid_shape=(2,3), footer='42 Motion: Head Speed')
+        pages[43] = PlotPage(content={(0,0):392,(0,1):'N2: Midbody Speed',(1,0):396,(1,1):400,(1,2):404}, grid_shape=(2,3), footer='43 Motion: Midbody Speed')
+        pages[44] = PlotPage(content={(0,0):408,(0,1):'N2: Tail Speed',(1,0):412,(1,1):416,(1,2):420}, grid_shape=(2,3), footer='44 Motion: Tail Speed')
+        pages[45] = PlotPage(content={(0,0):424,(0,1):'N2: Tail Tip Speed',(1,0):428,(1,1):432,(1,2):436}, grid_shape=(2,3), footer='45 Motion: Tail Tip Speed')
 
-        # pages[56] = 53 # Crawling frequency
-        # pages[57] = 54
-        # pages[58] = 55
+        pages[46] = PlotPage(content={(0,0):440,(0,1):'N2: Head Tip Motion Direction',(1,0):444,(1,1):448,(1,2):452}, grid_shape=(2,3), footer='46 Motion: Head Tip Motion Direction')
+        pages[47] = PlotPage(content={(0,0):456,(0,1):'N2: Head Motion Direction',(1,0):460,(1,1):464,(1,2):468}, grid_shape=(2,3), footer='47 Motion: Head Motion Direction')
+        pages[48] = PlotPage(content={(0,0):472,(0,1):'N2: Midbody Motion Direction',(1,0):476,(1,1):480,(1,2):484}, grid_shape=(2,3), footer='48 Motion: Midbody Motion Direction')
+        pages[49] = PlotPage(content={(0,0):488,(0,1):'N2: Tail Motion Direction',(1,0):492,(1,1):496,(1,2):500}, grid_shape=(2,3), footer='49 Motion: Tail Motion Direction')
+        pages[50] = PlotPage(content={(0,0):504,(0,1):'N2: Tail Tip Motion Direction',(1,0):508,(1,1):512,(1,2):516}, grid_shape=(2,3), footer='50 Motion: Tail Tip Motion Direction')
+        
+        pages[51] = PlotPage(content={(0,0):520,(0,1):'N2: Foraging Amplitude',(1,0):524,(1,1):528,(1,2):532}, grid_shape=(2,3), footer='51 Motion: Foraging Amplitude')
+        pages[52] = PlotPage(content={(0,0):552,(0,1):'N2: Head Crawling Amplitude',(1,0):'Forward',(1,1):'Paused',(1,2):564}, grid_shape=(2,3), footer='52 Motion: Head Crawling Amplitude')
+        pages[53] = PlotPage(content={(0,0):568,(0,1):'N2: Midbody Crawling Amplitude',(1,0):572,(1,1):'Paused',(1,2):'Backward'}, grid_shape=(2,3), footer='53 Motion: Midbody Crawling Amplitude')
+        pages[54] = PlotPage(content={(0,0):584,(0,1):'N2: Tail Crawling Amplitude',(1,0):'Forward',(1,1):'Paused',(1,2):'Backward'}, grid_shape=(2,3), footer='54 Motion: Tail Crawling Amplitude')
+        
+        pages[55] = PlotPage(content={(0,0):536,(0,1):'N2: Foraging Speed',(1,0):540,(1,1):544,(1,2):548}, grid_shape=(2,3), footer='55 Motion: Foraging Speed')
+        pages[56] = PlotPage(content={(0,0):600,(0,1):'N2: Head Crawling Frequency',(1,0):'Forward',(1,1):'Paused',(1,2):612}, grid_shape=(2,3), footer='56 Motion: Head Crawling Frequency')
+        pages[57] = PlotPage(content={(0,0):616,(0,1):'N2: Midbody Crawling Frequency',(1,0):620,(1,1):'Paused',(1,2):'Backward'}, grid_shape=(2,3), footer='57 Motion: Midbody Crawling Frequency')
+        pages[58] = PlotPage(content={(0,0):632,(0,1):'N2: Tail Crawling Frequency',(1,0):'Forward',(1,1):'Paused',(1,2):'Backward'}, grid_shape=(2,3), footer='58 Motion: Tail Crawling Frequency')
+        
+        pages[59] = PlotPage(content={(0,0):'Omega Turn Time',(0,1):'Inter Omega Turn Time',(0,2):'Inter vs. Omega Turn Time',(1,0):'Omega Turn Distance',(1,1):'Inter Omega Turn Distance',(1,2):'Inter vs. Omega Turn Distance'}, grid_shape=(2,3), footer='59 Motion: Omega Turn Motion')
+        pages[60] = PlotPage(content={(0,0):'Upsilon Turn Time',(0,1):'Inter Upsilon Turn Time',(0,2):'Inter vs. Upsilon Turn Time',(1,0):'Upsilon Turn Distance',(1,1):'Inter Upsilon Turn Distance',(1,2):'Inter vs. Upsilon Turn Distance'}, grid_shape=(2,3), footer='60 Motion: Upsilon Turn Motion')
 
-        # pages[60] = {(0,0):63,(0,1):64,(0,2):(63,64),
-        #              (1,0):65, 'gridshape':(2,3)}
-        # pages[61] = {(0,0):68,(0,1):69,(0,2):(68,69),
-        #              (1,0):70, 'gridshape':(2,2)}
-        # pages[62] = 56   # ANOTHER 6-figure plot (Path range)
-        # pages[63] = {(0,0):1,(0,1):2,(1,0):3,(1,1):4}  # Worm dwelling four-grid; worm, head, midbody, tail.
-        # pages[64] = 67   # ANOTHER 6-figure plot (Path curvature)
+        # Path
+        pages[61] = PlotPage(content={(0,0):648,(0,1):'N2: Range',(1,0):649,(1,1):650,(1,2):651}, grid_shape=(2,3), footer='26 Path: Range')
+        pages[62] = PlotPage(content={(0,0):668,(0,1):669,(1,0):670,(1,1):671}, grid_shape=(2,2), footer='26 Path: Dwelling')
+        pages[63] = PlotPage(content={(0,0):652,(0,1):'N2: Curvature',(1,0):656,(1,1):660,(1,2):664}, grid_shape=(2,3), footer='26 Path: Curvature')
 
         # PATH PLOTS, all annotated with omegas and coils:
         # i.e. exactly 30 pages of path and dwelling charts

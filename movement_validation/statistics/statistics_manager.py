@@ -517,7 +517,7 @@ class WormStatistics(object):
             data_type_string = '- {0}'.format(self.data_type)
     
         
-        title = ("{0} - {1}{2} (3)\n"
+        title = ("{0} - {1}{2} {3}\n"
                 "WORMS = {4} [{5}] \u00A4 SAMPLES = {6:,} [{7:,}]\n").\
                 format(self.specs.name.upper(),
                        self.motion_type,
