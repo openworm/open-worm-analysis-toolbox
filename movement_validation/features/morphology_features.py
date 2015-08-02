@@ -66,14 +66,22 @@ class Widths(object):
 #
 #
 #   Still need to handle equality comparison and loading from disk
-#   
+
+
 class Length(Feature):
     
-    def __init__(self,wf):
-        self.name = 'morphology.length' 
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
         self.value = wf.nw.length
+        
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name        
+        self.value = utils.get_nested_h5_field(wf.h,['morphology','length'])
+        return self
                 
-class Width(Feature):
+class WidthSection(Feature):
     """
     This should only be called by the subclasses
     
@@ -82,7 +90,7 @@ class Width(Feature):
     partition_name
     """
     
-    def __init__(self,wf,partition_name):
+    def __init__(self,wf,feature_name,partition_name):
 
         """
         Parameters
@@ -90,49 +98,66 @@ class Width(Feature):
         wf : WormFeatures instance
         """
         
-        self.name = 'morphology.width.' + partition_name
+        self.name = feature_name
         self.partition_name = partition_name
         #I'm not thrilled with the name of this method
         self.value = wf.nw.get_partition(partition_name, 'widths')
         
-class HeadWidth(Width):
-    
-    def __init__(self,wf):
-        Width.__init__(self,wf,'head')
-
-class MidbodyWidth(Width):
-    
-    def __init__(self,wf):
-        Width.__init__(self,wf,'midbody')
-        
-class TailWidth(Width):
-    
-    def __init__(self,wf):
-        Width.__init__(self,wf,'tail')        
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name, partition_name):
+        self = cls.__new__(cls)
+        self.name = feature_name        
+        self.value = utils.get_nested_h5_field(wf.h,['morphology','width',partition_name])
+        return self
     
 class Area(Feature):
+    """
+    Feature: morphology.area
+    """
 
-    def __init__(self,wf):
-        self.name = 'morphology.area'
+
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
         self.value = wf.nw.area
+        #We should instead be using this, NYI
+        #self.value = self.get_feature(wf,'nw.area').value
+        
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name               
+        self.value = utils.get_nested_h5_field(wf.h,['morphology','area'])
+        return self
         
 class AreaPerLength(Feature):
+    """
+    Feature: morphology.area_per_length
+    """
     
-    def __init__(self,wf):
-        self.name = 'morphology.area_per_length'
-        area = wf['morphology.area'].value
-        length = wf['morphology.length'].value
-        self.value = area/length
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        area = self.get_feature(wf,'morphology.area').value
+        length = self.get_feature(wf,'morphology.length').value
+        self.value = area/length    
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)       
 
 class WidthPerLength(Feature):
+    """
+    Feature: morphology.width_per_length
+    """
     
-    def __init__(self,wf):
-        self.name = 'morphology.width_per_length'
-        width = wf['morphology.width.midbody'].value
-        length = wf['morphology.length'].value
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        width = self.get_feature(wf,'morphology.width.midbody').value
+        length = self.get_feature(wf,'morphology.length').value
         self.value = width/length
     
-    
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)          
     
     
     

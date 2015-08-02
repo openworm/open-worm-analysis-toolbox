@@ -46,6 +46,14 @@ from . import morphology_features
 ===============================================================================
 ===============================================================================
 """
+#http://stackoverflow.com/questions/10408119/generators-to-iterate-over-a-dictionary-uniformly-in-both-python-2-and-3
+#def iteritems(d):
+#    'Factor-out Py2-to-3 differences in dictionary item iterator methods'
+#    try:
+#         return d.iteritems()
+#    except AttributeError:
+#         return d.items()
+
 
 class WormMorphology(object):
     """
@@ -842,7 +850,10 @@ class WormFeaturesDos(object):
     This is the new features class. It will eventually replace the old class
     when things are all ready.
     """
-    def __init__(self, nw, processing_options=None):
+    def __new__(cls):
+        return object.__new__(cls)
+    
+    def __init__(self, nw, processing_options=None,load_features=True):
         """
         
         Parameters
@@ -862,41 +873,70 @@ class WormFeaturesDos(object):
         self.nw = nw
         self.timer = utils.ElementTimer()    
 
-        f_specs = get_feature_processing_specs()
-
-        #Make it so that we can go from a feature name to a specification
-        #(via creation of a dictionary)
-        self.feature_spec_dict = {}
-        for spec in f_specs:
-            self.feature_spec_dict[spec.name] = spec
-
-
-        self.features = {}
-        self.feature_list = []
+        self.initialize_features()
 
         #The current behavior is to calculate all features
         #TODO: Add in support in which features are only compueted on demand
         #   - This is basically present, we just need an if statement
         #   and an optional input ... (use get_feature for on demand)
 
-        for spec in f_specs:
-            #TODO: We could pass in the spec instance ...
-            self.get_feature(spec.name)
+        
+
+        if load_features:
+            self._retrieve_all_features()
 
 
         import pdb
         pdb.set_trace()
 
-    def _get_feature_dependency(self,feature_name):
-        #This should be used by features to get a feature that it depends on
-        #We can log dependencies here ...
-        #1) log call
-        #2) call get_feature
-        pass
+    @classmethod
+    def from_schafer_file(cls, data_file_path):
+        """
+        Do we want to make load_features an option?
+        """
+        self = cls.__new__(cls)
+        self.initialize_features()
+        for spec in self.feature_spec_list:
+            spec.source = 'mrc'
+
+        #Load file reference for getting files from disk
+        h = h5py.File(data_file_path, 'r')
+        worm = h['worm']
+        self.h = worm
+
+        #Retrieve all features
+        #Do we need to differentiate what we can and can not load?
+        self._retrieve_all_features()        
+
+        return self
+    
+    def _retrieve_all_features(self):
+        for spec in self.feature_spec_list:
+            #TODO: We could pass in the spec instance ...
+            #rather than resolving the instance from the name
+            self.get_feature(spec.name) 
+    
+    def initialize_features(self):
+
+        f_specs = get_feature_processing_specs()
+        
+        self.feature_spec_dict = {value.name : value for value in f_specs}
+        self.feature_spec_list = f_specs
+
+
+        self.features = {}
+        
+        #This may be temporary
+        self.feature_list = []   
+
     
     def get_feature(self,feature_name):
         """
-        This should be the public interface to the user for retrieving a feature.
+        This is the public interface to the user for retrieving a feature.
+        
+        See Also
+        --------
+        FeatureProcessingSpec.get_feature
         """
         
         if feature_name in self.features:
@@ -905,13 +945,14 @@ class WormFeaturesDos(object):
     
         #TODO: This will need some better error handling
         spec = self.feature_spec_dict[feature_name]
-        try:
-            temp = spec.get_feature(self)
-        except:
-            import pdb
-            pdb.set_trace()
+            
+        temp = spec.get_feature(self)
+
         self.feature_list.append(temp)
-        self.features[temp.name] = temp
+        
+        #A feature can return None, which means we can't ask the feature
+        #what the name is
+        self.features[spec.name] = temp
     
         return temp
 
@@ -925,6 +966,10 @@ class WormFeaturesDos(object):
 def get_feature_processing_specs():
     
     """
+
+    Loads all specs that specify how features should be processed.
+    
+    Currently in /features/feature_metadata/features_list.csv
 
     See Also
     --------
@@ -961,6 +1006,9 @@ class FeatureProcessingSpec(object):
     
     Attributes
     ----------
+    source :
+        - new - from the normalized worm
+        - mrc
     name : string
         Feature name   
     module_name : string
@@ -983,12 +1031,12 @@ class FeatureProcessingSpec(object):
     #This is how I am resolving a string to a module.
     #Perhaps there is a better way ...
     modules_dict = {'morphology_features':morphology_features,
-    'locomotion_features':locomotion_features,
-    'generic_features':generic_features,
-    'locomotion_bends':locomotion_bends,
-    'locomotion_turns':locomotion_turns,
-    'path_features':path_features,
-    'posture_features':posture_features}     
+    'locomotion_features':  locomotion_features,
+    'generic_features':     generic_features,
+    'locomotion_bends':     locomotion_bends,
+    'locomotion_turns':     locomotion_turns,
+    'path_features':        path_features,
+    'posture_features':     posture_features}     
     
     def __init__(self,d):
         
@@ -999,6 +1047,9 @@ class FeatureProcessingSpec(object):
             Data in a row of the features file
         """
 
+
+        self.source = 'new'
+        
         self.name = d['Feature Name']
         self.module_name = d['Module']
         
@@ -1023,14 +1074,21 @@ class FeatureProcessingSpec(object):
         
         """
         
+        print("feature:" + self.name)        
+        
         #The flags input is optional, if no flag is present
         #we currently assume that the constructor doesn't require
         #the input
-        if len(self.flags) == 0:
-            temp = self.class_method(wf)
-        else:
-            temp = self.class_method(wf,self.flags)        
+        if self.source == 'new':
+            final_method = self.class_method     
+        else: #mrc
+            final_method = getattr(self.class_method,'from_schafer_file')
 
+        if len(self.flags) == 0:
+            temp = final_method(wf,self.name)
+        else:
+            temp = final_method(wf,self.name,self.flags)   
+                
         return temp
         
     def __repr__(self):

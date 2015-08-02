@@ -617,7 +617,35 @@ def gausswin(L, alpha=2.5):
     return w
 
 
+def get_nested_h5_field(h,fields,resolve_value=True):
+    """
+    Meant to be a replacement for _extract_time_from_disk
 
+    Attributes
+    ----------
+    h : HDF5 group
+    fields : list or string
+
+    """
+    
+    if type(fields) is not list:
+        fields = [fields] #string to list
+    
+    for key in fields:
+        h = h[key]
+    
+    if not resolve_value:
+        return h
+        
+    temp = h.value    
+
+    # Assuming vector, need to fix for eigenvectors
+    if temp.shape[0] > temp.shape[1]:
+        wtf = temp[:, 0]
+    else:
+        wtf = temp[0, :] 
+       
+    return wtf
 
 def _extract_time_from_disk(parent_ref, name, is_matrix = False):
     """

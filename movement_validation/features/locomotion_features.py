@@ -23,6 +23,8 @@ from . import velocity as velocity_module
 class LocomotionVelocityElement(object):
     """
     
+    This can be deleted when we move over to the new feature organization    
+    
     This class is a simple container class for a velocity element.    
     
     Attributes
@@ -63,6 +65,9 @@ class LocomotionVelocityElement(object):
 class LocomotionVelocity(object):
     
     """
+    
+    This can be deleted when we move over to the new feature organization    
+    
     This is for the 'velocity' locomotion feature. The helper function,
     'compute_velocity' is used elsewhere.  
 
@@ -190,6 +195,10 @@ class LocomotionVelocity(object):
 class MotionEvents(object):
     
     """
+    
+    
+    This can be deleted when we move our new features into place.
+    Replaced by MotionEvent    
     
     Attributes
     ----------
@@ -366,6 +375,8 @@ class MotionEvents(object):
 class AverageBodyAngle(object):
     
     """
+    Temporary Feature: locomotion.velocity.avg_body_angle
+    
     This is a temporary feature that is needed for
     locomotion.velocity features
     
@@ -374,42 +385,53 @@ class AverageBodyAngle(object):
     LocomotionVelocitySection
     
     """
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         nw = wf.nw
-        self.name = 'locomotion.velocity.avg_body_angle'
+        self.name = feature_name
         self.value = velocity_module.get_partition_angles(nw, 
                                   partition_key='body',
                                   data_key='skeleton',
                                   head_to_tail=False)    
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        #This doesn't exist in the file
+        return None
       
       
-class LocomotionVelocitySection(object):
+class LocomotionVelocitySection(Feature):
     
     """
+    Temporary Feature:     
     
     This is a generic temporary class that implements:
     locomotion.velocity.head_tip,
     locomotion.velocity.head, etc.
     
-    This is effectively HeadTip,Head,Midbody,etc.
-    asdf = {            
-    'head_tip': locomotion_options.velocity_tip_diff,
-    'head':     locomotion_options.velocity_body_diff,
-    'midbody':  locomotion_options.velocity_body_diff,
-    'tail':     locomotion_options.velocity_body_diff,
-    'tail_tip': locomotion_options.velocity_tip_diff}   
+    #Each of these holds two values:
+    - speed
+    - direction
+
+
     """
     
-    def __init__(self,wf,segment):
+    def __init__(self,wf,feature_name,segment):
 
+        self.name = feature_name
+        #self.name = 'locomotion.velocity.' + segment
 
         #Unpacking
         #-------------------------
         nw = wf.nw
         ventral_mode = nw.video_info.ventral_mode
-        fps          = nw.video_info.fps
+        fps = nw.video_info.fps
         locomotion_options = wf.options.locomotion
         
+        temp = self.get_feature(wf,'locomotion.velocity.avg_body_angle')
+        avg_body_angle = temp.value        
+
+        #Options by segment
+        #--------------------------------------------------        
         if segment == 'head_tip' or segment == 'tail_tip':
             sample_time = locomotion_options.velocity_tip_diff
         else:
@@ -420,12 +442,6 @@ class LocomotionVelocitySection(object):
         else:
             data_key = segment
             
-
-        self.name = 'locomotion.velocity.' + segment
-        temp = wf['locomotion.velocity.avg_body_angle']
-        avg_body_angle = temp.value
-        
-        
         #The actual computation
         #----------------------        
         x, y = nw.get_partition(data_key, 'skeleton', True)
@@ -436,20 +452,46 @@ class LocomotionVelocitySection(object):
 
         self.speed = speed
         self.direction = direction   
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,segment):
+        self = cls.__new__(cls)
+        self.name = feature_name
+
+        if segment == 'head_tip':
+            old_key = 'headTip'
+        elif segment == 'tail_tip':
+            old_key = 'tailTip'
+        else:
+            old_key = segment
+
+        temp = utils.get_nested_h5_field(wf.h,['locomotion','velocity',old_key],resolve_value=False)
+
+        self.speed = utils.get_nested_h5_field(temp,'speed')
+        self.direction = utils.get_nested_h5_field(temp,'direction')
+
+        return self
      
 class VelocitySpeed(Feature):
 
-    def __init__(self,wf,segment):
-        self.name = 'locomotion.velocity.' + segment + '.speed'
-        temp = wf['locomotion.velocity.head_tip']
-        self.value = temp.speed
+    def __init__(self,wf,feature_name,segment):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'locomotion.velocity.' + segment).speed
+        
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,segment):
+        return cls(wf,feature_name,segment)   
 
 class VelocityDirection(Feature):
 
-    def __init__(self,wf,segment):
-        self.name = 'locomotion.velocity.' + segment + '.direction'
-        temp = wf['locomotion.velocity.head_tip']
-        self.value = temp.direction
+    def __init__(self,wf,feature_name,segment):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'locomotion.velocity.' + segment).direction
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,segment):
+        return cls(wf,feature_name,segment)   
+
         
 #New motion events code
 #=====================================================
@@ -468,36 +510,46 @@ class VelocityDirection(Feature):
 
 class MidbodyVelocityDistance(Feature):
     """
-    Temporary feature that is used for turns
+    Temporary Feature: 'locomotion.velocity.mibdody.distance'
+    
+    Used for turns
     """
     
-    def __init__(self,wf):
-        self.name = 'locomotion.velocity.mibdody.distance'
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
 
         fps = wf.video_info.fps
 
-        midbody_speed = wf['locomotion.velocity.midbody.speed'].value
+        midbody_speed = self.get_feature(wf,'locomotion.velocity.midbody.speed').value
         self.value = abs(midbody_speed/fps)
-        
+ 
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        #We could calculate this but the features that need it are already calculated
+        return None
 
 class MotionEvent(Feature):
 
     """
     Implements:
-    locomotion.
+    locomotion.motion_events.forward
+    locomotion.motion_events.backward
+    locomotion.motion_events.paused
     """
 
 
-    def __init__(self,wf,motion_type):
+    def __init__(self,wf,feature_name,motion_type):
         
-        self.name = 'locomotion.motion_events.' + motion_type        
+        self.name = feature_name        
         
         fps = wf.video_info.fps
         locomotion_options = wf.options.locomotion
         
-        temp = wf['locomotion.velocity.midbody.speed']
-        midbody_speed = temp.value
-    
+        midbody_speed = self.get_feature(wf,'locomotion.velocity.midbody.speed').value        
+
+        skeleton_lengths = self.get_feature(wf,'morphology.length').value   
+
+        
         #TODO: Move this to the video_info object
         num_frames = len(midbody_speed)
     
@@ -508,8 +560,7 @@ class MotionEvent(Feature):
         #Interpolate the missing lengths.
         #------------------------------------
         #TODO: This process should be saved as an intermediate feature
-        temp = wf['morphology.length']
-        skeleton_lengths = temp.value
+
     
         skeleton_lengths = utils.interpolate_with_threshold(
                                skeleton_lengths,
@@ -577,11 +628,24 @@ class MotionEvent(Feature):
         m_event.num_video_frames = num_frames                       
 
         self.value = m_event                                      
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,motion_type):
+
+        self = cls.__new__(cls)
+
+        ref = utils.get_nested_h5_field(wf.h,['locomotion','motion',motion_type],resolve_value=False)
         
+        self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
+
+        return self
+
 
 class MotionMode(Feature):
 
     """
+    Temporary Feature:     
+    
     This is a temporary feature. For each frame it indicates whether that
     frame is part of a forward, backward, or paused event. 
     
@@ -595,13 +659,13 @@ class MotionMode(Feature):
     
     frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
  
-    def  __init__(self,wf):
+    def  __init__(self,wf,feature_name):
         
-        self.name = 'locomotion.motion_mode'
+        self.name = feature_name
         
         #Hack to get num_frames
-        temp = wf['morphology.length']
-        skeleton_lengths = temp.value
+        skeleton_lengths = self.get_feature(wf,'morphology.length').value    
+        
         #TODO: Get this from video_info
         num_frames = len(skeleton_lengths)
         
@@ -616,111 +680,12 @@ class MotionMode(Feature):
             event_mask = event_feature.get_event_mask()
             self.value[event_mask] = value
 
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,motion_type):
+        self = cls.__new__(cls)
 
-"""                                             
-        timer = features_ref.timer
-        timer.tic()
-
-        fps = features_ref.video_info.fps        
+        self.value = utils.get_nested_h5_field(wf.h,['locomotion','motion','mode'])
         
-        locomotion_options = features_ref.options.locomotion        
-        
-        # Initialize the worm speed and video frames.
-        num_frames = len(midbody_speed)
-    
-        # Compute the midbody's "instantaneous" distance travelled at each frame,
-        # distance per second / (frames per second) = distance per frame
-        distance_per_frame = abs(midbody_speed / fps)
-    
-        #  Interpolate the missing lengths.
-        skeleton_lengths = utils.interpolate_with_threshold(
-                               skeleton_lengths,
-                               locomotion_options.motion_codes_longest_nan_run_to_interpolate)
-    
-        #===================================
-        # SPACE CONSTRAINTS
-        # Make the speed and distance thresholds a fixed proportion of the
-        # worm's length at the given frame:
-        worm_speed_threshold = skeleton_lengths * locomotion_options.motion_codes_speed_threshold_pct
-        worm_distance_threshold = skeleton_lengths * locomotion_options.motion_codes_distance_threshold_pct
-        worm_pause_threshold = skeleton_lengths * locomotion_options.motion_codes_pause_threshold_pct
-    
-        # Minimum speed and distance required for movement to
-        # be considered "forward"
-        min_forward_speed = worm_speed_threshold
-        min_forward_distance = worm_distance_threshold
-    
-        # Minimum speed and distance required for movement to
-        # be considered "backward"
-        max_backward_speed = -worm_speed_threshold
-        min_backward_distance = worm_distance_threshold
-    
-        # Boundaries between which the movement would be considered "paused"
-        min_paused_speed = -worm_pause_threshold
-        max_paused_speed = worm_pause_threshold
-    
-        # Note that there is no maximum forward speed nor minimum backward speed.
-        #TODO: This might be better as a class attribute
-        frame_values = {'forward': 1, 'backward': -1, 'paused': 0}
-        
-        min_speeds = {'forward': min_forward_speed,
-                      'backward': None,
-                      'paused': min_paused_speed}
-        max_speeds = {'forward': None,
-                      'backward': max_backward_speed,
-                      'paused': max_paused_speed}
-        min_distance = {'forward': min_forward_distance,
-                        'backward': min_backward_distance,
-                        'paused': None}
-    
-        #===================================
-        # TIME CONSTRAINTS
-        # The minimum number of frames an event had to be taking place for
-        # to be considered a legitimate event
-        min_frames_threshold = \
-            fps * locomotion_options.motion_codes_min_frames_threshold
-        # Maximum number of contiguous contradicting frames within the event
-        # before the event is considered to be over.
-        max_interframes_threshold = \
-            fps * locomotion_options.motion_codes_max_interframes_threshold
-        
-        # Start with a blank numpy array, full of NaNs:
-        self._mode = np.empty(num_frames, dtype='float') * np.NaN
-    
-        for motion_type in frame_values:
-            # We will use EventFinder to determine when the
-            # event type "motion_type" occurred
-            ef = events.EventFinder()
-    
-            # "Space and time" constraints
-            ef.min_distance_threshold = min_distance[motion_type]
-            ef.max_distance_threshold = None  # we are not constraining max dist
-            ef.min_speed_threshold = min_speeds[motion_type]
-            ef.max_speed_threshold = max_speeds[motion_type]
-    
-            # "Time" constraints
-            ef.min_frames_threshold = min_frames_threshold
-            ef.max_inter_frames_threshold = max_interframes_threshold
-    
-            event_list = ef.get_events(midbody_speed, distance_per_frame)
-
-            # Take the start and stop indices and convert them to the structure
-            # used in the feature files
-            m_event = events.EventListWithFeatures(fps,
-                                                   event_list,
-                                                   distance_per_frame,
-                                                   compute_distance_during_event=True)
-    
-            setattr(self,motion_type,m_event)      
-    
-            #Assign motion modes
-            #------------------------------------------------------------------
-            event_mask = event_list.get_event_mask(num_frames)
-            self._mode[event_mask] = frame_values[motion_type]
-              
-
-        timer.toc('locomotion.motion_events')
- """
  
 class IsPaused(Feature):
 
@@ -728,12 +693,15 @@ class IsPaused(Feature):
     Temporary Feature: locomotion.motion_events.is_paused
     """
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         
         #TODO: We could eventually only compute the paused event
         #rather than checking the mode. We would need to add on support for
         #checking if a feature had been computed
-        self.name = 'locomotion.motion_events.is_paused'
-        temp = wf['locomotion.motion_mode']
-        self.value = temp.value == 0
- 
+        self.name = feature_name
+        mode = self.get_feature(wf,'locomotion.motion_mode').value
+        self.value = mode == 0
+        
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        return cls(wf,feature_name)

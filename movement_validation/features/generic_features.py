@@ -16,6 +16,7 @@ class Feature(object):
     name
     value
     """
+    
     def __repr__(self):
         return utils.print_object(self)
 
@@ -24,6 +25,21 @@ class Feature(object):
         #TODO: Figure out how to pass parameters into this
         #We should probably just overload it ...
         return utils.correlation(self.value,other.value,self.name)
+
+    def get_feature(self,wf,feature_name):
+        
+        """
+        This was put in to do anything we need when getting a feature
+        rather than calling the feature directly
+        """
+
+        #1) Do logging - NYI
+        #What is the easiest way to initialize without forcing a init super call?
+    
+        #2) Make the call to 
+
+        return wf.get_feature(feature_name)
+        
 
 #How are we going to do from disk?
 #

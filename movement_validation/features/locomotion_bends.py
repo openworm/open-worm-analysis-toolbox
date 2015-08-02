@@ -837,7 +837,7 @@ class ForagingBends(Feature):
 
     """
 
-    def __init__(self, wf):
+    def __init__(self, wf, feature_name):
         """
         Initialize an instance of LocomotionForagingBends
 
@@ -852,13 +852,15 @@ class ForagingBends(Feature):
                 
         #features_ref, is_segmented_mask, ventral_mode        
         
-        self.name = 'locomotion.foraging_bends'
+        self.name = feature_name
         
         options = wf.options.locomotion.foraging_bends   
         video_info = wf.video_info
         fps = video_info.fps
         nw = wf.nw
         ventral_mode = video_info.ventral_mode
+        
+        #TODO: Why don't we use this anymore?????
         is_segmented_mask = video_info.is_segmented
     
         
@@ -1128,29 +1130,35 @@ class ForagingBends(Feature):
 
         return amps
 
-    @classmethod
-    def from_disk(cls, foraging_ref):
 
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
         self = cls.__new__(cls)
+        self.name = feature_name
+        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','foraging','amplitude'])
+        self.angle_speed = utils.get_nested_h5_field(wf.h,['locomotion','foraging','angleSpeed'])
 
-        self.amplitude = utils._extract_time_from_disk(foraging_ref,'amplitude')
-        self.angle_speed = utils._extract_time_from_disk(foraging_ref,'angleSpeed')
-        
         return self
         
-    def __repr__(self):
-        return utils.print_object(self)
-        
-    def __eq__(self, other):
-        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
-             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+#    def __eq__(self, other):
+#        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
+#             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
 
 class ForagingAmplitude(Feature):
     
-    def __init__(self,wf):
-        self.name = 'locomotion.foraging_bends.amplitude'
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        
+        #TODO: replace with getFeature
         temp = wf['locomotion.foraging_bends']
         self.value = temp.amplitude
+        
+     @classmethod    
+     def from_schafer_file(cls,wf,feature_name):    
+         #JAH: At this point ...
+         import pdb
+         pdb.set_trace()
+         pass
 
 class ForagingAngleSpeed(Feature):
     

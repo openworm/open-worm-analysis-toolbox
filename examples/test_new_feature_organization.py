@@ -32,6 +32,8 @@ def main():
     # Load the normalized worm from file
     nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
+    matlab_worm_features = mv.WormFeaturesDos.from_schafer_file(matlab_generated_file_path)
+
     # Generate the OpenWorm movement validation repo version of the features
     openworm_features = mv.WormFeaturesDos(nw)
     
