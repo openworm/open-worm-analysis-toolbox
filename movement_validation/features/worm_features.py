@@ -1074,7 +1074,7 @@ class FeatureProcessingSpec(object):
         
         """
         
-        print("feature:" + self.name)        
+        print("feature: " + self.name)        
         
         #The flags input is optional, if no flag is present
         #we currently assume that the constructor doesn't require

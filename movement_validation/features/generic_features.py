@@ -7,6 +7,11 @@ generic_features
 
 from .. import utils
 
+import re
+
+#Get everything until a period that is followed by no periods
+_parent_feature_pattern = re.compile('(.*)\.[^\.]+')
+
 #This needs to move elsewhere so that the feature files can import it
 class Feature(object):
 
@@ -40,6 +45,23 @@ class Feature(object):
 
         return wf.get_feature(feature_name)
         
+
+def get_parent_feature_name(feature_name):
+    
+    """
+    Go from something like:
+    locomotion.crawling_bends.head.amplitude
+    TO
+    locomotion.crawling_bends.head
+    """    
+        
+    
+    #We could make this more obvious by using split ...
+    #I might want to also remove the parens and only get back the 1st string somehow
+    #0 - the entire match
+    #1 - the first parenthesized subgroup
+    result = _parent_feature_pattern.match(feature_name)
+    return result.group(1)
 
 #How are we going to do from disk?
 #

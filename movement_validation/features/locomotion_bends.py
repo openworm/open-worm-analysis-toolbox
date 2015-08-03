@@ -27,6 +27,7 @@ import scipy.ndimage.filters as filters
 
 import warnings
 
+import generic_features
 from .generic_features import Feature
 from .. import utils
 
@@ -1135,8 +1136,8 @@ class ForagingBends(Feature):
     def from_schafer_file(cls,wf,feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','foraging','amplitude'])
-        self.angle_speed = utils.get_nested_h5_field(wf.h,['locomotion','foraging','angleSpeed'])
+        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','bends','foraging','amplitude'])
+        self.angle_speed = utils.get_nested_h5_field(wf.h,['locomotion','bends','foraging','angleSpeed'])
 
         return self
         
@@ -1148,40 +1149,27 @@ class ForagingAmplitude(Feature):
     
     def __init__(self,wf,feature_name):
         self.name = feature_name
-        
-        #TODO: replace with getFeature
-        temp = wf['locomotion.foraging_bends']
-        self.value = temp.amplitude
+        self.value = self.getFeature(wf,'locomotion.foraging_bends').amplitude
+
         
      @classmethod    
      def from_schafer_file(cls,wf,feature_name):    
-         #JAH: At this point ...
-         import pdb
-         pdb.set_trace()
-         pass
+         return cls(wf,feature_name)
 
 class ForagingAngleSpeed(Feature):
     
-    def __init__(self,wf):
-        self.name = 'locomotion.foraging_bends.angle_speed'
-        temp = wf['locomotion.foraging_bends']
-        self.value = temp.angle_speed
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.getFeature(wf,'locomotion.foraging_bends').angle_speed
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):    
+         return cls(wf,feature_name)
 
 class CrawlingBend(Feature):
 
     """
     Locomotion Crawling Bends Feature.
-
-
-    This new version just calculates the values for the head, midbody, and
-    tail classes
-
-
-    Attributes
-    ----------    
-    head : LocomotionBend
-    midbody : LocomotionBend
-    tail : LocomotionBend
 
     Notes
     ---------------------------------------    
@@ -1203,7 +1191,7 @@ class CrawlingBend(Feature):
     tick, resulting from segmentation noise, will be diluted by the
     additional frame.
 
-
+    TODO: Move this to a different location and reference in the code 
     Nature Methods Description
     ---------------------------------------    
 
@@ -1258,7 +1246,7 @@ class CrawlingBend(Feature):
 
     #bend_names = ['head', 'midbody', 'tail']
 
-    def __init__(self, wf, bend_name):
+    def __init__(self, wf, feature_name, bend_name):
         """
         Compute the temporal bending frequency at the head, midbody, and tail.    
 
@@ -1276,13 +1264,13 @@ class CrawlingBend(Feature):
 
         #features_ref, bend_angles, is_paused, is_segmented_mask
 
-        self.name = 'locomotion.crawling_bends.' + bend_name
+        self.name = feature_name
 
         options = wf.options.locomotion.crawling_bends
         video_info = wf.video_info
         fps = video_info.fps
-        is_segmented_mask = video_info.is_segmented               
-        is_paused = wf['locomotion.motion_events.is_paused'].value
+        is_segmented_mask = video_info.is_segmented
+        is_paused = self.get_feature(wf,'locomotion.motion_events.is_paused').value
         bend_angles = wf.nw.angles
 
 
@@ -1525,24 +1513,14 @@ class CrawlingBend(Feature):
         #TODO: Why is this not a tuple - tuple would be more consistent
         return [peak_start_I, peak_end_I]
 
-    @classmethod
-    def from_disk(cls, bend_ref):
-
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name, bend_name):
         self = cls.__new__(cls)
+        self.name = feature_name
+        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','bends',bend_name,'amplitude'])
+        self.frequency = utils.get_nested_h5_field(wf.h,['locomotion','bends',bend_name,'frequency'])
         
-        self.head    = LocomotionBend.from_disk(bend_ref['head'],'head')
-        self.midbody = LocomotionBend.from_disk(bend_ref['midbody'],'midbody')
-        self.tail    = LocomotionBend.from_disk(bend_ref['tail'],'tail')        
-
         return self
-
-    def __repr__(self):
-        return utils.print_object(self)
-        
-    def __eq__(self, other):
-        return self.head == other.head and \
-            self.midbody == other.midbody and \
-            self.tail == other.tail
 
 class CrawlingBendsBoundInfo(object):
     
@@ -1851,14 +1829,21 @@ class CrawlingBendsBoundInfo(object):
 
 class BendAmplitude(Feature):
     
-    def __init__(self,wf,bend_name):
-        parent_name = 'locomotion.crawling_bends.' + bend_name 
-        self.name = parent_name + '.amplitude'
+    def __init__(self,wf,feature_name,bend_name):
+        parent_feature = generic_features.get_parent_feature_name(feature_name)
+        self.name = feature_name
+        #TODO: Fix this 
         self.value = wf[parent_name].amplitude
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        import pdb
+        pdb.set_trace()
+        return cls(wf,feature_name,bend_name)
         
 class BendFrequency(Feature):
     
-    def __init__(self,wf,bend_name):
+    def __init__(self,wf,feature_name,bend_name):
         parent_name = 'locomotion.crawling_bends.' + bend_name 
         self.name = parent_name + '.frequency'
         self.value = wf[parent_name].frequency
