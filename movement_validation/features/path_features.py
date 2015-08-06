@@ -13,45 +13,63 @@ from .. import utils
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
 from . import velocity as velocity_module 
+from . import generic_features
 from .generic_features import Feature
 
 class Coordinates(Feature):
     
     """
+    Feature: path.coordinates
+    
     Attributes
     ----------
     x :
     y : 
     """
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         
-        self.name = 'path.coordinates'
+        self.name = feature_name
         nw = wf.nw
         self.x = nw.contour_x.mean(axis=0)
         self.y = nw.contour_y.mean(axis=0) 
 
-    def __repr__(self):
-        return utils.print_object(self)
-    
-    @classmethod
-    def from_disk(cls, c_data):
-
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):        
         self = cls.__new__(cls)
-
-        #Use utils loader
-        self.x = c_data['x'].value[:, 0]
-        self.y = c_data['y'].value[:, 0]
-
-        return self
+        self.name = feature_name
+        self.x = utils.get_nested_h5_field(wf.h,['path','coordinates','x'])
+        self.y = utils.get_nested_h5_field(wf.h,['path','coordinates','y'])        
         
-    def __eq__(self, other):
-        return \
-            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
-            utils.correlation(self.y, other.y, 'path.coordinates.y')      
+    #JAH at this point
+
+#    def __repr__(self):
+#        return utils.print_object(self)
+#    
+#    @classmethod
+#    def from_disk(cls, c_data):
+#
+#        self = cls.__new__(cls)
+#
+#        #Use utils loader
+#        self.x = c_data['x'].value[:, 0]
+#        self.y = c_data['y'].value[:, 0]
+#
+#        return self
+#        
+#    def __eq__(self, other):
+#        return \
+#            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
+#            utils.correlation(self.y, other.y, 'path.coordinates.y')      
 
 class Range(object):
 
     """
+    
+    This is the old class. 
+    
+    Delete when ready and change "NewRange" to Range
+    both in the code and in the features list.    
+    
     Attributes
     ------------------
     value :
@@ -107,9 +125,9 @@ class Duration(Feature):
 
     """
 
-    def __init__(self, wf):
+    def __init__(self, wf, feature_name):
 
-        self.name = 'path.duration'        
+        self.name = feature_name     
         
         #Inputs
         #------
@@ -243,33 +261,37 @@ class Duration(Feature):
         self.midbody = temp_duration[2]
         self.tail = temp_duration[3]
 
-    def __eq__(self, other):
+#    def __eq__(self, other):
+#
+#        return True
+#        """
+#        if config.MIMIC_OLD_BEHAVIOUR:
+#            # JAH: I've looked at the results and they look right
+#            # Making them look the same would make things really ugly as it means
+#            # making rounding behavior the same between numpy and Matlab :/
+#            return True
+#        else:
+#            return \
+#                self.arena   == other.arena     and \
+#                self.worm    == other.worm      and \
+#                self.head    == other.head      and \
+#                self.midbody == other.midbody   and \
+#                self.tail == other.tail
+#        """
 
-        return True
-        """
-        if config.MIMIC_OLD_BEHAVIOUR:
-            # JAH: I've looked at the results and they look right
-            # Making them look the same would make things really ugly as it means
-            # making rounding behavior the same between numpy and Matlab :/
-            return True
-        else:
-            return \
-                self.arena   == other.arena     and \
-                self.worm    == other.worm      and \
-                self.head    == other.head      and \
-                self.midbody == other.midbody   and \
-                self.tail == other.tail
-        """
-
-    def __repr__(self):
-        return utils.print_object(self)
-
-    @classmethod
-    def from_disk(cls,duration_group):
-
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):        
         self = cls.__new__(cls)
-
-        self.arena = Arena.from_disk(duration_group['arena'])
+        self.name = feature_name
+        duration_ref = utils.get_nested_h5_field(wf.h,['path','duration'],resolve_value=False)
+        
+        import pdb
+        pdb.set_trace()        
+        
+        self.arena = Arena.from_disk(duration_ref['arena'])        
+        
+        #Arena.from_disk
+        self.value = utils.get_nested_h5_field(duration_ref,'arena')        
         self.worm = DurationElement.from_disk(duration_group['worm'])
         self.head = DurationElement.from_disk(duration_group['head'])
         self.midbody = DurationElement.from_disk(duration_group['midbody'])
@@ -277,9 +299,24 @@ class Duration(Feature):
 
         return self
 
+#    @classmethod
+#    def from_disk(cls,duration_group):
+#
+#        self = cls.__new__(cls)
+#
+#        self.arena = Arena.from_disk(duration_group['arena'])
+#        self.worm = DurationElement.from_disk(duration_group['worm'])
+#        self.head = DurationElement.from_disk(duration_group['head'])
+#        self.midbody = DurationElement.from_disk(duration_group['midbody'])
+#        self.tail = DurationElement.from_disk(duration_group['tail'])
+#
+#        return self
+
 
 class DurationElement(object):
-
+    """
+    Old class, please delete
+    """
     def __init__(self, arena_coverage=None, fps=None):
 
         # TODO: Pass in name for __eq__
@@ -454,15 +491,17 @@ def worm_path_curvature(features_ref):
 class NewRange(Feature):
 
     """
+    Feature: path.range    
+    
     Attributes
     ------------------
     value :
 
     """
 
-    def __init__(self, wf):
+    def __init__(self, wf, feature_name):
 
-        self.name = 'path.range'
+        self.name = feature_name
 
         nw = wf.nw
         contour_x = nw.contour_x
@@ -482,19 +521,32 @@ class NewRange(Feature):
             (mean_cx - x_centroid_cx) ** 2 + (mean_cy - y_centroid_cy) ** 2)
     
 
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = utils.get_nested_h5_field(wf.h,['path','range'])
+
 class NewDurationElement(Feature):
     
     """
+    Feature: path.duration.[section_name]
+
     This currently borrowing heavily from DurationElement. Eventually we'll
     want to move that code here
     
     """
-    def __init__(self,wf,section_name):
-        
-        self.name = 'path.duration.' + section_name
-        duration_main = wf['path.duration']
+    def __init__(self,wf,feature_name,section_name):
+        self.name = feature_name
+
+        parent_name = generic_features.get_parent_feature_name(feature_name)    
+        duration_main = self.get_feature(wf,parent_name)  
         duration_element = getattr(duration_main,section_name)
         self.value = duration_element.times  
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,section_name):
+        return cls(wf,feature_name,section_name)
 
 class Curvature(Feature):
 
@@ -502,9 +554,9 @@ class Curvature(Feature):
     Feature: path.curvature
     """
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         
-        self.name = 'path.curvature'
+        self.name = feature_name
         BODY_DIFF = 0.5
     
         nw = wf.nw
@@ -564,4 +616,10 @@ class Curvature(Feature):
         with np.errstate(invalid='ignore'):
             distance[distance < 1] = np.NAN
     
-        self.value = (diff_motion / distance) * (np.pi / 180)    
+        self.value = (diff_motion / distance) * (np.pi / 180)
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):        
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = utils.get_nested_h5_field(wf.h,['path','curvature'])        

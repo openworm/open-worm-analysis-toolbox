@@ -681,11 +681,12 @@ class MotionMode(Feature):
             self.value[event_mask] = value
 
     @classmethod    
-    def from_schafer_file(cls,wf,feature_name,motion_type):
+    def from_schafer_file(cls,wf,feature_name):
         self = cls.__new__(cls)
 
         self.value = utils.get_nested_h5_field(wf.h,['locomotion','motion','mode'])
         
+        return self
  
 class IsPaused(Feature):
 

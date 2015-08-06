@@ -885,7 +885,8 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
 class TurnProcessor(Feature):
 
     """
-        
+    Feature:   'locomotion.turn_processor'  
+    
     LocomotionTurns
 
     Attributes
@@ -899,7 +900,7 @@ class TurnProcessor(Feature):
 
     """
 
-    def __init__(self, wf):
+    def __init__(self, wf,feature_name):
         """
         Initialiser for the LocomotionTurns class
 
@@ -924,7 +925,7 @@ class TurnProcessor(Feature):
 
         #features_ref, , , midbody_distance, sx, sy
 
-        self.name = 'locomotion.turn_processor'
+        self.name = feature_name
 
 
         
@@ -1062,23 +1063,35 @@ class TurnProcessor(Feature):
 
         timer.toc('locomotion.turns')
 
-    def __repr__(self):
-        return utils.print_object(self)
 
-    @classmethod
-    def from_disk(cls, turns_ref):
-
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
+        self.name = feature_name  
 
-        self.omegas   = OmegaTurns.from_disk(turns_ref)  
-        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
+        #TODO: This should be a method, somewhere ...        
+        ref = utils.get_nested_h5_field(wf.h,['locomotion','turns','omegas'],resolve_value=False)
+        self.omegas = events.EventListWithFeatures.from_disk(ref,'MRC')        
+
+        ref = utils.get_nested_h5_field(wf.h,['locomotion','turns','upsilons'],resolve_value=False)
+        self.upsilons = events.EventListWithFeatures.from_disk(ref,'MRC')
         
         return self
 
-    def __eq__(self, other):
-        return \
-            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
-            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
+#    @classmethod
+#    def from_disk(cls, turns_ref):
+#
+#        self = cls.__new__(cls)
+#
+#        self.omegas   = OmegaTurns.from_disk(turns_ref)  
+#        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
+#        
+#        return self
+#
+#    def __eq__(self, other):
+#        return \
+#            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
+#            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
 
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
@@ -1283,14 +1296,28 @@ class TurnProcessor(Feature):
         return None
     
 class NewUpsilonTurns(Feature):
+    """
+    Feature: locomotion.upsilon_turns
+    """
     
-    def __init__(self,wf):
-        self.name = 'locomotion.upsilon_turns'
-        self.value = wf['locomotion.turn_processor'].upsilons
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'locomotion.turn_processor').upsilons
 
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        return cls(wf,feature_name)
 
 class NewOmegaTurns(Feature):
+    """
+    Feature: 'locomotion.omega_turns'
+    """
+
     
-    def __init__(self,wf):
-        self.name = 'locomotion.omega_turns'
-        self.value = wf['locomotion.turn_processor'].omegas
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'locomotion.turn_processor').omegas
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        return cls(wf,feature_name)        

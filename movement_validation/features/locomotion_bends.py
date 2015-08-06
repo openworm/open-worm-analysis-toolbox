@@ -27,7 +27,7 @@ import scipy.ndimage.filters as filters
 
 import warnings
 
-import generic_features
+from . import generic_features
 from .generic_features import Feature
 from .. import utils
 
@@ -1149,18 +1149,18 @@ class ForagingAmplitude(Feature):
     
     def __init__(self,wf,feature_name):
         self.name = feature_name
-        self.value = self.getFeature(wf,'locomotion.foraging_bends').amplitude
+        self.value = self.get_feature(wf,'locomotion.foraging_bends').amplitude
 
         
-     @classmethod    
-     def from_schafer_file(cls,wf,feature_name):    
-         return cls(wf,feature_name)
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):    
+        return cls(wf,feature_name)
 
 class ForagingAngleSpeed(Feature):
     
     def __init__(self,wf,feature_name):
         self.name = feature_name
-        self.value = self.getFeature(wf,'locomotion.foraging_bends').angle_speed
+        self.value = self.get_feature(wf,'locomotion.foraging_bends').angle_speed
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):    
@@ -1828,23 +1828,28 @@ class CrawlingBendsBoundInfo(object):
         return utils.print_object(self)
 
 class BendAmplitude(Feature):
+    """
+    Feature: locomotion.crawling_bends.[bend_name].amplitude
+    """
     
     def __init__(self,wf,feature_name,bend_name):
-        parent_feature = generic_features.get_parent_feature_name(feature_name)
+        parent_name = generic_features.get_parent_feature_name(feature_name)
         self.name = feature_name
-        #TODO: Fix this 
-        self.value = wf[parent_name].amplitude
+        self.value = self.get_feature(wf,parent_name).amplitude
 
-    @classmethod    
+    @classmethod
     def from_schafer_file(cls,wf,feature_name,bend_name):
-        import pdb
-        pdb.set_trace()
         return cls(wf,feature_name,bend_name)
         
 class BendFrequency(Feature):
-    
+    """
+    Feature: locomotion.crawling_bends.[bend_name].frequency
+    """
     def __init__(self,wf,feature_name,bend_name):
-        parent_name = 'locomotion.crawling_bends.' + bend_name 
-        self.name = parent_name + '.frequency'
-        self.value = wf[parent_name].frequency
+        parent_name = generic_features.get_parent_feature_name(feature_name)
+        self.name = feature_name
+        self.value = self.get_feature(wf,parent_name).frequency
         
+    @classmethod
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        return cls(wf,feature_name,bend_name)
