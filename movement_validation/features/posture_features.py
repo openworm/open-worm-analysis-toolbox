@@ -880,7 +880,7 @@ class EccentricityAndOrientationProcessor(Feature):
     orientation    
     """        
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         
         """
         Get the eccentricity and orientation of a contour using the moments
@@ -892,7 +892,7 @@ class EccentricityAndOrientationProcessor(Feature):
          
         """    
 
-        self.name = 'posture.eccentricity_and_orientation'
+        self.name = feature_name
     
         wf.timer.tic()
         
@@ -931,11 +931,27 @@ class EccentricityAndOrientationProcessor(Feature):
         self.eccentricity = eccentricity
         self.orientation = orientation        
 
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name               
+        self.eccentricity = utils.get_nested_h5_field(wf.h,['posture','eccentricity'])
+        
+        #This isn't saved to disk
+        self.orientation = None
+        return self
+
 class Eccentricity(Feature):
-    
-    def __init__(self,wf):
-        self.name = 'posture.eccentricity'
-        self.value = wf['posture.eccentricity_and_orientation'].eccentricity
+    """
+    Feature: 'posture.eccentricity'
+    """
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.eccentricity_and_orientation').eccentricity
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)
         
 class AmplitudeAndWavelengthProcessor(Feature):
     
@@ -951,7 +967,7 @@ class AmplitudeAndWavelengthProcessor(Feature):
     track_length
     """
     
-    def __init__(self, wf):
+    def __init__(self, wf,feature_name):
 
         """
         Calculates amplitude of rotated worm (relies on orientation
@@ -966,9 +982,8 @@ class AmplitudeAndWavelengthProcessor(Feature):
         
         """
         
-        self.name = 'posture.amplitude_wavelength_processor'        
-        
-        theta_d = wf['posture.eccentricity_and_orientation'].orientation
+        self.name = feature_name
+        theta_d = self.get_feature(wf,'posture.eccentricity_and_orientation')
 
         timer = wf.timer
         timer.tic()
@@ -1165,6 +1180,19 @@ class AmplitudeAndWavelengthProcessor(Feature):
         self.track_length = track_length
     
         timer.toc('posture.amplitude_and_wavelength')
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.amplitude_max = utils.get_nested_h5_field(wf.h,['posture','amplitude','max'])
+        self.amplitude_ratio = utils.get_nested_h5_field(wf.h,['posture','amplitude','ratio'])
+        self.primary_wavelength = utils.get_nested_h5_field(wf.h,['posture','wavelength','primary'])
+        self.secondary_wavelength = utils.get_nested_h5_field(wf.h,['posture','wavelength','secondary'])
+        self.track_length = utils.get_nested_h5_field(wf.h,['posture','tracklength'])
+        
+        #JAH: At this point
+        return self
 
 #        self.amplitude_max = amp_wave_track.amplitude_max
 #        self.amplitude_ratio = amp_wave_track.amplitude_ratio
