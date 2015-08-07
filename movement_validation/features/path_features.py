@@ -40,22 +40,7 @@ class Coordinates(Feature):
         self.x = utils.get_nested_h5_field(wf.h,['path','coordinates','x'])
         self.y = utils.get_nested_h5_field(wf.h,['path','coordinates','y'])        
         
-    #JAH at this point
 
-#    def __repr__(self):
-#        return utils.print_object(self)
-#    
-#    @classmethod
-#    def from_disk(cls, c_data):
-#
-#        self = cls.__new__(cls)
-#
-#        #Use utils loader
-#        self.x = c_data['x'].value[:, 0]
-#        self.y = c_data['y'].value[:, 0]
-#
-#        return self
-#        
 #    def __eq__(self, other):
 #        return \
 #            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
@@ -284,18 +269,12 @@ class Duration(Feature):
         self = cls.__new__(cls)
         self.name = feature_name
         duration_ref = utils.get_nested_h5_field(wf.h,['path','duration'],resolve_value=False)
-        
-        import pdb
-        pdb.set_trace()        
-        
+                
         self.arena = Arena.from_disk(duration_ref['arena'])        
-        
-        #Arena.from_disk
-        self.value = utils.get_nested_h5_field(duration_ref,'arena')        
-        self.worm = DurationElement.from_disk(duration_group['worm'])
-        self.head = DurationElement.from_disk(duration_group['head'])
-        self.midbody = DurationElement.from_disk(duration_group['midbody'])
-        self.tail = DurationElement.from_disk(duration_group['tail'])
+        self.worm = DurationElement.from_disk(duration_ref['worm'])
+        self.head = DurationElement.from_disk(duration_ref['head'])
+        self.midbody = DurationElement.from_disk(duration_ref['midbody'])
+        self.tail = DurationElement.from_disk(duration_ref['tail'])
 
         return self
 
@@ -527,7 +506,7 @@ class NewRange(Feature):
         self.name = feature_name
         self.value = utils.get_nested_h5_field(wf.h,['path','range'])
 
-class NewDurationElement(Feature):
+class DurationFeature(Feature):
     
     """
     Feature: path.duration.[section_name]
