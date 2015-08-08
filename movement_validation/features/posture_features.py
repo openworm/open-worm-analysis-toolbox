@@ -1202,10 +1202,16 @@ class AmplitudeAndWavelengthProcessor(Feature):
 
 class AmplitudeMax(Feature):
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         
         self.name = 'posture.amplitude_max'
         self.value = wf['posture.amplitude_wavelength_processor'].amplitude_max
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        #JAH at this point
+        import pdb
+        pdb.set_trace()
         
 class AmplitudeRatio(Feature):
     
@@ -1237,19 +1243,18 @@ class TrackLength(Feature):
         
 class Coils(Feature):
 
-    def __init__(self,wf):
-        
+    def __init__(self,wf,feature_name):   
         """
+        Feature Name: posture.coils
+        
         Get the worm's posture.coils.
     
     
         """
         
-        self.name = 'posture.coils'
-        
-        midbody_distance = wf['locomotion.velocity.mibdody.distance'].value       
-        
-        
+        self.name = feature_name
+        midbody_distance = self.get_feature(wf,'locomotion.velocity.mibdody.distance').value
+
         options = wf.options
         posture_options = options.posture
         timer = wf.timer
@@ -1315,11 +1320,20 @@ class Coils(Feature):
         timer.toc('posture.coils')  
     
         self.value = events.EventListWithFeatures(fps, temp, midbody_distance)
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name
+        ref = utils.get_nested_h5_field(wf.h,['posture','coils'],resolve_value=False)
+        self.value = events.EventListWithFeatures.from_disk(ref,'MRC')  
     
 class Kinks(Feature):
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         """
+        Feature Name: posture.kinks        
+        
         Parameters
         ----------
         features_ref : movement_validation.features.worm_features.WormFeatures
@@ -1330,7 +1344,7 @@ class Kinks(Feature):
     
         """
     
-        self.name = 'posture.kinks'
+        self.name = feature_name
         
         nw = wf.nw
         timer = wf.timer
@@ -1429,6 +1443,12 @@ class Kinks(Feature):
     
         self.value = n_kinks_all
 
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name        
+        self.value = utils.get_nested_h5_field(wf.h,['posture','kinks'])
+        return self
 
 def load_eigen_worms():
     """ 
@@ -1459,8 +1479,10 @@ def load_eigen_worms():
         
 class EigenProjectionProcessor(Feature):
     
-    def __init__(self,wf):
+    def __init__(self,wf,feature_name):
         """
+        Feature: 'posture.all_eigenprojections'  
+        
         Parameters
         ----------
         features_ref : movement_validation.features.worm_features.WormFeatures
@@ -1471,7 +1493,7 @@ class EigenProjectionProcessor(Feature):
     
         """
         
-        self.name = 'posture.all_eigenprojections'        
+        self.name = feature_name       
         
         nw = wf.nw
         sx = nw.skeleton_x
@@ -1532,17 +1554,31 @@ class EigenProjectionProcessor(Feature):
         timer.toc('posture.eigenworms')
     
         self.value =  eigen_projections
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        self = cls.__new__(cls)
+        self.name = feature_name        
+        self.value = utils.get_nested_h5_field(wf.h,['posture','eigenProjection'])
+        return self
+
     
 class EigenProjection(Feature):
     
-    def __init__(self,wf,index_str):
-        self.name = 'posture.eigen_projection' + index_str
-        temp = wf['posture.all_eigenprojections'].value
-        self.value = temp[int(index_str),:]
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        projection_matrix = self.get_feature(wf,'posture.all_eigenprojections')
+        index = int(feature_name[-1])
+        self.value = projection_matrix[index,:]
+        return self
+        
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        return cls(wf,feature_name)
         
 class Bend(Feature):
     
-    def __init__(self,wf,bend_name):
+    def __init__(self,wf,feature_name,bend_name):
 
         self.name = 'posture.bends.' + bend_name
 
@@ -1572,6 +1608,12 @@ class Bend(Feature):
 
         self.mean = temp_mean
         self.std_dev = temp_std
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name):
+        import pdb
+        pdb.set_trace()
+        return cls(wf,feature_name)
                     
 class BendMean(Feature):
 

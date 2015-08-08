@@ -107,7 +107,10 @@ def get_event_attribute(event_object,attribute_name):
         return getattr(event_object,attribute_name)
 
 class EventFeature(Feature):
-    
+    """
+    This covers features that come from events. This is NOT the temporary 
+    event features.
+    """
     def __init__(self,wf,feature_name):
         self.name = feature_name
         event_name, feature_type = get_feature_name_info(feature_name)
