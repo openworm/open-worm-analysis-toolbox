@@ -1012,6 +1012,9 @@ class EventListWithFeatures(EventList):
                 self.time_between_events = np.array(frame_values['interTime'][:-1])
                 self.distance_between_events = np.array(frame_values['interDistance'][:-1])
 
+            #JAH: I found float was needed as the calculated frequency was also
+            #of this type. I'm not sure why we lost the numpy array entry
+            #for the calculated frequency ...
             self.frequency = event_ref['frequency'].value[0][0]
 
             if 'ratio' in event_ref.keys():

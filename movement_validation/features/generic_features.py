@@ -28,7 +28,7 @@ class Feature(object):
     #This should be part of the features
     def __eq__(self,other):
         #TODO: Figure out how to pass parameters into this
-        #We should probably just overload it ...
+        #We should probably just overload it ...    
         return utils.correlation(self.value,other.value,self.name)
 
     def get_feature(self,wf,feature_name):
@@ -45,7 +45,6 @@ class Feature(object):
 
         return wf.get_feature(feature_name)
         
-
 def get_parent_feature_name(feature_name):
     
     """
@@ -121,6 +120,12 @@ class EventFeature(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
         return cls(wf,feature_name)
+
+
+    def __eq__(self,other):
+        #TODO: We need to implement this ...
+        #scalars - see if they are close, otherwise call super?
+        return True
 
 #We might want to make things specific again but for now we'll use
 #a single class

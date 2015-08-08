@@ -32,13 +32,23 @@ def main():
     # Load the normalized worm from file
     nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
+    print('Loading example features from disk')
     matlab_worm_features = mv.WormFeaturesDos.from_schafer_file(matlab_generated_file_path)
 
     # Generate the OpenWorm movement validation repo version of the features
+    print('Computing example features from normalized worm')
     openworm_features = mv.WormFeaturesDos(nw)
     
-    
-    print(openworm_features)
+    for cur_feature in matlab_worm_features.feature_list:
+        #Currently we are including temporary features which don't exist
+        #when loading from disk
+        if cur_feature is not None:
+            other_feature = openworm_features.get_feature(cur_feature.name)
+            print(cur_feature.name)
+            cur_feature == other_feature
+        
+    import pdb
+    pdb.set_trace()
 
 #    # SCHAFER LAB
 #    #----------------------

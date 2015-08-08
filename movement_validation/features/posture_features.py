@@ -14,6 +14,7 @@ import os, inspect, h5py
 
 import cv2
 
+from . import generic_features
 from .generic_features import Feature
 from .. import config, utils
 from . import events
@@ -983,7 +984,7 @@ class AmplitudeAndWavelengthProcessor(Feature):
         """
         
         self.name = feature_name
-        theta_d = self.get_feature(wf,'posture.eccentricity_and_orientation')
+        theta_d = self.get_feature(wf,'posture.eccentricity_and_orientation').orientation
 
         timer = wf.timer
         timer.tic()
@@ -1191,55 +1192,68 @@ class AmplitudeAndWavelengthProcessor(Feature):
         self.secondary_wavelength = utils.get_nested_h5_field(wf.h,['posture','wavelength','secondary'])
         self.track_length = utils.get_nested_h5_field(wf.h,['posture','tracklength'])
         
-        #JAH: At this point
         return self
 
-#        self.amplitude_max = amp_wave_track.amplitude_max
-#        self.amplitude_ratio = amp_wave_track.amplitude_ratio
-#        self.primary_wavelength = amp_wave_track.primary_wavelength
-#        self.secondary_wavelength = amp_wave_track.secondary_wavelength
-#        self.track_length = amp_wave_track.track_length
 
 class AmplitudeMax(Feature):
-    
+    """
+    Feature: posture.amplitude_max
+    """
     def __init__(self,wf,feature_name):
-        
-        self.name = 'posture.amplitude_max'
-        self.value = wf['posture.amplitude_wavelength_processor'].amplitude_max
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.amplitude_wavelength_processor').amplitude_max
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
-        #JAH at this point
-        import pdb
-        pdb.set_trace()
+        return cls(wf,feature_name)
         
 class AmplitudeRatio(Feature):
-    
-    def __init__(self,wf):
-        
-        self.name = 'posture.amplitude_ratio'
-        self.value = wf['posture.amplitude_wavelength_processor'].amplitude_ratio
+    """
+    Feature: posture.amplitude_ratio
+    """
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.amplitude_wavelength_processor').amplitude_ratio
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)
         
 class PrimaryWavelength(Feature):
-    
-    def __init__(self,wf):
-        
-        self.name = 'posture.primary_wavelength'
-        self.value = wf['posture.amplitude_wavelength_processor'].primary_wavelength
+    """
+    Feature: posture.primary_wavelength
+    """
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.amplitude_wavelength_processor').primary_wavelength
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)
         
 class SecondaryWavelength(Feature):
-    
-    def __init__(self,wf):
-        
-        self.name = 'posture.secondary_wavelength'
-        self.value = wf['posture.amplitude_wavelength_processor'].secondary_wavelength
+    """
+    Feature: posture.secondary_wavelength
+    """
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.amplitude_wavelength_processor').secondary_wavelength
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)
         
 class TrackLength(Feature):
-    
-    def __init__(self,wf):
-        
-        self.name = 'posture.track_length'
-        self.value = wf['posture.amplitude_wavelength_processor'].track_length      
+    """
+    Feature: posture.track_length
+    """
+    def __init__(self,wf,feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(wf,'posture.amplitude_wavelength_processor').track_length
+
+    @classmethod    
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf,feature_name)   
         
 class Coils(Feature):
 
@@ -1326,7 +1340,8 @@ class Coils(Feature):
         self = cls.__new__(cls)
         self.name = feature_name
         ref = utils.get_nested_h5_field(wf.h,['posture','coils'],resolve_value=False)
-        self.value = events.EventListWithFeatures.from_disk(ref,'MRC')  
+        self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
+        return self
     
 class Kinks(Feature):
     
@@ -1559,7 +1574,7 @@ class EigenProjectionProcessor(Feature):
     def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name        
-        self.value = utils.get_nested_h5_field(wf.h,['posture','eigenProjection'])
+        self.value = utils.get_nested_h5_field(wf.h,['posture','eigenProjection'],is_matrix=True)
         return self
 
     
@@ -1567,10 +1582,9 @@ class EigenProjection(Feature):
     
     def __init__(self,wf,feature_name):
         self.name = feature_name
-        projection_matrix = self.get_feature(wf,'posture.all_eigenprojections')
+        projection_matrix = self.get_feature(wf,'posture.all_eigenprojections').value
         index = int(feature_name[-1])
         self.value = projection_matrix[index,:]
-        return self
         
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
@@ -1610,40 +1624,61 @@ class Bend(Feature):
         self.std_dev = temp_std
 
     @classmethod    
-    def from_schafer_file(cls,wf,feature_name):
-        import pdb
-        pdb.set_trace()
-        return cls(wf,feature_name)
-                    
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.mean = utils.get_nested_h5_field(wf.h,['posture','bends',bend_name,'mean'])
+        self.std_dev = utils.get_nested_h5_field(wf.h,['posture','bends',bend_name,'stdDev'])
+
+        return self
+
 class BendMean(Feature):
 
-    def __init__(self,wf,bend_name):
+    def __init__(self,wf,feature_name,bend_name):
 
-        parent_name = 'posture.bends.' + bend_name
-        self.name = parent_name + '.mean'
-        self.value = wf[parent_name].mean
+        parent_name = generic_features.get_parent_feature_name(feature_name)
+        self.name = feature_name
+        self.value = self.get_feature(wf,parent_name).mean
+        
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        return cls(wf,feature_name,bend_name)
         
 class BendStdDev(Feature):
 
-    def __init__(self,wf,bend_name):
+    def __init__(self,wf,feature_name,bend_name):
 
-        parent_name = 'posture.bends.' + bend_name
-        self.name = parent_name + '.std_dev'
-        self.value = wf[parent_name].std_dev        
+        parent_name = generic_features.get_parent_feature_name(feature_name)
+        self.name = feature_name
+        self.value = self.get_feature(wf,parent_name).std_dev
+        
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        return cls(wf,feature_name,bend_name)
 
 class Skeleton(Feature):
     
     """
+    Feature: posture.skeleton
+    
     This just holds onto the skeleton x & y coordinates from normalized worm.
     We don't do anything with these coordinates as far as feature processing.
     """
-    def __init__(self, wf):
+    def __init__(self, wf, feature_name):
         
         nw  = wf.nw         
         
-        self.name = 'posture.skeleton'
+        self.name = feature_name
         self.x = nw.skeleton_x
         self.y = nw.skeleton_y
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,bend_name):
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.x = utils.get_nested_h5_field(wf.h,['posture','skeleton','x'],is_matrix=True)
+        self.y = utils.get_nested_h5_field(wf.h,['posture','skeleton','y'],is_matrix=True)         
+        return self
         
     @classmethod
     def from_disk(cls, skeleton_ref):
@@ -1684,17 +1719,18 @@ class Direction(Feature):
 
     """
 
-    def __init__(self, wf, key_name):
+    def __init__(self, wf, feature_name, key_name):
         
         """
-
+        Feature: posture.directions.[key_name]
+        
         Parameters
         ----------
         wf : 
 
         """
 
-        self.name = 'posture.directions.' + key_name
+        self.name = feature_name
 
         timer = wf.timer
         timer.tic()
@@ -1732,4 +1768,9 @@ class Direction(Feature):
         timer.toc(self.name)
         
         self.value = dir_value
-        
+
+    @classmethod    
+    def from_schafer_file(cls,wf,feature_name,key_name):
+        self = cls.__new__(cls)
+        self.value = utils.get_nested_h5_field(wf.h,['posture','directions',key_name])
+        return self

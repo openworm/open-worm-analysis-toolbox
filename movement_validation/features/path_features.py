@@ -246,23 +246,21 @@ class Duration(Feature):
         self.midbody = temp_duration[2]
         self.tail = temp_duration[3]
 
-#    def __eq__(self, other):
-#
-#        return True
-#        """
-#        if config.MIMIC_OLD_BEHAVIOUR:
-#            # JAH: I've looked at the results and they look right
-#            # Making them look the same would make things really ugly as it means
-#            # making rounding behavior the same between numpy and Matlab :/
-#            return True
-#        else:
-#            return \
-#                self.arena   == other.arena     and \
-#                self.worm    == other.worm      and \
-#                self.head    == other.head      and \
-#                self.midbody == other.midbody   and \
-#                self.tail == other.tail
-#        """
+    def __eq__(self, other):
+
+        if config.MIMIC_OLD_BEHAVIOUR:
+            # JAH: I've looked at the results and they look right
+            # Making them look the same would make things really ugly as it means
+            # making rounding behavior the same between numpy and Matlab :/
+            return True
+        else:
+            return \
+                self.arena   == other.arena     and \
+                self.worm    == other.worm      and \
+                self.head    == other.head      and \
+                self.midbody == other.midbody   and \
+                self.tail == other.tail
+
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):        

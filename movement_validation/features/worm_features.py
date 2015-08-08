@@ -348,8 +348,7 @@ class WormPosture(object):
 
         self.directions = posture_features.Directions(features_ref)
 
-        #TODO: I'd rather this be a formal class
-        self.skeleton = posture_features.Skeleton(features_ref)
+        self.skeleton = posture_features.Skeleton(features_ref,'temp')
 
         self.eigen_projection = posture_features.get_eigenworms(features_ref)
 
@@ -556,9 +555,9 @@ class WormPath(object):
         self.range = path_features.Range(nw.contour_x, nw.contour_y)
 
         # Duration (aka Dwelling)
-        self.duration = path_features.Duration(features_ref)
+        self.duration = path_features.Duration(features_ref,'temp')
 
-        self.coordinates = path_features.Coordinates(features_ref)
+        self.coordinates = path_features.Coordinates(features_ref,'temp')
 
         #Curvature
         self.curvature = path_features.worm_path_curvature(features_ref)
@@ -850,8 +849,6 @@ class WormFeaturesDos(object):
     This is the new features class. It will eventually replace the old class
     when things are all ready.
     """
-    def __new__(cls):
-        return object.__new__(cls)
     
     def __init__(self, nw, processing_options=None,load_features=True):
         """
@@ -885,17 +882,17 @@ class WormFeaturesDos(object):
         if load_features:
             self._retrieve_all_features()
 
-
-        import pdb
-        pdb.set_trace()
-
     @classmethod
     def from_schafer_file(cls, data_file_path):
         """
-        Do we want to make load_features an option?
+        Load features from the Schafer lab files.
         """
+        
         self = cls.__new__(cls)
         self.initialize_features()
+
+        #I'm not thrilled about this approach. I think we should
+        #move the source specification into intialize_features
         for spec in self.feature_spec_list:
             spec.source = 'mrc'
 
@@ -934,16 +931,25 @@ class WormFeaturesDos(object):
         """
         This is the public interface to the user for retrieving a feature.
         
+        Improvements
+        ------------
+        - retrieve multiple features, probably via a different method
+        - allow passing in specs
+        - have a feature that returns specs by regex or wildcard
+        
         See Also
         --------
         FeatureProcessingSpec.get_feature
         """
         
+        #If we've already computed the feature, then we return it, otherwise
+        #we need to compute it.
         if feature_name in self.features:
             return self.features[feature_name]
         
     
         #TODO: This will need some better error handling
+        #This could fail if a poor feature name is passed in
         spec = self.feature_spec_dict[feature_name]
             
         temp = spec.get_feature(self)
@@ -951,7 +957,7 @@ class WormFeaturesDos(object):
         self.feature_list.append(temp)
         
         #A feature can return None, which means we can't ask the feature
-        #what the name is
+        #what the name is, so we go based on the spec
         self.features[spec.name] = temp
     
         return temp
@@ -1074,16 +1080,17 @@ class FeatureProcessingSpec(object):
         
         """
         
-        print("feature: " + self.name)        
+        #print("feature: " + self.name)        
         
-        #The flags input is optional, if no flag is present
-        #we currently assume that the constructor doesn't require
-        #the input
+
         if self.source == 'new':
             final_method = self.class_method     
         else: #mrc
             final_method = getattr(self.class_method,'from_schafer_file')
 
+        #The flags input is optional, if no flag is present
+        #we currently assume that the constructor doesn't require
+        #the input
         if len(self.flags) == 0:
             temp = final_method(wf,self.name)
         else:

@@ -393,6 +393,9 @@ class AverageBodyAngle(object):
                                   data_key='skeleton',
                                   head_to_tail=False)    
 
+    def __eq__(self,other):
+        return True
+
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
         #This doesn't exist in the file
@@ -471,7 +474,12 @@ class LocomotionVelocitySection(Feature):
         self.direction = utils.get_nested_h5_field(temp,'direction')
 
         return self
-     
+        
+    def __eq__(self,other):
+        #I'm not sure what we want to do for these temporary features ...
+        return True
+                
+        
 class VelocitySpeed(Feature):
 
     def __init__(self,wf,feature_name,segment):
@@ -633,12 +641,17 @@ class MotionEvent(Feature):
     def from_schafer_file(cls,wf,feature_name,motion_type):
 
         self = cls.__new__(cls)
+        self.name = feature_name
 
         ref = utils.get_nested_h5_field(wf.h,['locomotion','motion',motion_type],resolve_value=False)
         
         self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
 
         return self
+        
+    def __eq__(self,other):
+        #temp feature ...
+        return True
 
 
 class MotionMode(Feature):
@@ -683,6 +696,8 @@ class MotionMode(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
         self = cls.__new__(cls)
+        
+        self.name = feature_name
 
         self.value = utils.get_nested_h5_field(wf.h,['locomotion','motion','mode'])
         

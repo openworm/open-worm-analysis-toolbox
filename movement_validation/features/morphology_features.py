@@ -10,6 +10,8 @@ from .. import utils
 
 class Widths(object):
     """
+    This is no longer used in the new code and can be deleted when ready    
+    
     Attributes
     ----------    
     head :
@@ -101,7 +103,8 @@ class WidthSection(Feature):
         self.name = feature_name
         self.partition_name = partition_name
         #I'm not thrilled with the name of this method
-        self.value = wf.nw.get_partition(partition_name, 'widths')
+        widths_in_partition = wf.nw.get_partition(partition_name, 'widths')
+        self.value = np.mean(widths_in_partition, 0)
         
     @classmethod    
     def from_schafer_file(cls, wf, feature_name, partition_name):
