@@ -45,7 +45,6 @@ class Feature(object):
 
         return wf.get_feature(feature_name)
         
-
 def get_parent_feature_name(feature_name):
     
     """

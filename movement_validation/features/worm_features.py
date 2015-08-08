@@ -850,8 +850,6 @@ class WormFeaturesDos(object):
     This is the new features class. It will eventually replace the old class
     when things are all ready.
     """
-    def __new__(cls):
-        return object.__new__(cls)
     
     def __init__(self, nw, processing_options=None,load_features=True):
         """
@@ -885,17 +883,17 @@ class WormFeaturesDos(object):
         if load_features:
             self._retrieve_all_features()
 
-
-        import pdb
-        pdb.set_trace()
-
     @classmethod
     def from_schafer_file(cls, data_file_path):
         """
-        Do we want to make load_features an option?
+        Load features from the Schafer lab files.
         """
+        
         self = cls.__new__(cls)
         self.initialize_features()
+
+        #I'm not thrilled about this approach. I think we should
+        #move the source specification into intialize_features
         for spec in self.feature_spec_list:
             spec.source = 'mrc'
 
@@ -934,16 +932,25 @@ class WormFeaturesDos(object):
         """
         This is the public interface to the user for retrieving a feature.
         
+        Improvements
+        ------------
+        - retrieve multiple features, probably via a different method
+        - allow passing in specs
+        - have a feature that returns specs by regex or wildcard
+        
         See Also
         --------
         FeatureProcessingSpec.get_feature
         """
         
+        #If we've already computed the feature, then we return it, otherwise
+        #we need to compute it.
         if feature_name in self.features:
             return self.features[feature_name]
         
     
         #TODO: This will need some better error handling
+        #This could fail if a poor feature name is passed in
         spec = self.feature_spec_dict[feature_name]
             
         temp = spec.get_feature(self)
@@ -951,7 +958,7 @@ class WormFeaturesDos(object):
         self.feature_list.append(temp)
         
         #A feature can return None, which means we can't ask the feature
-        #what the name is
+        #what the name is, so we go based on the spec
         self.features[spec.name] = temp
     
         return temp
