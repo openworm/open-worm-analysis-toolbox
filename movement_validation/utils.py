@@ -752,7 +752,7 @@ def compare_is_equal(x, y, variable_name, tol=1e-6):
         return False
 
 
-def correlation(x, y, variable_name, high_corr_value=0.999, 
+def correlation(x, y, variable_name, high_corr_value=0.99, 
                 merge_nans=False):
     """
     Compare two numpy arrays using a tolerance threshold

@@ -42,7 +42,7 @@ def main():
     for cur_feature in matlab_worm_features.feature_list:
         #Currently we are including temporary features which don't exist
         #when loading from disk
-        if cur_feature is not None:
+        if cur_feature is not None and not cur_feature.is_temporary:
             other_feature = openworm_features.get_feature(cur_feature.name)
             print(cur_feature.name)
             cur_feature == other_feature

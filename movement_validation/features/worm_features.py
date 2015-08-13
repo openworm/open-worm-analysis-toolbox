@@ -889,6 +889,7 @@ class WormFeaturesDos(object):
         """
         
         self = cls.__new__(cls)
+        self.timer = utils.ElementTimer()
         self.initialize_features()
 
         #I'm not thrilled about this approach. I think we should
@@ -1068,11 +1069,14 @@ class FeatureProcessingSpec(object):
         self.class_method = getattr(self.module,self.class_name) 
         
         self.flags = d['Flags']
+        self.is_temporary = d['is_feature'] == 'n'
 
     def get_feature(self,wf):
         
         """
         This method takes care of the logic of retrieving a feature.
+        
+        ALl features are created or loaded via this method.
         
         Arguments
         ---------
@@ -1085,8 +1089,12 @@ class FeatureProcessingSpec(object):
 
         if self.source == 'new':
             final_method = self.class_method     
-        else: #mrc
+        else: #mrc #TODO: make explicit check for MRC otherwise throw an error
             final_method = getattr(self.class_method,'from_schafer_file')
+
+
+        timer = wf.timer
+        timer.tic()
 
         #The flags input is optional, if no flag is present
         #we currently assume that the constructor doesn't require
@@ -1095,6 +1103,13 @@ class FeatureProcessingSpec(object):
             temp = final_method(wf,self.name)
         else:
             temp = final_method(wf,self.name,self.flags)   
+    
+        timer.toc(self.name)
+                
+        if temp is not None:
+            #We can get rid of the name assignments in class and use this ...
+            temp.name = self.name
+            temp.is_temporary = self.is_temporary               
                 
         return temp
         

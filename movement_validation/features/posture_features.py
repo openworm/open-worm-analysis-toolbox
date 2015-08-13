@@ -1574,7 +1574,7 @@ class EigenProjectionProcessor(Feature):
     def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name        
-        self.value = utils.get_nested_h5_field(wf.h,['posture','eigenProjection'],is_matrix=True)
+        self.value = np.transpose(utils.get_nested_h5_field(wf.h,['posture','eigenProjection'],is_matrix=True))
         return self
 
     
@@ -1730,10 +1730,6 @@ class Direction(Feature):
 
         """
 
-        self.name = feature_name
-
-        timer = wf.timer
-        timer.tic()
 
         nw = wf.nw
         
@@ -1765,7 +1761,7 @@ class Direction(Feature):
         dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, 
                                              tip_x - tail_x)
                                              
-        timer.toc(self.name)
+
         
         self.value = dir_value
 
