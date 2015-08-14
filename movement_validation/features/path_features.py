@@ -8,7 +8,7 @@ TODO: Create basic list
 
 import numpy as np
 
-from .. import utils
+from .. import config, utils
 
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
@@ -45,6 +45,8 @@ class Coordinates(Feature):
 #        return \
 #            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
 #            utils.correlation(self.y, other.y, 'path.coordinates.y')      
+
+
 
 class Range(object):
 
@@ -247,7 +249,6 @@ class Duration(Feature):
         self.tail = temp_duration[3]
 
     def __eq__(self, other):
-
         if config.MIMIC_OLD_BEHAVIOUR:
             # JAH: I've looked at the results and they look right
             # Making them look the same would make things really ugly as it means
@@ -276,18 +277,17 @@ class Duration(Feature):
 
         return self
 
-#    @classmethod
-#    def from_disk(cls,duration_group):
-#
-#        self = cls.__new__(cls)
-#
-#        self.arena = Arena.from_disk(duration_group['arena'])
-#        self.worm = DurationElement.from_disk(duration_group['worm'])
-#        self.head = DurationElement.from_disk(duration_group['head'])
-#        self.midbody = DurationElement.from_disk(duration_group['midbody'])
-#        self.tail = DurationElement.from_disk(duration_group['tail'])
-#
-#        return self
+    @classmethod
+    def from_disk(cls,duration_group):
+        self = cls.__new__(cls)
+
+        self.arena = Arena.from_disk(duration_group['arena'])
+        self.worm = DurationElement.from_disk(duration_group['worm'])
+        self.head = DurationElement.from_disk(duration_group['head'])
+        self.midbody = DurationElement.from_disk(duration_group['midbody'])
+        self.tail = DurationElement.from_disk(duration_group['tail'])
+
+        return self
 
 
 class DurationElement(object):
