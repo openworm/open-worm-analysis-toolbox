@@ -1,1 +1,9 @@
-need to handle event feature comparison using new approach
+need to handle event feature comparison using new approach,
+posture.bends.hip.mean,0.959
+posture.bends.tail.mean,0.976
+posture.bends.head.std_dev,0.881
+posture.bends.neck.std_dev,0.894
+posture.bends.hips.std_dev,0.607
+posture.bends.tail.std_dev,0.693
+posture.primary_wavelength,NaN
+posture.secondary_wavelength,NaN
