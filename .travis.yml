@@ -47,7 +47,7 @@ before_install:
   # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py seaborn
   
   - which python
   - python --version
