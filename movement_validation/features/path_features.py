@@ -41,10 +41,16 @@ class Coordinates(Feature):
         self.y = utils.get_nested_h5_field(wf.h,['path','coordinates','y'])        
         
 
-#    def __eq__(self, other):
-#        return \
-#            utils.correlation(self.x, other.x, 'path.coordinates.x') and \
-#            utils.correlation(self.y, other.y, 'path.coordinates.y')      
+    @classmethod
+    def from_disk(cls, c_data):
+
+        self = cls.__new__(cls)
+
+        #Use utils loader
+        self.x = c_data['x'].value[:, 0]
+        self.y = c_data['y'].value[:, 0]
+
+        return self  
 
 
 
