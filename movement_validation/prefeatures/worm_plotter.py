@@ -128,6 +128,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # 3. Add the subplots
         self.ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
         self.ax1.set_title('Position')
+        self.ax1.plot(self.nw.skeleton[0,0,:], self.nw.skeleton[0,1,:])
         self.ax1.set_xlabel('x')
         self.ax1.set_ylabel('y')
         #ax1.set_aspect(aspect='equal', adjustable='datalim')
@@ -191,45 +192,37 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                             arrowprops=dict(arrowstyle="fancy",
                                             connectionstyle="arc3,rad=.2"))
 
-        self.ax3 = plt.subplot2grid((3, 3), (2, 0), rowspan=1, colspan=2)
+        self.ax3 = plt.subplot2grid((3, 3), (1, 2))
         self.ax3.set_title('Orientation-free')
         # DON'T USE set_xbound, it changes dynmically
         self.ax3.set_aspect(aspect='equal', adjustable='datalim')
 
-        # CREATE TWO STATIC PLOTS
-        # Length over time
-        self.ax4 = plt.subplot2grid((3, 3), (1, 2))
-        self.ax4.plot(self.nw.length)
-        self.ax4.set_title('Length')
+        # Length and Area over time
+        self.ax4a = plt.subplot2grid((3, 3), (2, 0), rowspan=1, colspan=2)
+        self.ax4a.plot(self.nw.length, 'o-')
+        self.ax4a.set_title('Length and Area over time')
+        self.ax4a.set_ylabel('Microns')
 
+        self.ax4b = self.ax4a.twinx()
+        self.ax4b.plot(self.nw.area, 'xr-')
+        self.ax4b.set_ylabel('Microns ^ 2')
 
-        # TODO: turn this into an artist that can be modified over time
-        # so this fluctuates frame-by-frame
-
-        """
-        Full list is:
-        - Of shape (49,2,n):
-            ventral_contour
-            dorsal_contour
-            skeleton
-        - Of shape (49,n):
-            angles        
-            widths
-        - Of shape (n):
-            length
-            area
+        # Widths and Angles
+        self.ax5a = plt.subplot2grid((3, 3), (2, 2))
+        self.ax5a.set_title('Widths and Angles')
+        self.ax5a.set_xlabel('Skeleton point')
+        self.widths = Line2D([], [])
+        self.ax5a.set_ylabel('Microns')
         
-        But for features we care about head, midbody, tail width, etc., so
-        be smart about what you show in the plot.
-        """
-
-        # Widths over time??
-        self.ax5 = plt.subplot2grid((3, 3), (2, 2))
-        self.ax5.plot(self.nw.length)
-        self.ax5.set_title('Angles')
+        self.ax5b = self.ax5a.twinx()
+        self.angles = Line2D([], [])
+        self.ax5b.set_ylabel('Degrees')
 
 
         # 4. create Artist objects
+        self.time_marker = Line2D([], [])
+
+
         self.line1W = Line2D([], [], color='green', 
                              linestyle='point marker',
                              marker='o', markersize=5)
@@ -256,11 +249,13 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self.artists_with_data = [self.line1W, self.line1W_head, self.line1C,
                                   self.line2W, self.line2W_head, self.line2C, 
-                                  self.line2C2, self.line3W, self.line3W_head]
+                                  self.line2C2, self.line3W, self.line3W_head,
+                                  self.widths, self.angles, self.time_marker]
 
-        self.artists_to_be_drawn = [self.patch1E, self.annotation1a, 
-                                    self.annotation1b, self.annotation2] + \
-                                   self.artists_with_data
+        # This list is a superset of self.artists_with_data
+        self.artists_to_be_drawn = ([self.patch1E, self.annotation1a, 
+                                     self.annotation1b, self.annotation2] +
+                                    self.artists_with_data)
 
         self.set_axes_extents()
 
@@ -277,6 +272,12 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self.ax3.add_line(self.line3W)
         self.ax3.add_line(self.line3W_head)
+
+        self.ax4a.add_line(self.time_marker)
+
+        self.ax5a.add_line(self.widths)
+        self.ax5b.add_line(self.angles)
+
 
         # So labels don't overlap:
         #plt.tight_layout()
@@ -300,6 +301,11 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.ax2.set_ylim((-500, 500))
         self.ax3.set_xlim((-800, 800))
         self.ax3.set_ylim((-500, 500))
+        self.ax4a.set_xlim((0, self.nw.num_frames))
+        self.ax5a.set_xlim((0, 49))
+        self.ax5a.set_ylim((0, np.nanmax(self.nw.widths)))
+        self.ax5b.set_ylim((np.nanmin(self.nw.angles), 
+                            np.nanmax(self.nw.angles)))
 
 
     def set_frame_data(self, frame_index):
@@ -355,6 +361,12 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                              self.nw.orientation_free_skeleton[:, 1, i])
         self.line3W_head.set_data(self.nw.orientation_free_skeleton[0, 0, i],
                                   self.nw.orientation_free_skeleton[0, 1, i])
+                                  
+        self.widths.set_data(np.arange(49), self.nw.widths[:, i])
+        self.angles.set_data(np.arange(49), self.nw.angles[:, i])
+        
+        # Draw a vertical line to mark the passage of time
+        self.time_marker.set_data([i, i], [0, 10000])
 
     @property
     def num_frames(self):
