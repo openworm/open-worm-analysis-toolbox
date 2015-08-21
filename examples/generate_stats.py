@@ -29,7 +29,7 @@ def main():
     exp_histogram_manager, ctl_histogram_manager = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
-    # ctl_histogram_manager.plot_information()
+    #ctl_histogram_manager.plot_information()
 
     print("Done with Histogram generation.  Now let's calculate statistics.")
 

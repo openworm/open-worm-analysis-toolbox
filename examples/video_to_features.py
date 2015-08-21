@@ -37,9 +37,18 @@ def example_worms(num_frames=1000):
     
     bw = mv.BasicWorm.from_skeleton_factory(skeleton)
 
-    # have the worm move in a square
-    #motion_overlay = 
+    # Have the worm move in a square
+    motion_overlay_x = np.linspace(0, 100, num_frames)
+    motion_overlay_y = np.linspace(0, 0, num_frames)
 
+    # Shape is (1000,2,1):   (DEBUG: we need it to be (1,2,1000))
+    motion_overlay = np.rollaxis(np.dstack([motion_overlay_x,
+                                            motion_overlay_y]),
+                                  axis=0, start=3)
+
+    # Broadcast the motion_overlay across axis 0 (i.e. apply the 
+    # motion_overlay evenly across all skeleton points)
+    #skeleton_moving = skeleton + motion_overlay  # DEBUG
 
     return bw
 
