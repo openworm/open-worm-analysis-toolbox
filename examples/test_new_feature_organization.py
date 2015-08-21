@@ -13,7 +13,7 @@ import sys, os
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 import movement_validation as mv
-
+from movement_validation import utils
 
 def main():
     """
@@ -45,7 +45,10 @@ def main():
         if cur_feature is not None and not cur_feature.is_temporary:
             other_feature = openworm_features.get_feature(cur_feature.name)
             print(cur_feature.name)
-            cur_feature == other_feature
+            is_same = cur_feature == other_feature
+            if not is_same:
+                import pdb
+                pdb.set_trace()
         
     import pdb
     pdb.set_trace()

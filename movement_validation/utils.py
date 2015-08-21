@@ -753,7 +753,7 @@ def compare_is_equal(x, y, variable_name, tol=1e-6):
 
 
 def correlation(x, y, variable_name, high_corr_value=0.99, 
-                merge_nans=False):
+                merge_nans=False, pct_data_agreement_threshold = 0.9):
     """
     Compare two numpy arrays using a tolerance threshold
     
@@ -788,13 +788,31 @@ def correlation(x, y, variable_name, high_corr_value=0.99,
         np.reshape(x, x.size)
         np.reshape(y, y.size)
 
+        x_nans = np.isnan(x)
+        y_nans = np.isnan(y)
+        
+        
+
         if merge_nans:
-            keep_mask = ~np.logical_or(np.isnan(x), np.isnan(y))
-            xn = x[keep_mask]
-            yn = y[keep_mask]
+            pct_data_agreement = np.sum(~x_nans & ~y_nans)/np.sum(~x_nans | ~y_nans)
+            if pct_data_agreement < pct_data_agreement_threshold:
+                #TODO: Add on the pct_data_agreement value
+                print('Mismatch of NaN values per frame is too high: %s' % variable_name)
+                return False
+            else:
+                keep_mask = ~(x_nans | y_nans)
+                #keep_mask = ~np.logical_or(x_nans, y_nans)
+                xn = x[keep_mask]
+                yn = y[keep_mask]
         else:
-            xn = x[~np.isnan(x)]  # xn -> x without NaNs or x no NaN -> xn
-            yn = y[~np.isnan(y)]
+            #Test for equality of nans
+            if not np.array_equal(x_nans,y_nans):
+                #TODO: throw in which element is the first that differs ...    
+                print('Nan mask mismatch: %s' % variable_name)
+                return False
+            else:
+                xn = x[~np.isnan(x)]  # xn -> x without NaNs or x no NaN -> xn
+                yn = y[~np.isnan(y)]
 
         if (xn.size == 0) and (yn.size == 0):
             return_value = True

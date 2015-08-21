@@ -1313,6 +1313,20 @@ class CrawlingBend(Feature):
 
         timer.toc('locomotion.crawling_bends')
 
+#    def __eq__(self, other):
+#
+#        #merge_nans=True - utils.separated_peaks works slightly differently
+#        #so merge_nans is true here, for now. The utils function works correctly
+#        #and the old version works incorrectly but was convoluted enough that
+#        #it was hard to replicate        
+#        
+#        return utils.correlation(self.value, other.v,
+#                                  'locomotion.bends.' + self.name + '.amplitude',
+#                                  merge_nans=True) and \
+#             utils.correlation(self.frequency, other.frequency, 
+#                                'locomotion.bends.' + self.name + '.frequency',
+#                                merge_nans=True)
+
 
     def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
         """
@@ -1840,6 +1854,12 @@ class BendAmplitude(Feature):
     @classmethod
     def from_schafer_file(cls,wf,feature_name,bend_name):
         return cls(wf,feature_name,bend_name)
+
+    def __eq__(self,other):
+        
+        return utils.correlation(self.value, other.value,
+                                  self.name,
+                                  merge_nans=True)
         
 class BendFrequency(Feature):
     """
@@ -1853,3 +1873,9 @@ class BendFrequency(Feature):
     @classmethod
     def from_schafer_file(cls,wf,feature_name,bend_name):
         return cls(wf,feature_name,bend_name)
+        
+    def __eq__(self,other):
+        
+        return utils.correlation(self.value, other.value,
+                                  self.name,
+                                  merge_nans=True)        

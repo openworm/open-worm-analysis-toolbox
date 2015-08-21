@@ -1230,6 +1230,12 @@ class PrimaryWavelength(Feature):
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
         return cls(wf,feature_name)
+
+    def __eq__(self,other):
+        
+        return utils.correlation(self.value, other.value,
+                                  self.name,high_corr_value=0.98,
+                                  merge_nans=True)
         
 class SecondaryWavelength(Feature):
     """
