@@ -1249,6 +1249,12 @@ class SecondaryWavelength(Feature):
     def from_schafer_file(cls, wf, feature_name):
         return cls(wf,feature_name)
         
+    def __eq__(self,other):
+        
+        return utils.correlation(self.value, other.value,
+                                  self.name,high_corr_value=0.98,
+                                  merge_nans=True)        
+        
 class TrackLength(Feature):
     """
     Feature: posture.track_length
@@ -1597,7 +1603,19 @@ class EigenProjection(Feature):
         return cls(wf,feature_name)
         
 class Bend(Feature):
+    """
     
+    Old MRC code used very different indices for this part:
+    #s are in Matlab format, 1 based and inclusive
+    Indices Mismatch
+    %            OLD                        NEW
+    %---------------------------------------------
+    %head     : 1:9                         1:8
+    %neck     : 9:17                        9:16
+    %midbody  : 17:32 (mean) 17:31 (std)    17:33
+    %hip      : 31:39                       34:41
+    %tail     : 39:48                       42:49
+    """
     def __init__(self,wf,feature_name,bend_name):
 
         self.name = 'posture.bends.' + bend_name
@@ -1649,6 +1667,11 @@ class BendMean(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,bend_name):
         return cls(wf,feature_name,bend_name)
+
+    def __eq__(self,other):
+        return utils.correlation(self.value, other.value,
+                                  self.name,high_corr_value=0.95)
+
         
 class BendStdDev(Feature):
 
@@ -1661,6 +1684,10 @@ class BendStdDev(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,bend_name):
         return cls(wf,feature_name,bend_name)
+
+    def __eq__(self,other):
+        return utils.correlation(self.value, other.value,
+                                  self.name,high_corr_value=0.60)
 
 class Skeleton(Feature):
     
