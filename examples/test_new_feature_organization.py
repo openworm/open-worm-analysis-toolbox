@@ -39,20 +39,19 @@ def main():
     print('Computing example features from normalized worm')
     openworm_features = mv.WormFeaturesDos(nw)
     
-    for cur_feature in matlab_worm_features.feature_list:
+    all_features = matlab_worm_features.features
+    for key in all_features:
+        cur_feature = all_features[key]
         #Currently we are including temporary features which don't exist
         #when loading from disk
-        if cur_feature is not None and not cur_feature.is_temporary:
+        if cur_feature is not None:
             other_feature = openworm_features.get_feature(cur_feature.name)
             print(cur_feature.name)
             is_same = cur_feature == other_feature
             if not is_same:
                 import pdb
                 pdb.set_trace()
-        
-    import pdb
-    pdb.set_trace()
-
+     
 #    # SCHAFER LAB
 #    #----------------------
 #    # Load the Matlab codes generated features from disk

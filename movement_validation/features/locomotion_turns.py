@@ -941,7 +941,7 @@ class TurnProcessor(Feature):
         #sx = nw.skeleton_x
         #sy = nw.skeleton_y
         
-        midbody_distance = wf['locomotion.velocity.mibdody.distance'].value
+        midbody_distance = self.get_feature(wf,'locomotion.velocity.mibdody.distance').value
         
 
         timer = wf.timer

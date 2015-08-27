@@ -686,9 +686,8 @@ class MotionMode(Feature):
         self.value = np.empty(num_frames, dtype='float') * np.NaN
         
         for key,value in self.frame_values.items():
-            feature_name = 'locomotion.motion_events.' + key            
-            temp = wf[feature_name]
-            event_feature = temp.value
+            motion_type = 'locomotion.motion_events.' + key    
+            event_feature = self.get_feature(wf,motion_type).value
             
             event_mask = event_feature.get_event_mask()
             self.value[event_mask] = value

@@ -7,6 +7,7 @@ This module defines the NormalizedWorm class
 import numpy as np
 import scipy.io
 
+import collections
 import copy
 import warnings
 import os

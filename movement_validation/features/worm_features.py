@@ -26,7 +26,7 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 import csv, os, warnings
 import h5py  # For loading from disk
 import numpy as np
-import collections  # For namedtuple
+import collections  # For namedtuple, OrderedDict
 import pandas as pd
 
 from .. import utils
@@ -872,13 +872,6 @@ class WormFeaturesDos(object):
 
         self.initialize_features()
 
-        #The current behavior is to calculate all features
-        #TODO: Add in support in which features are only compueted on demand
-        #   - This is basically present, we just need an if statement
-        #   and an optional input ... (use get_feature for on demand)
-
-        
-
         if load_features:
             self._retrieve_all_features()
 
@@ -894,7 +887,9 @@ class WormFeaturesDos(object):
 
         #I'm not thrilled about this approach. I think we should
         #move the source specification into intialize_features
-        for spec in self.feature_spec_list:
+        all_specs = self.specs        
+        for key in all_specs:
+            spec = all_specs[key]
             spec.source = 'mrc'
 
         #Load file reference for getting files from disk
@@ -909,23 +904,33 @@ class WormFeaturesDos(object):
         return self
     
     def _retrieve_all_features(self):
-        for spec in self.feature_spec_list:
+        spec_dict = self.specs        
+        for key in spec_dict:
+            #Trying to avoid 2v3 differences in Python dict iteration
+            spec = spec_dict[key]
             #TODO: We could pass in the spec instance ...
             #rather than resolving the instance from the name
             self.get_feature(spec.name) 
     
     def initialize_features(self):
 
+        """
+        Reads the feature specs
+        """
+
         f_specs = get_feature_processing_specs()
         
-        self.feature_spec_dict = {value.name : value for value in f_specs}
-        self.feature_spec_list = f_specs
-
-
-        self.features = {}
+        self.specs = collections.OrderedDict([(value.name, value) for value in f_specs])        
         
-        #This may be temporary
-        self.feature_list = []   
+        #self.feature_spec_dict = {value.name : value for value in f_specs}
+        #self.feature_spec_list = f_specs
+
+
+        self.features = collections.OrderedDict()
+        self._temp_features = collections.OrderedDict()
+        
+        ##This may be temporary
+        #self.feature_list = []   
 
     
     def get_feature(self,feature_name):
@@ -947,25 +952,26 @@ class WormFeaturesDos(object):
         #we need to compute it.
         if feature_name in self.features:
             return self.features[feature_name]
+        elif feature_name in self._temp_features:
+            return self._temp_features[feature_name]
         
     
-        #TODO: This will need some better error handling
-        #This could fail if a poor feature name is passed in
-        spec = self.feature_spec_dict[feature_name]
+        #Ensure that the feature name is valid
+        if feature_name in self.specs:    
+            spec = self.specs[feature_name]
+        else:
+            raise KeyError('Specified feature name not found in the feature specifications')    
             
         temp = spec.get_feature(self)
 
-        self.feature_list.append(temp)
-        
         #A feature can return None, which means we can't ask the feature
         #what the name is, so we go based on the spec
-        self.features[spec.name] = temp
+        if spec.is_temporary:
+            self._temp_features[spec.name] = temp
+        else:
+            self.features[spec.name] = temp
     
         return temp
-
-    def __getitem__(self,key):
-        #TODO: I think we are going to retire this method in favor of get_feature
-        return self.features[key]
 
     def __repr__(self):
         return utils.print_object(self)    
