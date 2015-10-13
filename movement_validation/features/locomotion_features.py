@@ -380,6 +380,12 @@ class AverageBodyAngle(object):
     This is a temporary feature that is needed for
     locomotion.velocity features
     
+    Description
+    -----------
+    For the "body" parition, compute angles between each point
+    on the skeleton and average them together to compute a single value for 
+    each frame.
+    
     See Also
     --------
     LocomotionVelocitySection
@@ -392,9 +398,6 @@ class AverageBodyAngle(object):
                                   partition_key='body',
                                   data_key='skeleton',
                                   head_to_tail=False)    
-
-    def __eq__(self,other):
-        return True
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
@@ -411,7 +414,11 @@ class LocomotionVelocitySection(Feature):
     locomotion.velocity.head_tip,
     locomotion.velocity.head, etc.
     
-    #Each of these holds two values:
+    This is the parent feature which computes and then temporarily holds
+    attributes for more specific child functions
+    
+    Attributes
+    ----------
     - speed
     - direction
 
@@ -420,18 +427,40 @@ class LocomotionVelocitySection(Feature):
     
     def __init__(self,wf,feature_name,segment):
 
+        """
+        Parameters
+        ----------
+        segment: string
+            Options include:
+            - head_tip
+            - head
+            - midbody
+            - tail
+            - tail_tip
+        
+        Feature Dependencies
+        --------------------
+        - locomotion.velocity.avg_body_angle     
+        
+        See Also
+        --------
+        - velocity_module.compute_velocity      #This is the function that
+                                                #does all the work
+        
+        """
+
         self.name = feature_name
-        #self.name = 'locomotion.velocity.' + segment
 
         #Unpacking
         #-------------------------
         nw = wf.nw
         ventral_mode = nw.video_info.ventral_mode
         fps = nw.video_info.fps
+        
+        #TODO: I'd like this to be inside the class
         locomotion_options = wf.options.locomotion
         
-        temp = self.get_feature(wf,'locomotion.velocity.avg_body_angle')
-        avg_body_angle = temp.value        
+        avg_body_angle = self.get_feature(wf,'locomotion.velocity.avg_body_angle').value     
 
         #Options by segment
         #--------------------------------------------------        
@@ -440,18 +469,21 @@ class LocomotionVelocitySection(Feature):
         else:
             sample_time = locomotion_options.velocity_body_diff
         
+        data_key = segment        
         if segment == 'midbody' and wf.options.mimic_old_behaviour:
             data_key = 'old_midbody_velocity'
-        else:
-            data_key = segment
-            
+                        
         #The actual computation
-        #----------------------        
-        x, y = nw.get_partition(data_key, 'skeleton', True)
+        #----------------------
+        #If we ever move nw features into the self.get_feature approach, this
+        #would be tougher to replicate
+        #i.e. x = self.get_feature(nw,'skeleton_x')
+        x, y = nw.get_partition(data_key, 'skeleton', True)        
+        #The real work ...
         speed, direction = velocity_module.compute_velocity(fps, x, y,
                                             avg_body_angle,
                                             sample_time,
-                                            ventral_mode)[0:2]        
+                                            ventral_mode)[0:2]
 
         self.speed = speed
         self.direction = direction   

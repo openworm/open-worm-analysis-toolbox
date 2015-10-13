@@ -18,26 +18,48 @@ __ALL__ = ['get_angles',
 def get_angles(segment_x, segment_y, head_to_tail=False):
     """ 
     
-    Obtain the "angle" of a subset of the 49 points of a worm, for each frame.
+    TODO: This might be better named as:
+    get_average_angle_per_frame
+    
+    Obtain the average angle (see definition in output) for a subset of the 
+    worm for each frame.
         
-    #TODO: Implement the explain function check here ...
-
     Parameters
     ----------
-    segment_x, segment_y: numpy arrays of shape (p,n) where 
-      p is the size of the partition of the 49 points
-      n is the number of frames in the video
+    segment_x, segment_y: numpy arrays of shape (p,n) where
+          - 'p' is the size of the partition of the 49 points
+          - 'n' is the number of frames in the video
+          Values are typically (always) the skeleton x & y positions.
     head_to_tail: bool
+        - if True
+             - closer to tail are tips (where vector is tip - tail)
+             - closer to head are tails
+             1 2 3 4
+             ======>   #This is supposed to be the vector
+        - if False
+             - closer to tail are tails
+             - closer to head are tips
+             1 2 3 4
+             <======
         True means the worm points are ordered head to tail.
 
     Returns
     -------
-    A numpy array of shape (n) and stores the worm body's "angle" 
-    (in degrees) for each frame of video
+    Angles in degrees. A numpy array of shape (n) and stores the worm body's 
+    "angle" (in degrees) for each frame of video. All angles for a given 
+    frame are averaged together. Angles are computed between sequential points
+    and not smoothed.
+    
+    Implementation Notes
+    --------------------
+    JAH: I'm surprised this works given that there is relatively little control
+    over the density of sampling of the skeleton (or segment_x and segment_y).
+    As the spatial sampling changes, I would expect the results of this function
+    to change drastically.
 
     """
 
-    if(not head_to_tail):
+    if not head_to_tail:
         # reverse the worm points so we go from tail to head
         segment_x = segment_x[::-1,:]
         segment_y = segment_y[::-1,:]
@@ -46,6 +68,9 @@ def get_angles(segment_x, segment_y, head_to_tail=False):
     # then we take the mean of these differences for each frame
     # ignore mean of empty slice from np.nanmean
     with warnings.catch_warnings():
+        
+        #TODO: Why do we need to filter if we are catching warnings?????
+        #
         # This warning arises when all values are NaN in an array
         # This occurs in not for all values but only for some rows, other rows
         # may be a mix of valid and NaN values
@@ -68,24 +93,34 @@ def get_partition_angles(nw, partition_key, data_key='skeleton',
                          head_to_tail=False):
     """ 
     
-    Obtain the "angle" of a subset of the 49 points of a worm for each frame
-
-    #TODO: I have no idea what this is actually doing, what is an "angle" for 
-    a body part
+    Obtain the "angle" of a subset of the 49 points of a worm for each frame.
+    
+    This is a wrapper around get_angles(). This function resolves a body 
+    partition into actual x,y data for that function.
 
     Parameters:
     -----------
-    nw : Normalized Worm (class name???)
-    partition_key :
+    nw: NormalizedWorm
+    
+    partition_key : str
+        Examples include head, tail, or body
     data_key : str
-        The attribute used
+        The attribute of normalized worm to use. Examples include:
+            - skeleton
+            - anything else?
     head_to_tail : bool
-    =True means the worm points are order head to tail.
+            - True means the worm points are ordered head to tail.
+            TODO: Explain this more
 
     Returns:
     --------
     numpy array of shape (n)
         Stores the worm body's "angle" (in degrees) for each frame of video.
+        See the get_angles() function for how the angles are calculated.
+        
+    See Also:
+    ---------
+    get_angles
         
     """
 
@@ -342,16 +377,19 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     sample_time: int
       Time over which to compute velocity, in seconds.
 
-    ventral_mode: int
-      0, 1, or 2, specifying that the ventral side is...
-        0 = unknown
-        1 = clockwise
-        2 = anticlockwise
+    ventral_mode: int (0,1,2)
+        Options for specification of the ventral side:
+        - 0 = unknown (default)
+        - 1 = clockwise
+        - 2 = anticlockwise
 
     Returns
     -------
     (speed, angular_speed, motion_direction)
     Three numpy arrays of shape (n), speed, angular_speed, motion_direction
+        speed:
+        angular_speed:
+        motion_direction:
 
     Known Callers
     -------------
@@ -458,16 +496,21 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
 def get_frames_per_sample(fps, sample_time):
     """
+    Converts a specified sample_time from seconds to # of samples.
 
-    Matlab code: getWindowWidthAsInteger
-
-
-      get_window_width:
-        We require sampling_scale to be an odd integer
-        We calculate the scale as a scalar multiple of FPS.  We require the 
-        scalar multiple of FPS to be an ODD INTEGER.
-
-        INPUT: sample_time: number of seconds to sample.
+    Parameters
+    ----------
+    fps: float
+        Video sampling rate
+    sample_time: float
+        Duration (in seconds) to sample
+    
+    Returns
+    --------
+    int
+        The # of samples that corresponds to the specified sample_time. This
+        value will always be odd. Values are always increased to obtain the 
+        odd value (e.g. an exact sampling of 4 samples becomes 5).
     """
 
     ostensive_sampling_scale = sample_time * fps
@@ -475,29 +518,5 @@ def get_frames_per_sample(fps, sample_time):
     half_scale = round(ostensive_sampling_scale/2)
     sampling_scale = 2*half_scale + 1     
     
-    #    # Code would be better as: (Matlab code shown)
-    #    #------------------------------------------------
-    #    #half_scale = round(window_width_as_samples/2);
-    #    #window_width_integer = 2*half_scale + 1;
-    #
-    #    # We need sampling_scale to be an odd integer, so
-    #    # first we check if we already have an integer.
-    #    if((ostensive_sampling_scale).is_integer()):
-    #        # In this case ostensive_sampling_scale is an integer.
-    #        # But is it odd or even?
-    #        if(ostensive_sampling_scale % 2 == 0):  # EVEN so add one
-    #            sampling_scale = ostensive_sampling_scale + 1
-    #        else:                                  # ODD
-    #            sampling_scale = ostensive_sampling_scale
-    #    else:
-    #        # Otherwise, ostensive_sampling_scale is not an integer,
-    #        # so take the nearest odd integerw
-    #        sampling_scale_low = np.floor(ostensive_sampling_scale)
-    #        sampling_scale_high = np.ceil(ostensive_sampling_scale)
-    #        if(sampling_scale_high % 2 == 0):
-    #            sampling_scale = sampling_scale_low
-    #        else:
-    #            sampling_scale = sampling_scale_high
-
     assert(type(sampling_scale) == int or sampling_scale.is_integer())
     return int(sampling_scale)
