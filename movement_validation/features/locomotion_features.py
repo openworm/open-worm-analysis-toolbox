@@ -69,7 +69,7 @@ class LocomotionVelocity(object):
     This can be deleted when we move over to the new feature organization    
     
     This is for the 'velocity' locomotion feature. The helper function,
-    'compute_velocity' is used elsewhere.  
+    'compute_speed' is used elsewhere.  
 
     Computes the worm velocity at various parts of the worm body.
         
@@ -128,12 +128,12 @@ class LocomotionVelocity(object):
             'tail_tip': locomotion_options.velocity_tip_diff
         }
 
-        # Step 2: Run the compute_velocity function on the different 
+        # Step 2: Run the compute_speed function on the different 
         # parts of the body, 
         for attribute_key, data_key in zip(self.attribute_keys, data_keys):
             x, y = nw.get_partition(data_key, 'skeleton', True)
 
-            speed, direction = velocity_module.compute_velocity(fps, x, y,
+            speed, direction = velocity_module.compute_speed(fps, x, y,
                                             avg_body_angle,
                                             sample_time_values[attribute_key],
                                             ventral_mode)[0:2]
@@ -444,7 +444,7 @@ class LocomotionVelocitySection(Feature):
         
         See Also
         --------
-        - velocity_module.compute_velocity      #This is the function that
+        - velocity_module.compute_speed      #This is the function that
                                                 #does all the work
         
         """
@@ -480,7 +480,7 @@ class LocomotionVelocitySection(Feature):
         #i.e. x = self.get_feature(nw,'skeleton_x')
         x, y = nw.get_partition(data_key, 'skeleton', True)        
         #The real work ...
-        speed, direction = velocity_module.compute_velocity(fps, x, y,
+        speed, direction = velocity_module.compute_speed(fps, x, y,
                                             avg_body_angle,
                                             sample_time,
                                             ventral_mode)[0:2]

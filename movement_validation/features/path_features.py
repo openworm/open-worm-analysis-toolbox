@@ -423,7 +423,7 @@ def worm_path_curvature(features_ref):
     # NOTE: This is what is in the MRC code, but differs from their description.
     # In this case I think the skeleton filtering makes sense so we'll keep it.
     speed, ignored_variable, motion_direction = \
-        velocity_module.compute_velocity(fps, x[BODY_I, :], y[BODY_I,:], \
+        velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I,:], \
                                          avg_body_angles_d, BODY_DIFF, ventral_mode)
 
     frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
@@ -563,7 +563,7 @@ class Curvature(Feature):
         # NOTE: This is what is in the MRC code, but differs from their description.
         # In this case I think the skeleton filtering makes sense so we'll keep it.
         speed, ignored_variable, motion_direction = \
-            velocity_module.compute_velocity(fps, x[BODY_I, :], y[BODY_I,:], \
+            velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I,:], \
                                              avg_body_angles_d, BODY_DIFF, ventral_mode)
     
         frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)

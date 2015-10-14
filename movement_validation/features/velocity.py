@@ -11,7 +11,7 @@ import numpy as np
 __ALL__ = ['get_angles',
            'get_partition_angles',
            'h__computeAngularSpeed',
-           'compute_velocity',
+           'compute_speed',
            'get_frames_per_sample']
 
 
@@ -98,8 +98,8 @@ def get_partition_angles(nw, partition_key, data_key='skeleton',
     This is a wrapper around get_angles(). This function resolves a body 
     partition into actual x,y data for that function.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     nw: NormalizedWorm
     
     partition_key : str
@@ -112,14 +112,14 @@ def get_partition_angles(nw, partition_key, data_key='skeleton',
             - True means the worm points are ordered head to tail.
             TODO: Explain this more
 
-    Returns:
-    --------
+    Returns
+    -------
     numpy array of shape (n)
         Stores the worm body's "angle" (in degrees) for each frame of video.
         See the get_angles() function for how the angles are calculated.
         
-    See Also:
-    ---------
+    See Also
+    --------
     get_angles
         
     """
@@ -133,28 +133,40 @@ def get_partition_angles(nw, partition_key, data_key='skeleton',
 def h__computeAngularSpeed(fps, segment_x, segment_y,
                            left_I, right_I, ventral_mode):
     """ 
-    TODO: What does this do????    
     
-    Parameters:
-    ----------- 
+    This function is called by compute_speeed().
+    
+    TODO: These units are wrong ...
+    TODO: This is actually angular velocity    
+    
+    Parameters
+    ---------- 
     fps :    
-    segment_x : 
-        The x's of the partition being considered. shape (p,n)
-    segment_y : 
-        The y's of the partition being considered. shape (p,n)
-    left_I : 
-        The angle's first point (frame?)
-    right_I : 
-        The angle's second point
+    segment_x : numpy array, shape (p,n)
+        The x's of the partition being considered. 
+    segment_y : numpy array, shape (p,n)
+        The y's of the partition being considered. 
+    left_I : numpy array
+        For each frame, an index (earlier in time) from which to compute
+        the desired value. These values only exist for cases in which
+        both left_I and right_I were computed to be valid.
+    right_I : numpy array
+        For each frame, an index (later in time) from which to compute the 
+        desired vlaue.
     ventral_mode : 
         0, 1, or 2, specifying that the ventral side is...
           0 = unknown
           1 = clockwise
           2 = anticlockwise
 
-    Returns:
-    --------
+    Returns
+    -------
     a numpy array of shape n, in units of degrees per second
+    
+    See Also
+    --------
+    compute_speed
+    get_angles
 
     """
     # Compute the body part direction for each frame
@@ -178,27 +190,29 @@ def h__computeAngularSpeed(fps, segment_x, segment_y,
     return angular_speed
 
 
-def h__getVelocityIndices(frames_per_sample, good_frames_mask):
+def h__getSpeedIndices(frames_per_sample, good_frames_mask):
     """ 
 
-    For each point, we calculate the velocity using frames prior to and following
+    For each point, we calculate the speed using frames prior to and following
     a frame. Given that some frames are not valid (have NaN), we move the index
     backward (prior frame) or forward (following frame), essentially slightly
-    widening the time frame over which the velocity is computed.
+    widening the time frame over which the speed is computed.
 
     This function determines what the indices are that each frame will use to 
     calculate the velocity at that frame. For example, at frame 5 we might decide
     to use frames 2 and 8.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     frames_per_sample : int
       Our sample scale, in frames. The integer must be odd.
 
     good_frames_mask : 
       Shape (num_frames), false if underlying angle is NaN
 
-         OUTPUTS:
+    Returns
+    -------
+    (keep_mask,left_I,right_I)
            keep_mask : shape (num_frames), this is used to indicate 
                        which original frames have valid velocity values, 
                        and which don't. 
@@ -208,14 +222,54 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
                        that should be used to calculate the velocity
            right_I   : shape (n_valid_velocity_values)
 
-    """
+    Explanation
+    -----------
+    Assume we have the following data ........
+    half_scale = 1 # minimum shift for computing value at a frame
+    full_scale = 2 # maximum shift for computing value at a frame
+    frame   : 0 1 2 3 4 5 6 7 8 9
+    is_good : T F T T T F T F T F   
+    
+    Our first possibly valid frame is 1, because we require 1 on each side
+    (i.e. half_scale = 1).
+    
+    frame 0:
+        can't go left, left is invalid
+        check 1, it is invalid
+        check 2, it is valid, right index is 2
+    
+    So for frame 1:
+        check 0, it is valid, left index is set
+        check 2, also valid, right index is set
+        
+    Now onto 2:
+        check 1, invalid
+        check 0, valid, left index at 0
+        check 3, valid, right index is 3
+        
+    So far we have:
+        left_I  = [NaN, 0, 0]
+        right_I = [2,   2, 3]
+        
+    Interpretation:
+    frame 0: left index is invalid, so we don't compute the value
+    frame 1: compute value taking values at frame 0 (left) and frame 2 (right)
+        
+    This is a frame by frame approach, but below we actually loop over
+    the shifts since the shifts tends to be much less than in size than the
+    # of frames
+    
+    i.e. (by shift approach explained)
+    For all frames, check 1 to the left. For all valid frames, set these
+    as the left_I values for the current frames.    
+    Do the same thing as well for frames that are 1 to the right.
+    Now we are done with a shift size of 1.
 
+    Now repeat this process for a shift size of 2, however only override left_I
+    and right_I values if they were not set for a shift size of 1.    
+    
+    
     """
-  Approach, rather than interating over each frame, we iterate over the
-  possible shifts. Since this tends to be significantly less than the # of
-  frames, we save a bit of time in the execution.
-
-  """
 
     # Require that frames_per_sample be an odd integer
     assert(type(frames_per_sample) == int)
@@ -234,14 +288,12 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
     # Final frame for which we can assign a valid velocity, plus one:
     end_index = num_frames - half_scale
 
-    # These are the indices we will use to compute the velocity. We add
-    # a half scale here to avoid boundary issues. We'll subtract it out later.
+    # These are the indices we will use to compute the speed. We add
+    # a half scale here to avoid boundary issues (i.e. because we pad the. We'll subtract it out later.
     # See below for more details
     middle_I = np.array(np.arange(start_index, end_index, 1) + half_scale,
                         dtype='int32')
 
-    # @MichaelCurrie: Wouldn't this make more sense?
-    #middle_I = np.arange(start_index, end_index + half_scale, 1) + half_scale
 
     """
      Our start_index frame can only have one valid start frame (frame 0)
@@ -273,7 +325,7 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
      never use those values however because below we state that the values
      at those indices are bad (see good_frames_mask_padded)
   
-  """
+    """
 
     # This tells us whether each value is useable or not for velocity
     # Better to do this out of the loop.
@@ -356,9 +408,12 @@ def h__getVelocityIndices(frames_per_sample, good_frames_mask):
 
 
 
-def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
+def compute_speed(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     """
-    The velocity is computed not using the nearest values but values
+
+    Previous Name: compute_velocity    
+    
+    The speed is computed not using the nearest values but values
     that are separated by a sufficient time (sample_time). 
     If the encountered values are not valid (i.e. NaNs), the width of 
     time is expanded up to a maximum of 2*sample_time (or technically, 
@@ -398,6 +453,10 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     """
 
     num_frames = np.shape(sx)[1]
+    speed = np.full((1, num_frames),np.nan)
+    angular_speed = np.full((1, num_frames),np.nan)
+    motion_direction = np.full((1, num_frames),np.nan)
+
 
     # We need to go from a time over which to compute the velocity
     # to a # of samples. The # of samples should be odd.
@@ -406,33 +465,18 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     # If we don't have enough frames to satisfy our sampling scale,
     # return with nothing.
     if(frames_per_sample > num_frames):
-        # Create numpy arrays filled with NaNs
-        speed = np.empty((1, num_frames))
-        speed.fill(np.NaN)
-        direction = np.empty((1, num_frames))
-        direction.fill(np.NaN)
-        return speed, direction
+        return speed, angular_speed, motion_direction
 
     # Compute the indices that we will use for computing the velocity. We
     # calculate the velocity roughly centered on each sample, but with a
-    # considerable width between frames that smooths the velocity.
+    # considerable width between frames that smooths the velocity estimate.
     good_frames_mask = ~np.isnan(avg_body_angle)
-    keep_mask, left_I, right_I = h__getVelocityIndices(frames_per_sample,
+    keep_mask, left_I, right_I = h__getSpeedIndices(frames_per_sample,
                                                        good_frames_mask)
 
-    # Compute speed
+    #1) Compute speed
     # --------------------------------------------------------
-
     # Centroid of the current skeletal segment, frame-by-frame:
-
-    # NOTE: In Matlab this is done only over a certain range of the body
-    # TODO: Who calls this, can we just hard code mimic old behavior here???
-    #
-    #   ??? What are the old behaviors?
-    #
-    # Caller List (not necessarily complete):
-    # - locomotion.velocity entries
-
     x_mean = np.mean(sx, 0)
     y_mean = np.mean(sy, 0)
 
@@ -442,28 +486,22 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     distance = np.sqrt(dX ** 2 + dY ** 2)
     time = (right_I - left_I) / fps
 
-    speed = np.empty((num_frames))
-    speed.fill(np.NaN)
     speed[keep_mask] = distance / time
 
-    # Compute angular speed (Formally known as direction :/)
+    #2) Compute angular speed (Formally known as direction :/)
     # --------------------------------------------------------
-    angular_speed = np.empty((num_frames))
-    angular_speed.fill(np.NaN)
     angular_speed[keep_mask] = h__computeAngularSpeed(fps, sx, sy, left_I, right_I,
                                                       ventral_mode)
 
-    # Sign the speed.
+    #3) Sign the speed.
+    # ------------------------------------------------------------
     #   We want to know how the worm's movement direction compares
     #   to the average angle it had (apparently at the start)
-    motion_direction = np.empty((num_frames))
-    motion_direction.fill(np.NaN)
     motion_direction[keep_mask] = np.degrees(np.arctan2(dY, dX))
 
     # This recentres the definition, as we are really just concerned
     # with the change, not with the actual value
-    body_direction = np.empty((num_frames))
-    body_direction.fill(np.NaN)
+    body_direction = np.full((1, num_frames),np.nan)
     body_direction[keep_mask] = motion_direction[keep_mask] - \
         avg_body_angle[left_I]
 
@@ -489,11 +527,6 @@ def compute_velocity(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
     return speed, angular_speed, motion_direction
 
-    # @MichaelCurrie: shouldn't we also return these?  Otherwise, why
-    # did we both to calculate them?
-    #            'body_direction': body_direction,
-
-
 def get_frames_per_sample(fps, sample_time):
     """
     Converts a specified sample_time from seconds to # of samples.
@@ -506,11 +539,13 @@ def get_frames_per_sample(fps, sample_time):
         Duration (in seconds) to sample
     
     Returns
-    --------
+    -------
     int
         The # of samples that corresponds to the specified sample_time. This
         value will always be odd. Values are always increased to obtain the 
-        odd value (e.g. an exact sampling of 4 samples becomes 5).
+        odd value (e.g. an exact sampling of 4 samples becomes 5). Odd values
+        are meant to specify grabbing a set of points that is inclusive of the 
+        end point so as to occupy the specified duration.
     """
 
     ostensive_sampling_scale = sample_time * fps
