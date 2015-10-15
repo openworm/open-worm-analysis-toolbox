@@ -358,7 +358,11 @@ class ShafferPlotDocument(PlotDocument):
             # Compute histograms on our files
             exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
             ctl_histogram_manager = mv.HistogramManager(control_files[:10])
-            
+
+            # Compute pathplots on our files
+            exp_pathplot_manager = mv.PathPlotManager(experiment_files[:10])
+            ctl_pathplot_manager = mv.PathPlotManager(control_files[:10])
+
             # Store a pickle file in the same folder as this script 
             # (i.e. movement_validation/examples/)
             with open(pickle_file_path, "wb") as pickle_file:
@@ -368,17 +372,10 @@ class ShafferPlotDocument(PlotDocument):
         print("Experiment has a total of " + \
               str(len(exp_histogram_manager.merged_histograms)) + " histograms")
 
-        return exp_histogram_manager, ctl_histogram_manager
-
-
-
-
-
+        return exp_histogram_manager, ctl_histogram_manager, exp_pathplot_manager, ctl_pathplot_manager
 
 if __name__ == '__main__':
     plt.ioff()
-
-
 
     if len(sys.argv) > 1:
         document = ShafferPlotDocument(sys.argv[1])

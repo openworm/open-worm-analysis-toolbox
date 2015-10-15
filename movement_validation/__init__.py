@@ -30,6 +30,8 @@ from .statistics.histogram_manager import HistogramManager
 from .statistics.statistics_manager import StatisticsManager
 from .statistics.histogram import Histogram, MergedHistogram
 
+from .statistics.pathplot import *
+
 try:
     from . import user_config
 except ImportError:
