@@ -472,7 +472,7 @@ def compute_speed(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     # considerable width between frames that smooths the velocity estimate.
     good_frames_mask = ~np.isnan(avg_body_angle)
     keep_mask, left_I, right_I = h__getSpeedIndices(frames_per_sample,
-                                                       good_frames_mask)
+                                                    good_frames_mask)
 
     #1) Compute speed
     # --------------------------------------------------------
@@ -486,41 +486,45 @@ def compute_speed(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
     distance = np.sqrt(dX ** 2 + dY ** 2)
     time = (right_I - left_I) / fps
 
-    speed[keep_mask] = distance / time
+    #import pdb
+    #pdb.set_trace()
+
+    speed[0,keep_mask] = distance / time
 
     #2) Compute angular speed (Formally known as direction :/)
     # --------------------------------------------------------
-    angular_speed[keep_mask] = h__computeAngularSpeed(fps, sx, sy, left_I, right_I,
+    angular_speed[0,keep_mask] = h__computeAngularSpeed(fps, sx, sy, 
+                                                      left_I, right_I,
                                                       ventral_mode)
 
     #3) Sign the speed.
     # ------------------------------------------------------------
     #   We want to know how the worm's movement direction compares
     #   to the average angle it had (apparently at the start)
-    motion_direction[keep_mask] = np.degrees(np.arctan2(dY, dX))
+    motion_direction[0,keep_mask] = np.degrees(np.arctan2(dY, dX))
 
     # This recentres the definition, as we are really just concerned
     # with the change, not with the actual value
     body_direction = np.full((1, num_frames),np.nan)
-    body_direction[keep_mask] = motion_direction[keep_mask] - \
+    body_direction[0,keep_mask] = motion_direction[0,keep_mask] - \
         avg_body_angle[left_I]
 
     # Force all angles to be within -pi and pi
     with np.errstate(invalid='ignore'):
-        body_direction = (body_direction + 180) % (360) - 180
+        body_direction[0,:] = (body_direction + 180) % (360) - 180
 
     # Sign speed[i] as negative if the angle
     # body_direction[i] lies in Q2 or Q3
     with np.errstate(invalid='ignore'):
-        speed[abs(body_direction) > 90] = -speed[abs(body_direction) > 90]
+        speed[0,abs(body_direction[0,:]) > 90] = -speed[0,abs(body_direction[0,:]) > 90]
 
     # (Added for wormPathCurvature)
     # Sign motion_direction[i] as negative if the angle
     # body_direction[i] lies in Q3 or Q4
 
     with np.errstate(invalid='ignore'):
-        motion_direction[body_direction < 0] = - \
-            motion_direction[body_direction < 0]
+        motion_direction[0,body_direction[0,:] < 0] = - \
+            motion_direction[0,body_direction[0,:] < 0]
 
     if(ventral_mode == 2):  # i.e. if ventral side is anticlockwise:
         motion_direction = -motion_direction
