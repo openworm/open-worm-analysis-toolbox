@@ -77,7 +77,6 @@ class EndPointsPlot(BasePointsPlot):
     def plot_points(self, ax, size=100, color='black', symbol='o'):
         ax.scatter(self.points['x'], self.points['y'], s=size, c=color, marker=symbol) 
 
-
 class BasePathPlot(BasePlot):
     def __init__(self, worm):
         super(BasePathPlot, self).__init__(worm)
@@ -95,8 +94,6 @@ class MidbodyPathPlot(BasePathPlot):
     def _get_path(self):
         self.path['x'] = np.nanmean(self.worm.posture.skeleton.x[16:33], axis=0)
         self.path['y'] = np.nanmean(self.worm.posture.skeleton.y[16:33], axis=0)
-
-        print self.path
 
     def plot_path(self, ax, color='chartreuse'):
         ax.plot(self.path['x'], self.path['y'], c=color)
@@ -143,12 +140,20 @@ def test_run():
     mp = MidbodyPathPlot(worm)
     tp = TailPathPlot(worm)
 
+    path.set_title("Path Plot")
+    velocity.set_title("Velocity Plot")
+    head.set_title("Path Plot Head")
+    mid.set_title("Path Plot Midbody")
+    tail.set_title("Path Plot Tail")
+
     pp.plot_path(path)
     up.plot_points(path)
     op.plot_points(path)
     cp.plot_points(path)
     sp.plot_points(path)
     ep.plot_points(path)
+
+
 
     hp.plot_path(head)
     up.plot_points(head)
