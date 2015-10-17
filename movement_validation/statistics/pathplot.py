@@ -50,16 +50,16 @@ class OmegaPointsPlot(BasePointsPlot):
         for frame in self.worm.locomotion.turns.omegas.start_frames:
             self._set_location_from_frame(frame)
 
-    def plot_points(self, ax, size=120, color='brown', symbol='x'):
-        ax.scatter(self.points['x'], self.points['y'], s=size, c=color, marker=symbol)
+    def plot_points(self, ax, size=240, color='brown', symbol='x'):
+        ax.scatter(self.points['x'], self.points['y'], lw=6, s=size, c=color, marker=symbol)
 
 class CoilPointsPlot(BasePointsPlot):
     def _get_points(self):
-        for frame in self.worm.posture.coils.end_frames:
-            self._set_location_from_frame(frame)
+        for frame in self.worm.posture.coils.start_frames:
+            self._set_location_from_frame(frame - 5)
 
-    def plot_points(self, ax, size=120, color='brown', symbol='+'):
-        ax.scatter(self.points['x'], self.points['y'], s=size, c=color, marker=symbol)
+    def plot_points(self, ax, size=240, color='brown', symbol='+'):
+        ax.scatter(self.points['x'], self.points['y'], lw=6, s=size, c=color, marker=symbol)
 
 class StartPointsPlot(BasePointsPlot):
     def _get_points(self):
@@ -118,10 +118,12 @@ class VelocityPathPlot(BasePathPlot):
     def _get_path(self):
         self.path['x'] = self.worm.path.coordinates.x
         self.path['y'] = self.worm.path.coordinates.y
-        self.color = self.worm.locomotion.velocity
+        raw_colors = np.nan_to_num(self.worm.locomotion.velocity.midbody.speed)
+        max_color = max(raw_colors)
+        self.colors = raw_colors/max_color
 
     def plot_path(self, ax):
-        ax.plot(self.path['x'], self.path['y'])
+        ax.scatter(self.path['x'], self.path['y'], c=self.colors, cmap='RdYlGn', lw=0, marker='.')
 
 def test_run():
     worm_file_path = "/Users/chris/Google Drive/example_data/30m_wait/L/tracker_1/2012-03-08___15_42_48/483 AQ2947 on food R_2012_03_08__15_42_48___1___8_features.mat"
@@ -139,6 +141,7 @@ def test_run():
     hp = HeadPathPlot(worm)
     mp = MidbodyPathPlot(worm)
     tp = TailPathPlot(worm)
+    vp = VelocityPathPlot(worm)
 
     path.set_title("Path Plot")
     velocity.set_title("Velocity Plot")
@@ -153,7 +156,12 @@ def test_run():
     sp.plot_points(path)
     ep.plot_points(path)
 
-
+    up.plot_points(velocity)
+    op.plot_points(velocity)
+    cp.plot_points(velocity)
+    sp.plot_points(velocity)
+    ep.plot_points(velocity)
+    vp.plot_path(velocity)
 
     hp.plot_path(head)
     up.plot_points(head)
@@ -169,6 +177,7 @@ def test_run():
     sp.plot_points(mid)
     ep.plot_points(mid)
 
+    tp.plot_path(tail)
     up.plot_points(tail)
     op.plot_points(tail)
     cp.plot_points(tail)
@@ -176,10 +185,10 @@ def test_run():
     sp.plot_points(tail)
     ep.plot_points(tail)
 
+    f.text(0,1,"Omega Turns X")
+    f.text(0,0.5,"Coils +")
 
     plt.show()
-
-
 
 
 if __name__ == "__main__":
