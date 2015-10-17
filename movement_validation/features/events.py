@@ -262,10 +262,11 @@ class EventFinder:
         seg_worm/feature/event_finder/getEvents.m
 
         """
-        # Go from shape == (1, 4642) to (4642,) (where 4642 is the number of 
-        # frames, for instance)
-        event_data = event_data.flatten()
-        event_mask = event_mask.flatten()
+        #NO        
+        ## Go from shape == (1, 4642) to (4642,) (where 4642 is the number of 
+        ## frames, for instance)
+        #event_data = event_data.flatten()
+        #event_mask = event_mask.flatten()
 
         # Make sure our parameters are of the correct type and dimension
         assert(type(event_data) == np.ndarray)

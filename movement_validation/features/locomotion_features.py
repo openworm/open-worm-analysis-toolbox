@@ -138,10 +138,10 @@ class LocomotionVelocity(object):
                                             sample_time_values[attribute_key],
                                             ventral_mode)[0:2]
 
-            # Go from shape (1, 4642) to shape (4642,), for 
-            # num_frames == 4642, say.
-            speed = speed.flatten()
-            direction = direction.flatten()
+            ## Go from shape (1, 4642) to shape (4642,), for 
+            ## num_frames == 4642, say.
+            #speed = speed.flatten()
+            #direction = direction.flatten()
 
             setattr(self,
                     attribute_key,
