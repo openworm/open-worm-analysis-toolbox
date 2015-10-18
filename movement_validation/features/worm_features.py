@@ -1010,7 +1010,6 @@ def get_feature_processing_specs():
 
 
 class FeatureProcessingSpec(object):
-    
     """
     Information on how to get a feature.
     
@@ -1043,23 +1042,22 @@ class FeatureProcessingSpec(object):
     
     #This is how I am resolving a string to a module.
     #Perhaps there is a better way ...
-    modules_dict = {'morphology_features':morphology_features,
-    'locomotion_features':  locomotion_features,
-    'generic_features':     generic_features,
-    'locomotion_bends':     locomotion_bends,
-    'locomotion_turns':     locomotion_turns,
-    'path_features':        path_features,
-    'posture_features':     posture_features}     
+    modules_dict = {'morphology_features': morphology_features,
+                    'locomotion_features': locomotion_features,
+                    'generic_features':    generic_features,
+                    'locomotion_bends':    locomotion_bends,
+                    'locomotion_turns':    locomotion_turns,
+                    'path_features':       path_features,
+                    'posture_features':    posture_features}     
     
-    def __init__(self,d):
-        
+    def __init__(self, d):
         """
         Parameters
         ----------
         d: dict
             Data in a row of the features file
-        """
 
+        """
 
         self.source = 'new'
         
@@ -1068,17 +1066,16 @@ class FeatureProcessingSpec(object):
         
         #TODO: Wrap this in a try clause with clear error if the module
         #hasn't been specified in the dictionary
-        self.module = self.modules_dict[self.module_name]        
+        self.module = self.modules_dict[self.module_name]
         
         self.class_name = d['Class Name']
 
-        self.class_method = getattr(self.module,self.class_name) 
+        self.class_method = getattr(self.module, self.class_name) 
         
         self.flags = d['Flags']
         self.is_temporary = d['is_feature'] == 'n'
 
     def get_feature(self,wf):
-        
         """
         This method takes care of the logic of retrieving a feature.
         
@@ -1091,7 +1088,6 @@ class FeatureProcessingSpec(object):
         """
         
         #print("feature: " + self.name)        
-        
 
         if self.source == 'new':
             final_method = self.class_method     

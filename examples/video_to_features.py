@@ -76,12 +76,11 @@ def main():
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
     
     # DEBUG
-    wp = mv.NormalizedWormPlottable(nw, interactive=False)
-    wp.show()
-    return
+    #wp = mv.NormalizedWormPlottable(nw, interactive=False)
+    #wp.show()
+    #return
 
-
-    wf = mv.WormFeatures(nw)
+    wf = mv.WormFeaturesDos(nw)
 
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')
