@@ -76,6 +76,7 @@ def _test_bw_and_nw(bw, nw):
 
         
 if __name__ == '__main__':
+    print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
     start_time = mv.utils.timing_function()
     test_pre_features()
     print("\nTime elapsed: %.2fs" % 

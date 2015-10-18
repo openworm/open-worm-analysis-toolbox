@@ -3,14 +3,14 @@
 Some unit tests of the movement_validation package
 
 """
-import sys
+import sys, os
 
 # We must add .. to the path so that we can perform the
 # import of movement_validation while running this as
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 import movement_validation as mv
-import scipy as sp
+#import scipy as sp
 
 def test_simple():
     # Simple test to verify our test harness works
@@ -41,3 +41,6 @@ def test_ttest():
     #p2 = sp.stats.ttest_ind(rvs1, rvs2)
     
     assert(True)
+
+if __name__ == '__main__':
+    print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
