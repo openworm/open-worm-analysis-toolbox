@@ -9,7 +9,7 @@ that are the equivalent of the same-named functions in Matlab, e.g. gausswin
 from __future__ import division
 from itertools import groupby
 
-import sys, time, csv
+import os, sys, time, csv
 
 import numpy as np
 import scipy as sp
@@ -1117,3 +1117,36 @@ def compute_q_values(pvalues,
         qvalues[idx[i]] = min(min(qvalues[idx[i]], qvalues[idx[i+1]]), 1.0)
 
     return qvalues
+    
+
+def get_files_of_a_type(root_path, file_extension='.mat'):
+    """
+    Recursively traverses from root_path to find all files ending 
+    in a given extension (e.g. '.mat')
+
+    Parameters
+    -----------------------
+    root_path: string
+        The absolute path to start searching from
+    file_extension: string of length 3 or 4
+        The extension of the files we are looking for
+        e.g. '.mat'  (or 'mat')
+
+    Returns
+    -----------------------
+    filepaths_found: list
+        The full paths to files ending in the desired extension
+
+    """
+    if file_extension[0] != '.':
+        file_extension = '.'+file_extension
+
+    assert(len(file_extension) == 4)
+
+    filepaths_found = []
+    for root, dirs, files in os.walk(root_path):
+        current_files = [f for f in files if f[-4:] == file_extension]
+        for f in current_files:
+            filepaths_found.append(os.path.join(root, f))
+
+    return filepaths_found

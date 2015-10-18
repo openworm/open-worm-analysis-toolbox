@@ -70,27 +70,6 @@ def main():
     # List if the mean is vailable or golor red if not.
 
 
-
-def get_matlab_filepaths(root_path):
-    """
-    Recursively traverses from root_path to find all .mat files
-    Returns a list of .mat files, with full path
-
-    Parameters
-    -----------------------
-    root_path: string
-        The absolute path to start searching from
-
-    """
-    matlab_filepaths = []
-    for root, dirs, files in os.walk(root_path):
-        mat_files = [f for f in files if f[-4:] == '.mat']
-        for f in mat_files:
-            matlab_filepaths.append(os.path.join(root, f))
-
-    return matlab_filepaths
-
-
 def obtain_histograms(root_path, pickle_file_path):
     """
     Compute histograms for 10 experiment and 10 control feature files.
@@ -128,8 +107,9 @@ def obtain_histograms(root_path, pickle_file_path):
         experiment_path = os.path.join(root_path, 'L')
         control_path = os.path.join(root_path, 'R')
 
-        experiment_files = get_matlab_filepaths(experiment_path)
-        control_files = get_matlab_filepaths(control_path)
+        experiment_files = mv.utils.get_files_of_a_type(experiment_path,
+                                                        '.mat')
+        control_files = mv.utils.get_files_of_a_type(control_path, '.mat')
 
         # We need at least 10 files in each
         assert(len(experiment_files) >= 10)
