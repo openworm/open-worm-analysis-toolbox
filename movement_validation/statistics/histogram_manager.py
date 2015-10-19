@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from .. import utils
-from ..features.worm_features import WormFeatures
+from ..features.worm_features import WormFeaturesDos
 
 from .histogram import Histogram, MergedHistogram
 from .specifications import SimpleSpecs, EventSpecs, MovementSpecs
@@ -68,7 +68,7 @@ class HistogramManager(object):
                 # If we have a string, it's a filepath to an HDF5 feature file
                 feature_file = h5py.File(feature_path_or_object, 'r')
                 #worm_features = feature_file["worm"]
-                worm_features = WormFeatures.from_disk(feature_path_or_object)
+                worm_features = WormFeaturesDos.from_disk(feature_path_or_object)
                 feature_file.close()
             else:
                 # Otherwise the worm features have been passed directly
@@ -192,7 +192,7 @@ class HistogramManager(object):
         
         # :/ HACK: - @JimHokanson
         # Just get the size from the size of one of the pieces of data
-        num_samples = len(worm_features.morphology.length)
+        num_samples = len(worm_features.get_feature('morphology.length'))
         
         e_hists = self.__event_histograms(worm_features, 
                                           EventSpecs.specs_factory(), 
