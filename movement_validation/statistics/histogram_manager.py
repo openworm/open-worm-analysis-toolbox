@@ -141,7 +141,7 @@ class HistogramManager(object):
         # Give a more human-readable column name
         df.columns = ['Video %d mean' % i for i in range(self.num_videos)]
         
-        feature_spec = WormFeatures.get_feature_spec(extended=True)
+        feature_spec = WormFeaturesDos.get_feature_spec(extended=True)
         feature_spec = feature_spec[['feature_field',
                                      'data_type', 
                                      'motion_type']]
@@ -179,15 +179,14 @@ class HistogramManager(object):
           start at the first frame or end at the last frame)
           
         """
+        # Simple histograms
+        s_hists = self.__simple_histograms(worm_features, 
+                                           SimpleSpecs.specs_factory())
 
         # Movement histograms
         m_hists = self.__movement_histograms(worm_features, 
                                              MovementSpecs.specs_factory())
-        
-        # Simple histograms
-        s_hists = self.__simple_histograms(worm_features, 
-                                           SimpleSpecs.specs_factory())
-        
+      
         # Event histograms
         
         # :/ HACK: - @JimHokanson
@@ -285,6 +284,9 @@ class HistogramManager(object):
         data_types = ['all', 'absolute', 'positive', 'negative']
 
         movement_histograms = []
+
+        import pdb
+        pdb.set_trace()
 
         for cur_spec in specs:
             cur_data = cur_spec.get_data(worm_features)

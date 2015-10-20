@@ -102,7 +102,25 @@ class Specs(object):
         A numpy array
 
         """
+        import pdb
+        pdb.set_trace()
+
+        data_object = worm_features.get_feature(self.feature_field)
+        
+        if data_object is None:
+            raise Exception("The WormFeatures instance passed does " + 
+                            "not have the feature: " + self.long_field)
+        else:
+            data_array = data_object.value
+
+        return data_array
+        
+        # DEBUG: remove this stuff once the above is confirmed to work.
+
         data = worm_features
+        
+        import pdb
+        pdb.set_trace()
         # Call getattr as many times as is necessary, to dynamically 
         # access a potentially nested field.
         # e.g. if self.feature_field = 'posture.coils', we'll need to call

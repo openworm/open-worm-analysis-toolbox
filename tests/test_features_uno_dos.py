@@ -43,7 +43,9 @@ def main():
 
     import pdb
     pdb.set_trace()
-
+    
+    #openworm_features_uno.posture.bends.head.std_dev
+    #openworm_features_dos.get_feature('posture.bends.head.std_dev').value
     
     # COMPARISON
     #----------------------
