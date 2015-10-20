@@ -6,6 +6,7 @@ raw video .avi file to a fitness function result.
 """
 import sys, os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
@@ -62,6 +63,7 @@ def main():
    
     #bw = BasicWorm.from_h_contour_factory(h_ventral_contour, h_dorsal_contour)
     #bw.video_info = video_info
+
 
     # TEMPORARY----------------------------
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
@@ -125,7 +127,9 @@ def get_matlab_filepaths(root_path):
 def geppetto_to_features(minimal_worm_spec_path):
     pass
 
-
+pd.set_option('expand_frame_repr', False)
+pd.set_option('display.float_format', lambda x:'%.4f'%x)
+#fs = mv.WormFeaturesDos.get_feature_spec()
 #%%
 if __name__ == '__main__':
     start_time = mv.utils.timing_function()

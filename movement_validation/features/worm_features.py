@@ -677,64 +677,6 @@ class WormFeatures(object):
 
         return self
 
-    @staticmethod
-    def get_feature_spec(extended=False):
-        """
-        Parameters
-        ------------
-        extended: boolean
-            If True, return the full 726 features, not just the 93.
-        
-        Returns
-        ------------
-        A pandas.DataFrame object
-            Contains all the feature specs in one table
-            
-        """
-        # Use pandas to load the features specification
-        feature_spec_path = os.path.join('..', 'documentation', 
-                                         'database schema', 
-                                         'Features Specifications.xlsx')
-
-        # Let's ignore a PendingDeprecationWarning here since my release of 
-        # pandas seems to be using tree.getiterator() instead of tree.iter()
-        # It's probably fixed in the latest pandas release already
-        # Here's an exmaple of the issue in a different repo, along with the 
-        # fix.  https://github.com/python-excel/xlrd/issues/104
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            excel_file = pd.ExcelFile(feature_spec_path)
-
-        feature_spec = excel_file.parse('FeatureSpecifications')
-
-        if not extended:
-            return feature_spec
-        else:
-            # Extend the 93 features into 726, then return that
-            all_data_types = ['all', 'absolute', 'positive', 'negative']
-            all_motion_types = ['all', 'forward', 'paused', 'backward']
-
-            motion_types = pd.DataFrame({'motion_type': 
-                                                ['All']+all_motion_types})
-            motion_types['is_time_series'] = [False, True, True, True, True]
-
-            data_types = pd.DataFrame({'data_type': ['All']+all_data_types})
-            data_types['is_signed'] = [False, True, True, True, True]
-
-            # The effect of these two left outer joins is to duplicate any
-            # feature rows where we have multiple data or motion types.
-            # Thus the number of rows expands from 93 to 726
-            feature_spec_expanded = feature_spec.merge(motion_types, 
-                                                       on='is_time_series', 
-                                                       how='left')
-
-            feature_spec_expanded = feature_spec_expanded.merge(data_types, 
-                                                                on='is_signed', 
-                                                                how='left')
-
-            return feature_spec_expanded
-            #MultiIndex.from_product(iterables=[motion_type, data_type], 
-            # names=['first', 'second'])
 
 
     def get_DataFrame(self):
@@ -920,7 +862,8 @@ class WormFeaturesDos(object):
 
         f_specs = get_feature_processing_specs()
         
-        self.specs = collections.OrderedDict([(value.name, value) for value in f_specs])        
+        self.specs = \
+            collections.OrderedDict([(value.name, value) for value in f_specs])        
         
         #self.feature_spec_dict = {value.name : value for value in f_specs}
         #self.feature_spec_list = f_specs
@@ -975,6 +918,84 @@ class WormFeaturesDos(object):
 
     def __repr__(self):
         return utils.print_object(self)    
+
+
+    @staticmethod
+    def get_feature_spec(extended=False, show_temp_features=False):
+        """
+        Parameters
+        ------------
+        extended: boolean
+            If True, return the full 726 features, not just the 93.
+        show_temp_features: boolean
+            If False, return only actual features.  Raises an exception
+            if both show_temp_features and extended are True
+        
+        Returns
+        ------------
+        A pandas.DataFrame object
+            Contains all the feature specs in one table
+            
+        """
+        # Use pandas to load the features specification
+        feature_spec_path = os.path.join('..', 'documentation', 
+                                         'database schema', 
+                                         'Features Specifications.xlsx')
+
+        # Let's ignore a PendingDeprecationWarning here since my release of 
+        # pandas seems to be using tree.getiterator() instead of tree.iter()
+        # It's probably fixed in the latest pandas release already
+        # Here's an exmaple of the issue in a different repo, along with the 
+        # fix.  https://github.com/python-excel/xlrd/issues/104
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            excel_file = pd.ExcelFile(feature_spec_path)
+
+        feature_spec = excel_file.parse('FeatureSpecifications')
+
+        # I haven't bothered to work on the logic that I'd need
+        # if extended == True and show_temp_features == True, so
+        # let's just raise an exception in that case
+        assert(not (extended and show_temp_features))
+
+        if not show_temp_features:
+            feature_spec = feature_spec[feature_spec['is_feature'] == 'y']
+        
+        #feature_spec = feature_spec[['remove_partial_events']].astype(bool)
+        #feature_spec = feature_spec[['make_zero_if_empty']].astype(bool)
+
+        if not extended:
+            feature_spec = feature_spec.set_index('sub-extended feature ID')
+            return feature_spec
+        else:
+            # Extend the 93 features into 726, then return that
+            all_data_types = ['all', 'absolute', 'positive', 'negative']
+            all_motion_types = ['all', 'forward', 'paused', 'backward']
+
+            motion_types = pd.DataFrame({'motion_type': 
+                                                ['All']+all_motion_types})
+            motion_types['is_time_series'] = [False, True, True, True, True]
+
+            data_types = pd.DataFrame({'data_type': ['All']+all_data_types})
+            data_types['is_signed'] = [False, True, True, True, True]
+
+            # The effect of these two left outer joins is to duplicate any
+            # feature rows where we have multiple data or motion types.
+            # Thus the number of rows expands from 93 to 726
+            feature_spec_expanded = feature_spec.merge(motion_types, 
+                                                       on='is_time_series', 
+                                                       how='left')
+
+            feature_spec_expanded = feature_spec_expanded.merge(data_types, 
+                                                                on='is_signed', 
+                                                                how='left')
+
+            feature_spec_expanded = \
+                feature_spec_expanded.set_index('sub-extended feature ID', 
+                                                'motion_type', 'data_type')
+
+            return feature_spec_expanded
+
         
 def get_feature_processing_specs():
     

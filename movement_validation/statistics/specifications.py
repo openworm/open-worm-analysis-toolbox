@@ -37,7 +37,9 @@ https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
 """
 import os, csv
 import numpy as np
+import pandas as pd
 
+from ..features.worm_features import WormFeaturesDos
 from .. import utils
 
 class Specs(object):
