@@ -38,6 +38,7 @@ https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
 import os, csv
 import numpy as np
 import pandas as pd
+import pdb
 
 from ..features.worm_features import WormFeaturesDos
 from .. import utils
@@ -62,7 +63,11 @@ class Specs(object):
         to call the static factory method Specs.specs_factory
         
         """
-        pass
+        self.fields_needed = ['feature_field', 'sub_field', 'feature_category', 
+                         'bin_width', 'signed_field', 'name', 'short_name', 
+                         'units', 'make_zero_if_empty', 
+                         'remove_partial_events', 'is_zero_bin', 'is_signed', 
+                         'old_feature_field', 'old_sub_field']
 
     def __repr__(self):
         return utils.print_object(self)
@@ -172,10 +177,33 @@ class Specs(object):
         here but Matlab is awkward for dynamic object creation 
         - @JimHokanson
         """
-        stats_instances = []    
-
         # See below comment above prop_types
         data_types = {1: str, 2: float, 3: int, 4: bool}
+
+
+        feature_type = 'event'
+
+        # Obtain the relevant feature specifications
+        fs = WormFeaturesDos.get_feature_spec(extended=False)
+        fs = fs[fs['feature_type'] == feature_type]
+
+        stats_instances = []    
+
+        # Iterate over these features, making an object for each row
+        for featureID, feature_details in fs.iterrows():
+            feature_details = feature_details.to_dict()
+
+            stats_instance = class_function_handle()
+            for feature_detail_key in fields_needed:
+                value = feature_details[feature_detail_key]
+                setattr(stats_instance, feature_detail_key, value)
+
+            stats_instances.append(stats_instance)
+
+            pdb.set_trace()
+
+        return stats_instances
+
 
         with open(csv_path) as feature_metadata_file:
             feature_metadata = csv.DictReader(feature_metadata_file)
