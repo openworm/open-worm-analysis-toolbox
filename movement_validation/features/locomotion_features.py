@@ -13,7 +13,7 @@ import numpy as np
 
 from .. import utils
 
-from .generic_features import Feature
+from .generic_features import Feature, get_parent_feature_name
 from . import events
 # To avoid conflicting with variables named 'velocity', we 
 # import this as 'velocity_module':
@@ -394,6 +394,7 @@ class AverageBodyAngle(object):
     See Also
     --------
     LocomotionVelocitySection
+    velocity_module.get_partition_angles    
     
     """
     def __init__(self,wf,feature_name):
@@ -420,12 +421,12 @@ class LocomotionVelocitySection(Feature):
     locomotion.velocity.head, etc.
     
     This is the parent feature which computes and then temporarily holds
-    attributes for more specific child functions
+    attributes for more specific child features.
     
     Attributes
     ----------
-    - speed
-    - direction
+    speed : VelocitySpeed
+    direction : VelocityDirection
 
 
     """
@@ -435,7 +436,7 @@ class LocomotionVelocitySection(Feature):
         """
         Parameters
         ----------
-        segment: string
+        segment : string
             Options include:
             - head_tip
             - head
@@ -449,8 +450,8 @@ class LocomotionVelocitySection(Feature):
         
         See Also
         --------
-        - velocity_module.compute_speed      #This is the function that
-                                                #does all the work
+        - velocity_module.compute_speed      #  This is the function that
+                                             #  does all the work
         
         """
 
@@ -498,6 +499,8 @@ class LocomotionVelocitySection(Feature):
         self = cls.__new__(cls)
         self.name = feature_name
 
+        #These particular segments were renamed internally to follow naming
+        #conventions. The other ones were fine
         if segment == 'head_tip':
             old_key = 'headTip'
         elif segment == 'tail_tip':
@@ -518,20 +521,28 @@ class LocomotionVelocitySection(Feature):
                 
         
 class VelocitySpeed(Feature):
-
+    """
+    Feature: locomotion.velocity.[segment].speed
+    
+    This feature is actually calculated via LocomotionVelocitySection
+    """
     def __init__(self,wf,feature_name,segment):
         self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.velocity.' + segment).speed
+        parent_feature_name = get_parent_feature_name(feature_name)
+        self.value = self.get_feature(wf,parent_feature_name).speed
         
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,segment):
         return cls(wf,feature_name,segment)   
 
 class VelocityDirection(Feature):
-
+    """
+    Feature: locomotion.velocity.[segment].speed
+    """
     def __init__(self,wf,feature_name,segment):
         self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.velocity.' + segment).direction
+        parent_feature_name = get_parent_feature_name(feature_name)
+        self.value = self.get_feature(wf,parent_feature_name).direction
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,segment):

@@ -790,6 +790,31 @@ class WormFeaturesDos(object):
     """
     This is the new features class. It will eventually replace the old class
     when things are all ready.
+    
+    Accessing Features
+    ------------------
+    Features should normally be accessed via get_feature(). Alternatively 
+    it is possible to access features directly via the 'features' attribute
+    however this attribute only contains computed features.
+        
+    
+    Attributes
+    ----------
+    video_info :
+    options :
+    nw :
+    timer :
+    specs : {FeatureProcessingSpec}
+    features : {Feature}
+        Contains all computed features.
+            
+    _temp_features : {Feature}
+
+    When loading from Schafer File
+    h : hdf5 file reference
+
+
+    
     """
     
     def __init__(self, nw, processing_options=None,load_features=True):
@@ -820,7 +845,7 @@ class WormFeaturesDos(object):
     @classmethod
     def from_schafer_file(cls, data_file_path):
         """
-        Load features from the Schafer lab files.
+        Load features from the Schafer lab feature (.mat) files.
         """
         
         self = cls.__new__(cls)
@@ -846,9 +871,12 @@ class WormFeaturesDos(object):
         return self
     
     def _retrieve_all_features(self):
-        spec_dict = self.specs        
-        for key in spec_dict:
-            #Trying to avoid 2v3 differences in Python dict iteration
+        """
+        Simple function for retrieving all features.
+        """
+        spec_dict = self.specs
+        #Trying to avoid 2v3 differences in Python dict iteration
+        for key in spec_dict:            
             spec = spec_dict[key]
             #TODO: We could pass in the spec instance ...
             #rather than resolving the instance from the name
@@ -857,28 +885,25 @@ class WormFeaturesDos(object):
     def initialize_features(self):
 
         """
-        Reads the feature specs
+        Reads the feature specs and initializes necessary attributes.
         """
 
         f_specs = get_feature_processing_specs()
         
         self.specs = \
             collections.OrderedDict([(value.name, value) for value in f_specs])        
-        
-        #self.feature_spec_dict = {value.name : value for value in f_specs}
-        #self.feature_spec_list = f_specs
-
 
         self.features = collections.OrderedDict()
         self._temp_features = collections.OrderedDict()
-        
-        ##This may be temporary
-        #self.feature_list = []   
-
     
     def get_feature(self,feature_name):
         """
         This is the public interface to the user for retrieving a feature.
+        A feature is returned if it has already been computed. If it has not
+        been previously computed it is computed then returned.
+        
+        This function may become recursive if the feature being computed
+        requires other features to be computed.
         
         Improvements
         ------------
@@ -916,6 +941,17 @@ class WormFeaturesDos(object):
     
         return temp
 
+    def list_specs(self,filter=None):
+        #TODO: similar to list_features except for the feature specs
+        #TODO: We might want get_specs as well
+        pass
+
+    def list_features(self,filter=None):
+        #TODO: I'd like to have this print all computed features that
+        #match a filter (if specified)
+        #e.g. wf.list_features('locomotion.*')
+        pass
+
     def __repr__(self):
         return utils.print_object(self)    
 
@@ -923,6 +959,8 @@ class WormFeaturesDos(object):
     @staticmethod
     def get_feature_spec(extended=False, show_temp_features=False):
         """
+        TODO: This method needs to be documented!        
+        
         Parameters
         ------------
         extended: boolean
@@ -1001,7 +1039,7 @@ def get_feature_processing_specs():
     
     """
 
-    Loads all specs that specify how features should be processed.
+    Loads all specs that specify how features should be processed/created.
     
     Currently in /features/feature_metadata/features_list.csv
 

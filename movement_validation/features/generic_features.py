@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-generic_features
-
-@author: RNEL
+This module handles the base (generic) Feature code that the actual
+computed features inherit from.
 """
 
 from .. import utils
@@ -10,16 +9,22 @@ from .. import utils
 import re
 
 #Get everything until a period that is followed by no periods
+#
+#e.g. from:
+#   temp.name.prop    TO     
+#   temp.name
 _parent_feature_pattern = re.compile('(.*)\.([^\.]+)')
 
-#This needs to move elsewhere so that the feature files can import it
 class Feature(object):
 
     """
+        
+    
     Attributes
     ----------
     name
-    value
+    value : 
+    dependencies : list
     """
     
     def __repr__(self):
@@ -40,8 +45,12 @@ class Feature(object):
 
         #1) Do logging - NYI
         #What is the easiest way to initialize without forcing a init super call?
+        if hasattr(self,'dependencies'):
+            self.dependencies.append(feature_name)
+        else:
+            self.dependencies = [feature_name]
     
-        #2) Make the call to 
+        #2) Make the call to WormFeatures
 
         return wf.get_feature(feature_name)
         
