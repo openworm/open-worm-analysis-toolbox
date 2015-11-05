@@ -39,3 +39,5 @@ trackers <http://www.wormbook.org/chapters/www_tracking/tracking.html>`__
 6. Roussel himself working for WormLab to implement his model-based algorithm.
 
 7. Brown Lab is working on a new tracker.  Since André Brown worked on WT2.0, this new tracker is basically WT3.0 and will have multi-worm tracking capabilities. They are working closely with OpenWorm; viz. [this meeting 16 Feb 2015](https://docs.google.com/document/d/1VRMnNHoLQ2oHD3wgGOQrE8KzyCSrEoMwChWPOhVNTj0/edit?usp=sharing)
+
+8. A commercial competitor has arisen in this space, by MBF Biosciences: http://www.mbfbioscience.com/wormlab
