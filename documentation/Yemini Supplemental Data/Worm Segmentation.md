@@ -1,9 +1,9 @@
 Worm Segmentation
------------------
+=================
 
 From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer,
 W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nat.
-Methods (2013). doi:10.1038/nmeth.2560
+Methods (2013). `doi:10.1038/nmeth.2560`
 
 Video frames are extracted using the Matlab videoIO toolbox by Gerald
 Dalley. There is a sharp contrast between the worm and background in our
@@ -48,5 +48,6 @@ skeleton has been shown to effectively measure worm bending in previous
 trackers and likely reflects constraints of the bodywall muscles, their
 innervation, and cuticular rigidity (Cronin et al. 2005).
 
-
-[Freeman 1961] Herbert Freeman. 1961.  On the encoding of arbitrary geometric configurations.  *IRE Transactions on Electronic Computers*, 10:260-268.
+[Freeman 1961] Herbert Freeman. 1961. On the encoding of arbitrary
+geometric configurations. *IRE Transactions on Electronic Computers*,
+10:260-268.

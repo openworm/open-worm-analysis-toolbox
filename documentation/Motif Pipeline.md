@@ -88,4 +88,4 @@ variable than heartbeats. I have found numerous methods that do not
 work, but right now I am close to put together something that identifies
 behaviours reliably. Currently I am using this method and the results
 are promising for both Drosophila and the worm:
-http://epubs.siam.org/doi/abs/10.1137/1.9781611972825.77
+<http://epubs.siam.org/doi/abs/10.1137/1.9781611972825.77>

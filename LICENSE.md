@@ -1,23 +1,23 @@
 License
-~~~~~~~
+=======
 
 Copyright © 2015 OpenWorm
 
 **movement\_validation**, and indeed all software written as part of the
-`OpenWorm <https://github.com/openworm/>`__ project is free software under
-the `MIT license <http://opensource.org/licenses/MIT>`__.
+[OpenWorm](https://github.com/openworm/) project is free software under
+the [MIT license](http://opensource.org/licenses/MIT).
 
 Original code written in Matlab by Dr. Eviatar Yemini, at the Schafer
 Lab at Cambridge University's MRC.
 
 Notice from the original Matlab code:
 
-    ``© Medical Research Council 2012``
-
-    ``You will not remove any copyright or other notices from the Software; you must reproduce all copyright notices and other proprietary notices on any copies of the Software.``
+> `© Medical Research Council 2012`
+>
+> `You will not remove any copyright or other notices from the Software; you must reproduce all copyright notices and other proprietary notices on any copies of the Software.`
 
 The MIT License
-~~~~~~~~~~~~~~~
+===============
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the

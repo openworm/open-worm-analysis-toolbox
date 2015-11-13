@@ -1,21 +1,19 @@
 Path Features
 =============
 
-Credit for all Locomotion feature definitions: `Yemini *et al.*
-(2013) <http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf>`__
+Credit for all Locomotion feature definitions: [Yemini et al.
+(2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
-.. figure:: Path%20Figure.gif
-   :alt: 
+![](Path%20Figure.gif)
 
 1. Range
-~~~~~~~~
+--------
 
 The centroid of the worm’s entire path is computed. The range is defined
 as the distance of the worm’s midbody from this overall centroid, in
 each frame. For example:
 
-.. figure:: fig%204%20h%20-%20range.gif
-   :alt: 
+![](fig%204%20h%20-%20range.gif)
 
 *The range is defined, per frame, as the distance of the worm’s midbody
 from its final path centroid. The central dot displays the final path
@@ -23,13 +21,12 @@ centroid. The two arrows display the range at early and late times
 within the experiment.*
 
 2. Dwelling
-~~~~~~~~~~~
+-----------
 
 The worm dwelling is computed for the head, midbody, tail, and the
 entire worm. For example:
 
-.. figure:: fig%204%20i%20-%20dwelling.gif
-   :alt: 
+![](fig%204%20i%20-%20dwelling.gif)
 
 *The locations of worm dwelling are shown as a heatmap. A single
 location of dwelling dominates faint traces of the worm’s path during
@@ -46,7 +43,7 @@ square is integrated to define the dwelling distribution for each body
 part. For each body part, untouched grid squares are ignored.
 
 3. Curvature
-~~~~~~~~~~~~
+------------
 
 The path curvature is defined as the angle, in radians, of the worm’s
 path divided by the distance it traveled in microns. The curvature is

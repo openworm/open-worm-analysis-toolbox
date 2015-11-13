@@ -6,9 +6,9 @@ to statistics. Much of the code comes from the Schafer Lab's Worm
 Tracker 2 (WT2) software.
 
 This repo currently takes **STEP 3** as the starting point, and does not
-code for steps 2 or 3, because the Schafer Lab already has an `analysis
+code for steps 2 or 3, because the Schafer Lab already has an [analysis
 tool
-online <http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis>`__
+online](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis)
 that transforms the raw video into normalized data.
 
 It might be useful to also port the machine vision processing for **STEP
@@ -46,23 +46,22 @@ Schafer Lab Code Sources
 
 **STEP 1**: n/a
 
-**STEPS 2-3**: `Worm Analysis Toolbox
-1.3.4 <http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis>`__.
+**STEPS 2-3**: [Worm Analysis Toolbox
+1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
 
-**STEP 4**: Added by Jim as ``createObjectFromFiles`` in
-`NormalizedWorm <https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m>`__
+**STEP 4**: Added by Jim as `createObjectFromFiles` in
+[NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m)
 
 **STEPS 5-6**: Some of the code is in the SegwormMatlabClasses repo,
 under
-`tree/master/oldFeatures <https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/oldFeatures>`__.
+[tree/master/oldFeatures](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/oldFeatures).
 
 **STEPS 7-9**: n/a
 
 PIPELINE: STEPS 1 to 9: Details
 -------------------------------
 
-1. Raw video
-~~~~~~~~~~~~
+### 1. Raw video
 
 Conduct experiment: - case: REAL WORM: Capture video of worm movement
 using a test protocol, in tandem with a control worm. - case: VIRTUAL
@@ -72,36 +71,32 @@ Raw video, plus tracking plate movement data + other metadata (time of
 filming, vulva location, whether worm flipped during video, strain of
 worm used, Lab name, etc)
 
-.. figure:: https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%200-1.bmp?raw=true
-   :alt: 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%200-1.bmp?raw=true)
 
-Credit: OpenWorm / http://dorkutopia.com/tag/xbox-one/
+Credit: OpenWorm / <http://dorkutopia.com/tag/xbox-one/>
 
-2. Measurements
-~~~~~~~~~~~~~~~
+### 2. Measurements
 
 *(Machine vision processing step.)*
 
 This gives the worm contour and skeleton, etc.
 
-.. figure:: https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%202.gif?raw=true
-   :alt: 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%202.gif?raw=true)
 
 Credit: Ev Yemini
 
-3. Normalized measurements
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+### 3. Normalized measurements
 
 *(Normalize each worm video frame to just 49 points; necessary for
 frame-by-frame comparability.)*
 
 The existing WT2 code covering **STEP 2** and **STEP 3** is
-`available <http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis>`__
+[available](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis)
 at the Schafer lab site.
 
 The Schafer Lab code creates a bunch of files, some of which are the
-norm files: - normBlock1 - normBlock2 - normBlock3 - ... - normBlock10 -
-mec-4 (u253) off food
+norm files: - normBlock1 - normBlock2 - normBlock3 - ... -
+normBlock10 -mec-4 (u253) off food
 x\_2010\_04\_21\_\_17\_19\_20\_\_1\_failedFrames.mat (in the .data
 folder)
 
@@ -110,31 +105,29 @@ contour, such as the area of the head which can be calculated relatively
 easy from the contour.
 
 When a model worm is created, these steps will need to be reproduced.
-This is described in `OpenWorm Issue
-144 <https://github.com/openworm/OpenWorm/issues/144>`__.
+This is described in [OpenWorm Issue
+144](https://github.com/openworm/OpenWorm/issues/144).
 
 **Relevant Code:**
 
--  `blob/master/Worms/Features/wormDataInfo.m <https://github.com/openworm/SegWorm/blob/master/Worms/Features/wormDataInfo.m>`__
-   (This is the original code which starts to describe this expanded set
-   of base features)
--  `feature/roots.m <https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bfeature/roots.m>`__
+-   [blob/master/Worms/Features/wormDataInfo.m](https://github.com/openworm/SegWorm/blob/master/Worms/Features/wormDataInfo.m)
+    (This is the original code which starts to describe this expanded
+    set of base features)
+-   [feature/roots.m](https://github.com/JimHokanson/SegWorm/blob/classes/new_code/%2Bseg_worm/%2Bfeature/roots.m)
 
-`SegWorm/Pipeline/featureProcess.m <https://github.com/JimHokanson/mrc_wormtracker_gui/blob/master/SegWorm/Pipeline/featureProcess.m>`__
-- This file is responsible for creating the feature mat files
+[SegWorm/Pipeline/featureProcess.m](https://github.com/JimHokanson/mrc_wormtracker_gui/blob/master/SegWorm/Pipeline/featureProcess.m) -
+This file is responsible for creating the feature mat files
 
-4. Combine normalized measurments into one file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### 4. Combine normalized measurments into one file
 
 Jim wrote a function called
-`NormalizedWorm <https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m>`__.createObjectFromFiles
+[NormalizedWorm](https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%40normalized_worm/normalized_worm.m).createObjectFromFiles
 that stitches these "blocks" together, into an easy-to-deal-with file
 called norm\_obj.mat. (Previously, this merging of the blocks was
 embedded within the feature processing code, which complicated the
 feature processing code unnecessarily.)
 
-5. Worm features
-~~~~~~~~~~~~~~~~
+### 5. Worm features
 
 *(Feature calculation in Python based on WT2 code.)*
 
@@ -142,8 +135,7 @@ feature processing code unnecessarily.)
 data. For instance, the area of the head (a feature) is calculated from
 "skeleton" and width data (which are considered "measurements")
 
-6. Worm features (expanded)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### 6. Worm features (expanded)
 
 *(Feature calculation in Python based on WT2 code.)*
 
@@ -152,13 +144,12 @@ much larger set of features. As an example, the worm length provides 4
 features, one overall, and three more when computed during forward
 movement, backwards movements, and when paused.
 
-For more on this, see: `Expanded Features <Expanded_Features.md>`__
+For more on this, see: [Expanded Features](Expanded_Features.md)
 
-**Relevant Code** -
-https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/wormStatsInfo.m
+**Relevant
+Code** -<https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/wormStatsInfo.m>
 
-7. Worm statistics
-~~~~~~~~~~~~~~~~~~
+### 7. Worm statistics
 
 *(Stats calculation in Python based on WT2 code.)*
 
@@ -168,23 +159,20 @@ data in certain situations, normalizes some values, and appears to
 quantize the frame data to reduce memory requirements. This process will
 need to eventually be described here in more detail.
 
-8. Database of statistics on multiple worms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### 8. Database of statistics on multiple worms
 
 This database could perhaps be made available to researchers everywhere
 to use, to act as a central repository for C. elegans behavioural
 statistics.
 
 In fact, the Schafer lab currently has such a database,
-`wormbehavior.mrc-lmb.cam.ac.uk <http://wormbehavior.mrc-lmb.cam.ac.uk/>`__
+[wormbehavior.mrc-lmb.cam.ac.uk](http://wormbehavior.mrc-lmb.cam.ac.uk/)
 
-9. Reports
-~~~~~~~~~~
+### 9. Reports
 
 Reports are run from data in the statistics database, and can take the
 form of a summary pixel grid, pairwise boxplots, and other charts.
 
-.. figure:: https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%207.bmp?raw=true
-   :alt: 
+![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%207.bmp?raw=true)
 
 Credit: Ev Yemini

@@ -1,9 +1,9 @@
 Ventral Side Annotation and Head Detection
-------------------------------------------
+==========================================
 
 From From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. &
 Schafer, W. R. A database of Caenorhabditis elegans behavioral
-phenotypes. Nat. Methods (2013). doi:10.1038/nmeth.2560
+phenotypes. Nat. Methods (2013). `doi:10.1038/nmeth.2560`
 
 Our worm features necessitate dorsal-ventral and head-tail distinctions.
 The worm's ventral side was annotated for each video by eye. We did not

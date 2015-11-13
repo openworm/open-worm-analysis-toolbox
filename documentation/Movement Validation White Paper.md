@@ -8,7 +8,7 @@ Cantarelli, Michael Vella, Sergey Khayrulin, Andrey Palyanov, Michael
 Currie, Jim Hokanson, Giovanni Idili, and Stephen Larson)*
 
 Evaluating the worm simulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 Popper [39] reasoned that for a theory to be considered scientific, it
 must make predictions that can in principle turn out to be false when
@@ -64,8 +64,7 @@ contour data, and then further processing into features. The videos of
 real worms are taken directly from the Schafer Lab’s dataset. A
 generalized test process is outlined in figure 2.
 
-.. figure:: test%20diagram.png
-   :alt: 
+![](test%20diagram.png)
 
 Harel argued for a worm model verification framework that is "true to
 all known facts". [18, 41] Since many facts are known about how the worm
@@ -86,7 +85,7 @@ for its ability to reproduce the sleep-like states [43,44] and the
 learning capabilities [45] of a real worm.
 
 OpenWorm on every desk and in every home
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 
 The OpenWorm project has two goals. The first, discussed above, is to
 functionally reproduce the behaviour of the wild-type *C. elegans* in a
@@ -128,7 +127,7 @@ make development more data-driven, helping to improve the biological
 realism of the OpenWorm model in the first place.
 
 References
-~~~~~~~~~~
+----------
 
 [18] David Harel. A grand challenge for computing: towards full reactive
 modeling of a multi-cellular animal. Verification, Model Checking, and
@@ -160,13 +159,13 @@ and memory in *Caenorhabditis elegans*. Learning & Memory,
 17(4):191–201, 2010.
 
 Further Reading
-~~~~~~~~~~~~~~~
+---------------
 
-`Ince et. al. The case for open computer programs. Nature Perspectives,
-2012. <http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html>`__
+[Ince et. al. The case for open computer programs. Nature Perspectives,
+2012.](http://www.nature.com/nature/journal/v482/n7386/full/nature10836.html)
 
-`Cyrus Omar, Jonathan Aldrich, Richard C. Gerkin. Collaborative
+[Cyrus Omar, Jonathan Aldrich, Richard C. Gerkin. Collaborative
 Infrastructure for Test-Driven Scientific Model
-Valuation. <https://github.com/cyrus-/papers/raw/master/sciunit-icse14/sciunit-icse14.pdf>`__
-(`SciUnit <https://github.com/scidash/sciunit>`__). 36th International
+Valuation.](https://github.com/cyrus-/papers/raw/master/sciunit-icse14/sciunit-icse14.pdf)
+([SciUnit](https://github.com/scidash/sciunit)). 36th International
 Conference on Software Engineering, Hyderabad, India, 2014.

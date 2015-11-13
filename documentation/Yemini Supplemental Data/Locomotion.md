@@ -1,31 +1,28 @@
 Locomotion Features
 ===================
 
-Credit for all Locomotion feature definitions: `Yemini *et al.*
-(2013) <http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf>`__
+Credit for all Locomotion feature definitions: [Yemini *et al.*
+(2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
 There are four locomotion features: bends, motion, turns, and velocity.
 Here they are in the actual HDF5 file storing them:
 
-.. figure:: Locomotion%20-%20basic%20tree.gif
-   :alt: 
+![](Locomotion%20-%20basic%20tree.gif)
 
 1. Velocity
-~~~~~~~~~~~
+-----------
 
-.. figure:: Locomotion%20-%20velocity.gif
-   :alt: 
+![](Locomotion%20-%20velocity.gif)
 
 The worm’s velocity is measured at five places:
 
--  the tip of the head ("headTip")
--  the tip of the tail ("tailTip")
--  the head
--  the tail
--  the midbody
+-   the tip of the head ("headTip")
+-   the tip of the tail ("tailTip")
+-   the head
+-   the tail
+-   the midbody
 
-.. figure:: body%20part%20locations.gif
-   :alt: 
+![](body%20part%20locations.gif)
 
 *(The locations of the body parts used for feature computation: head,
 neck, midbody, hips, and tail. Each body part encompasses 1/6 of the
@@ -39,22 +36,21 @@ At each frame of the video, we attempt to calculate an approximate
 *instantaneous* velocity, by by using a starting and ending frame some
 number of frames away from the frame in question:
 
--  The head tip and tail tips’ instantaneous velocity is measured at
-   each frame using a 1/4 second up to a 1/2 second window. For each
-   frame, we search for a start frame 1/4 of a second before and an end
-   frame 1/4 second after to delineate the worm’s instantaneous path. If
-   the worm’s location is not known within either the start or end
-   frame, we extend the search for a known location up to 1/2 second in
-   either direction. If the worm’s location is still missing at either
-   the start or end, the velocity is marked unknown at this point.
--  The head, midbody, and tail velocity are computed identically except
-   they use a 1/2 second up to a 1 second window for choosing their
-   start and end frames.
+-   The head tip and tail tips’ instantaneous velocity is measured at
+    each frame using a 1/4 second up to a 1/2 second window. For each
+    frame, we search for a start frame 1/4 of a second before and an end
+    frame 1/4 second after to delineate the worm’s instantaneous path.
+    If the worm’s location is not known within either the start or end
+    frame, we extend the search for a known location up to 1/2 second in
+    either direction. If the worm’s location is still missing at either
+    the start or end, the velocity is marked unknown at this point.
+-   The head, midbody, and tail velocity are computed identically except
+    they use a 1/2 second up to a 1 second window for choosing their
+    start and end frames.
 
 **The velocity calculation for each body part**
 
-.. figure:: fig%204%20c%20and%20d%20-%20velocity.gif
-   :alt: 
+![](fig%204%20c%20and%20d%20-%20velocity.gif)
 
 The figure above on the left is a simple diagram representing worm
 velocity and the crawling wave.
@@ -62,18 +58,17 @@ velocity and the crawling wave.
 The figure above on the right shows how the velocity vector of a body
 part is measured relative to the head-tail axis. In other words, the
 velocity, per body part, is the vector of its respective
-`centroid <http://en.wikipedia.org/wiki/Centroid>`__. Therefore, to
-fully characterize this vector, the velocity is composed of two parts:
+[centroid](http://en.wikipedia.org/wiki/Centroid). Therefore, to fully
+characterize this vector, the velocity is composed of two parts:
 
-1. The **speed** is defined as the distance between the centroids of the
-   start and end frames (for the respective body parts) divided by the
-   time between both frames.
-
-2. The **direction**, expressed as an `angular
-   speed <http://en.wikipedia.org/wiki/Angular_speed>`__. Direction is
-   defined as the angle (between centroids) from the start to the end
-   frame, relative to the worm’s *overall body angle*, divided by the
-   time between both frames.
+1.  The **speed** is defined as the distance between the centroids of
+    the start and end frames (for the respective body parts) divided by
+    the time between both frames.
+2.  The **direction**, expressed as an [angular
+    speed](http://en.wikipedia.org/wiki/Angular_speed). Direction is
+    defined as the angle (between centroids) from the start to the end
+    frame, relative to the worm’s *overall body angle*, divided by the
+    time between both frames.
 
 The worm’s **overall body angle** is defined as the mean orientation of
 the angles, in the tail-to-head direction, between subsequent midbody
@@ -87,15 +82,14 @@ the respective body part moves towards the tail (as opposed to the
 head).
 
 2. Motion States
-~~~~~~~~~~~~~~~~
+----------------
 
-.. figure:: Locomotion%20-%20motion.gif
-   :alt: 
+![](Locomotion%20-%20motion.gif)
 
 The worm’s forward, backward, and paused motion states attempt to
 differentiate these event states unambiguously:
 
-|image0|.
+![image0](fig%204%20f%20-%20motion%20states.gif).
 
 *A 25 second window of worm motion reveals 2 forward, 3 backward, and
 roughly 5 paused events. A short, small peak (between the second and
@@ -106,14 +100,13 @@ Therefore, ambiguous motion has no associated state.
 
 The motion states are computed from the worm’s **velocity** (described
 above) and **length** (described in the section on
-“\ `Morphology <morphology.md>`__\ ”). Missing lengths are linearly
+“[Morphology](morphology.md)”). Missing lengths are linearly
 interpolated between segmented frames.
 
-*Example of interpolated skeleton lengths:* |image1|
+*Example of interpolated skeleton lengths:*
+![image1](skeleton_lengths_interpolated.gif)
 
 *Code to generate the above plot:*
-
-::
 
     def get_motion_codes(midbody_speed, skeleton_lengths):
         ...  
@@ -131,45 +124,38 @@ interpolated between segmented frames.
 (The following filtering criteria were chosen based on human labeling of
 events within a variety of N2 and mutant videos:)
 
--  The worm is defined in a state of **forward motion** when a period,
-   more than half a second long, is observed wherein:
+-   The worm is defined in a state of **forward motion** when a period,
+    more than half a second long, is observed wherein:
+    -   a)  the worm travels at least 5% of its mean length over the
+            entire period; and,
+    -   b)  the worm’s speed is at least 5% of its length, per second,
+            in each frame. The worm must maintain this speed almost
+            continuously with permissible interruptions of, at most, a
+            quarter second (this permits quick contradictory movements
+            such as head withdrawal, body contractions, and segmentation
+            noise).
 
-   -  
-
-      a) the worm travels at least 5% of its mean length over the entire
-         period; and,
-
-   -  
-
-      b) the worm’s speed is at least 5% of its length, per second, in
-         each frame. The worm must maintain this speed almost
-         continuously with permissible interruptions of, at most, a
-         quarter second (this permits quick contradictory movements such
-         as head withdrawal, body contractions, and segmentation noise).
-
--  The criteria for **backward motion** is identical except the worm
-   must be moving backwards (the midbody speed must be negatively
-   signed).
--  The worm is defined in a **paused state** when a period, more than
-   half a second long, is observed wherein the worm’s forward and
-   backward speed do not exceed 2.5% of its length, per second, in each
-   frame. The worm must observe these speed limits almost continuously
-   with permissible interruptions of, at most, a quarter second (once
-   again, this permits quick contradictory movements).
+-   The criteria for **backward motion** is identical except the worm
+    must be moving backwards (the midbody speed must be negatively
+    signed).
+-   The worm is defined in a **paused state** when a period, more than
+    half a second long, is observed wherein the worm’s forward and
+    backward speed do not exceed 2.5% of its length, per second, in each
+    frame. The worm must observe these speed limits almost continuously
+    with permissible interruptions of, at most, a quarter second (once
+    again, this permits quick contradictory movements).
 
 3. Bends
-~~~~~~~~
+--------
 
-.. figure:: Locomotion%20-%20bends.gif
-   :alt: 
+![](Locomotion%20-%20bends.gif)
 
 As shown in the file structure image above, in the feature file itself,
 The "bends" feature has four sub-features, "foraging", "head",
 "midbody", "tail". The latter three are grouped in the below description
 of crawling, whereas the first sub-feature is described separately.
 
-.. figure:: fig%204%20b%20-%20bend%20angle.gif
-   :alt: 
+![](fig%204%20b%20-%20bend%20angle.gif)
 
 The bend angle (α) is the difference in tangent angles at each point;
 or, alternatively phrased, the supplementary angle (α) with respect to
@@ -177,13 +163,11 @@ the angle formed by any three consecutive points (β). The bend angle is
 signed negatively whenever the ventral side is concave within the bend
 (as is the case for the bend shown).
 
-Bends sub-feature: Foraging
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Bends sub-feature: Foraging
 
 Worm foraging is expressed as both an amplitude and an angular speed:
 
-.. figure:: fig%204%20g%20-%20foraging.gif
-   :alt: 
+![](fig%204%20g%20-%20foraging.gif)
 
 *Worm foraging is measured from the bend angle between the two sections
 of the head (panel a). The noisy signal (black) is smoothed (red) by
@@ -260,13 +244,11 @@ sometimes bends it back but a full wave, akin to a body bend, occurs far
 less frequently. Therefore I chose to measure angular speed for
 foraging.
 
-Bends sub-features (for crawling): "head", "midbody", "tail"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Bends sub-features (for crawling): "head", "midbody", "tail"
 
 Worm crawling is expressed as both an amplitude and frequency:
 
-.. figure:: fig%204%20e%20-%20crawling.gif
-   :alt: 
+![](fig%204%20e%20-%20crawling.gif)
 
 *A crawling wave is represented as the sinusoidal wave of the bend angle
 at its associated body part. Note the dorsal-ventral asymmetry both in
@@ -282,11 +264,11 @@ instantaneous bend.
 
 Crawling is only measured during forward and backward motion states. The
 worm bend mean angles (described in the section on
-“\ `Posture <Posture.md>`__\ ”) show a roughly periodic signal as the
-crawling wave travels along the worm’s body. This wave can be asymmetric
-due to differences in dorsal-ventral flexibility or simply because the
-worm is executing a turn. Moreover the wave dynamics can change abruptly
-to speed up or slow down. Therefore, the signal is only roughly periodic
+“[Posture](Posture.md)”) show a roughly periodic signal as the crawling
+wave travels along the worm’s body. This wave can be asymmetric due to
+differences in dorsal-ventral flexibility or simply because the worm is
+executing a turn. Moreover the wave dynamics can change abruptly to
+speed up or slow down. Therefore, the signal is only roughly periodic
 and we measure its instantaneous properties.
 
 Worm bends are linearly interpolated across unsegmented frames. The
@@ -317,36 +299,32 @@ Similarly, if the integral between the troughs is less than half the
 total integral, the peak is rejected for being weak.
 
 5. Turns
-~~~~~~~~
+--------
 
-.. figure:: Locomotion%20-%20turns.gif
-   :alt: 
+![](Locomotion%20-%20turns.gif)
 
 **Omega** and **upsilon** turn events are computed similarly to a
-previously described method `("Machine-vision-based detection of omega
-bends and reversals in C. elegans" by Huang et. al, also of the
-Schafer Lab
-(2006)) <http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/Huang2006.pdf>`__
+previously described method [("Machine-vision-based detection of omega
+bends and reversals in C. elegans" by Huang et. al, also of the Schafer
+Lab
+(2006))](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/Huang2006.pdf)
 but using skeleton bends instead of a single head-midbody-tail angle.
 Omega and upsilon turns are signed negatively whenever the worm’s
 ventral side is sheltered within the concavity of its midbody bend.
 
-The worm bends (described in the section on
-“\ `Posture <Posture.md>`__\ ”) are used to find a contiguous sequence
-of frames (interruptible by coiling and other segmentation failures)
-wherein a large bend travels from the worm’s head, through its midbody,
-to its tail. The worm’s body is separated into three equal parts from
-its head to its tail. The mean supplementary angle is measured along
-each third. - For **omega** turns, this angle must initially exceed 30°
-at the first but not the last third of the body (the head but not the
-tail). The middle third must then exceed 30°. And finally, the last but
-not the first third of the body must exceed 30° (the tail but not the
-head). This sequence of a 30° mean supplementary angle, passing
-continuously along the worm from head to tail, is labeled an omega turn
-event. - **Upsilon** turns are computed nearly identically but they
-capture all events that escaped being labeled omega turns, wherein the
-mean supplementary angle exceeded 15° on one side of the worm (the first
-or last third of the body) while not exceeding 30° on the opposite end.
-
-.. |image0| image:: fig%204%20f%20-%20motion%20states.gif
-.. |image1| image:: skeleton_lengths_interpolated.gif
+The worm bends (described in the section on “[Posture](Posture.md)”) are
+used to find a contiguous sequence of frames (interruptible by coiling
+and other segmentation failures) wherein a large bend travels from the
+worm’s head, through its midbody, to its tail. The worm’s body is
+separated into three equal parts from its head to its tail. The mean
+supplementary angle is measured along each third. - For **omega** turns,
+this angle must initially exceed 30° at the first but not the last third
+of the body (the head but not the tail). The middle third must then
+exceed 30°. And finally, the last but not the first third of the body
+must exceed 30° (the tail but not the head). This sequence of a 30° mean
+supplementary angle, passing continuously along the worm from head to
+tail, is labeled an omega turn event. - **Upsilon** turns are computed
+nearly identically but they capture all events that escaped being
+labeled omega turns, wherein the mean supplementary angle exceeded 15°
+on one side of the worm (the first or last third of the body) while not
+exceeding 30° on the opposite end.
