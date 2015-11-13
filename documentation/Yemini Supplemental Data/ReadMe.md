@@ -122,20 +122,16 @@ like if a worm only moves forward, its histogram for all movement
 features isolated to just backward data will contain no data.)
 
 -   [Morphology](Morphology.md) - [MatLab
-    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology)
-    - [Python
+    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology) - [Python
     Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/WormFeatures.py)
 -   [Posture](Posture.md) - [MatLab
-    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture)
-    - [Python
+    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture) - [Python
     Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/posture_features.py)
 -   [Locomotion](Locomotion.md) - [MatLab
-    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion)
-    - [Python
+    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion) - [Python
     Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/locomotion_features.py)
 -   [Path](Path.md) - [MatLab
-    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path)
-    - [Python
+    Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path) - [Python
     Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
 -   [Event Finder Code (in
     Python)](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/events.py)

@@ -1,7 +1,7 @@
 Morphology Features
 ===================
 
-Credit for all Locomotion feature definitions: [Yemini *et al.*
+Credit for all Locomotion feature definitions: [Yemini et al.
 (2013)](http://www.nature.com/nmeth/journal/v10/n9/extref/nmeth.2560-S1.pdf)
 
 1. Length

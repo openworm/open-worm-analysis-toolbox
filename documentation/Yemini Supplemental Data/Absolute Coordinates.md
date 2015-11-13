@@ -3,7 +3,7 @@ Absolute Coordinates
 
 From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer,
 W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nat.
-Methods (2013). <doi:10.1038/nmeth.2560>
+Methods (2013). `doi:10.1038/nmeth.2560`
 
 Many features require plate (or absolute) coordinates rather than pixel
 coordinates defined with respect to the camera field of view. Prior to

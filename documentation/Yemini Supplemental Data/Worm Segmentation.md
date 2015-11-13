@@ -3,7 +3,7 @@ Worm Segmentation
 
 From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. & Schafer,
 W. R. A database of Caenorhabditis elegans behavioral phenotypes. Nat.
-Methods (2013). <doi:10.1038/nmeth.2560>
+Methods (2013). `doi:10.1038/nmeth.2560`
 
 Video frames are extracted using the Matlab videoIO toolbox by Gerald
 Dalley. There is a sharp contrast between the worm and background in our

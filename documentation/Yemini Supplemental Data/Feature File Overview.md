@@ -3,7 +3,7 @@ Feature File Overview
 
 From From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. &
 Schafer, W. R. A database of Caenorhabditis elegans behavioral
-phenotypes. Nat. Methods (2013). <doi:10.1038/nmeth.2560>
+phenotypes. Nat. Methods (2013). `doi:10.1038/nmeth.2560`
 
 The features are presented within four types of files available online
 at:
@@ -90,11 +90,11 @@ PDF Files
 
 The PDF (portable document format) files include five sections:
 
-a)  a table of contents and overview of the results,
-b)  a short summary of the most important features,
-c)  the details for every feature,
-d)  traces of the worm paths, and
-e)  a reference with the experimental methods.
+1.  a table of contents and overview of the results,
+2.  a short summary of the most important features,
+3.  the details for every feature,
+4.  traces of the worm paths, and
+5.  a reference with the experimental methods.
 
 Each page uses a color scheme to provide quick visual summaries of its
 results. All pages display tabs, on the right side, that explain their

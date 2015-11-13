@@ -3,7 +3,7 @@ Feature Overview
 
 From From Yemini, E., Jucikas, T., Grundy, L. J., Brown, A. E. X. &
 Schafer, W. R. A database of Caenorhabditis elegans behavioral
-phenotypes. Nat. Methods (2013). <doi:10.1038/nmeth.2560>
+phenotypes. Nat. Methods (2013). `doi:10.1038/nmeth.2560`
 
 All feature are computed from the worm's segmented contour and skeleton.
 The skeleton and each side of the contour are scaled down to 49 points
@@ -20,9 +20,9 @@ worm posture.
 
 A common notation is used to define the body parts. The head is
 controlled by the first four bodywall muscles, per
-quadrant --approximately 1/6 the length of the worm (White et al. 1986).
+quadrant - approximately 1/6 the length of the worm (White et al. 1986).
 Similarly, the neck is controlled by the next four bodywall muscles, per
-quadrant -- approximately 1/6 the length of the worm. For this reason,
+quadrant - approximately 1/6 the length of the worm. For this reason,
 we define the head as the first 1/6 of the worm and the neck as the next
 1/6 of the worm (skeleton points 1-8 and 9-16, respectively). For
 symmetry, we define the tail and "hips", in a similar manner, on the
