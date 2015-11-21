@@ -1,0 +1,6 @@
+feature_field,bin_width,is_zero_bin,is_signed
+1,2,4,4
+path.duration.worm,1,0,0
+path.duration.head,0.5,0,0
+path.duration.midbody,1,0,0
+path.duration.tail,0.5,0,0

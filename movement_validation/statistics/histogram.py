@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+This code is generally interfaced with by the HistogramManager.
+
 The Histogram class, and its subclass, MergedHistogram:
 
 MergedHistoram contains a constructor that accepts a list
@@ -20,7 +22,7 @@ from .. import config, utils
 #%%
 class Histogram(object):
     """    
-    Encapsulates the notion of a signle histogram for a single feature.
+    Encapsulates the notion of a single histogram for a single feature.
     
     All bins in this histogram have an equal bin width.
     

@@ -194,6 +194,9 @@ class Specs(object):
             feature_details = feature_details.to_dict()
 
             stats_instance = class_function_handle()
+            import pdb
+            pdb.set_trace()
+            
             for feature_detail_key in fields_needed:
                 value = feature_details[feature_detail_key]
                 setattr(stats_instance, feature_detail_key, value)
@@ -255,6 +258,10 @@ class Specs(object):
 
 class SimpleSpecs(Specs):
     """
+    
+    Attributes
+    ----------
+    
     
     Notes
     ---------------

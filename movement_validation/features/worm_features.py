@@ -843,6 +843,13 @@ class WormFeaturesDos(object):
             self._retrieve_all_features()
 
     @classmethod
+    def from_disk(cls,data_file_path):
+        #This ideally would allow us to load any file from disk.
+        #
+        #For now we'll punt on this logic
+        return cls.from_schafer_file(data_file_path)
+
+    @classmethod
     def from_schafer_file(cls, data_file_path):
         """
         Load features from the Schafer lab feature (.mat) files.

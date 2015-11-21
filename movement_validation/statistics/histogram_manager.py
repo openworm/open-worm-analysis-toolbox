@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
+Entry Point
+-----------
+mv.HistogramManager(feature_path_or_object_list)
+
 The current processing approach is to take a set of features from an
 experiment and to summarize each of these features as a binned data set 
 (i.e. a histogram) where for each bin of a given width the # of values 
@@ -35,7 +39,8 @@ class HistogramManager(object):
     or WormFeatures objects.    
     
     Attributes
-    ------------- 
+    ----------
+    hist_cell_array: 
     merged_histograms: numpy array of MergedHistogram objects
         This can be accessed via the overloaded [] operator
 
@@ -66,6 +71,8 @@ class HistogramManager(object):
             
             if isinstance(feature_path_or_object, six.string_types):
                 # If we have a string, it's a filepath to an HDF5 feature file
+            
+                #TODO: Use 'with' statement
                 feature_file = h5py.File(feature_path_or_object, 'r')
                 #worm_features = feature_file["worm"]
                 worm_features = WormFeaturesDos.from_disk(feature_path_or_object)
