@@ -844,13 +844,20 @@ class WormFeaturesDos(object):
 
     @classmethod
     def from_disk(cls,data_file_path):
+        """
+        Creates an instance of the class from disk.
+        
+        Ideally we would support loading of any file type. For now
+        we'll punt on building in any logic until we have more types to deal
+        with.
+        """
         #This ideally would allow us to load any file from disk.
         #
         #For now we'll punt on this logic
-        return cls.from_schafer_file(data_file_path)
+        return cls._from_schafer_file(data_file_path)
 
     @classmethod
-    def from_schafer_file(cls, data_file_path):
+    def _from_schafer_file(cls, data_file_path):
         """
         Load features from the Schafer lab feature (.mat) files.
         """
@@ -1127,19 +1134,39 @@ class FeatureProcessingSpec(object):
 
         self.source = 'new'
         
-        self.name = d['Feature Name']
-        self.module_name = d['Module']
+        self.is_temporary = d['is_final_feature'] == 'n'
+        self.name = d['feature_name']
+        self.module_name = d['module']
         
         #TODO: Wrap this in a try clause with clear error if the module
         #hasn't been specified in the dictionary
         self.module = self.modules_dict[self.module_name]
         
-        self.class_name = d['Class Name']
+        self.class_name = d['class_name']
 
+        #We retrieve the class constructor or function from the module
         self.class_method = getattr(self.module, self.class_name) 
         
-        self.flags = d['Flags']
-        self.is_temporary = d['is_feature'] == 'n'
+        
+        self.flags = d['processing_flags']
+        
+        #TODO: We might write a __getattr__ function and just hold 
+        #onto the dict
+        self.type = d['type']
+        self.category = d['category']
+        self.display_name = d['display_name']
+        self.short_display_name = d['short_display_name']
+        self.units = d['units']
+        self.bin_width = d['bin_width']
+        self.is_signed = d['is_signed']
+        self.has_zero_bin = d['has_zero_bin']
+        self.signing_field = d['signing_field']
+        self.remove_partial_events = d['remove_partial_events']
+        self.make_zero_if_empty = d['make_zero_if_empty']
+        self.is_time_series = d['is_time_series']
+        
+        
+        
 
     def get_feature(self,wf):
         """
