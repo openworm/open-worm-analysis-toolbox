@@ -38,11 +38,12 @@ def main():
     # SCHAFER LAB
     #----------------------
     print('Loading example features from disk')
-    matlab_worm_features = mv.WormFeaturesDos.from_schafer_file(matlab_generated_file_path)
+    matlab_worm_features = mv.WormFeaturesDos.from_disk(matlab_generated_file_path)
 
     
     # COMPARISON
     #----------------------
+    #TODO: I think we should add an iteration method for worm_features
     all_features = matlab_worm_features.features
     for key in all_features:
         cur_feature = all_features[key]

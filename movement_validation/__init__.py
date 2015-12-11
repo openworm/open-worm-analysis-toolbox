@@ -22,6 +22,7 @@ from .prefeatures.worm_plotter import NormalizedWormPlottable
 # This is temporary; we will eventually remove it when the code is ready
 # to become WormFeatures
 from .features.worm_features import WormFeaturesDos
+from .features import feature_manipulations
 
 from .features.worm_features import WormFeatures
 from .features.feature_processing_options import FeatureProcessingOptions

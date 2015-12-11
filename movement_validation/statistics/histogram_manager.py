@@ -50,7 +50,7 @@ class HistogramManager(object):
     
     """
     #%%
-    def __init__(self, feature_path_or_object_list):
+    def __init__(self, feature_path_or_object_list,verbose=False):
         """
         Parameters
         ----------
@@ -59,9 +59,10 @@ class HistogramManager(object):
             their in-memory object equivalents.
         
         """
-        print("Number of feature files passed into the histogram manager:", 
+        if verbose:
+            print("Number of feature files passed into the histogram manager:", 
               len(feature_path_or_object_list))
-
+              
         # This will have shape (len(feature_path_or_object_list), 726)
         self.hist_cell_array = []
         
@@ -71,12 +72,8 @@ class HistogramManager(object):
             
             if isinstance(feature_path_or_object, six.string_types):
                 # If we have a string, it's a filepath to an HDF5 feature file
-            
-                #TODO: Use 'with' statement
-                feature_file = h5py.File(feature_path_or_object, 'r')
-                #worm_features = feature_file["worm"]
-                worm_features = WormFeaturesDos.from_disk(feature_path_or_object)
-                feature_file.close()
+                file_path = feature_path_or_object
+                worm_features = WormFeaturesDos.from_disk(file_path)
             else:
                 # Otherwise the worm features have been passed directly
                 # as an instance of WormFeatures (we hope)
@@ -85,8 +82,12 @@ class HistogramManager(object):
             #TODO: Need to add on info to properties 
             #worm_features.info -> obj.info
 
-            self.hist_cell_array.append(self.init_histograms(worm_features))
+            new_histogram_set = self.init_histograms(worm_features)
 
+            self.hist_cell_array.append(new_histogram_set)
+
+        #JAH TODO: I'm not sure what this is doing ..., add documentation
+        #----------------------------------------------------------------
         # Convert to a numpy array
         self.hist_cell_array = np.array(self.hist_cell_array)
         # At this point hist_cell_array is a list, with one element for 
@@ -186,6 +187,11 @@ class HistogramManager(object):
           start at the first frame or end at the last frame)
           
         """
+        
+        #How do we want to do this ...
+        #I'd like to have feature expansion be a specific step        
+        
+        
         # Simple histograms
         s_hists = self.__simple_histograms(worm_features, 
                                            SimpleSpecs.specs_factory())

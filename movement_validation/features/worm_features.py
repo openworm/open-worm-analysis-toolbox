@@ -955,17 +955,6 @@ class WormFeaturesDos(object):
     
         return temp
 
-    def list_specs(self,filter=None):
-        #TODO: similar to list_features except for the feature specs
-        #TODO: We might want get_specs as well
-        pass
-
-    def list_features(self,filter=None):
-        #TODO: I'd like to have this print all computed features that
-        #match a filter (if specified)
-        #e.g. wf.list_features('locomotion.*')
-        pass
-
     def __repr__(self):
         return utils.print_object(self)    
 
@@ -1164,15 +1153,12 @@ class FeatureProcessingSpec(object):
         self.remove_partial_events = d['remove_partial_events']
         self.make_zero_if_empty = d['make_zero_if_empty']
         self.is_time_series = d['is_time_series']
-        
-        
-        
 
     def get_feature(self,wf):
         """
         This method takes care of the logic of retrieving a feature.
         
-        ALl features are created or loaded via this method.
+        All features are created or loaded via this method.
         
         Arguments
         ---------
@@ -1182,6 +1168,10 @@ class FeatureProcessingSpec(object):
         
         #print("feature: " + self.name)        
 
+        #Resolve who is going to populate the feature
+        #--------------------------------------------
+        #'source' should be overwritten by the feature loading method
+        #after loading all the specs
         if self.source == 'new':
             final_method = self.class_method     
         else: #mrc #TODO: make explicit check for MRC otherwise throw an error
@@ -1204,7 +1194,8 @@ class FeatureProcessingSpec(object):
         if temp is not None:
             #We can get rid of the name assignments in class and use this ...
             temp.name = self.name
-            temp.is_temporary = self.is_temporary               
+            temp.is_temporary = self.is_temporary
+            temp.spec = self
                 
         return temp
         
