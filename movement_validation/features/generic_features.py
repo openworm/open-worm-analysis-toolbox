@@ -6,6 +6,7 @@ computed features inherit from.
 
 from .. import utils
 
+import copy
 import re
 
 #Get everything until a period that is followed by no periods
@@ -53,6 +54,10 @@ class Feature(object):
         #2) Make the call to WormFeatures
 
         return wf.get_feature(feature_name)
+        
+    def copy(self):
+        #Shallow copy for now ...
+        return copy.copy(self)
         
 def get_parent_feature_name(feature_name):
     

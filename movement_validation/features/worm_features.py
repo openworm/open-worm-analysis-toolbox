@@ -23,6 +23,7 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
 """
 
+import copy
 import csv, os, warnings
 import h5py  # For loading from disk
 import numpy as np
@@ -841,6 +842,12 @@ class WormFeaturesDos(object):
 
         if load_features:
             self._retrieve_all_features()
+            
+    def __iter__(self):
+        """  Let's allow iteration over the features """
+        all_features = self.features
+        for key in all_features:
+            yield all_features[key]
 
     @classmethod
     def from_disk(cls,data_file_path):
@@ -1147,12 +1154,12 @@ class FeatureProcessingSpec(object):
         self.short_display_name = d['short_display_name']
         self.units = d['units']
         self.bin_width = d['bin_width']
-        self.is_signed = d['is_signed']
-        self.has_zero_bin = d['has_zero_bin']
+        self.is_signed = d['is_signed'] == '1'
+        self.has_zero_bin = d['has_zero_bin'] == '1'
         self.signing_field = d['signing_field']
-        self.remove_partial_events = d['remove_partial_events']
-        self.make_zero_if_empty = d['make_zero_if_empty']
-        self.is_time_series = d['is_time_series']
+        self.remove_partial_events = d['remove_partial_events'] == '1'
+        self.make_zero_if_empty = d['make_zero_if_empty'] == '1'
+        self.is_time_series = d['is_time_series'] == '1'
 
     def get_feature(self,wf):
         """
@@ -1200,4 +1207,7 @@ class FeatureProcessingSpec(object):
         return temp
         
     def __repr__(self):
-        return utils.print_object(self)       
+        return utils.print_object(self)
+    
+    def copy(self):
+        return copy.copy(self)
