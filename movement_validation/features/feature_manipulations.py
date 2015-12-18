@@ -31,33 +31,53 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     # Remove the NaN and Inf entries
     all_data = utils.filter_non_numeric(cur_data)
     
+    new_features = []    
+    
     data_entries = {}
     data_entries['all'] = all_data
     if cur_spec.is_signed:
+        #Absolute doesn't make sense since it is the same as positive
         data_entries['absolute'] = np.absolute(all_data)
+        
+        parent_name = generic_features.get_parent_feature_name(e_feature.name)
+        signing_field = cur_spec.signing_field
+        signing_feature_name = '%s.%s' % (parent_name,signing_field)
+        #'locomotion.omega_turns.is_ventral'
+        #TODO: Need to add is_ventral feature to features list
+        #signing_feature = old_features.get_feature(signing_feature_name)
+        import pdb
+        pdb.set_trace()
         data_entries['positive'] = all_data[all_data >= 0]
         data_entries['negative'] = all_data[all_data <= 0]
+        
     
-    #JAH at this point
-    import pdb
-    pdb.set_trace()
+    return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
+     
     
-    #This should eventually change I think ...
-    parent_name = generic_features.get_parent_feature_name()    
-    
-    if cur_spec.is_signed    
-    
-    
-    
-    d_masks = {}
-    d_masks['all'] = good_data_mask
-    if cur_spec.is_signed:
-        d_masks["absolute"] = good_data_mask
-        d_masks["positive"] = cur_data >= 0 #bad data will be false
-        d_masks["negative"] = cur_data <= 0 #bad data will be false
-            
+def _create_new_event_feature(feature,data,d_type):
 
+    FEATURE_NAME_FORMAT_STR = '%s.%s_data'
     
+
+    temp_feature = feature.copy()
+    temp_spec = feature.spec.copy()
+    temp_spec.type = 'expanded_event'
+    temp_spec.is_time_series = False
+    temp_spec.name = FEATURE_NAME_FORMAT_STR % (temp_spec.name,d_type)
+    
+    #We might want to change this to load from the spec
+    temp_feature.name = temp_spec.name
+    #display_name?
+    #short_display_name?
+    #
+    #has_zero_bin => stays the same
+    #is_signed => maybe ...
+    #TODO: Might need to change this for events
+    temp_spec.is_signed = temp_spec.is_signed and d_type == 'all'
+    temp_feature.value = data
+    temp_feature.spec = temp_spec
+    
+    return temp_feature    
     pass
 
 def _expand_movement_features(m_feature,m_masks,num_frames):
@@ -101,6 +121,7 @@ def _expand_movement_features(m_feature,m_masks,num_frames):
 
         #We could get rid of this if we don't care about the order
         #OR if we use an ordered dict ...
+        #since we could iterate on d_masks
         if cur_spec.is_signed:
             end_type_index = 4
         else:
