@@ -129,7 +129,13 @@ class EventFeature(Feature):
         event_name, feature_type = get_feature_name_info(feature_name)
         event_name = get_parent_feature_name(feature_name)
         event_value = self.get_feature(wf,event_name).value              
-        self.value = get_event_attribute(event_value,feature_type)        
+        self.value = get_event_attribute(event_value,feature_type)
+        
+        self.n_frames = 1 #How to get from wf?????
+        
+        #TODO: Check on whether first and last are full
+        #TODO: Figure out how to make sure that on copy
+        #we adjust the mask if only full_values are set ...
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
@@ -140,6 +146,9 @@ class EventFeature(Feature):
         #TODO: We need to implement this ...
         #scalars - see if they are close, otherwise call super?
         return True
+        
+    def get_full_values(self):
+        pass
 
 #We might want to make things specific again but for now we'll use
 #a single class

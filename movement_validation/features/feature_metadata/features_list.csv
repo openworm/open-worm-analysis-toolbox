@@ -69,11 +69,13 @@ y,locomotion.omega_turns.time_between_events,generic_features,EventFeature,,,eve
 y,locomotion.omega_turns.distance_between_events,generic_features,EventFeature,,,event,locomotion,Inter Omega Distance (+/- = Previous D/V),Inter Distance,microns,100,1,0,is_ventral,1,0,0,locomotion.turns.omegas.frames,interDistance
 y,locomotion.omega_turns.frequency,generic_features,EventFeature,,,event,locomotion,Omega Turns Frequency,Frequency,Hz,0.001,0,0,,0,1,0,locomotion.turns.omegas.frequency,
 y,locomotion.omega_turns.time_ratio,generic_features,EventFeature,,,event,locomotion,Omega Turns Time Ratio,Time Ratio,no units,0.001,0,0,,0,1,0,locomotion.turns.omegas.timeRatio,
+n,locomotion.omega_turns.is_ventral,generic_features,EventFeature,,,event,locomotion,,,,,,,,,,,,
 y,locomotion.upsilon_turns.event_durations,generic_features,EventFeature,,,event,locomotion,Upsilon Turn Time (+/- = D/V Inside),Time,seconds,0.1,1,0,is_ventral,1,0,0,locomotion.turns.upsilons.frames,time
 y,locomotion.upsilon_turns.time_between_events,generic_features,EventFeature,,,event,locomotion,Inter Upsilon Time (+/- = Previous D/V),Inter Time,seconds,5,1,0,is_ventral,1,0,0,locomotion.turns.upsilons.frames,interTime
 y,locomotion.upsilon_turns.distance_between_events,generic_features,EventFeature,,,event,locomotion,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,microns,100,1,0,is_ventral,1,0,0,locomotion.turns.upsilons.frames,interDistance
 y,locomotion.upsilon_turns.frequency,generic_features,EventFeature,,,event,locomotion,Upsilon Turns Frequency,Frequency,Hz,0.001,0,0,,0,1,0,locomotion.turns.upsilons.frequency,
 y,locomotion.upsilon_turns.time_ratio,generic_features,EventFeature,,,event,locomotion,Upsilon Turns Time Ratio,Time Ratio,no units,0.001,0,0,,0,1,0,locomotion.turns.upsilons.timeRatio,
+n,locomotion.upsilon_turns.is_ventral,generic_features,EventFeature,,,event,locomotion,,,,,,,,,,,,
 y,path.range,path_features,NewRange,,,movement,path,Path Range,Range,Microns,10,0,0,,,,1,path.range,
 n,path.duration,path_features,Duration,,,,path,NA,NA,NA,,,,,,,,,
 y,path.duration.worm,path_features,DurationFeature,worm,,simple,path,Worm Dwelling,Worm,seconds,1,0,0,,,move into code,move towards setup,,

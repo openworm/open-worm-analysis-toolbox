@@ -31,26 +31,21 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     # Remove the NaN and Inf entries
     all_data = utils.filter_non_numeric(cur_data)
     
-    new_features = []    
-    
     data_entries = {}
     data_entries['all'] = all_data
     if cur_spec.is_signed:
-        #Absolute doesn't make sense since it is the same as positive
+        #Absolute doesn't make sense since it is the same as positive ...
         data_entries['absolute'] = np.absolute(all_data)
         
         parent_name = generic_features.get_parent_feature_name(e_feature.name)
         signing_field = cur_spec.signing_field
         signing_feature_name = '%s.%s' % (parent_name,signing_field)
-        #'locomotion.omega_turns.is_ventral'
-        #TODO: Need to add is_ventral feature to features list
-        #signing_feature = old_features.get_feature(signing_feature_name)
-        import pdb
-        pdb.set_trace()
-        data_entries['positive'] = all_data[all_data >= 0]
-        data_entries['negative'] = all_data[all_data <= 0]
+        signing_feature = old_features.get_feature(signing_feature_name)
+        negate_mask = signing_feature.value
         
-    
+        data_entries['positive'] = all_data[~negate_mask]
+        data_entries['negative'] = -1*all_data[negate_mask]
+        
     return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
      
     
@@ -77,8 +72,7 @@ def _create_new_event_feature(feature,data,d_type):
     temp_feature.value = data
     temp_feature.spec = temp_spec
     
-    return temp_feature    
-    pass
+    return temp_feature
 
 def _expand_movement_features(m_feature,m_masks,num_frames):
     """
