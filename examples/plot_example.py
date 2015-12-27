@@ -35,11 +35,11 @@ def main():
     # We need to create WormFeatures to get the motion codes
     # (telling us in each frame if the worm is moving forward, backward, etc,
     #  which is nice to have so we can annotate the plot with that info)
-    wf = mv.WormFeatures(nw)
-    motion_codes = wf.locomotion.motion_mode
+    #wf = mv.WormFeatures(nw)
+    #motion_codes = wf.locomotion.motion_mode
 
     # Plot an animation of the worm and its motion codes
-    wp = mv.NormalizedWormPlottable(nw, motion_codes)
+    wp = mv.NormalizedWormPlottable(nw)#, motion_codes)
     wp.show()
 
     # At this point we could save the plot to a file:

@@ -224,27 +224,27 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
 
         self.line1W = Line2D([], [], color='green', 
-                             linestyle='point marker',
+                             linestyle=':',
                              marker='o', markersize=5)
         self.line1W_head = Line2D([], [], color='red', 
-                                  linestyle='point marker',
+                                  linestyle=':',
                                   marker='o', markersize=7)
         self.line1C = Line2D([], [], color='yellow', 
-                             linestyle='point marker',
+                             linestyle=':',
                              marker='o', markersize=5)
         self.patch1E = Ellipse(xy=(0, 0), width=1000, height=500, 
                                angle=0, alpha=0.3)
 
         self.line2W = Line2D([], [], color='black', marker='o', markersize=5)
         self.line2W_head = Line2D([], [], color='red',
-                                  linestyle='point marker',
+                                  linestyle=':',
                                   marker='o', markersize=7)
         self.line2C = Line2D([], [], color='blue')
         self.line2C2 = Line2D([], [], color='orange')
 
         self.line3W = Line2D([], [], color='black', marker='o', markersize=5)
         self.line3W_head = Line2D([], [], color='red',
-                                  linestyle='point marker',
+                                  linestyle=':',
                                   marker='o', markersize=7)
 
         self.artists_with_data = [self.line1W, self.line1W_head, self.line1C,
