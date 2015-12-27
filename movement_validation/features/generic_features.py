@@ -6,6 +6,7 @@ computed features inherit from.
 
 from .. import utils
 
+import numpy as np
 import copy
 import re
 
@@ -123,19 +124,78 @@ class EventFeature(Feature):
     """
     This covers features that come from events. This is NOT the temporary 
     event features.
+    
+    Attributes
+    ----------
+    name
+    value
+    
+    
+    
     """
     def __init__(self,wf,feature_name):
         self.name = feature_name
         event_name, feature_type = get_feature_name_info(feature_name)
         event_name = get_parent_feature_name(feature_name)
-        event_value = self.get_feature(wf,event_name).value              
+        
+        #TODO: I'd like a better name for this
+        #event_parent?
+        #event_main?
+        event_value = self.get_feature(wf,event_name).value      
+        #event_value : EventListWithFeatures
+        
+        self.is_null = event_value.is_null        
+        
+        if self.is_null:
+            self.keep_mask = None
+            self.value = None
+            return
+        
+        
         self.value = get_event_attribute(event_value,feature_type)
+        start_frames = get_event_attribute(event_value,'start_frames')
+        end_frames = get_event_attribute(event_value,'end_frames')
         
-        self.n_frames = 1 #How to get from wf?????
-        
+        #TODO: Make sure that the main event class contains this value
+        self.num_video_frames = event_value.num_video_frames #How to get from wf?????
+
         #TODO: Check on whether first and last are full
         #TODO: Figure out how to make sure that on copy
         #we adjust the mask if only full_values are set ...
+        
+        #event_durations - filter on starts and stops
+        #distance_during_events - "  "
+        #time_between_events - filter on the breaks
+        #distance_between_events - filter on the breaks
+        #
+        #Ideally 
+        
+        #TODO: I think we should hide the 'keep_mask' => '_keep_mask'        
+        
+        #TODO: The filtering should maybe be identified by type
+        #event-main - summary of an event itself
+        #event-inter - summary of something between events
+        #event-summary - summary statistic over all events
+        #or something like this ...
+        
+        #TODO: This is different behavior than the original
+        #In the original the between events were filtered the same as the 1st
+        #event. In other words, if the 1st event was a partial, the time
+        #between the 1st and 2nd event was considered a partial
+        if self.value is None or self.value.size == 0:
+            self.keep_mask = None
+        else:
+            self.keep_mask = np.ones(self.value.shape, dtype=bool)
+            if feature_type in ['event_durations','distance_during_events']:
+                self.keep_mask[0] = start_frames[0] != 0
+                self.keep_mask[-1] = end_frames[-1] != (self.num_video_frames - 1)
+            elif feature_type in ['time_between_events','distance_between_events']:
+                #JAH: At this point
+                #First is partial if the main event starts after the first frame
+                self.keep_mask[0] = start_frames[0] == 0
+                #Similarly, if the last event ends before the end of the
+                #video, then anything after that is partial
+                self.keep_mask[-1] = end_frames[-1] == (self.num_video_frames - 1)            
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
@@ -148,7 +208,10 @@ class EventFeature(Feature):
         return True
         
     def get_full_values(self):
-        pass
+        if self.is_null:
+            return None
+        else:
+            return self.value[self.keep_mask]
 
 #We might want to make things specific again but for now we'll use
 #a single class

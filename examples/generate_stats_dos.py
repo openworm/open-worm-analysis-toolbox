@@ -114,7 +114,8 @@ def obtain_histograms(root_path, pickle_file_path):
         
         new_experiment_features = [mv.feature_manipulations.expand_mrc_features(x) for x in experiment_features]
 
-
+        import pdb
+        pdb.set_trace()
 
         # We need at least 10 files in each
         assert(len(experiment_files) >= 10)

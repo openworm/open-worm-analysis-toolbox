@@ -847,6 +847,9 @@ class WormFeaturesDos(object):
         """  Let's allow iteration over the features """
         all_features = self.features
         for key in all_features:
+            #next_feature = all_features[key]
+            #if next_feature is not None:
+            #    yield next_feature
             yield all_features[key]
 
     @classmethod

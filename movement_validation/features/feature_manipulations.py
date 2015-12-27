@@ -9,7 +9,7 @@ from .. import utils
 from . import generic_features
 
 import copy
-
+import warnings
 import numpy as np
 
 
@@ -23,10 +23,7 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     
     cur_spec = e_feature.spec
     
-    #TODO: Let's filter partials (0 and n_frames)
-    #I'd like to push this to the feature method
-    #cur_data = e_feature.get_full_values
-    cur_data = e_feature.value
+    cur_data = e_feature.get_full_values()
 
     # Remove the NaN and Inf entries
     all_data = utils.filter_non_numeric(cur_data)
@@ -43,8 +40,12 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
         signing_feature = old_features.get_feature(signing_feature_name)
         negate_mask = signing_feature.value
         
-        data_entries['positive'] = all_data[~negate_mask]
-        data_entries['negative'] = -1*all_data[negate_mask]
+        #Why would we sign between events??????
+        #TODO: This needs to be fixed
+        #https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/worm2histogram.m#L322
+        #https://github.com/openworm/SegWorm/blob/master/Worms/Features/removePartialEvents.m
+        data_entries['positive'] = all_data    #[~negate_mask]
+        data_entries['negative'] = -1*all_data #[negate_mask]
         
     return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
      
@@ -104,8 +105,10 @@ def _expand_movement_features(m_feature,m_masks,num_frames):
     d_masks['all'] = good_data_mask
     if cur_spec.is_signed:
         d_masks["absolute"] = good_data_mask
-        d_masks["positive"] = cur_data >= 0 #bad data will be false
-        d_masks["negative"] = cur_data <= 0 #bad data will be false       
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d_masks["positive"] = cur_data >= 0 #bad data will be false
+            d_masks["negative"] = cur_data <= 0 #bad data will be false       
     
     # Now let's create 16 histograms, for each element of
     # (motion_types x data_types)
@@ -211,17 +214,29 @@ def expand_mrc_features(old_features):
 
     all_features = []
     for cur_feature in old_features:
-        
-        cur_spec = cur_feature.spec
-        
-        if cur_spec.type == 'movement':
-            all_features.extend(_expand_movement_features(cur_feature,move_mask,num_frames))
-        #elif cur_spec.type == 'simple':
-        #    all_features.append(copy.deepcopy(cur_feature))
-        elif cur_spec.type == 'event':
-            all_features.extend(_expand_event_features(old_features,cur_feature,move_mask,num_frames))
+
+        #TODO: Null behavior needs to be clarified    
+        #TODO: We should filter on None
+        if cur_feature is None:
+            print('This should not run')
+            pass
         else:
-            all_features.extend(copy.deepcopy(cur_feature))
+             
+            cur_spec = cur_feature.spec
             
+            if cur_spec.type == 'movement':
+                all_features.extend(_expand_movement_features(cur_feature,move_mask,num_frames))
+            #elif cur_spec.type == 'simple':
+            #    all_features.append(copy.deepcopy(cur_feature))
+            elif cur_spec.type == 'event':
+                all_features.extend(_expand_event_features(old_features,cur_feature,move_mask,num_frames))
+            else:
+                #Deep copy doesn't work
+                #all_features.extend(copy.deepcopy(cur_feature))
+                #
+                #This could be dangerous ...
+                all_features.extend(cur_feature.copy())
             
+    import pdb
+    pdb.set_trace()        
     #TODO: Return new features container with all_features attached
