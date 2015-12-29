@@ -1,4 +1,4 @@
-# The movement_validation Travis CI build configuration file.
+# The movement_validation Travis-CI build configuration file.
 #
 # The original template for this .travis.yml came from 
 # https://gist.github.com/dan-blanchard/7045057
@@ -7,7 +7,6 @@
 language: python
 python:
   - 2.7
-  #Open CV isn't working with 3.3 for some reason ...
   - 3.3
   - 3.4
   - 3.5
@@ -19,12 +18,11 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-    #This will obviously need to be made generic ...
-    #- MINICONDA_DIR=/home/travis/virtualenv/python3.3.5
-    #THis is the python 2.7 version ...
-    #- MINICONDA_DIR=/home/travis/miniconda
-    #Is this the path for miniconda3?
-    - MINICONDA_DIR=/home/travis/miniconda3
+    - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+          MINICONDA_DIR=/home/travis/miniconda3;
+    - else
+          MINICONDA_DIR=/home/travis/miniconda;
+    - fi
  
 before_install:
   - #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
@@ -36,8 +34,11 @@ before_install:
   
 
   # Anaconda installation
-  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  #- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+        wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - else
+        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
@@ -55,7 +56,7 @@ before_install:
 
   # INSTALL OPENCV  
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-    sudo conda install --yes python=$TRAVIS_PYTHON_VERSION opencv;
+      sudo conda install --yes python=$TRAVIS_PYTHON_VERSION opencv;
   - else
       # OpenCV
       #-------------
