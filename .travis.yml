@@ -1,8 +1,7 @@
-# The movement_validation Travis-CI build configuration file.
+# The movement_validation Travis-CI build configuration file
 #
 # The original template for this .travis.yml came from 
 # https://gist.github.com/dan-blanchard/7045057
-#
 
 language: python
 python:
