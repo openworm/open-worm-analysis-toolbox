@@ -29,8 +29,6 @@ import numpy as np
 import collections  # For namedtuple, OrderedDict
 import pandas as pd
 
-from .. import utils
-
 from . import feature_processing_options as fpo
 from . import events
 from . import generic_features
@@ -40,6 +38,8 @@ from . import locomotion_features
 from . import locomotion_bends
 from . import locomotion_turns
 from . import morphology_features
+
+from .. import utils
 
 
 """
