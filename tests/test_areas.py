@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pylab as plt
 
 sys.path.append('..')
-import open-worm-analysis-toolbox as mv
+import open_worm_analysis_toolbox as mv
 
 def compute_area_by_rasterization(contour):
     """

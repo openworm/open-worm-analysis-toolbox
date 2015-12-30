@@ -10,10 +10,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
-# import of open-worm-analysis-toolbox while running this as 
+# import of open_worm_analysis_toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import open-worm-analysis-toolbox as mv
+import open_worm_analysis_toolbox as mv
 
 #%%
 def example_worms(num_frames=1000):

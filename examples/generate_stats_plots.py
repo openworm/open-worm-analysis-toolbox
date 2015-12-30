@@ -11,7 +11,7 @@ import pandas as pd
 import pickle
 
 sys.path.append('..')
-import open-worm-analysis-toolbox as mv
+import open_worm_analysis_toolbox as mv
 
 # Use pandas to load the features specification
 feature_spec_path = os.path.join('..', 'documentation', 'database schema',

@@ -10,7 +10,7 @@ import warnings
 # import of open-worm-analysis-toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-from open-worm-analysis-toolbox import user_config, BasicWorm, NormalizedWorm
+from open_worm_analysis_toolbox import user_config, BasicWorm, NormalizedWorm
 
 
 def main():
