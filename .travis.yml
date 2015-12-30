@@ -107,7 +107,7 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 
   # Create a valid user_config.py file for open-worm-analysis-toolbox
-  - sudo /bin/cp $TRAVIS_BUILD_DIR/open-worm-analysis-toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open-worm-analysis-toolbox/user_config.py
+  - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
