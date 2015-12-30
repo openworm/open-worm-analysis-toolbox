@@ -17,13 +17,14 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-    - |
-        if [ $TRAVIS_PYTHON_VERSION == 2.7 ]
-        then
-          MINICONDA_DIR=/home/travis/miniconda3
-        else
-          MINICONDA_DIR=/home/travis/miniconda
-        fi
+    - MINICONDA_DIR=/home/travis/miniconda3
+#    - |
+#        if [ $TRAVIS_PYTHON_VERSION == 2.7 ]
+#        then
+#          MINICONDA_DIR=/home/travis/miniconda3
+#        else
+#          MINICONDA_DIR=/home/travis/miniconda
+#        fi
  
 before_install:
   #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
