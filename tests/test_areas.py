@@ -11,20 +11,7 @@ worm and then counting the pixels bounded by the countour.
 See https://github.com/openworm/movement_validation/issues/127
 
 """
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
-     for i in installed_packages])
-print(installed_packages_list)
-raise AssertionError(str(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()])))
-
-
-
-import six
-if six.PY2:
-    import cv as cv2
-else:
-    import cv2
+import cv2
 import sys, os
 import numpy as np
 import matplotlib.pylab as plt
