@@ -46,6 +46,9 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
+  #- echo $PATH
+  #- echo "MINICONDA DIR@@:"
+  #- echo $MINICONDA_DIR
   #- conda update --yes conda
   
   # Need to install the actual Python version, does this work?
@@ -53,7 +56,7 @@ before_install:
   # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
-  - conda info python
+  #- conda info python
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py seaborn
   
   - which python
