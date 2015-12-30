@@ -18,10 +18,10 @@ env:
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
     - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-          MINICONDA_DIR=/home/travis/miniconda3;
-    - else
-          MINICONDA_DIR=/home/travis/miniconda;
-    - fi
+      MINICONDA_DIR=/home/travis/miniconda3;
+      else
+      MINICONDA_DIR=/home/travis/miniconda;
+      fi
  
 before_install:
   - #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
@@ -34,10 +34,10 @@ before_install:
 
   # Anaconda installation
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-        wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - else
-        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - fi
+    wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    else
+    wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
@@ -55,8 +55,8 @@ before_install:
 
   # INSTALL OPENCV  
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-      sudo conda install --yes python=$TRAVIS_PYTHON_VERSION opencv;
-  - else
+    sudo conda install --yes python=$TRAVIS_PYTHON_VERSION opencv;
+#    else
       # OpenCV
       #-------------
       # Anaconda doesn't support conda install opencv & binstart wasn't working
@@ -73,23 +73,23 @@ before_install:
       #     76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
       # 1) Get from source, currently master is v3.0.0 (supporting Python 3)
 
-      - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
-      - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
+#      - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
+#      - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
 
       # https://scivision.co/anaconda-python-opencv3/
       # ------------------------------------------
-      - cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
-      - make -j4
-      - sudo make install
+#      - cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
+#      - make -j4
+#      - sudo make install
   
       # https://gist.github.com/itguy51/4239282
       # ------------------------------------------
-      - echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
-      - sudo ldconfig
-      - echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" | sudo tee -a /etc/bash.bashrc
-      - echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
-      - export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
-  - fi
+#      - echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
+#      - sudo ldconfig
+#      - echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" | sudo tee -a /etc/bash.bashrc
+#      - echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
+#      - export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
+    fi
 
   # Is this still an issue? Can we remove it? - @JimHokanson, 2015/06/15
   # The next couple lines fix a crash with multiprocessing on Travis and 
