@@ -5,15 +5,7 @@
 
 language: python
 python:
-  # So we can install python-opencv via apt-get (in Python 2.7),
-  # we must make the global site packages directory visible to the virtualenv
-  # Travis has set up, since Travis by default isolates this virtualenv from 
-  # the system packages.  I learned this from:
-  # http://danielnouri.org/notes/2012/11/23/use-apt-get-to-install-python-dependencies-for-travis-ci/
-  # e.g.
-  # https://github.com/dnouri/nolearn/commit/f3567e22878abfc9f29e75b6a4d9e6b1d2bdcd7a#diff-354f30a63fb0907d4ad57269548329e3
-  # See the updated way of doing things here: https://github.com/travis-ci/travis-ci/issues/2219
-  - "2.7_with_system_site_packages"
+  - 2.7
   - 3.3
   - 3.4
   - 3.5
@@ -27,17 +19,14 @@ env:
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
  
 before_install:
-  #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
+  # Fix a matplotlib error
+  # http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start" 
-  - which python
-  - python --version
-  - cmake --version
-  - echo $TRAVIS_PYTHON_VERSION
 
   # Anaconda installation
   - |
-      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
         MINICONDA_DIR=/home/travis/miniconda2
         wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
       else
@@ -47,29 +36,21 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
-  - echo $PATH
-  - echo $MINICONDA_DIR
-  - echo $TRAVIS_PYTHON_VERSION
   #- conda update --yes conda
-  
-  # Need to install the actual Python version, does this work?
   # To get the correct version you have to do a conda install
   # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
-  #- conda info python
-  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
-  - |
-      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
-          conda install --yes python=2.7 atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
-      else
-          conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
-      fi
-  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
-  
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+
+  # Diagnostic information
   - which python
   - python --version
-
+  - cmake --version
+  - echo $PATH
+  - echo $MINICONDA_DIR
+  - echo $TRAVIS_PYTHON_VERSION
+  
   # INSTALL OPENCV
   # OpenCV
   #-------------
@@ -78,6 +59,12 @@ before_install:
   # sure we move the correct files to the correct Python installation, which is 
   # done via specifying PYTHON_PACKAGES_PATH
   # - @JimHokanson
+  #
+  # Ordinarily installing opencv would be as simple as `sudo apt-get install opencv`
+  # but because the Travis-CI build machine is wrapped in a virtualenv, we can't 
+  # access packages outside of our hermetically-sealed build environment
+  # So we build from source, as Jim says.
+  # - @MichaelCurrie
   #
   # References:
   # https://github.com/kevin-brown/blog.kevin-brown.com/blob/
@@ -93,7 +80,7 @@ before_install:
   # https://scivision.co/anaconda-python-opencv3/
   # ------------------------------------------
   - |
-      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
         cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python) -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
       else
         cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
@@ -109,19 +96,18 @@ before_install:
   - echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
   - export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
 
+  # Diagnostic: list all installed Python modules
   - pydoc modules
 
-  # Is this still an issue? Can we remove it? - @JimHokanson, 2015/06/15
   # The next couple lines fix a crash with multiprocessing on Travis and 
   # are not specific to using Miniconda
+  # If we are not using multithreading we can remove these, but perhaps it's best
+  # to keep them in for now.  - @MichaelCurrie, 2015-12-30
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 
   # Create a valid user_config.py file for movement_validation
   - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
-
-#install: 
-#  - ./install-dependencies.sh $TRAVIS_BUILD_DIR
 
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
