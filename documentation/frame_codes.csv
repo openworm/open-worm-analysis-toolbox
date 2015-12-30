@@ -2,7 +2,7 @@ Frame Code;System;Code Name;Description,,,
 1;segWorm;Success;'The worm was successfully segmented.',,,
 2;findStageMovement;StageMovement;'The video frame contains stage motion.',,,
 3;segWorm;DroppedFrame;'The video frame was dropped.',,,
-100;movement_validation;UnknownFailure;'The worm failed to be segmented for an unknown reason.'
+100;open-worm-analysis-toolbox;UnknownFailure;'The worm failed to be segmented for an unknown reason.'
 101;segWorm;NoWormFound;'No worm was found in the video frame.',,,
 102;segWorm;ContourTouchesBoundary;'The worm contour touches the image boundary.',,,
 103;segWorm;ContourTooSmall;'The worm contour is too small.',,,

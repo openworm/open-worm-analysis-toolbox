@@ -9,10 +9,10 @@ Status: Still in development (by Jim)
 import sys, os
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open-worm-analysis-toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 def main():
     """
@@ -31,7 +31,7 @@ def main():
     # Load the normalized worm from file
     nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
-    # Generate the OpenWorm movement validation repo version of the features
+    # Generate the OpenWorm version of the features
     print('Computing example features from normalized worm')
     openworm_features = mv.WormFeaturesDos(nw)
 

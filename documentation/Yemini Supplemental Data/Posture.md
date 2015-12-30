@@ -150,7 +150,7 @@ posture in each frame. Even for the mutants, the data is always
 projected onto the N2-derived eigenworms.
 
 (Also discussed at [issue
-79](https://github.com/openworm/movement_validation/issues/79))
+79](https://github.com/openworm/open-worm-analysis-toolbox/issues/79))
 
 ![](eigenworms.png)
 

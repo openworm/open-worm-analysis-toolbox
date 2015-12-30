@@ -8,7 +8,7 @@ Validate that the "shoelace method" of calculating the worm area
 is correct, by comparing it to the brute-force method of rasterizing the 
 worm and then counting the pixels bounded by the countour.
 
-See https://github.com/openworm/movement_validation/issues/127
+See https://github.com/openworm/open-worm-analysis-toolbox/issues/127
 
 """
 import cv2
@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pylab as plt
 
 sys.path.append('..')
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 def compute_area_by_rasterization(contour):
     """

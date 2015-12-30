@@ -20,7 +20,7 @@ format, ending with the extension .MAT. We are using the Python module
 H5PY to extract the information from these files.
 
 **Data storage:** Google Drive. To store examples of worm videos and
-HDF5 (.mat) feature files so the movement\_validation package can be put
+HDF5 (.mat) feature files so the open-worm-analysis-toolbox package can be put
 through its paces.
 
 **Markdown editor:** [MarkdownPad](http://markdownpad.com/). Optional.
@@ -30,7 +30,7 @@ For editing documents like this one.
 viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/). Optional. This
 tool can be used for debugging the file structure of the data files.
 
-Installing and running the movement\_validation repository
+Installing and running the open-worm-analysis-toolbox repository
 ==========================================================
 
 1.  Install Python 3.x, matplotlib, and Cython. Some examples may also
@@ -61,10 +61,10 @@ The workaround is to install from source. Follow the instructions under
 6.  Install [Google Drive for
     desktop](https://tools.google.com/dlpage/drive).
 7.  Using Google Drive, sync with the folder
-    [example\_movement\_validation\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
+    [example\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
     which is a subfolder of
-    `OpenWorm/OpenWorm Public/movement_validation/`.
-8.  In the `movement_validation/movement_validation` folder there should
+    `OpenWorm/OpenWorm Public/Movement Analysis/`.
+8.  In the `open-worm-analysis-toolbox/open-worm-analysis-toolbox` folder there should
     be a file `user_config_example.txt`. Rename this file as
     `user_config.py`. It will be ignored by GitHub since it is in the
     `.gitignore` file. So in `user_config.py`, specify your computer's

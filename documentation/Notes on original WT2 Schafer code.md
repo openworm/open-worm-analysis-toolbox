@@ -19,7 +19,7 @@ seconds is 15 minutes)
 
 Technical descriptions of the features calculated are [available in
 hyperlinked
-form](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Schafer%20Lab%20Feature%20Descriptions.md),
+form](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Yemini%20Supplemental%20Data/Schafer%20Lab%20Feature%20Descriptions.md),
 in documents adapted from the original Schafer Lab Supplemental
 Documentation to [4].
 

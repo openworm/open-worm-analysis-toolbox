@@ -31,10 +31,10 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open_worm_analysis_toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 
 def update_line(num, data, line):

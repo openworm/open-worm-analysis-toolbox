@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     sys.path.append('..')
-    import movement_validation as mv
+    import open-worm-analysis-toolbox as mv
 else:
-    from movement_validation import movement_validation as mv
+    from open-worm-analysis-toolbox import open-worm-analysis-toolbox as mv
     
       
 base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
@@ -42,7 +42,7 @@ nw_frame_metadata = pd.DataFrame(
                       'is_stage_movement': bw.is_stage_movement})
 
 # obtain this computer's path to 
-# movement_validation\documentation\frame_codes.csv
+# open-worm-analysis-toolbox\documentation\frame_codes.csv
 package_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 frame_codes_path = os.path.join(package_path, 
                                 'documentation', 

@@ -11,7 +11,7 @@ import sys, os
 #that we shouldn't . We need to decide how we want to handle this for all examples
 sys.path.append('..') 
 
-import movement_validation as mv
+import open-worm-analysis-toolbox as mv
 
 def main():
     # Set up the necessary file paths for file loading
@@ -21,7 +21,7 @@ def main():
     # Load the normalized worm from file
     nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
-    # Generate the OpenWorm movement validation repo version of the features
+    # Generate the OpenWorm version of the features
     fpo = mv.FeatureProcessingOptions()
     fpo.disable_feature_sections(['morphology']) 
     openworm_features = mv.WormFeatures(nw, fpo)    

@@ -505,7 +505,7 @@ def get_worm_kinks(features_ref):
     """
     Parameters
     ----------
-    features_ref : movement_validation.features.worm_features.WormFeatures
+    features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
     
     Returns
     -------
@@ -624,7 +624,7 @@ def get_worm_coils(features_ref, midbody_distance):
     
     Parameters
     ----------
-    features_ref : movement_validation.features.worm_features.WormFeatures    
+    features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures    
     
     This function is currently very reliant on the MRC processor.
     
@@ -720,7 +720,7 @@ class Directions(object):
 
         Parameters
         ----------
-        features_ref : movement_validation.features.worm_features.WormFeatures
+        features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
 
         """
 
@@ -797,7 +797,7 @@ def get_eigenworms(features_ref):
 
     Parameters
     ----------
-    features_ref : movement_validation.features.worm_features.WormFeatures
+    features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
     
     Returns
     -------
@@ -1363,7 +1363,7 @@ class Kinks(Feature):
         
         Parameters
         ----------
-        features_ref : movement_validation.features.worm_features.WormFeatures
+        features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
         
         Returns
         -------
@@ -1512,7 +1512,7 @@ class EigenProjectionProcessor(Feature):
         
         Parameters
         ----------
-        features_ref : movement_validation.features.worm_features.WormFeatures
+        features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
         
         Returns
         -------

@@ -1,6 +1,6 @@
 import sys
 
 sys.path.append('..')
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 mv.statistics.pathplot.test_run()

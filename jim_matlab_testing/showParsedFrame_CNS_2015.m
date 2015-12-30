@@ -1,11 +1,11 @@
 function showParsedFrame
 
-% file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_contour_and_skeleton_info.mat';
-% fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_norm_worm.mat';
+% file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data\example_contour_and_skeleton_info.mat';
+% fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data\example_video_norm_worm.mat';
 
 FRAME_USE = 980;
 
-video_path = 'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_data\mec-4 (u253) off food x_2010_04_21__17_19_20__1.avi';
+video_path = 'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data\example_video_data\mec-4 (u253) off food x_2010_04_21__17_19_20__1.avi';
 
 vr = sl.video.avi.reader(video_path);
 

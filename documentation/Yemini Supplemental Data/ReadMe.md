@@ -123,18 +123,18 @@ features isolated to just backward data will contain no data.)
 
 -   [Morphology](Morphology.md) - [MatLab
     Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40morphology) - [Python
-    Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/WormFeatures.py)
+    Code](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/open-worm-analysis-toolbox/features/WormFeatures.py)
 -   [Posture](Posture.md) - [MatLab
     Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40posture) - [Python
-    Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/posture_features.py)
+    Code](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/open-worm-analysis-toolbox/features/posture_features.py)
 -   [Locomotion](Locomotion.md) - [MatLab
     Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40locomotion) - [Python
-    Code](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/locomotion_features.py)
+    Code](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/open-worm-analysis-toolbox/features/locomotion_features.py)
 -   [Path](Path.md) - [MatLab
     Code](https://github.com/JimHokanson/SegwormMatlabClasses/tree/master/%2Bseg_worm/%2Bfeatures/%40path) - [Python
-    Code](https://github.com/openworm/movement_validation/blob/master/wormpy/WormFeatures.py)
+    Code](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/wormpy/WormFeatures.py)
 -   [Event Finder Code (in
-    Python)](https://github.com/openworm/movement_validation/blob/master/movement_validation/features/events.py)
+    Python)](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/open-worm-analysis-toolbox/features/events.py)
 
 [Phenotypic Ontology](Phenotypic%20Ontology.md)
 -----------------------------------------------
