@@ -34,18 +34,10 @@ before_install:
   - python --version
   - cmake --version
   - echo $TRAVIS_PYTHON_VERSION
-  - |
-      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
-          TRAVIS_PYTHON_VERSION_SIMPLE = 2.7
-      else
-          TRAVIS_PYTHON_VERSION_SIMPLE = $TRAVIS_PYTHON_VERSION
-      fi
-  - echo $TRAVIS_PYTHON_VERSION
-  - echo $TRAVIS_PYTHON_VERSION_SIMPLE
 
   # Anaconda installation
   - |
-      if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 2.7 ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
         MINICONDA_DIR=/home/travis/miniconda2
         wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
       else
@@ -67,7 +59,12 @@ before_install:
   # to try and match
   #- conda info python
   #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION_SIMPLE atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+  - |
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+          conda install --yes python=2.7 atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+      else
+          conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+      fi
   #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
   
   - which python
@@ -75,7 +72,7 @@ before_install:
 
   # INSTALL OPENCV  
   - |
-      if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 2.7 ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
         sudo apt-get install python-opencv
         # After doing an "import cv2" you will get the following message:
         # "libdc1394 error: Failed to initialize libdc1394".
