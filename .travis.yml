@@ -73,6 +73,12 @@ before_install:
   # INSTALL OPENCV  
   - |
       if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+        # So apt-get can see python-opencv, we must add these lines, following
+        # advice from http://askubuntu.com/questions/339217/unable-to-locate-package-libopencv-dev
+        sudo echo "deb http://de.archive.ubuntu.com/ubuntu precise main restricted universe" >> /etc/apt/sources.list
+        sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise restricted main multiverse universe" >> /etc/apt/sources.list
+        sudo echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" >> /etc/apt/sources.list
+        sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" >> /etc/apt/sources.list
         sudo apt-get install python-opencv
         # After doing an "import cv2" you will get the following message:
         # "libdc1394 error: Failed to initialize libdc1394".
