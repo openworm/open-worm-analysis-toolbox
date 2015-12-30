@@ -67,8 +67,13 @@ before_install:
   # INSTALL OPENCV  
   - |
       if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-        sudo apt-get python-opencv
-        #conda install --yes python=$TRAVIS_PYTHON_VERSION opencv
+        sudo apt-get install python-opencv
+        # After doing an "import cv2" you will get the following message:
+        # "libdc1394 error: Failed to initialize libdc1394".
+        # This is apparently a camera driver, so we don't care,
+        # So following http://stackoverflow.com/questions/12689304/,
+        # Let's suppress the message with:
+        sudo ln /dev/null /dev/raw1394
       else
         # OpenCV
         #-------------
