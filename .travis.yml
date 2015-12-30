@@ -17,14 +17,13 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-    - MINICONDA_DIR=/home/travis/miniconda3
-#    - |
-#        if [ $TRAVIS_PYTHON_VERSION == 2.7 ]
-#        then
-#          MINICONDA_DIR=/home/travis/miniconda3
-#        else
-#          MINICONDA_DIR=/home/travis/miniconda
-#        fi
+#    - MINICONDA_DIR=/home/travis/miniconda3
+    - |
+        if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+          MINICONDA_DIR=/home/travis/miniconda3
+        else
+          MINICONDA_DIR=/home/travis/miniconda
+        fi
  
 before_install:
   #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
@@ -52,6 +51,7 @@ before_install:
   # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
+  - conda info python
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py seaborn
   
   - which python
