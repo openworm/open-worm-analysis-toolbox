@@ -57,9 +57,9 @@ before_install:
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
   #- conda info python
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels h5py seaborn
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
+  #- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+  #- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
   
   - which python
   - python --version
