@@ -8,7 +8,7 @@
   
 """
 
-EXAMPLE_DATA_PATH = r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data'
+EXAMPLE_DATA_PATH = r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\Movement Analysis\example_data'
 
 
 # There is a step that is very slow that can be disabled

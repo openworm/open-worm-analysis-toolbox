@@ -63,7 +63,7 @@ The workaround is to install from source. Follow the instructions under
 7.  Using Google Drive, sync with the folder
     [example\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
     which is a subfolder of
-    `OpenWorm/OpenWorm Public/movement_analysis/`.
+    `OpenWorm/OpenWorm Public/Movement Analysis/`.
 8.  In the `open-worm-analysis-toolbox/open-worm-analysis-toolbox` folder there should
     be a file `user_config_example.txt`. Rename this file as
     `user_config.py`. It will be ignored by GitHub since it is in the
