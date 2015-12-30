@@ -1,11 +1,11 @@
 movement\_validation
 ====================
 
-[![image](https://travis-ci.org/openworm/movement_validation.svg?branch=master)](https://travis-ci.org/openworm/movement_validation)
+[![image](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox)
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/movement_validation?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true)
+![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
 
 Images: *C. elegans* by Bob Goldstein, UNC Chapel Hill
 <http://bio.unc.edu/people/faculty/goldstein/> Freely licensed. Contour
@@ -26,16 +26,16 @@ sub-project of the [OpenWorm project](https://github.com/openworm).
 It is only about 50% complete. Please see:
 
 -   [Installation
-    Guide](https://github.com/openworm/movement_validation/blob/master/INSTALL.rst)
+    Guide](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/INSTALL.rst)
 -   [Guide for
-    Contributors](https://github.com/openworm/movement_validation/blob/master/documentation/Guide%20for%20contributors.rst)
+    Contributors](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Guide%20for%20contributors.rst)
 -   [Current Code
     Progress](https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit?usp=sharing)
 -   [Kanban Board with current GitHub
-    Issues](https://waffle.io/openworm/movement_validation) [![Stories
+    Issues](https://waffle.io/openworm/open-worm-analysis-toolbox) [![Stories
     in
-    Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
+    Ready](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 -   [Movement Validation
-    Cloud](https://github.com/openworm/movement_validation_cloud) - An
+    Cloud](https://github.com/openworm/open-worm-analysis-toolbox_cloud) - An
     AWS Elastic Beanstalk instance for running this package on a server.
 

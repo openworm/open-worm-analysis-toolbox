@@ -1,4 +1,4 @@
-# The movement_validation Travis-CI build configuration file
+# The open-worm-analysis-toolbox Travis-CI build configuration file
 #
 # The original template for this .travis.yml came from 
 # https://gist.github.com/dan-blanchard/7045057
@@ -106,8 +106,8 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 
-  # Create a valid user_config.py file for movement_validation
-  - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
+  # Create a valid user_config.py file for open-worm-analysis-toolbox
+  - sudo /bin/cp $TRAVIS_BUILD_DIR/open-worm-analysis-toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open-worm-analysis-toolbox/user_config.py
 
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data

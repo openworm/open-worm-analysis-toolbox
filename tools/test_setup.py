@@ -20,7 +20,7 @@ http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy
 Manual user config specification
 --------------------------------
 Some settings must be set manually by the user. To do this make a copy of the
-user_config_example.txt file in the movement_validation folder and rename
+user_config_example.txt file in the open-worm-analysis-toolbox folder and rename
 it in the same folder as user_config.py
 
 Replace all values in the this file with their appropriate values.
@@ -41,7 +41,7 @@ import sys, os
 print("Python version: " + sys.version)
 
 if sys.version_info[:2] < (2,7):
-    raise Exception("movement_validation requires Python version 2.7 or greater")
+    raise Exception("open-worm-analysis-toolbox requires Python version 2.7 or greater")
 else:
     print("The version used is acceptable, since it is >=2.7")
 
@@ -112,12 +112,12 @@ except ImportError as e:
 
 try:
     # We must add .. to the path so that we can perform the 
-    # import of movement_validation while running this as 
+    # import of open-worm-analysis-toolbox while running this as 
     # a top-level script (i.e. with __name__ = '__main__')
     sys.path.append('..') 
-    from movement_validation import user_config
+    from open-worm-analysis-toolbox import user_config
 except ImportError as e:
-    print('Unable to import movement_validation/user_config.py module')
+    print('Unable to import open-worm-analysis-toolbox/user_config.py module')
     
 if not hasattr(user_config,'EXAMPLE_DATA_PATH'):
     print("user_config.py module is missing the 'EXAMPLE_DATA_PATH' attribute")

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Plotting some of the calculated values of movement_validation for 
+Plotting some of the calculated values of open-worm-analysis-toolbox for 
 illustrative purposes.
 
 Usage
 ----------------------------
 
-Within the movement_validation repository, the plotting code is encapsulated 
+Within the open-worm-analysis-toolbox repository, the plotting code is encapsulated 
 in the NormalizedWormPlottable class.
 
 If you already have an instance nw of the NormalizedWorm class, you could 

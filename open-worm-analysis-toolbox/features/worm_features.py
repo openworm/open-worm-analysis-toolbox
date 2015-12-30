@@ -622,7 +622,7 @@ class WormFeatures(object):
     Attributes
     ----------      
     video_info: VideoInfo object
-    options: movement_validation.features.feature_processing_options
+    options: open-worm-analysis-toolbox.features.feature_processing_options
     nw: NormalizedWorm object
     morphology: WormMorphology object
     locomotion: WormLocomotion object
@@ -637,7 +637,7 @@ class WormFeatures(object):
         Parameters
         ----------
         nw: NormalizedWorm object
-        processing_options: movement_validation.features.feature_processing_options
+        processing_options: open-worm-analysis-toolbox.features.feature_processing_options
 
         """
         if processing_options is None:
@@ -823,7 +823,7 @@ class WormFeaturesDos(object):
         Parameters
         ----------
         nw: NormalizedWorm object
-        processing_options: movement_validation.features.feature_processing_options
+        processing_options: open-worm-analysis-toolbox.features.feature_processing_options
 
         """
         if processing_options is None:

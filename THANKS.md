@@ -62,7 +62,7 @@ Acknowledgements:](https://github.com/openworm/SegWorm/blob/master/Worms/Printin
     (Cronin et al.
     2005)](http://www.ncbi.nlm.nih.gov/pubmed/15698479), for use
     in the [locomotion
-    features](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Locomotion.md).
+    features](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Yemini%20Supplemental%20Data/Locomotion.md).
 -   [Joan Lasenby](http://www-sigproc.eng.cam.ac.uk/Main/JL) and [Nick
     Kingsbury](http://www-sigproc.eng.cam.ac.uk/Main/NGK) were an
     invaluable resource for computer vision questions.

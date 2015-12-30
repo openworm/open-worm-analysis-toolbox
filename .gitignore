@@ -1,5 +1,5 @@
 /.idea
 *.pyc
 *.dat
-__pycache__\*
-/movement_validation/user_config.py
+__pycache__/*
+/open-worm-analysis-toolbox/user_config.py

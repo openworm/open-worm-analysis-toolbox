@@ -11,7 +11,7 @@ import pandas as pd
 import pickle
 
 sys.path.append('..')
-import movement_validation as mv
+import open-worm-analysis-toolbox as mv
 
 # Use pandas to load the features specification
 feature_spec_path = os.path.join('..', 'documentation', 'database schema',
@@ -364,7 +364,7 @@ class ShafferPlotDocument(PlotDocument):
             ctl_pathplot_manager = mv.PathPlotManager(control_files[:10])
 
             # Store a pickle file in the same folder as this script 
-            # (i.e. movement_validation/examples/)
+            # (i.e. open-worm-analysis-toolbox/examples/)
             with open(pickle_file_path, "wb") as pickle_file:
                 pickle.dump(exp_histogram_manager, pickle_file)
                 pickle.dump(ctl_histogram_manager, pickle_file)

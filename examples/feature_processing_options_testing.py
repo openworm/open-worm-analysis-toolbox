@@ -11,7 +11,7 @@ import sys, os
 #that we shouldn't . We need to decide how we want to handle this for all examples
 sys.path.append('..') 
 
-import movement_validation as mv
+import open-worm-analysis-toolbox as mv
 
 def main():
     # Set up the necessary file paths for file loading

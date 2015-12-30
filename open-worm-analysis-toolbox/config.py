@@ -5,7 +5,7 @@ contained many hardcoded values.  These are tracked in a central
 location here.
 
 THIS IS BEING PHASED OUT
-- to be replaced with movement_validation/features/feature_processing_options.py
+- to be replaced with open-worm-analysis-toolbox/features/feature_processing_options.py
 
 Notes
 ---------------------------------------
@@ -14,7 +14,7 @@ these are shown here as being commented out.
 
 Usage
 ---------------------------------------
-Best practice is to use this via "from movement_validation import config", 
+Best practice is to use this via "from open-worm-analysis-toolbox import config", 
 and then reference the configuration settings like this: e.g. "config.FPS" 
 rather than doing "from wormpy.config import *" and referencing "FPS"
 since the latter approach pollutes the global namespace.

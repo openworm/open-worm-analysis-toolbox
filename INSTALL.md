@@ -61,10 +61,10 @@ The workaround is to install from source. Follow the instructions under
 6.  Install [Google Drive for
     desktop](https://tools.google.com/dlpage/drive).
 7.  Using Google Drive, sync with the folder
-    [example\_movement\_validation\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
+    [example\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
     which is a subfolder of
-    `OpenWorm/OpenWorm Public/movement_validation/`.
-8.  In the `movement_validation/movement_validation` folder there should
+    `OpenWorm/OpenWorm Public/movement_analysis/`.
+8.  In the `open-worm-analysis-toolbox/open-worm-analysis-toolbox` folder there should
     be a file `user_config_example.txt`. Rename this file as
     `user_config.py`. It will be ignored by GitHub since it is in the
     `.gitignore` file. So in `user_config.py`, specify your computer's

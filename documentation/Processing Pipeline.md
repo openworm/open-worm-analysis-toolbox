@@ -71,7 +71,7 @@ Raw video, plus tracking plate movement data + other metadata (time of
 filming, vulva location, whether worm flipped during video, strain of
 worm used, Lab name, etc)
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%200-1.bmp?raw=true)
+![](images/STEP%200-1.bmp?raw=true)
 
 Credit: OpenWorm / <http://dorkutopia.com/tag/xbox-one/>
 
@@ -81,7 +81,7 @@ Credit: OpenWorm / <http://dorkutopia.com/tag/xbox-one/>
 
 This gives the worm contour and skeleton, etc.
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%202.gif?raw=true)
+![](images/STEP%202.gif?raw=true)
 
 Credit: Ev Yemini
 
@@ -173,6 +173,6 @@ In fact, the Schafer lab currently has such a database,
 Reports are run from data in the statistics database, and can take the
 form of a summary pixel grid, pairwise boxplots, and other charts.
 
-![](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/images/STEP%207.bmp?raw=true)
+![](images/STEP%207.bmp?raw=true)
 
 Credit: Ev Yemini

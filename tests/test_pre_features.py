@@ -11,7 +11,7 @@ they are the same:   i.e. nw == nw_calculated
 import sys, os
 
 sys.path.append('..')
-import movement_validation as mv
+import open-worm-analysis-toolbox as mv
 
 
 def test_pre_features():

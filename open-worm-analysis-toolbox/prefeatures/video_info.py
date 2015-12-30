@@ -132,7 +132,7 @@ class VideoInfo(object):
         
         """
         # Obtain this computer's path to 
-        # movement_validation\documentation\frame_codes.csv
+        # open-worm-analysis-toolbox\documentation\frame_codes.csv
         cur_file_folder = os.path.dirname(__file__)
         package_path = os.path.abspath(os.path.dirname(cur_file_folder))
         frame_codes_path = os.path.join(package_path, 

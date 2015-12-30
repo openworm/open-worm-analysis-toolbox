@@ -7,10 +7,10 @@ An example of plotting an animation of a worm's skeleton and contour
 import sys, os, warnings
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open-worm-analysis-toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import movement_validation as mv
+import open-worm-analysis-toolbox as mv
 
 def main():
     """

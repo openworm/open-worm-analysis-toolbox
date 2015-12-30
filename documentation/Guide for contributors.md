@@ -10,7 +10,7 @@ Objectives:
 -----------
 
 1.  This repository should house a test
-    [pipeline](https://github.com/OpenWorm/movement_validation/blob/master/documentation/Processing%20Pipeline.md)
+    [pipeline](https://github.com/OpenWorm/open-worm-analysis-toolbox/blob/master/documentation/Processing%20Pipeline.md)
     for the OpenWorm project to run a behavioural phenotyping of its
     virtual worm, using the same statistical tests the Schafer lab used
     on their real worm data.
@@ -60,7 +60,7 @@ repo.
 From October 2013, [Michael Currie](https://github.com/MichaelCurrie)
 started to translate Jim's SegWormMatlabClasses repository into Python
 so it would be fully open source. To this end he started the
-[movement\_validation](https://github.com/openworm/movement_validation)
+[movement\_validation](https://github.com/openworm/open-worm-analysis-toolbox)
 repository.
 
 Currently only the movement\_validation repository is being actively
@@ -74,13 +74,13 @@ Best practices for contributing to this repo
 --------------------------------------------
 
 Just find an issue in the "Ready" column of the [waffle
-board](https://waffle.io/openworm/movement_validation) and dig in. Ask
+board](https://waffle.io/openworm/open-worm-analysis-toolbox) and dig in. Ask
 questions of others early and often; you can do so on our message board,
 [OpenWorm-discuss](https://groups.google.com/forum/#!forum/openworm-discuss).
 
 Please commit your code often, even if you've made a very small change,
 but only if you've verified that your change has not broken any
-[examples](https://github.com/openworm/movement_validation/tree/master/examples).
+[examples](https://github.com/openworm/open-worm-analysis-toolbox/tree/master/examples).
 
 For more information, see ["Commit Often, Perfect Later, Publish Once:
 Git best practices"](http://sethrobertson.github.io/GitBestPractices/).
@@ -89,7 +89,7 @@ Further Information
 -------------------
 
 [White Paper Describing Movement Validation at a high
-level](https://github.com/openworm/movement_validation/blob/master/documentation/Movement%20Validation%20White%20Paper.md)
+level](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Movement%20Validation%20White%20Paper.md)
 *(June 2014)*
 
 [movement\_validation Google Docs
