@@ -130,6 +130,8 @@ before_install:
         export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
       fi
 
+  - pydoc modules
+
   # Is this still an issue? Can we remove it? - @JimHokanson, 2015/06/15
   # The next couple lines fix a crash with multiprocessing on Travis and 
   # are not specific to using Miniconda
