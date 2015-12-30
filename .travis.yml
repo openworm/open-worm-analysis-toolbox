@@ -80,8 +80,9 @@ before_install:
         echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" | sudo tee -a /etc/apt/sources.list
         echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" | sudo tee -a /etc/apt/sources.list
         # From https://web.archive.org/web/20130620145414/http://www.neuroforge.co.uk/index.php/getting-started-with-python-a-opencv
+        cat /etc/apt/sources.list
         sudo apt-get install python-software-properties
-        sudo add-apt-repository repo        
+        sudo add-apt-repository python-opencv
         # This tested and worked on an Ubuntu Amazon AMI:
         sudo apt-get install python-opencv
         # After doing an "import cv2" you will get the following message:
