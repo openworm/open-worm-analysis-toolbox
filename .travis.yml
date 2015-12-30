@@ -25,13 +25,6 @@ env:
     # Dependencies
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
-#    - MINICONDA_DIR=/home/travis/miniconda3
-#    - |
-#        if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-#          MINICONDA_DIR=/home/travis/miniconda3
-#        else
-#          MINICONDA_DIR=/home/travis/miniconda
-#        fi
  
 before_install:
   #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
@@ -40,11 +33,19 @@ before_install:
   - which python
   - python --version
   - cmake --version
-  
+  - echo $TRAVIS_PYTHON_VERSION
+  - |
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+          TRAVIS_PYTHON_VERSION_SIMPLE = 2.7
+      else
+          TRAVIS_PYTHON_VERSION_SIMPLE = $TRAVIS_PYTHON_VERSION
+      fi
+  - echo $TRAVIS_PYTHON_VERSION
+  - echo $TRAVIS_PYTHON_VERSION_SIMPLE
 
   # Anaconda installation
   - |
-      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 2.7 ]]; then 
         MINICONDA_DIR=/home/travis/miniconda2
         wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
       else
@@ -65,16 +66,16 @@ before_install:
   # match Python versions and it seems like continuum doesn't want you 
   # to try and match
   #- conda info python
-  #- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
-  #- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
+  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION_SIMPLE atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
   
   - which python
   - python --version
 
   # INSTALL OPENCV  
   - |
-      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+      if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 2.7 ]]; then 
         sudo apt-get install python-opencv
         # After doing an "import cv2" you will get the following message:
         # "libdc1394 error: Failed to initialize libdc1394".
