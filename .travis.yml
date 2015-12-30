@@ -18,12 +18,12 @@ env:
     - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
     - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
 #    - MINICONDA_DIR=/home/travis/miniconda3
-    - |
-        if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-          MINICONDA_DIR=/home/travis/miniconda3
-        else
-          MINICONDA_DIR=/home/travis/miniconda
-        fi
+#    - |
+#        if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+#          MINICONDA_DIR=/home/travis/miniconda3
+#        else
+#          MINICONDA_DIR=/home/travis/miniconda
+#        fi
  
 before_install:
   #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
@@ -37,8 +37,10 @@ before_install:
   # Anaconda installation
   - |
       if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
+        MINICONDA_DIR=/home/travis/miniconda3
         wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
       else
+        MINICONDA_DIR=/home/travis/miniconda
         wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
       fi
   - chmod +x miniconda.sh
@@ -104,6 +106,9 @@ before_install:
 
   # Create a valid user_config.py file for movement_validation
   - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
+
+#install: 
+#  - ./install-dependencies.sh $TRAVIS_BUILD_DIR
 
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
