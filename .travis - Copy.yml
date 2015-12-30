@@ -1,0 +1,164 @@
+# The movement_validation Travis-CI build configuration file
+#
+# The original template for this .travis.yml came from 
+# https://gist.github.com/dan-blanchard/7045057
+
+language: python
+python:
+  # So we can install python-opencv via apt-get (in Python 2.7),
+  # we must make the global site packages directory visible to the virtualenv
+  # Travis has set up, since Travis by default isolates this virtualenv from 
+  # the system packages.  I learned this from:
+  # http://danielnouri.org/notes/2012/11/23/use-apt-get-to-install-python-dependencies-for-travis-ci/
+  # e.g.
+  # https://github.com/dnouri/nolearn/commit/f3567e22878abfc9f29e75b6a4d9e6b1d2bdcd7a#diff-354f30a63fb0907d4ad57269548329e3
+  # See the updated way of doing things here: https://github.com/travis-ci/travis-ci/issues/2219
+  - "2.7_with_system_site_packages"
+  - 3.3
+  - 3.4
+  - 3.5
+notifications:
+  email: false
+
+env:
+  global:
+    # Dependencies
+    - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
+    - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
+ 
+before_install:
+  #http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start" 
+  - which python
+  - python --version
+  - cmake --version
+  - echo $TRAVIS_PYTHON_VERSION
+
+  # Anaconda installation
+  - |
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+        MINICONDA_DIR=/home/travis/miniconda2
+        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+      else
+        MINICONDA_DIR=/home/travis/miniconda3
+        wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+      fi
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=$MINICONDA_DIR/bin:$PATH
+  - echo $PATH
+  - echo $MINICONDA_DIR
+  - echo $TRAVIS_PYTHON_VERSION
+  #- conda update --yes conda
+  
+  # Need to install the actual Python version, does this work?
+  # To get the correct version you have to do a conda install
+  # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
+  # match Python versions and it seems like continuum doesn't want you 
+  # to try and match
+  #- conda info python
+  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get purge python3-dateutil; fi
+  - |
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+          conda install --yes python=2.7 atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+      else
+          conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+      fi
+  #- if [[ $TRAVIS_PYTHON_VERSION_SIMPLE == 3.5 ]]; then sudo apt-get install python3-dateutil; fi
+  
+  - which python
+  - python --version
+
+  # INSTALL OPENCV  
+  - |
+      if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
+        # So apt-get can see python-opencv, we must add these lines, following
+        # advice from http://askubuntu.com/questions/339217/unable-to-locate-package-libopencv-dev
+        echo "deb http://de.archive.ubuntu.com/ubuntu precise main restricted universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb-src http://de.archive.ubuntu.com/ubuntu precise restricted main multiverse universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" | sudo tee -a /etc/apt/sources.list
+        # From https://web.archive.org/web/20130620145414/http://www.neuroforge.co.uk/index.php/getting-started-with-python-a-opencv
+        cat /etc/apt/sources.list
+        sudo apt-get install python-software-properties
+        sudo add-apt-repository python-opencv
+        # This tested and worked on an Ubuntu Amazon AMI:
+        sudo apt-get install python-opencv
+        # After doing an "import cv2" you will get the following message:
+        # "libdc1394 error: Failed to initialize libdc1394".
+        # This is apparently a camera driver, so we don't care,
+        # So following http://stackoverflow.com/questions/12689304/,
+        # Let's suppress the message with:
+        sudo ln /dev/null /dev/raw1394
+        # Let's print out what version of OpenCV we've installed, following
+        # http://stackoverflow.com/questions/11273459/how-do-i-install-opencv
+        apt-cache policy python-opencv
+      else
+        # OpenCV
+        #-------------
+        # Anaconda doesn't support conda install opencv & binstart wasn't working
+        # so instead we download and build from source. The only other trick is making
+        # sure we move the correct files to the correct Python installation, which is 
+        # done via specifying PYTHON_PACKAGES_PATH
+        # - @JimHokanson
+        #
+        # References:
+        # https://github.com/kevin-brown/blog.kevin-brown.com/blob/
+        #     2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/
+        #     2014-09-27-building-and-installing-opencv-3.markdown
+        # https://github.com/kashefy/elm/blob/
+        #     76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
+        # 1) Get from source, currently master is v3.0.0 (supporting Python 3)
+
+        travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
+        mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
+
+        # https://scivision.co/anaconda-python-opencv3/
+        # ------------------------------------------
+        cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
+        make -j4
+        sudo make install
+  
+        # https://gist.github.com/itguy51/4239282
+        # ------------------------------------------
+        echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
+        sudo ldconfig
+        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" | sudo tee -a /etc/bash.bashrc
+        echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
+        export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
+      fi
+
+  # Is this still an issue? Can we remove it? - @JimHokanson, 2015/06/15
+  # The next couple lines fix a crash with multiprocessing on Travis and 
+  # are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+
+  # Create a valid user_config.py file for movement_validation
+  - sudo /bin/cp $TRAVIS_BUILD_DIR/movement_validation/travis_config.txt $TRAVIS_BUILD_DIR/movement_validation/user_config.py
+
+#install: 
+#  - ./install-dependencies.sh $TRAVIS_BUILD_DIR
+
+before_script:
+  - mkdir $TRAVIS_BUILD_DIR/example_data
+  - cd $TRAVIS_BUILD_DIR/example_data
+  # TODO: Presumably the initial address could be a variable
+  - wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_and_skeleton_info.mat" -O example_contour_and_skeleton_info.mat
+  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
+  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
+  # TODO: Presumably we could run some command on the directory
+  # This may no longer be necessary, found other bugs ...
+  - ls -l
+  - chmod 777 example_contour_and_skeleton_info.mat
+  - chmod 777 example_video_feature_file.mat
+  - chmod 777 example_video_norm_worm.mat
+  - pwd
+  - ls -l
+ 
+# Run test
+script:
+  - cd $TRAVIS_BUILD_DIR/tests
+  - pwd
+  - nosetests --nocapture
