@@ -79,6 +79,10 @@ before_install:
         sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise restricted main multiverse universe" >> /etc/apt/sources.list
         sudo echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" >> /etc/apt/sources.list
         sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" >> /etc/apt/sources.list
+        # From https://web.archive.org/web/20130620145414/http://www.neuroforge.co.uk/index.php/getting-started-with-python-a-opencv
+        sudo apt-get install python-software-properties
+        sudo add-apt-repository repo        
+        # This tested and worked on an Ubuntu Amazon AMI:
         sudo apt-get install python-opencv
         # After doing an "import cv2" you will get the following message:
         # "libdc1394 error: Failed to initialize libdc1394".
@@ -86,6 +90,9 @@ before_install:
         # So following http://stackoverflow.com/questions/12689304/,
         # Let's suppress the message with:
         sudo ln /dev/null /dev/raw1394
+        # Let's print out what version of OpenCV we've installed, following
+        # http://stackoverflow.com/questions/11273459/how-do-i-install-opencv
+        apt-cache policy python-opencv
       else
         # OpenCV
         #-------------
