@@ -8,7 +8,7 @@ Biology](http://www2.mrc-lmb.cam.ac.uk/), Cambridge, UK, developed the
 Toolbox](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis)
 to work with data from the [Worm Tracker 2.0
 (WT2)](http://www.mrc-lmb.cam.ac.uk/wormtracker/). The
-movement\_validation package is a port of the last version of the Worm
+open-worm-analysis-toolbox package is a port of the last version of the Worm
 Analysis Toolbox, version 1.3.4.
 
 [Dr. Eviatar "Ev"
@@ -28,10 +28,11 @@ Schafer](http://www2.mrc-lmb.cam.ac.uk/group-leaders/n-to-s/william-schafer/),
 Schafer Lab eponym, for allowing us to use and adapt Ev's code.
 
 [Dr. André
-Brown](http://www2.mrc-lmb.cam.ac.uk/groups/wschafer/people2.html),
-post-doctoral scholar at the Schafer Lab, for contributions to the
-original Matlab code and for his work on behavioural motifs, which we
-hope to add.
+Brown](http://csc.mrc.ac.uk/research-group/behavioural-genomics/),
+formerly a post-doctoral scholar at the Schafer Lab, and now principal investigator at the Brown Lab at Imperial College London, for contributions to the
+original Matlab code and for his work on behavioural motifs, which we hope to add.  With Dr. Kerr he created the tracker-commons format.
+
+[Dr. Rex Kerr](https://www.janelia.org/kerr-lab), principal investigator at the Kerr Lab at Janelia Research Campus, for his work on the tracker-commons format.
 
 [Barry
 Bentley](http://www.neuroscience.cam.ac.uk/directory/profile.php?bb421),
@@ -113,8 +114,7 @@ OpenWorm
 coordinator, for the original idea to adapt Ev's code and for
 encouragement and support.
 
-[The Movement Validation
-Team](https://github.com/orgs/openworm/teams/movement-validation):
+[The Movement Analysis Team](https://github.com/orgs/openworm/teams/movement-analysis):
 
 -   [Dr. James "Jim" Hokanson](https://github.com/JimHokanson) for
     improving upon the original Matlab code, doing much of the
@@ -124,4 +124,7 @@ Team](https://github.com/orgs/openworm/teams/movement-validation):
 -   [Michael Currie](https://github.com/MichaelCurrie) for helping with
     the translation into Python, and helping with repository
     documentation.
-
+-   [Chris Linzy]
+-   [Chris Barnes]
+-   [Joe Bowen]
+-   [Aidan Rocke]

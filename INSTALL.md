@@ -20,7 +20,7 @@ format, ending with the extension .MAT. We are using the Python module
 H5PY to extract the information from these files.
 
 **Data storage:** Google Drive. To store examples of worm videos and
-HDF5 (.mat) feature files so the movement\_validation package can be put
+HDF5 (.mat) feature files so the open-worm-analysis-toolbox package can be put
 through its paces.
 
 **Markdown editor:** [MarkdownPad](http://markdownpad.com/). Optional.
@@ -30,7 +30,7 @@ For editing documents like this one.
 viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/). Optional. This
 tool can be used for debugging the file structure of the data files.
 
-Installing and running the movement\_validation repository
+Installing and running the open-worm-analysis-toolbox repository
 ==========================================================
 
 1.  Install Python 3.x, matplotlib, and Cython. Some examples may also

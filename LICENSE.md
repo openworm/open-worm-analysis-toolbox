@@ -3,8 +3,8 @@ License
 
 Copyright © 2015 OpenWorm
 
-**movement\_validation**, and indeed all software written as part of the
-[OpenWorm](https://github.com/openworm/) project is free software under
+The **Open Worm Analysis Toolbox**, as with all software written as part of the
+[OpenWorm](https://github.com/openworm/) project, is free software under
 the [MIT license](http://opensource.org/licenses/MIT).
 
 Original code written in Matlab by Dr. Eviatar Yemini, at the Schafer

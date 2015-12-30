@@ -1,4 +1,4 @@
-Movement Validation Video Processing Pipeline
+Open Worm Analysis Toolbox Video Processing Pipeline
 =============================================
 
 This repository intends to code the processing pipeline from raw video

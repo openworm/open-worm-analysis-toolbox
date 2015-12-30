@@ -59,15 +59,15 @@ repo.
 
 From October 2013, [Michael Currie](https://github.com/MichaelCurrie)
 started to translate Jim's SegWormMatlabClasses repository into Python
-so it would be fully open source. To this end he started the
-[movement\_validation](https://github.com/openworm/open-worm-analysis-toolbox)
+so it would be fully open source. To this end he started what is now called the
+[open-worm-analysis-toolbox](https://github.com/openworm/open-worm-analysis-toolbox)
 repository.
 
-Currently only the movement\_validation repository is being actively
+Currently only the open-worm-analysis-toolbox repository is being actively
 worked on.
 
 An overview of the current status of the work on the
-movement\_validation repository is available at [Code
+open-worm-analysis-toolbox repository is available at [Code
 Progress](https://docs.google.com/spreadsheets/d/1dW1ukYlTu4vbm35bkf8MIZ3obP37yrKFz12X84ukOTU/edit#gid=9274694).
 
 Best practices for contributing to this repo
@@ -78,9 +78,7 @@ board](https://waffle.io/openworm/open-worm-analysis-toolbox) and dig in. Ask
 questions of others early and often; you can do so on our message board,
 [OpenWorm-discuss](https://groups.google.com/forum/#!forum/openworm-discuss).
 
-Please commit your code often, even if you've made a very small change,
-but only if you've verified that your change has not broken any
-[examples](https://github.com/openworm/open-worm-analysis-toolbox/tree/master/examples).
+To make a contribution, please branch, make commits until they no longer break any [examples](https://github.com/openworm/open-worm-analysis-toolbox/tree/master/examples), then make a pull request.
 
 For more information, see ["Commit Often, Perfect Later, Publish Once:
 Git best practices"](http://sethrobertson.github.io/GitBestPractices/).
@@ -92,7 +90,7 @@ Further Information
 level](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Movement%20Validation%20White%20Paper.md)
 *(June 2014)*
 
-[movement\_validation Google Docs
+[open-worm-analysis-toolbox Google Docs
 folder](https://drive.google.com/#folders/0B9dU7zPD0s_LdHRndU9QQ3NTRUE),
 with various information including team member list, code progress, etc.
 
@@ -101,7 +99,6 @@ Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp
 *(Maintained from September 2013 to March 2014, after which they were
 discontinued)*
 
-[Movement
-Validation](https://github.com/openworm/openworm_docs/blob/master/Projects/worm-movement.rst)
+[Movement Validation](https://github.com/openworm/openworm_docs/blob/master/Projects/worm-movement.rst)
 documented at the OpenWorm/openworm\_docs repository. *(Has not been
 updated since 29 Dec 2013)*

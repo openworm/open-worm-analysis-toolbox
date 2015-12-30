@@ -31,7 +31,7 @@ def main():
     # Load the normalized worm from file
     nw = mv.NormalizedWorm.from_schafer_file_factory(data_file_path)
 
-    # Generate the OpenWorm movement validation repo version of the features
+    # Generate the OpenWorm version of the features
     print('Computing example features from normalized worm')
     openworm_features_uno = mv.WormFeatures(nw)
     openworm_features_dos = mv.WormFeaturesDos(nw)
