@@ -23,6 +23,13 @@ import matplotlib.pylab as plt
 sys.path.append('..')
 import movement_validation as mv
 
+import pip
+installed_packages = pip.get_installed_distributions()
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
+     for i in installed_packages])
+print(installed_packages_list)
+raise AssertionError(str(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()])))
+
 def compute_area_by_rasterization(contour):
     """
     Calculate the area by creating a binary image with a worm image
