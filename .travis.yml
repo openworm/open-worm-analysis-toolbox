@@ -75,10 +75,10 @@ before_install:
       if [[ $TRAVIS_PYTHON_VERSION == "2.7_with_system_site_packages" ]]; then 
         # So apt-get can see python-opencv, we must add these lines, following
         # advice from http://askubuntu.com/questions/339217/unable-to-locate-package-libopencv-dev
-        sudo echo "deb http://de.archive.ubuntu.com/ubuntu precise main restricted universe" >> /etc/apt/sources.list
-        sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise restricted main multiverse universe" >> /etc/apt/sources.list
-        sudo echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" >> /etc/apt/sources.list
-        sudo echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" >> /etc/apt/sources.list
+        echo "deb http://de.archive.ubuntu.com/ubuntu precise main restricted universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb-src http://de.archive.ubuntu.com/ubuntu precise restricted main multiverse universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb http://de.archive.ubuntu.com/ubuntu precise-updates main restricted universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb-src http://de.archive.ubuntu.com/ubuntu precise-updates restricted main multiverse universe" | sudo tee -a /etc/apt/sources.list
         # From https://web.archive.org/web/20130620145414/http://www.neuroforge.co.uk/index.php/getting-started-with-python-a-opencv
         sudo apt-get install python-software-properties
         sudo add-apt-repository repo        
