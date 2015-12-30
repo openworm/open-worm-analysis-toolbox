@@ -13,7 +13,7 @@ python:
   # e.g.
   # https://github.com/dnouri/nolearn/commit/f3567e22878abfc9f29e75b6a4d9e6b1d2bdcd7a#diff-354f30a63fb0907d4ad57269548329e3
   # See the updated way of doing things here: https://github.com/travis-ci/travis-ci/issues/2219
-  - "2.7_with_site_packages"
+  - "2.7_with_system_site_packages"
   - 3.3
   - 3.4
   - 3.5
