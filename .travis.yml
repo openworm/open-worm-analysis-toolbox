@@ -46,9 +46,9 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
-  #- echo $PATH
-  #- echo "MINICONDA DIR@@:"
-  #- echo $MINICONDA_DIR
+  - echo $PATH
+  - echo "MINICONDA DIR@@:"
+  - echo $MINICONDA_DIR
   #- conda update --yes conda
   
   # Need to install the actual Python version, does this work?
