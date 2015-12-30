@@ -47,8 +47,8 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=$MINICONDA_DIR/bin:$PATH
   - echo $PATH
-  - echo "MINICONDA DIR@@:"
   - echo $MINICONDA_DIR
+  - echo $TRAVIS_PYTHON_VERSION
   #- conda update --yes conda
   
   # Need to install the actual Python version, does this work?
@@ -67,7 +67,8 @@ before_install:
   # INSTALL OPENCV  
   - |
       if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-        sudo conda install --yes python=$TRAVIS_PYTHON_VERSION opencv
+        sudo apt-get python-opencv
+        #conda install --yes python=$TRAVIS_PYTHON_VERSION opencv
       else
         # OpenCV
         #-------------
