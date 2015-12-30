@@ -11,7 +11,11 @@ worm and then counting the pixels bounded by the countour.
 See https://github.com/openworm/movement_validation/issues/127
 
 """
-import cv2
+import six
+if six.PY2:
+    import cv as cv2
+else:
+    import cv2
 import sys, os
 import numpy as np
 import matplotlib.pylab as plt
