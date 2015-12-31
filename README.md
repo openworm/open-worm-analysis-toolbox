@@ -1,4 +1,4 @@
-[![image](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![image](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Stories in Ready](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 Open Worm Analysis Toolbox
 ====================
@@ -16,9 +16,7 @@ It is only about 75% complete. Please see:
 -   [Guide for
     Contributors](documentation/Guide%20for%20contributors.rst)
 -   [Kanban Board with current GitHub
-    Issues](https://waffle.io/openworm/open-worm-analysis-toolbox) [![Stories
-    in
-    Ready](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
+    Issues](https://waffle.io/openworm/open-worm-analysis-toolbox)
 -   [Movement Validation Cloud](https://github.com/openworm/movement_validation_cloud) - Code for running this package on the cloud via Amazon Web Services
 
 ![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
