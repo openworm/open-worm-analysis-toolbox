@@ -82,4 +82,5 @@ trackers](http://www.wormbook.org/chapters/www_tracking/tracking.html)
     2015](<https://docs.google.com/document/d/1VRMnNHoLQ2oHD3wgGOQrE8KzyCSrEoMwChWPOhVNTj0/edit?usp=sharing>)
 8.  A commercial competitor has arisen in this space, by MBF
     Biosciences: <http://www.mbfbioscience.com/wormlab>
+9.  An open-source static worm image analysis package, that analyses still images rather than videos, is described in [Wählby et al., 2012](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3433711/), called "WormToolbox".
 
