@@ -1,4 +1,4 @@
-function awesome_contours_oh_yeah_v2(frame_values)
+function s = awesome_contours_oh_yeah_v2(frame_values)
 %
 %   too much Despicable Me watching ...
 %
@@ -48,12 +48,12 @@ function awesome_contours_oh_yeah_v2(frame_values)
 %   3601 - coiling that fails with dot product unless a search is done
 %       for multiple peaks and the smaller width chosen
 %
-
-%Original example contour & skeleton data from:
+%   Problem Frames:
+%   -------------------
+%   1200 - ends are a bit messed up
 %
-
-%Problem frames:
-%1200 - ends are a bit messed up
+% Original example contour & skeleton data from:
+%
 
 FRACTION_WORM_SMOOTH = 1/12;
 PERCENT_BACK_SEARCH = 0.3;
@@ -63,9 +63,10 @@ END_S1_WALK_PCT = 0.15;
 %file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
 %fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
 
+base_path = 'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data';
 
-file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_contour_and_skeleton_info.mat';
-fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_norm_worm.mat';
+file_path = fullfile(base_path,'example_contour_and_skeleton_info.mat');
+fp2 = fullfile(base_path,'example_video_norm_worm.mat');
 
 
 %Intersection is a dangerous game because of the problem of being very
@@ -80,9 +81,18 @@ nw_sy = h2.s.y;
 h = load(file_path);
 
 n_frames = length(h.all_vulva_contours);
+
+
+n_frames = length(frame_values);
 sx_all = cell(1,n_frames);
 sy_all = cell(1,n_frames);
 widths_all = cell(1,n_frames);
+s1x_all = cell(1,n_frames);
+s2x_all = cell(1,n_frames);
+s1y_all = cell(1,n_frames);
+s2y_all = cell(1,n_frames);
+
+s = struct;
 
 tic
 %frame_value = 1;
@@ -149,7 +159,12 @@ for iFrame = frame_values %1:100:4642
     s1_y  = s1(I_1,2);
     s1_px = s2(I_2,1); %s1_pair x
     s1_py = s2(I_2,2);
-        
+
+    s1x_all{iFrame} = s1_x;
+s2x_all{iFrame} = s1_y;
+s1y_all{iFrame} = s1_px;
+s2y_all{iFrame} = s1_py;
+    
     %TODO: Allow smoothing on x & y
     skeleton_x = 0.5*(s1_x + s1_px);
     skeleton_y = 0.5*(s1_y + s1_py);
@@ -250,15 +265,21 @@ for iFrame = frame_values %1:100:4642
         if length(frame_values) > 1
             %pause
             drawnow
-            pause(0.1)
+            pause
+            %pause(0.1)
         end
         
     end
 end
 toc
 
-
-
+s.sx_all = sx_all;
+s.sy_all = sy_all;
+s.widths_all = widths_all;
+s.s1x_all = s1x_all;
+s.s2x_all = s2x_all;
+s.s1y_all = s1y_all;
+s.s2y_all = s2y_all;
 
 end
 

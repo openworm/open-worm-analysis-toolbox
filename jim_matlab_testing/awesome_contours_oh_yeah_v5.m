@@ -40,8 +40,8 @@ FRACTION_WORM_SMOOTH = 1/12;
 %file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
 %fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
 
-file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_contour_and_skeleton_info.mat';
-fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data\example_video_norm_worm.mat';
+file_path = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data\example_contour_and_skeleton_info.mat';
+fp2 = 'C:\Backup\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data\example_video_norm_worm.mat';
 
 
 %Intersection is a dangerous game because of the problem of being very

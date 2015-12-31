@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 15 21:41:46 2015
+
+@author: RNEL
+"""
+
+EXAMPLE_DATA_PATH = '/home/travis/build/openworm/open-worm-analysis-toolbox/example_data'
+PERFORM_SLOW_ECCENTRICITY_CALC = True
+
+
+#example_video_feature_file = https://drive.google.com/file/d/0B7to9gBdZEyGX2tFQ1JyRzdUYUE/view?usp=sharing
+#example_video_norm_worm.mat = https://drive.google.com/file/d/0B7to9gBdZEyGakg5U3loVUktRm8/view?usp=sharing

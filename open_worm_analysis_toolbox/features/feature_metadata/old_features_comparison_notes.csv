@@ -1,0 +1,11 @@
+need to handle event feature comparison using new approach,,NaN mask mismatch,Looks Good,
+locomotion.crawling_bends.tail.amplitude,0.763,yes,yes,utils.separated_peaks works slightly differently so merge_nans is true here for now. The utils function works correctly and the old version works incorrectly but was convoluted enough that it was hard to replicate 
+locomotion.crawling_bends.tail.frequency,0.677,yes,yes,""" """
+posture.bends.hip.mean,0.959,no,didn't look,The indices used on the worm for posture bends are very different from how they are used elsewhere in the code. This difference has been noted in the Bends class
+posture.bends.tail.mean,0.976,no,didn't look,
+posture.bends.head.std_dev,0.881,no,didn't look,
+posture.bends.neck.std_dev,0.894,no,didn't look,
+posture.bends.hips.std_dev,0.607,no,didn't look,
+posture.bends.tail.std_dev,0.693,no,didn't look,
+posture.primary_wavelength,0.988,yes,yes,There was an error in the old code relating to which feature - primary or secondary - got which peak from the frequency response. I believe it was largest index (or maybe lowest) and not largest amplitude that got the primary
+posture.secondary_wavelength,0.988,yes,yes,"""    """

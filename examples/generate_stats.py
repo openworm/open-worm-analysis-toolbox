@@ -1,69 +1,73 @@
 # -*- coding: utf-8 -*-
 """
-This should replicate the behaviour of the compute "new" histograms code from
-https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
-
-We are just trying to achieve the creation of an in-memory object that contains
-the statistics generated from comparing a set of 20 Feature .mat Files:
+Create an in-memory object, statistics_manager, that contains the 
+statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Experiment" files and
 - 10 "Control" files.
 
+Notes
+--------------
+Formerly:
+https://github.com/JimHokanson/SegwormMatlabClasses/
+blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
+
 """
-
 import sys, os, pickle
+import matplotlib.pyplot as plt
 
-# We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# We must add .. to the path so that we can perform the
+# import of open_worm_analysis_toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 
 def main():
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     root_path = os.path.join(base_path, '30m_wait')
 
-    experiment_histograms, control_histograms = \
+    exp_histogram_manager, ctl_histogram_manager = \
         obtain_histograms(root_path, "pickled_histograms.dat")
 
+    #ctl_histogram_manager.plot_information()
 
-    #for i in range(0, 700, 100):
-    for i in range(1):
-        experiment_histograms.hists[i].plot_versus(control_histograms.hists[i])     
+    print("Done with Histogram generation.  Now let's calculate statistics.")
 
-    print('Done with stats generation')
+    statistics_manager = \
+        mv.StatisticsManager(exp_histogram_manager, ctl_histogram_manager)
 
-    # TODO: test this:
-    #stats = mv.StatisticsManager(experiment_histograms, control_histograms)
+    print("Comparison p and q values are %.2f and %.2f, respectively." %
+          (statistics_manager.min_p_wilcoxon, 
+           statistics_manager.min_q_wilcoxon))
 
-    # TODO:
-    # now somehow display the stats to prove that we generated them!
-
+    #statistics_manager.plot()
+    #statistics_manager[0].plot(ax=plt.figure().gca(), use_alternate_plot=False)
+    statistics_manager[0].plot(ax=None, use_alternate_plot=True)
+    
+    #plt.savefig('michael.png')
+    
+    """
+    # Plot the p-values, ranked.
+    # TODO: add a line at the 0.01 and 0.05 thresholds, with annotation for
+    #       the intercept.
+    plt.plot(np.sort(statistics_manager.p_wilcoxon_array), 
+             label="Sorted p-values by Wilcoxon's signed rank test")
+    plt.plot(np.sort(statistics_manager.q_wilcoxon_array),
+             label="Sorted q-values by Wilcoxon's signed rank test")
+    plt.ylabel("Probability", fontsize=10)
+    plt.xlabel("Feature", fontsize=10)
+    plt.legend(loc='best', shadow=True)
+    #plt.gca().set_axis_bgcolor('m')
+    plt.show()
+    """    
+    
     # TODO:
     # maybe compare to the segwormmatlabclasses-generated stats somehow?
 
-    # TODO:
-    # visualize the data in a grid
-    # http://stackoverflow.com/questions/19407950
-
-def get_matlab_filepaths(root_path):
-    """
-    Recursively traverses from root_path to find all .mat files
-    Returns a list of .mat files, with full path
-
-    Parameters
-    -----------------------
-    root_path: string
-        The absolute path to start searching from
-
-    """
-    matlab_filepaths = []
-    for root, dirs, files in os.walk(root_path):
-        mat_files = [f for f in files if f[-4:] == '.mat']
-        for f in mat_files:
-            matlab_filepaths.append(os.path.join(root, f))
-
-    return matlab_filepaths
+    # Y-axis is features, labeled
+    # X-axis is worm videos
+    # then list the p and q values
+    # List if the mean is vailable or golor red if not.
 
 
 def obtain_histograms(root_path, pickle_file_path):
@@ -79,45 +83,52 @@ def obtain_histograms(root_path, pickle_file_path):
         A path that has two subfolders, L and R, containing some .mat files,
         for the experiment and control samples, respectively.
     pickle_file_path: string
-        A relative path, to the pickle file that has serialized the histograms. This is
-        generally found in the examples folder if one wishes to delete it to rerun the code fresh
+        A relative path, to the pickle file that has serialized the 
+        histograms.  This is generally found in the examples folder 
+        if one wishes to delete it to rerun the code fresh.
     
     Returns
     -------
-    Two items: experiment_histograms and control_histograms    
+    exp_histogram_manager, ctl_histogram_manager
+        Both instances of HistogramManager
     
     """
     if os.path.isfile(pickle_file_path):
-        print("Found a pickled version of the histogram managers at:\n%s\n" % pickle_file_path +
-              "Let's attempt to unpickle rather than re-calculate, to save time...")
+        print("Found a pickled version of the histogram managers "
+              "at:\n%s\n" % pickle_file_path + "Let's attempt to "
+              "unpickle rather than re-calculate, to save time...")
         with open(pickle_file_path, "rb") as pickle_file:
-            experiment_histograms = pickle.load(pickle_file)
-            control_histograms = pickle.load(pickle_file)
+            exp_histogram_manager = pickle.load(pickle_file)
+            ctl_histogram_manager = pickle.load(pickle_file)
     else:
-        print("Could not find a pickled version of the histogram managers " + \
-              "so let's calculate from scratch and then pickle")
+        print("Could not find a pickled version of the histogram "
+              "managers so let's calculate from scratch and then pickle")
 
         experiment_path = os.path.join(root_path, 'L')
         control_path = os.path.join(root_path, 'R')
 
-        experiment_files = get_matlab_filepaths(experiment_path)
-        control_files = get_matlab_filepaths(control_path)
+        experiment_files = mv.utils.get_files_of_a_type(experiment_path,
+                                                        '.mat')
+        control_files = mv.utils.get_files_of_a_type(control_path, '.mat')
 
         # We need at least 10 files in each
         assert(len(experiment_files) >= 10)
         assert(len(control_files) >= 10)
 
         # Compute histograms on our files
-        experiment_histograms = mv.HistogramManager(experiment_files)
-        control_histograms = mv.HistogramManager(control_files)
+        exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
+        ctl_histogram_manager = mv.HistogramManager(control_files[:10])
+        
+        # Store a pickle file in the same folder as this script 
+        # (i.e. open-worm-analysis-toolbox/examples/)
         with open(pickle_file_path, "wb") as pickle_file:
-            pickle.dump(experiment_histograms, pickle_file)
-            pickle.dump(control_histograms, pickle_file)
+            pickle.dump(exp_histogram_manager, pickle_file)
+            pickle.dump(ctl_histogram_manager, pickle_file)
 
     print("Experiment has a total of " + \
-          str(len(experiment_histograms.hists)) + " histograms")
+          str(len(exp_histogram_manager.merged_histograms)) + " histograms")
 
-    return experiment_histograms, control_histograms
+    return exp_histogram_manager, ctl_histogram_manager
 
 
 if __name__ == '__main__':
