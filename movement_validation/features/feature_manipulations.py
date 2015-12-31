@@ -23,7 +23,8 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     
     cur_spec = e_feature.spec
     
-    cur_data = e_feature.get_full_values()
+    #Removes partials and signs data
+    cur_data = e_feature.get_value()
 
     # Remove the NaN and Inf entries
     all_data = utils.filter_non_numeric(cur_data)
@@ -31,26 +32,16 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     data_entries = {}
     data_entries['all'] = all_data
     if cur_spec.is_signed:
-        #Absolute doesn't make sense since it is the same as positive ...
         data_entries['absolute'] = np.absolute(all_data)
-        
-        parent_name = generic_features.get_parent_feature_name(e_feature.name)
-        signing_field = cur_spec.signing_field
-        signing_feature_name = '%s.%s' % (parent_name,signing_field)
-        signing_feature = old_features.get_feature(signing_feature_name)
-        negate_mask = signing_feature.value
-        
-        #Why would we sign between events??????
-        #TODO: This needs to be fixed
-        #https://github.com/openworm/SegWorm/blob/master/Worms/Statistics/worm2histogram.m#L322
-        #https://github.com/openworm/SegWorm/blob/master/Worms/Features/removePartialEvents.m
-        data_entries['positive'] = all_data    #[~negate_mask]
-        data_entries['negative'] = -1*all_data #[negate_mask]
-        
+        data_entries['positive'] = all_data[all_data > 0]
+        data_entries['negative'] = all_data[all_data > 0]       
+                
     return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
      
     
 def _create_new_event_feature(feature,data,d_type):
+
+    #TODO: Need to verify that this is correct
 
     FEATURE_NAME_FORMAT_STR = '%s.%s_data'
     
@@ -72,6 +63,7 @@ def _create_new_event_feature(feature,data,d_type):
     temp_spec.is_signed = temp_spec.is_signed and d_type == 'all'
     temp_feature.value = data
     temp_feature.spec = temp_spec
+    #TODO: Let's update the keep mask and signed
     
     return temp_feature
 
@@ -211,7 +203,6 @@ def expand_mrc_features(old_features):
     move_mask["backward"] = motion_modes == -1
     move_mask["paused"]   = motion_modes == 0
 
-
     all_features = []
     for cur_feature in old_features:
 
@@ -219,6 +210,8 @@ def expand_mrc_features(old_features):
         #TODO: We should filter on None
         if cur_feature is None:
             print('This should not run')
+            import pdb
+            pdb.set_trace()
             pass
         else:
              
@@ -235,7 +228,12 @@ def expand_mrc_features(old_features):
                 #all_features.extend(copy.deepcopy(cur_feature))
                 #
                 #This could be dangerous ...
-                all_features.extend(cur_feature.copy())
+                try:
+                    all_features.extend(cur_feature.copy())
+                except:
+                    print('asasfasdfsdf')
+                    import pdb
+                    pdb.set_trace()
             
     import pdb
     pdb.set_trace()        

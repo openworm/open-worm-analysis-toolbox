@@ -134,16 +134,25 @@ class EventFeature(Feature):
     
     """
     def __init__(self,wf,feature_name):
+        
+        #This is a bit messy :/
+        #We might want to eventually obtain this some other way
+        cur_spec = wf.specs[feature_name]         
+        
         self.name = feature_name
         event_name, feature_type = get_feature_name_info(feature_name)
         event_name = get_parent_feature_name(feature_name)
         
         #TODO: I'd like a better name for this
+        #---------------------------
         #event_parent?
         #event_main?
         event_value = self.get_feature(wf,event_name).value      
         #event_value : EventListWithFeatures
         
+        
+        #This could potentially be handled a lot more cleanly
+        #Should all features have this?
         self.is_null = event_value.is_null        
         
         if self.is_null:
@@ -156,12 +165,7 @@ class EventFeature(Feature):
         start_frames = get_event_attribute(event_value,'start_frames')
         end_frames = get_event_attribute(event_value,'end_frames')
         
-        #TODO: Make sure that the main event class contains this value
-        self.num_video_frames = event_value.num_video_frames #How to get from wf?????
-
-        #TODO: Check on whether first and last are full
-        #TODO: Figure out how to make sure that on copy
-        #we adjust the mask if only full_values are set ...
+        self.num_video_frames = event_value.num_video_frames
         
         #event_durations - filter on starts and stops
         #distance_during_events - "  "
@@ -173,45 +177,102 @@ class EventFeature(Feature):
         #TODO: I think we should hide the 'keep_mask' => '_keep_mask'        
         
         #TODO: The filtering should maybe be identified by type
-        #event-main - summary of an event itself
-        #event-inter - summary of something between events
-        #event-summary - summary statistic over all events
+        #-------------------------
+        #  event-main - summary of an event itself
+        #  event-inter - summary of something between events
+        #  event-summary - summary statistic over all events
         #or something like this ...
         
         #TODO: This is different behavior than the original
         #In the original the between events were filtered the same as the 1st
         #event. In other words, if the 1st event was a partial, the time
         #between the 1st and 2nd event was considered a partial
+        #        
+        #1) Document difference
+        #2) Build in temporary support for the old behavior flag
+        #
         if self.value is None or self.value.size == 0:
             self.keep_mask = None
         else:
+            if cur_spec.is_signed:
+                signing_field_name = cur_spec.signing_field
+                signing_mask = get_event_attribute(event_value,signing_field_name)
+                if feature_type in ['event_durations','distance_during_events']:
+                    self.signing_mask = signing_mask
+                else:
+                    #TODO: We should check on scalar vs inter-event here
+                    #but only inter-events are signed
+                    #
+                    #Signing them makes little sense and should be removed
+                    #
+                    #This is the old behavior
+                    #Signing the inter-events doesn't make much sense
+                    #
+                    #See note below regarding inter-events and their relation to
+                    #events
+                    #This behavior signs the interevent based on the proceeding
+                    #event since I'm 99% sure you only ever have:
+                    #   - event, interevent, event AND NOT
+                    #   - interevent, event, interevent OR
+                    #   - event, interevent, etc.
+                    #
+                    #   i.e. only have interevents between events
+                    self.signing_mask = signing_mask[0:-1]
+            else:
+                self.signing_mask = None
+            
             self.keep_mask = np.ones(self.value.shape, dtype=bool)
             if feature_type in ['event_durations','distance_during_events']:
                 self.keep_mask[0] = start_frames[0] != 0
                 self.keep_mask[-1] = end_frames[-1] != (self.num_video_frames - 1)
             elif feature_type in ['time_between_events','distance_between_events']:
-                #JAH: At this point
+
+                #TODO: Verify that inter-events can be partial ...
+                #i.e. if an event starts at frame 20, verify that we have an
+                #inter-event from frames 1 - 19
+                #
+                #   Document this result (either way)
+                #
+                # I think we only ever include inter-event values that are
+                # actually between events ...
+                
                 #First is partial if the main event starts after the first frame
                 self.keep_mask[0] = start_frames[0] == 0
                 #Similarly, if the last event ends before the end of the
                 #video, then anything after that is partial
-                self.keep_mask[-1] = end_frames[-1] == (self.num_video_frames - 1)            
+                self.keep_mask[-1] = end_frames[-1] == (self.num_video_frames - 1)
+            else:
+                #Should be a scalar value
+                #e.g. => frequency
+                self.keep_mask = np.ones(1, dtype=bool)
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
         return cls(wf,feature_name)
 
+    #TODO: Figure out how to make sure that on copy
+    #we adjust the mask if only full_values are set ...
+    #def copy(self):
 
     def __eq__(self,other):
         #TODO: We need to implement this ...
         #scalars - see if they are close, otherwise call super?
         return True
         
-    def get_full_values(self):
+    def get_value(self,partials=False,signed=True):
+        #TODO: Document this function
         if self.is_null:
             return None
-        else:
-            return self.value[self.keep_mask]
+        
+        temp_values = self.value
+        if signed and (self.signing_mask is not None):
+            #TODO: Not sure if we multiply by -1 for True or False
+            temp_values[self.signing_mask] = -1*temp_values[self.signing_mask]
+            
+        if partials:
+            temp_values = temp_values[self.keep_mask]
+            
+        return temp_values
 
 #We might want to make things specific again but for now we'll use
 #a single class

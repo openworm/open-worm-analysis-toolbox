@@ -109,6 +109,10 @@ def obtain_histograms(root_path, pickle_file_path):
 
         experiment_files = mv.utils.get_files_of_a_type(experiment_path,'.mat')
         control_files = mv.utils.get_files_of_a_type(control_path, '.mat')
+        
+        # We need at least 10 files in each
+        assert(len(experiment_files) >= 10)
+        assert(len(control_files) >= 10)
 
         experiment_features = [mv.WormFeaturesDos.from_disk(x) for x in experiment_files]
         
@@ -117,9 +121,7 @@ def obtain_histograms(root_path, pickle_file_path):
         import pdb
         pdb.set_trace()
 
-        # We need at least 10 files in each
-        assert(len(experiment_files) >= 10)
-        assert(len(control_files) >= 10)
+ 
 
         # Compute histograms on our files
         exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
