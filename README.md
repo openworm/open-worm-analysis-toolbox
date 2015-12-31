@@ -12,9 +12,9 @@ It is also the package used by the OpenWorm project to determine how closely its
 It is only about 75% complete. Please see:
 
 -   [Installation
-    Guide](INSTALL.rst)
+    Guide](INSTALL.md)
 -   [Guide for
-    Contributors](documentation/Guide%20for%20contributors.rst)
+    Contributors](documentation/Guide%20for%20contributors.md)
 -   [Kanban Board with current GitHub
     Issues](https://waffle.io/openworm/open-worm-analysis-toolbox)
 -   [Movement Validation Cloud](https://github.com/openworm/movement_validation_cloud) - Code for running this package on the cloud via Amazon Web Services
