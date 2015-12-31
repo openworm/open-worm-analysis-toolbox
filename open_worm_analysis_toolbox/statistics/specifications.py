@@ -86,7 +86,7 @@ class Specs(object):
         value = self.feature_field
 
         if hasattr(self, 'sub_field') and \
-           self.sub_field != None and self.sub_field != '':
+           not self.sub_field is not None and self.sub_field != '':
             value += '.' + self.sub_field
 
         return value
@@ -413,7 +413,7 @@ class EventSpecs(Specs):
         return super(EventSpecs, cls).specs_factory(csv_path, EventSpecs)
 
     
-    def get_data(self, worm_features, num_samples=0):
+    def get_data(self, worm_features, num_samples=-1):
         """
 
         Parameters
@@ -427,6 +427,8 @@ class EventSpecs(Specs):
                - locomotion, in an h5py group.
         num_samples: int
             Number of samples (i.e. number of frames in the video)
+        frame_range: [int, int]
+            Frame range, used in case the 
 
         Returns
         ---------------------
@@ -453,6 +455,17 @@ class EventSpecs(Specs):
             num_samples = worm_features.nw.length.size
             
         parent_data = super(EventSpecs,self).get_data(worm_features)
+
+        #JAH: This will fail in Python 2.7
+        #???? super(Specs).getData(worm_features)
+        
+        #add the option to have the num_samples as optional parameter and 
+        #extract it from the worm_features structure
+        if num_samples<=0:
+            num_samples = len(worm_features.morphology.length)
+
+
+        parent_data = super(EventSpecs,self).getData(worm_features)
 
         # JAH: The Matlab code would use an empty structure.
         # Rather than just having an empty class, all events have a 
@@ -512,11 +525,9 @@ class EventSpecs(Specs):
                 try:
                     data = data[~remove_mask]
                 except:
-                    import pdb
                     pdb.set_trace()
                 
         else:
-            import pdb
             pdb.set_trace()
             raise Exception("The WormFeature contains no data for " +
                             self.long_field)
