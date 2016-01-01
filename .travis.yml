@@ -109,7 +109,7 @@ before_install:
   # Create a valid user_config.py file for open-worm-analysis-toolbox
   - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
-before_install:
+install:
   - pip install --upgrade pip
   - pip install six
   - pip install pep8
