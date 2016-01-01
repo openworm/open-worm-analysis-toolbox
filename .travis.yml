@@ -109,6 +109,11 @@ before_install:
   # Create a valid user_config.py file for open-worm-analysis-toolbox
   - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
+before_install:
+  - pip install --upgrade pip
+  - pip install six
+  - pip install pep8
+
 before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
   - cd $TRAVIS_BUILD_DIR/example_data
@@ -127,6 +132,19 @@ before_script:
  
 # Run test
 script:
+  # Run pep8 on all .py files in all subfolders
+  # We must ignore E402 module level import not at top of file
+  # because of use case sys.path.append('..'); import <module>
+  # - find . -name \*.py -exec pep8 --ignore=E402 {} +
+  # NOTE: To correct any errors in the above pep8 check, run the 
+  # following to clear out about 80% of the issues automatically:
+  # # Get the latest version of the repo
+  # git pull
+  # # Run autopep8 on all .py files in all subfolders
+  # find . -name \*.py -exec autopep8 --recursive --aggressive --aggressive --in-place {} +
+  # # Push these changes to GitHub
+  # git commit -a -m "autopep8"
+
   - cd $TRAVIS_BUILD_DIR/tests
   - pwd
   - nosetests --nocapture
