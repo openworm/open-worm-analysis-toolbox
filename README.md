@@ -19,6 +19,41 @@ It is only about 75% complete. Please see:
     Issues](https://waffle.io/openworm/open-worm-analysis-toolbox)
 -   [Movement Validation Cloud](https://github.com/openworm/movement_validation_cloud) - Code for running this package on the cloud via Amazon Web Services
 
+Usage Example
+-------------
+
+```Python
+# Load a "basic" worm from a file
+bw = mv.BasicWorm.from_schafer_file_factory("example_contour_and_skeleton_info.mat")
+# Normalize the basic worm
+nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+# Plot this normalized worm    
+wp = mv.NormalizedWormPlottable(nw, interactive=False)
+wp.show()
+# Obtain features
+wf = mv.WormFeatures(nw)
+```
+
+Later, if we have control worms, we can run statistics on our worm:
+
+```Python
+# Compute histograms
+experiment_histograms = mv.HistogramManager([wf, wf])
+control_histograms = mv.HistogramManager(control_worms)
+
+# Compute statistics
+stat = mv.StatisticsManager(experiment_histograms, control_histograms)
+
+# Plot statistics for the first extended feature
+stat[0].plot(ax=None, use_alternate_plot=True)
+
+# Give an overall assessment of the worm's similarity to the control set
+print("Nonparametric p and q values are %.2f and %.2f, respectively." %
+      (stat.min_p_wilcoxon, stat.min_q_wilcoxon))
+```
+
+------------------------
+
 ![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
 
 Images: *C. elegans* by Bob Goldstein, UNC Chapel Hill
