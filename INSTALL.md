@@ -49,13 +49,14 @@ chmod 777 *.mat
 Windows
 ------------------
 
-1.  Install Python 3.x, matplotlib, Cython, numpy, scipy, seaborn, pandas.
+1.  Install Python (2 or 3), matplotlib, numpy, scipy, seaborn, pandas, OpenCV.  You can install most of these using WinPython, and the rest, like scipy, pandas, and OpenCV, can be downloaded pre-compiled from http://www.lfd.uci.edu/~gohlke/pythonlibs/.  Once downloaded use `pip` to install the egg (Python 2) or wheel (Python 3) downloaded.
 2.  Clone this GitHub repository to your computer.
-3.  If you don't already have an account, get a [Google
+*[If you want to skip using Google Drive for the below 3 steps, just visit the Example Data folder link below and manually download all the content and place on a folder on your computer.  It isn't updated too frequently so it shouldn't cause a problem to not be syncing all the time]*
+3.  [OPTIONAL] If you don't already have an account, get a [Google
     Drive](https://www.google.com/intl/en/drive/) account.
-4.  Install [Google Drive for
+4.  [OPTIONAL] Install [Google Drive for
     desktop](https://tools.google.com/dlpage/drive).
-5.  Using Google Drive, sync with the folder
+5.  [OPTIONAL] Using Google Drive, sync with the folder
     [example\_data/](https://drive.google.com/folderview?id=0B7to9gBdZEyGNWtWUElWVzVxc0E&usp=sharing),
     which is a subfolder of
     `OpenWorm/OpenWorm Public/Movement Analysis/`.
