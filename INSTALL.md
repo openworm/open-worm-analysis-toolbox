@@ -1,6 +1,7 @@
 For developers: Installing the repository
 ==========================================================
 
+```bash
 Linux (Ubuntu)  (Python 3; modify for Python 2 as needed)
 ---------------------------------------------------------
 # Install condas
@@ -42,6 +43,8 @@ wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
 chmod 777 *.mat
+
+```
 
 Windows
 ------------------
