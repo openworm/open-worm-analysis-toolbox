@@ -23,6 +23,8 @@ Usage Example
 -------------
 
 ```Python
+import open_worm_analysis_toolbox as mv
+
 # Load a "basic" worm from a file
 bw = mv.BasicWorm.from_schafer_file_factory("example_contour_and_skeleton_info.mat")
 # Normalize the basic worm
