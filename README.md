@@ -1,4 +1,9 @@
-[![Travis-CI](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox) [![BountySource](https://api.bountysource.com/badge/team?team_id=23852)](https://www.bountysource.com/teams/openworm)
+[![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE.md)
+[![Travis-CI](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![BountySource](https://api.bountysource.com/badge/team?team_id=23852)](https://www.bountysource.com/teams/openworm)
+[![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
+
 
 Open Worm Analysis Toolbox
 ====================
