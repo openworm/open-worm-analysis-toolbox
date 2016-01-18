@@ -141,7 +141,7 @@ def _create_new_movement_feature(feature,m_masks,d_masks,m_type,d_type):
     
     cur_mask = m_masks[m_type] & d_masks[d_type]
     temp_feature = feature.copy()
-    temp_spec = feature.spec.copy()
+    temp_spec = temp_feature.spec
     temp_spec.type = 'expanded_movement'
     temp_spec.is_time_series = False
     temp_spec.name = FEATURE_NAME_FORMAT_STR % (temp_spec.name,d_type,m_type)
@@ -206,35 +206,15 @@ def expand_mrc_features(old_features):
     all_features = []
     for cur_feature in old_features:
 
-        #TODO: Null behavior needs to be clarified    
-        #TODO: We should filter on None
-        if cur_feature is None:
-            print('This should not run')
-            import pdb
-            pdb.set_trace()
-            pass
+        cur_spec = cur_feature.spec
+        
+        if cur_spec.type == 'movement':
+            all_features.extend(_expand_movement_features(cur_feature,move_mask,num_frames))
+        #elif cur_spec.type == 'simple':
+        #    all_features.append(copy.deepcopy(cur_feature))
+        elif cur_spec.type == 'event':
+            all_features.extend(_expand_event_features(old_features,cur_feature,move_mask,num_frames))
         else:
-             
-            cur_spec = cur_feature.spec
-            
-            if cur_spec.type == 'movement':
-                all_features.extend(_expand_movement_features(cur_feature,move_mask,num_frames))
-            #elif cur_spec.type == 'simple':
-            #    all_features.append(copy.deepcopy(cur_feature))
-            elif cur_spec.type == 'event':
-                all_features.extend(_expand_event_features(old_features,cur_feature,move_mask,num_frames))
-            else:
-                #Deep copy doesn't work
-                #all_features.extend(copy.deepcopy(cur_feature))
-                #
-                #This could be dangerous ...
-                try:
-                    all_features.extend(cur_feature.copy())
-                except:
-                    print('asasfasdfsdf')
-                    import pdb
-                    pdb.set_trace()
-            
-    import pdb
-    pdb.set_trace()        
-    #TODO: Return new features container with all_features attached
+            all_features.append(cur_feature.copy())
+
+    return old_features.copy(all_features)

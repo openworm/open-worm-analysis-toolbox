@@ -794,7 +794,18 @@ class WormFeaturesDos(object):
     
     Accessing Features
     ------------------
-    Features should normally be accessed via get_feature(). Alternatively 
+    Features should normally be accessed via get_feature() or via iteration
+    over this object.
+
+    Design Decisions
+    ----------------
+    # When iterating over the features, should we include null features?
+            => NO?
+    # What should be returned from get_feature when it doesn't exist?
+    # What is returned when a feature can't be computed because of a missing
+    dependency?    
+    
+    . Alternatively 
     it is possible to access features directly via the 'features' attribute
     however this attribute only contains computed features.
         
@@ -851,6 +862,23 @@ class WormFeaturesDos(object):
             if next_feature is not None:
                 yield next_feature
             #yield all_features[key]
+                
+    def copy(self,new_features):
+        """
+        Parameters
+        ----------
+        new_features : list or dict (only list supported)
+        """
+        import pdb
+        pdb.set_trace()
+        new_self = self.__new__(self.__class__)
+        
+        #We need to setup features and specs
+        #get specs from features
+        
+        return new_self
+        
+        pass
 
     @classmethod
     def from_disk(cls,data_file_path):
@@ -865,6 +893,8 @@ class WormFeaturesDos(object):
         #
         #For now we'll punt on this logic
         return cls._from_schafer_file(data_file_path)
+        
+    
 
     @classmethod
     def _from_schafer_file(cls, data_file_path):
@@ -1213,4 +1243,5 @@ class FeatureProcessingSpec(object):
         return utils.print_object(self)
     
     def copy(self):
+        #Not sure if I'll need to do anything here ...
         return copy.copy(self)

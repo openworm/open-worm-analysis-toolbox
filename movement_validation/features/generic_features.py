@@ -57,8 +57,19 @@ class Feature(object):
         return wf.get_feature(feature_name)
         
     def copy(self):
-        #Shallow copy for now ...
-        return copy.copy(self)
+        #TODO: We might want to do something special for value
+    
+        new_self = self.__new__(self.__class__)
+        d = self.__dict__
+        for key in d:
+            temp = d[key]
+            if key == 'spec':
+                setattr(new_self,'spec',temp.copy())
+            else:
+                setattr(new_self,key,copy.copy(temp))
+        
+        return new_self
+        #return copy.copy(self)
         
 def get_parent_feature_name(feature_name):
     
@@ -123,7 +134,7 @@ def get_event_attribute(event_object,attribute_name):
 class EventFeature(Feature):
     """
     This covers features that come from events. This is NOT the temporary 
-    event features.
+    event feature parent.
     
     Attributes
     ----------
