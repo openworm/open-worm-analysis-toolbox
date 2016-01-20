@@ -982,8 +982,11 @@ class WormFeaturesDos(object):
             Contains all the feature specs in one table
             
         """
+        #the the absolute path of this script, otherwise if the code is executed outside 
+        #the movment validation dir it will not work.
         # Use pandas to load the features specification
-        feature_spec_path = os.path.join('..', 'documentation', 
+        feature_spec_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                                         '..', '..', 'documentation', 
                                          'database schema', 
                                          'Features Specifications.xlsx')
 
@@ -1073,7 +1076,6 @@ def get_feature_processing_specs():
             f_specs.append(FeatureProcessingSpec(row))
             
     return f_specs
-
 
 class FeatureProcessingSpec(object):
     """

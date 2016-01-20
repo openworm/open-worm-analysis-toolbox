@@ -63,11 +63,7 @@ class Specs(object):
         to call the static factory method Specs.specs_factory
         
         """
-        self.fields_needed = ['feature_field', 'sub_field', 'feature_category', 
-                         'bin_width', 'signed_field', 'name', 'short_name', 
-                         'units', 'make_zero_if_empty', 
-                         'remove_partial_events', 'is_zero_bin', 'is_signed', 
-                         'old_feature_field', 'old_sub_field']
+        pass
 
     def __repr__(self):
         return utils.print_object(self)
@@ -109,8 +105,8 @@ class Specs(object):
         A numpy array
 
         """
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
 
         data_object = worm_features.get_feature(self.feature_field)
         
@@ -124,24 +120,24 @@ class Specs(object):
         
         # DEBUG: remove this stuff once the above is confirmed to work.
 
-        data = worm_features
+        # data = worm_features
         
-        import pdb
-        pdb.set_trace()
-        # Call getattr as many times as is necessary, to dynamically 
-        # access a potentially nested field.
-        # e.g. if self.feature_field = 'posture.coils', we'll need to call
-        #      getattr twice, first on 'posture', and second on 'coils'.
-        for cur_feature_field in self.feature_field.split('.'):
-            if not hasattr(data, cur_feature_field):
-                import pdb
-                pdb.set_trace()
-                raise Exception("The WormFeatures instance passed does " + 
-                                "not have the feature: " + cur_feature_field + 
-                                ". Its full name is " + self.long_field)
-            data = getattr(data, cur_feature_field)
+        # import pdb
+        # pdb.set_trace()
+        # # Call getattr as many times as is necessary, to dynamically 
+        # # access a potentially nested field.
+        # # e.g. if self.feature_field = 'posture.coils', we'll need to call
+        # #      getattr twice, first on 'posture', and second on 'coils'.
+        # for cur_feature_field in self.feature_field.split('.'):
+        #     if not hasattr(data, cur_feature_field):
+        #         import pdb
+        #         pdb.set_trace()
+        #         raise Exception("The WormFeatures instance passed does " + 
+        #                         "not have the feature: " + cur_feature_field + 
+        #                         ". Its full name is " + self.long_field)
+        #     data = getattr(data, cur_feature_field)
 
-        return data
+        # return data
 
     
     @classmethod
@@ -180,6 +176,11 @@ class Specs(object):
         # See below comment above prop_types
         data_types = {1: str, 2: float, 3: int, 4: bool}
 
+        fields_needed = ['feature_field', 'sub_field', 'feature_category', 
+                         'bin_width', 'signed_field', 'name', 'short_name', 
+                         'units', 'make_zero_if_empty', 
+                         'remove_partial_events', 'is_zero_bin', 'is_signed', 
+                         'old_feature_field', 'old_sub_field']
 
         feature_type = 'event'
 
@@ -194,8 +195,8 @@ class Specs(object):
             feature_details = feature_details.to_dict()
 
             stats_instance = class_function_handle()
-            import pdb
-            pdb.set_trace()
+            #import pdb
+            #pdb.set_trace()
             
             for feature_detail_key in fields_needed:
                 value = feature_details[feature_detail_key]
@@ -203,7 +204,7 @@ class Specs(object):
 
             stats_instances.append(stats_instance)
 
-            pdb.set_trace()
+            #pdb.set_trace()
 
         return stats_instances
 
