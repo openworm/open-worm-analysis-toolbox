@@ -24,9 +24,16 @@ class Feature(object):
     
     Attributes
     ----------
-    name
+    name :
+    is_temporary :
+    spec : worm_features.FeatureProcessingSpec
     value : 
     dependencies : list
+
+    See Also
+    --------
+    worm_features.FeatureProcessingSpec.get_feature
+    
     """
     
     def __repr__(self):
@@ -204,6 +211,7 @@ class EventFeature(Feature):
         #
         if self.value is None or self.value.size == 0:
             self.keep_mask = None
+            self.signing_mask = None
         else:
             if cur_spec.is_signed:
                 signing_field_name = cur_spec.signing_field

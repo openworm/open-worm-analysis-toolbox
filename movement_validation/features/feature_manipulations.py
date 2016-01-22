@@ -29,12 +29,17 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     # Remove the NaN and Inf entries
     all_data = utils.filter_non_numeric(cur_data)
     
-    data_entries = {}
-    data_entries['all'] = all_data
-    if cur_spec.is_signed:
-        data_entries['absolute'] = np.absolute(all_data)
-        data_entries['positive'] = all_data[all_data > 0]
-        data_entries['negative'] = all_data[all_data > 0]       
+    #This is temporary, we need to figure out what we want to do ...
+    if all_data is None:
+        data_entries = {}
+        data_entries['all'] = None
+    else:
+        data_entries = {}
+        data_entries['all'] = all_data
+        if cur_spec.is_signed:
+            data_entries['absolute'] = np.absolute(all_data)
+            data_entries['positive'] = all_data[all_data > 0]
+            data_entries['negative'] = all_data[all_data > 0]       
                 
     return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
      

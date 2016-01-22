@@ -114,8 +114,10 @@ def obtain_histograms(root_path, pickle_file_path):
         assert(len(experiment_files) >= 10)
         assert(len(control_files) >= 10)
 
+        print('Loading features from disk')
         experiment_features = [mv.WormFeaturesDos.from_disk(x) for x in experiment_files]
         
+        print('Starting feature expansion')
         new_experiment_features = [mv.feature_manipulations.expand_mrc_features(x) for x in experiment_features]
 
         import pdb

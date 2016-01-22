@@ -836,6 +836,7 @@ class WormFeaturesDos(object):
         ----------
         nw: NormalizedWorm object
         processing_options: movement_validation.features.feature_processing_options
+        load_features: 
 
         """
         if processing_options is None:
@@ -865,20 +866,43 @@ class WormFeaturesDos(object):
                 
     def copy(self,new_features):
         """
+        This method was introduced for "feature expansion"        
+        
         Parameters
         ----------
         new_features : list or dict (only list supported)
         """
-        import pdb
-        pdb.set_trace()
         new_self = self.__new__(self.__class__)
         
         #We need to setup features and specs
         #get specs from features
+
+        #specs : {FeatureProcessingSpec}
+        #features : {Feature}
+        
+        d = self.__dict__
+        for key in d:
+            temp = d[key]
+            if key in ['features','specs','h','_temp_features']:
+                pass
+                #do nothing
+                #setattr(new_self,'spec',temp.copy())
+            else:
+                setattr(new_self,key,copy.copy(temp))
+        
+        #Currently assuming a list for features
+        
+        temp_features = collections.OrderedDict()
+        new_specs = collections.OrderedDict()
+        for cur_feature in new_features:
+            feature_name = cur_feature.name
+            temp_features[feature_name] = cur_feature
+            new_specs[feature_name] = cur_feature.spec
+        
+        new_self.features = temp_features
+        new_self.specs = new_specs
         
         return new_self
-        
-        pass
 
     @classmethod
     def from_disk(cls,data_file_path):
@@ -1158,6 +1182,10 @@ class FeatureProcessingSpec(object):
         ----------
         d: dict
             Data in a row of the features file
+
+        See Also
+        --------
+        get_feature_processing_specs    
 
         """
 
