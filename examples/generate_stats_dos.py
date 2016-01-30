@@ -120,13 +120,16 @@ def obtain_histograms(root_path, pickle_file_path):
         print('Starting feature expansion')
         new_experiment_features = [mv.feature_manipulations.expand_mrc_features(x) for x in experiment_features]
 
+        print('Starting histograms')
+        exp_histogram_manager = mv.HistogramManager(new_experiment_features)
+
         import pdb
         pdb.set_trace()
 
  
 
         # Compute histograms on our files
-        exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
+        
         ctl_histogram_manager = mv.HistogramManager(control_files[:10])
         
         # Store a pickle file in the same folder as this script 

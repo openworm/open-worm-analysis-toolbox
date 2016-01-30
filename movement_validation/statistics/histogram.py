@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+
+TODO: Most of the attributes here are not computed initially.
+We should add a paragraph or two regarding design decisions made here
+
+
+
 This code is generally interfaced with by the HistogramManager.
 
 The Histogram class, and its subclass, MergedHistogram:
@@ -57,7 +63,7 @@ class Histogram(object):
 
     """    
     #%%
-    def __init__(self, data, specs, histogram_type, motion_type, data_type):
+    def __init__(self, feature):
         """
         Initializer
         
@@ -80,15 +86,20 @@ class Histogram(object):
         
         """
         # The underlying data itself
-        self.data        = data
+        self.data        = feature.value
+
+        import pdb
+        pdb.set_trace()
 
         # Features specifications
         self.specs       = specs
 
-        # "Expanded" features specifications
-        self.histogram_type = histogram_type
-        self.motion_type    = motion_type
-        self.data_type      = data_type
+        #TODO: Should this be in specs????
+        #=======================================
+        ## "Expanded" features specifications
+        #self.histogram_type = histogram_type
+        #self.motion_type    = motion_type
+        #self.data_type      = data_type
 
         if self.data is not None:
             # Find a set of bins that will cover the data
@@ -98,8 +109,7 @@ class Histogram(object):
 
     #%%
     @classmethod
-    def create_histogram(cls, data, specs, histogram_type, 
-                         motion_type, data_type):
+    def create_histogram(cls, feature):
         """
         Factory method to create a Histogram instance.
 
@@ -127,10 +137,11 @@ class Histogram(object):
                                                  data_type)
         
         """
+        data = feature.value
         if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
-            return cls(data, specs, histogram_type, motion_type, data_type)
+            return cls(feature)
     #%%
     @property
     def num_samples(self):

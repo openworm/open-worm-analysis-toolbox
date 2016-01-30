@@ -1022,15 +1022,35 @@ class WormFeaturesDos(object):
     def __repr__(self):
         return utils.print_object(self)    
 
+    def get_histograms(self,other_feature_sets=None):
+        """
+        
+        TODO:
+        - Create histogram manager
+        - 
+        
+        Improvements:
+        - allow filtering of which features should be included
+
+        """
+        
+        
+
+        pass
 
     @staticmethod
     def get_feature_spec(extended=False, show_temp_features=False):
         """
         TODO: This method needs to be documented!        
         
+        I think this method is old. Jim and Michael need to talk about what
+        this is trying to do and how to incorporate this into the current
+        design. Most likely we would load via pandas and then have our current
+        methods rely on processing of the loaded pandas data.        
+        
         Parameters
-        ------------
-        extended: boolean
+        ----------
+        extended: boolean (default False)
             If True, return the full 726 features, not just the 93.
         show_temp_features: boolean
             If False, return only actual features.  Raises an exception

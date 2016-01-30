@@ -32,6 +32,22 @@ from ..features.worm_features import WormFeaturesDos
 from .histogram import Histogram, MergedHistogram
 from .specifications import SimpleSpecs, EventSpecs, MovementSpecs
 
+#This is where I'd like to go with things ...
+#===================================================
+class HistogramManagerDos(object):
+    
+    def __init__(self,feature_sets):
+        pass
+
+class HistogramSet(object):
+    """
+    Each histogram should 
+    """
+    pass
+#===================================================
+
+
+
 #%%
 class HistogramManager(object):
     """
@@ -159,11 +175,8 @@ class HistogramManager(object):
     #%%
     def init_histograms(self, worm_features):
         """
-        For a given set of worm features, prepare a 1D array of Histogram 
-        instances, consisting of, in order:
-        - The movement histograms
-        - The "simple" histograms
-        - The event histograms
+
+        #TODO: Add documentation
 
         Parameters
         ------------------
@@ -175,279 +188,12 @@ class HistogramManager(object):
             object or the old structure. Both have the same format.
             -@JimHokanson
 
-        Notes
-        ------------------
-        Formerly:
-        hist_objs = seg_worm.stats.hist.manager.initObjects(feature_file_paths)
-
-        Potential Improvements
-        ------------------
-        - We could optimize the histogram calculation data for motion data
-        - For event data, we should remove partial events (events that 
-          start at the first frame or end at the last frame)
           
         """
         
-        #How do we want to do this ...
-        #I'd like to have feature expansion be a specific step        
+        return np.hstack([Histogram.create_histogram(f) for f in worm_features])        
         
-        
-        # Simple histograms
-        s_hists = self.__simple_histograms(worm_features, 
-                                           SimpleSpecs.specs_factory())
-
-        # Movement histograms
-        m_hists = self.__movement_histograms(worm_features, 
-                                             MovementSpecs.specs_factory())
-      
-        # Event histograms
-        
-        # :/ HACK: - @JimHokanson
-        # Just get the size from the size of one of the pieces of data
-        num_samples = len(worm_features.get_feature('morphology.length'))
-        
-        e_hists = self.__event_histograms(worm_features, 
-                                          EventSpecs.specs_factory(), 
-                                          num_samples)
-
-        # Put all these histograms together into one single-dim numpy array.
-        return np.hstack((m_hists, s_hists, e_hists))
-
-    ###########################################################################
-    ## THREE FUNCTIONS TO CONVERT DATA TO HISTOGRAMS:
-    ## __simple_histograms, __movement_histograms, __event_histograms
-    ###########################################################################    
-    #%%
-    def __simple_histograms(self, worm_features, specs):
-        """
-        Compute simple histograms
-        
-        Parameters
-        ---------------------
-        worm_features : An h5py group instance
-            All the feature data calculated for a single worm video.
-            Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.
-        specs: A list of SimpleSpecs instances
-        
-        Returns
-        --------------------        
-        A list of Histogram instances, one for each of the simple features
-        
-        """
-        return [Histogram.create_histogram(
-                utils.filter_non_numeric(specs[iSpec].get_data(worm_features)),
-                                         specs[iSpec],
-                                         'simple', 'all', 'all') 
-                for iSpec in range(len(specs))]
-
-    #%%
-    def __movement_histograms(self, worm_features, specs):
-        """
-        For movement features, we compute either 4 or 16 histogram objects,
-        depending on whether or not the feature can be signed. If the data is
-        not signed, then we compute 4. If it is, we compute 16. We compute
-        histograms for when the motion of the midbody is:
-            - going forward
-            - going backward
-            - paused
-            - all 3 of the above combined
-
-        If signed, this also gets computed on feature data that is:
-            - positive
-            - negative
-            - absolute value of data
-            - both positive and negative
-
-        By combining the motion of the midbody with the sign of the data, we
-        get 16 different possible combinations for each feature specification.
-
-        Parameters
-        -------------------------
-        worm_features : An h5py group instance
-            All the feature data calculated for a single worm video.
-            Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.
-        specs: A list of MovementSpecs instances
-
-        Returns
-        --------------------        
-        A list of Histogram instances, one for each of the movement features
-
-        Notes
-        -------------------------
-        Formerly m_hists = h_computeMHists(worm_features, specs)
-
-        We could significantly reduce the amount of binning done in this
-        function - @JimHokanson
-
-        """
-        motion_modes = worm_features.locomotion.motion_mode
-        
-        num_frames = len(motion_modes)
-        
-        indices_use_mask = {}
-        indices_use_mask["all"]      = np.ones(num_frames, dtype=bool)
-        indices_use_mask["forward"]  = motion_modes == 1
-        indices_use_mask["backward"] = motion_modes == -1
-        indices_use_mask["paused"]   = motion_modes == 0
-
-        # NOTE: motion types refers to the motion of the worm's midbody
-        motion_types = ['all', 'forward', 'paused', 'backward']
-        data_types = ['all', 'absolute', 'positive', 'negative']
-
-        movement_histograms = []
-
-        import pdb
-        pdb.set_trace()
-
-        for cur_spec in specs:
-            cur_data = cur_spec.get_data(worm_features)
-
-            good_data_mask = ~utils.get_non_numeric_mask(cur_data).flatten()
-            
-            # Now let's create 16 histograms, for each element of
-            # (motion_types x data_types)
-            
-            for cur_motion_type in motion_types:
-                if (good_data_mask.size != 
-                                    indices_use_mask[cur_motion_type].size):
-                    # DEBUG
-                    #import pdb
-                    #pdb.set_trace()
-                
-                    assert(good_data_mask.size ==
-                           indices_use_mask[cur_motion_type].size)
-
-                cur_mask = indices_use_mask[cur_motion_type] & good_data_mask
-                assert(isinstance(cur_data, np.ndarray))
-                assert(isinstance(cur_mask, np.ndarray))
-                assert(cur_data.size == cur_mask.size)
-
-                temp_data = cur_data[cur_mask]
-
-                # Create the histogram for the case where we consider all
-                # numeric data                
-                all_hist = Histogram.create_histogram(temp_data,
-                                                 cur_spec, 
-                                                 'motion',
-                                                 cur_motion_type, 
-                                                 data_types[0])
-
-                movement_histograms.append(all_hist)
-
-                if cur_spec.is_signed:
-                    
-                    # Histogram for the data made absolute
-                    # TODO: This could be improved by merging results 
-                    #       from positive and negative - @JimHokanson
-                    abs_hist = Histogram.create_histogram(abs(temp_data),
-                                                     cur_spec,
-                                                     'motion',
-                                                     cur_motion_type,
-                                                     data_types[1])
-                                        
-                    # TODO: To get a speed-up, we could avoid reliance on 
-                    # create_histogram.  Instead, we could take the 
-                    # positive and negative aspects of the object 
-                    # that included all data. - @JimHokanson
-                    # (see the SegWormMatlabClasses version of this to see
-                    #  how this could be done)
-                    
-                    # Histogram for just the positive data
-                    pos_hist  = Histogram.create_histogram(
-                                    temp_data[temp_data >= 0],
-                                    cur_spec,
-                                    'motion',
-                                    cur_motion_type,
-                                    data_types[2])
-                    
-                    # Histogram for just the negative data
-                    neg_hist  = Histogram.create_histogram(
-                                    temp_data[temp_data <= 0], 
-                                    cur_spec, 
-                                    'motion', 
-                                    cur_motion_type, 
-                                    data_types[3])
-                    
-                    # Append our list with these histograms
-                    movement_histograms.append(abs_hist)
-                    movement_histograms.append(pos_hist)
-                    movement_histograms.append(neg_hist)
-        
-        return movement_histograms
-
-    #%%
-    def __event_histograms(self, worm_features, specs, num_samples):
-        """
-        Compute event histograms.  We produce four histograms for each
-        specification in specs, for:
-        - all data
-        - absolute data
-        - positive data
-        - negative data
-
-        Parameters
-        ---------------------
-        worm_features : A WormFeatures instance
-            All the feature data calculated for a single worm video.
-            Arranged heirarchically into categories:, posture, morphology, 
-            path, locomotion, in an h5py group.
-        specs: a list of EventSpecs instances
-        num_samples: int
-            number of samples
-
-        Returns
-        --------------------        
-        A list of Histogram instances, one for each of the event features
-
-        """
-        temp_hists = []
-
-        for cur_specs in specs:
-            
-            cur_data = cur_specs.get_data(worm_features, num_samples)
-            
-            # Remove the NaN and Inf entries
-            cur_data = utils.filter_non_numeric(cur_data)
-
-            # Calculate the first histogram, on all the data.
-            temp_hists.append(Histogram.create_histogram(cur_data, cur_specs, 
-                                                    'event', 'all', 'all'))
-
-            # If the data is signed, we calculate three more histograms:
-            # - On an absolute version of the data, 
-            # - On only the positive data, and 
-            # - On only the negative data.
-            if cur_specs.is_signed:
-                if cur_data is None:
-                    # TODO: This is a bit opaque and should be clarified
-                    # The call to create_histograms() just returns None, so 
-                    # we put together a bunch of None's
-                    # in a list and append, rather than calling the 
-                    # function three times
-                    temp_hists = temp_hists + [None, None, None]
-                else:
-                    temp_hists.append(Histogram.create_histogram(abs(cur_data), 
-                                      cur_specs, 'event', 'all', 'absolute'))
-
-                    positive_histogram = \
-                        Histogram.create_histogram(cur_data[cur_data > 0], 
-                                              cur_specs, 'event', 
-                                              'all', 'positive')
-                    negative_histogram = \
-                        Histogram.create_histogram(cur_data[cur_data < 0], 
-                                              cur_specs, 'event', 
-                                              'all', 'negative')
-
-                    temp_hists.append(positive_histogram)
-                    temp_hists.append(negative_histogram)
-
-        return temp_hists
-
-    
-    #%%
-    ###########################################################################
+       
     @staticmethod
     def merge_histograms(hist_cell_array):
         """            
