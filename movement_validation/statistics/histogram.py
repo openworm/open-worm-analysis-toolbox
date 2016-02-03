@@ -86,15 +86,18 @@ class Histogram(object):
         
         """
         # The underlying data itself
-        self.data        = feature.value
+        self.data = feature.value
+        self.specs = feature.spec
 
-        import pdb
-        pdb.set_trace()
-
-        # Features specifications
-        self.specs       = specs
-
-        #TODO: Should this be in specs????
+        #JAH TODO: Should this be added to the spec
+        #in the expansion?
+        #TODO: This should also work without expanded features, so this
+        #would need to be in the default spec as well (or have defaults in
+        #the code)
+        #
+        # Maybe this could be made generic such as "feature_manipulations"
+        # with a list of strings that get concatenated together
+        #
         #=======================================
         ## "Expanded" features specifications
         #self.histogram_type = histogram_type

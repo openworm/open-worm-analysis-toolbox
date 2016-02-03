@@ -1234,7 +1234,11 @@ class FeatureProcessingSpec(object):
         self.display_name = d['display_name']
         self.short_display_name = d['short_display_name']
         self.units = d['units']
-        self.bin_width = d['bin_width']
+        if self.is_temporary:
+            self.bin_width = 1
+        else:
+            self.bin_width = float(d['bin_width'])
+            
         self.is_signed = d['is_signed'] == '1'
         self.has_zero_bin = d['has_zero_bin'] == '1'
         self.signing_field = d['signing_field']

@@ -99,7 +99,6 @@ class HistogramManager(object):
             #worm_features.info -> obj.info
 
             new_histogram_set = self.init_histograms(worm_features)
-
             self.hist_cell_array.append(new_histogram_set)
 
         #JAH TODO: I'm not sure what this is doing ..., add documentation
@@ -191,9 +190,8 @@ class HistogramManager(object):
           
         """
         
-        return np.hstack([Histogram.create_histogram(f) for f in worm_features])        
-        
-       
+        return np.array([Histogram.create_histogram(f) for f in worm_features])
+
     @staticmethod
     def merge_histograms(hist_cell_array):
         """            
@@ -229,12 +227,25 @@ class HistogramManager(object):
         Formerly objs = seg_worm.stats.hist.mergeObjects(hist_cell_array)
 
         """
+        
+
         # DEBUG
         print("In HistogramManager.merge_histograms... # of "
               "histograms to merge:", len(hist_cell_array))
 
         # Make sure that the hist_cell_array is a numpy array
         hist_cell_array = np.array(hist_cell_array)
+
+        #Bah humbug, no idea how this code worked before
+        for hist in hist_cell_array.flatten():
+            try:
+                wtf = hist.num_videos
+            except:
+                import pdb
+                pdb.set_trace()
+
+        import pdb
+        pdb.set_trace()
 
         # Check that we don't have any multiple videos in any histogram,
         # since it's not implemented to merge already-merged histograms
