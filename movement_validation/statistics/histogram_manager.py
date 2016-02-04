@@ -100,11 +100,24 @@ class HistogramManager(object):
 
             new_histogram_set = self.init_histograms(worm_features)
             self.hist_cell_array.append(new_histogram_set)
+            
+        #0 through 3 - 706
+        #4 - 697
+        import pdb
+        pdb.set_trace()
 
         #JAH TODO: I'm not sure what this is doing ..., add documentation
         #----------------------------------------------------------------
         # Convert to a numpy array
+
+        #If self.hist_cell_array elements are the same size (e.g we have n of m long arrays)
+        #then the result is a single array of (m,n)
+        #However if of those n elements, some are not m long, then we get
+        #an array of length n, where each contains its elements
+        #[(m1),(m2),(m3),(m4),...etc]
         self.hist_cell_array = np.array(self.hist_cell_array)
+        
+        
         # At this point hist_cell_array is a list, with one element for 
         # each video.
         # Each element is a numpy array of 700+ Histogram instances.
