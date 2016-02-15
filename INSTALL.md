@@ -7,7 +7,7 @@ Linux (Ubuntu)  (Python 3; modify for Python 2 as needed)
 # Script to configure a fresh ubuntu instance for OWAT
 sudo apt-get update
 
-TRAVIS_PYTHON_VERSION=3.3
+PYTHON_VERSION=3.5
 # Install condas
 cd ~
 MINICONDA_DIR=~/miniconda3
@@ -15,7 +15,7 @@ wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O min
 chmod +x miniconda.sh
 ./miniconda.sh -b
 export PATH=$MINICONDA_DIR/bin:$PATH
-conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+conda install --yes python=$PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
 
 # Install OpenCV
 sudo apt-get update
