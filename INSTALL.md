@@ -10,7 +10,7 @@ sudo apt-get update
 TRAVIS_PYTHON_VERSION=3.3
 # Install condas
 cd ~
-MINICONDA_DIR=/home/travis/miniconda3
+MINICONDA_DIR=~/miniconda3
 wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 chmod +x miniconda.sh
 ./miniconda.sh -b
