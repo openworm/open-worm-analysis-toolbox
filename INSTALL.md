@@ -20,10 +20,10 @@ conda install --yes python=$PYTHON_VERSION atlas numpy scipy matplotlib nose pan
 # Install OpenCV
 sudo apt-get update
 sudo apt-get install -y python-opencv
-sudo apt-get install -y make
-sudo apt-get install -y cmake
 
 # If the above doesn't work, try the below:
+sudo apt-get install -y make
+sudo apt-get install -y cmake
 DEPS_DIR=/home/ubuntu
 OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
 sudo git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
