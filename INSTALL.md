@@ -4,6 +4,10 @@ For developers: Installing the repository
 ```bash
 Linux (Ubuntu)  (Python 3; modify for Python 2 as needed)
 ---------------------------------------------------------
+# Script to configure a fresh ubuntu instance for OWAT
+sudo apt-get update
+
+TRAVIS_PYTHON_VERSION=3.3
 # Install condas
 cd ~
 MINICONDA_DIR=/home/travis/miniconda3
@@ -15,14 +19,20 @@ conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib n
 
 # Install OpenCV
 sudo apt-get update
-sudo apt-get install python-opencv
+sudo apt-get install -y python-opencv
+sudo apt-get install -y make
+sudo apt-get install -y cmake
+
 # If the above doesn't work, try the below:
-OPENCV_BUILD_DIR=~/opencv/build
-travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
-mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
-cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
+DEPS_DIR=/home/ubuntu
+OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
+sudo git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
+sudo mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
+sudo cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
 make -j4
 sudo make install
+
+
 # https://gist.github.com/itguy51/4239282
 echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
 sudo ldconfig
@@ -43,7 +53,6 @@ wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
 chmod 777 *.mat
-
 ```
 
 Windows
