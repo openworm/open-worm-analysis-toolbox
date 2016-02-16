@@ -859,7 +859,12 @@ class WormFeaturesDos(object):
         """  Let's allow iteration over the features """
         all_features = self.features
         for key in all_features:
+            #Eventual code
+            #yield all_features[key]            
+            
             next_feature = all_features[key]
+            
+            #TODO: This will need to be removed
             if next_feature is not None:
                 yield next_feature
             #yield all_features[key]
@@ -899,7 +904,7 @@ class WormFeaturesDos(object):
             temp_features[feature_name] = cur_feature
             new_specs[feature_name] = cur_feature.spec
         
-        new_self.features = temp_features
+        new_self._features = temp_features
         new_self.specs = new_specs
         
         return new_self
@@ -948,6 +953,11 @@ class WormFeaturesDos(object):
 
         return self
     
+    @property
+    def features(self):
+        d = self._features
+        return [d[x] for x in d if (x is not None and not d[x].is_temporary and d[x].is_user_requested)]
+    
     def _retrieve_all_features(self):
         """
         Simple function for retrieving all features.
@@ -971,10 +981,12 @@ class WormFeaturesDos(object):
         self.specs = \
             collections.OrderedDict([(value.name, value) for value in f_specs])        
 
-        self.features = collections.OrderedDict()
+        self._features = collections.OrderedDict()
+        
+        #This will be removed soon
         self._temp_features = collections.OrderedDict()
     
-    def get_feature(self,feature_name):
+    def get_feature(self,feature_name,internal_request=False):
         """
         This is the public interface to the user for retrieving a feature.
         A feature is returned if it has already been computed. If it has not
@@ -988,35 +1000,41 @@ class WormFeaturesDos(object):
         - retrieve multiple features, probably via a different method
         - allow passing in specs
         - have a feature that returns specs by regex or wildcard
+        - have this call an internal requester that exposes the internal_request
+        rather than exposing it to the user
         
         See Also
         --------
         FeatureProcessingSpec.get_feature
         """
         
-        #If we've already computed the feature, then we return it, otherwise
-        #we need to compute it.
-        if feature_name in self.features:
-            return self.features[feature_name]
-        elif feature_name in self._temp_features:
-            return self._temp_features[feature_name]
-        
-    
+        #Early return if already computed
+        #----------------------------------
+        if feature_name in self._features:
+            #Check if it is being requested now via the user instead of internally
+            cur_feature = self._features[feature_name]
+            if not cur_feature.is_user_requested and not internal_request:
+                #If the logged feature is not currently user requested but 
+                #this request is from the user, then toggle the value
+                #
+                #otherwise we don't care, leave it as it currently is
+                cur_feature.is_user_requested = True
+            
+            return cur_feature
+            
         #Ensure that the feature name is valid
+        #-------------------------------------------
         if feature_name in self.specs:    
             spec = self.specs[feature_name]
         else:
             raise KeyError('Specified feature name not found in the feature specifications')    
             
-        temp = spec.get_feature(self)
+        temp = spec.get_feature(self,internal_request=internal_request)
 
+        #TODO: this will change
         #A feature can return None, which means we can't ask the feature
         #what the name is, so we go based on the spec
-        if spec.is_temporary:
-            self._temp_features[spec.name] = temp
-        else:
-            self.features[spec.name] = temp
-    
+        self._features[spec.name] = temp
         return temp
 
     def __repr__(self):
@@ -1121,7 +1139,10 @@ class WormFeaturesDos(object):
 
             return feature_spec_expanded
 
-        
+
+def get_spec_table():
+    pass
+
 def get_feature_processing_specs():
     
     """
@@ -1246,15 +1267,21 @@ class FeatureProcessingSpec(object):
         self.make_zero_if_empty = d['make_zero_if_empty'] == '1'
         self.is_time_series = d['is_time_series'] == '1'
 
-    def get_feature(self,wf):
+    def get_feature(self,wf,internal_request=False):
         """
+        TODO: Consider renaming to compute_feature()
+        Note, the only caller of this function should be from WormFeaturesDos
+        
         This method takes care of the logic of retrieving a feature.
         
-        All features are created or loaded via this method.
+        ALL features are created or loaded via this method.
+        
         
         Arguments
         ---------
         wf : WormFeaturesDos
+            This is primarily needed to facilitate requesting additional
+            features from the feature currently being computed
         
         """
         
@@ -1281,13 +1308,26 @@ class FeatureProcessingSpec(object):
         else:
             temp = final_method(wf,self.name,self.flags)   
     
-        timer.toc(self.name)
-                
+        elapsed_time = timer.toc(self.name)
+        
+        #This is an assigment of global attributes that the spec knows about
+        #This could eventually be handled by a super() call to Feature
+        #but for now this works        
         if temp is not None:
+            #TODO: We will remove all None features soon ...            
+
+            #TODO: This is confusing for children features that rely on a 
+            #temporary parent. Unfortunately this is populated after
+            #the feature has been computed.
+            #We could allow children to copy the value from the parent but
+            #then we would need to check for that here ...
+            temp.computation_time = elapsed_time
+            
             #We can get rid of the name assignments in class and use this ...
             temp.name = self.name
             temp.is_temporary = self.is_temporary
             temp.spec = self
+            temp.is_user_requested = not internal_request
                 
         return temp
         

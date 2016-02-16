@@ -722,6 +722,7 @@ def get_non_numeric_mask(data):
 def timing_function():
     # There's a better timing function available in Python 3.3+
     # Otherwise use the old one.
+    #TODO: This could be a static analysis at the top of the module
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 3:
         return time.monotonic()
     else:
@@ -881,6 +882,8 @@ class ElementTimer(object):
     timer.tic()
     # Run the feature processing code, or some other code
     timer.toc('name of feature being processed')    
+    
+    #TODO: Consider
         
     """
 
@@ -892,8 +895,13 @@ class ElementTimer(object):
         self.start_time = timing_function()
     
     def toc(self,name):
-        self.times.append(timing_function() - self.start_time)
+        elapsed_time = timing_function() - self.start_time
+        self.times.append(elapsed_time)
         self.names.append(name)
+        return elapsed_time
+        
+    #def get_time(self,name):
+    #    return self.times[self.names.index(name)]
         
     def __repr__(self):
         return print_object(self)

@@ -34,6 +34,9 @@ def main():
     # Generate the OpenWorm movement validation repo version of the features
     print('Computing example features from normalized worm')
     openworm_features = mv.WormFeaturesDos(nw)
+    
+    import pdb
+    pdb.set_trace()
 
     # SCHAFER LAB
     #----------------------

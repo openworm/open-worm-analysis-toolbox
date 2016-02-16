@@ -49,7 +49,12 @@ class Feature(object):
         
         """
         This was put in to do anything we need when getting a feature
-        rather than calling the feature directly
+        rather than calling the feature directly.
+        
+        For example, right now we'll log dependencies.
+        
+        Note, the dependencies are not recursive (i.e. we don't load in the
+        dependencies of the featurew we are requesting)
         """
 
         #1) Do logging - NYI
@@ -60,8 +65,14 @@ class Feature(object):
             self.dependencies = [feature_name]
     
         #2) Make the call to WormFeatures
-
-        return wf.get_feature(feature_name)
+        #Note, we call wf.get_features rather than the spec to ensure that wf
+        #is aware of the new features that have been computed
+        #
+        #TODO: We could rename the spec function to something like compute_feature()
+        #
+        #   Actually, we might make the public interface compute_feature()
+        #   or compute_features()
+        return wf.get_feature(feature_name,internal_request=True)
         
     def copy(self):
         #TODO: We might want to do something special for value
@@ -208,8 +219,11 @@ class EventFeature(Feature):
         #        
         #1) Document difference
         #2) Build in temporary support for the old behavior flag
-        #
-        if self.value is None or self.value.size == 0:
+        
+        #print(cur_spec.name)  
+        
+        #This will eventually be removed when we move to empty_features
+        if self.value is None or type(self.value) is float or self.value.size == 0:
             self.keep_mask = None
             self.signing_mask = None
         else:
