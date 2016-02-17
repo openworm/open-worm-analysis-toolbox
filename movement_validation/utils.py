@@ -274,6 +274,16 @@ def print_object(obj):
           path: [1x1 seg_worm.features.path]
           info: [1x1 seg_worm.info]
 
+    TODO: Implement dispaly of @property methods ...
+    #http://stackoverflow.com/questions/27503965/list-property-decorated-methods-in-a-python-class
+    #display as:
+    my_property_name: @property method (dynamic evaluation) #or something like this
+    
+    #NOTE: The key below is to use the class definition, not an instance of the class
+    #which below I am just getting with the __class__ attribute
+    #
+    #wtf = [name for name, value in vars(nw.__class__).items() if isinstance(value, property)]
+
     """
 
     # TODO - have some way of indicating nested function and not doing fancy
