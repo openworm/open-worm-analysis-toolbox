@@ -43,6 +43,10 @@ from . import locomotion_turns
 from . import morphology_features
 
 
+FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'features_list.csv')  
+
 """
 ===============================================================================
 ===============================================================================
@@ -799,11 +803,14 @@ class WormFeaturesDos(object):
 
     Design Decisions
     ----------------
-    # When iterating over the features, should we include null features?
-            => NO?
+    # When iterating over the features, should we include null features? 
+            => YES? => this introduces stability between different videos
     # What should be returned from get_feature when it doesn't exist?
+            => An empty feature object NYI
     # What is returned when a feature can't be computed because of a missing
     dependency?    
+            => An empty feature object NYI    
+    
     
     . Alternatively 
     it is possible to access features directly via the 'features' attribute
@@ -818,9 +825,8 @@ class WormFeaturesDos(object):
     timer :
     specs : {FeatureProcessingSpec}
     features : {Feature}
-        Contains all computed features.
-            
-    _temp_features : {Feature}
+        Contains all computed features that have been requested by the user.
+
 
     When loading from Schafer File
     h : hdf5 file reference
@@ -829,14 +835,18 @@ class WormFeaturesDos(object):
     
     """
     
-    def __init__(self, nw, processing_options=None,load_features=True):
+    def __init__(self, nw, processing_options=None,specs='all'):
         """
         
         Parameters
         ----------
-        nw: NormalizedWorm object
+        nw : NormalizedWorm object
+        specs : 
+
+        #This is eventuallly going to change. We should have the options
+        #be accessible from the specs    
         processing_options: movement_validation.features.feature_processing_options
-        load_features: 
+
 
         """
         if processing_options is None:
@@ -852,7 +862,14 @@ class WormFeaturesDos(object):
 
         self.initialize_features()
 
-        if load_features:
+        #TODO: We should eventually support a list of specs as well
+        #TODO: We might also allow transforming the specs, which this doesn't
+        #handle
+        if isinstance(specs,pd.core.frame.DataFrame):
+            #This wouldn't be good if the specs have changed.
+            #We would need to change the initialize_features() call
+            self.get_features(specs['feature_name'])
+        else:
             self._retrieve_all_features()
             
     def __iter__(self):
@@ -955,6 +972,10 @@ class WormFeaturesDos(object):
     
     @property
     def features(self):
+        """ 
+        We need to filter out temporary features and features that are 
+        not user requested        
+        """
         d = self._features
         return [d[x] for x in d if (x is not None and not d[x].is_temporary and d[x].is_user_requested)]
     
@@ -976,7 +997,7 @@ class WormFeaturesDos(object):
         Reads the feature specs and initializes necessary attributes.
         """
 
-        f_specs = get_feature_processing_specs()
+        f_specs = get_feature_specs(as_table=False)
         
         self.specs = \
             collections.OrderedDict([(value.name, value) for value in f_specs])        
@@ -985,6 +1006,14 @@ class WormFeaturesDos(object):
         
         #This will be removed soon
         self._temp_features = collections.OrderedDict()
+    
+    def get_features(self,feature_names):
+        """
+        This could be called by the user.
+        We might want to hide get_feature and only expose this ...
+        """
+        for feature_name in feature_names:
+            self.get_feature(feature_name)
     
     def get_feature(self,feature_name,internal_request=False):
         """
@@ -1140,16 +1169,19 @@ class WormFeaturesDos(object):
             return feature_spec_expanded
 
 
-def get_spec_table():
-    pass
-
-def get_feature_processing_specs():
+def get_feature_specs(as_table=True):
     
     """
 
     Loads all specs that specify how features should be processed/created.
     
     Currently in /features/feature_metadata/features_list.csv
+
+    Parameters
+    ----------
+    as_table : logical
+        If true, returns a Pandas dataframe. Otherwise it returns a list of 
+        FeatureProcessingSpec objects.
 
     See Also
     --------
@@ -1161,19 +1193,40 @@ def get_feature_processing_specs():
     
     """    
     
-    FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                'feature_metadata',
-                                'features_list.csv')        
-    
-    f_specs = []    
-    
-    with open(FEATURE_SPEC_CSV_PATH) as feature_metadata_file:
-        feature_metadata = csv.DictReader(feature_metadata_file)
+      
+    if as_table:
+        #spec_df = pd.read_csv(FEATURE_SPEC_CSV_PATH,dtype={'is_final_feature':bool},true_values=['y'],false_values =['f'])
+        #I don't like not specifying data types initially since I don't trust
+        #them to guess correctly. TODO: Need to make things explicit
+        #there are already some incorrect guesses
+        df = pd.read_csv(FEATURE_SPEC_CSV_PATH)
+        df.is_final_feature = df.is_final_feature == 'y'
+        df['is_temporary'] = ~df.is_final_feature
         
-        for row in feature_metadata: 
-            f_specs.append(FeatureProcessingSpec(row))
+        #self.flags = d['processing_flags']
+
+        #This number conversion shouldn't have happened since I think it is
+        #better to compare to '1'            
+        df.is_signed = df.is_signed == 1
+        df.has_zero_bin = df.has_zero_bin == 1        
+        df.remove_partial_events = df.remove_partial_events == 1
+        
+        #Why didn't these convert to numbers then?
+        df.make_zero_if_empty = df.make_zero_if_empty == '1'
+        df.is_time_series = df.is_time_series == '1'
+        
+        return df
+
+    else:
+        f_specs = []    
+    
+        with open(FEATURE_SPEC_CSV_PATH) as feature_metadata_file:
+            feature_metadata = csv.DictReader(feature_metadata_file)
+        
+            for row in feature_metadata: 
+                f_specs.append(FeatureProcessingSpec(row))
             
-    return f_specs
+        return f_specs
 
 
 class FeatureProcessingSpec(object):
