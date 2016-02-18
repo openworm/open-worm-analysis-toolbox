@@ -274,15 +274,7 @@ def print_object(obj):
           path: [1x1 seg_worm.features.path]
           info: [1x1 seg_worm.info]
 
-    TODO: Implement dispaly of @property methods ...
-    #http://stackoverflow.com/questions/27503965/list-property-decorated-methods-in-a-python-class
-    #display as:
-    my_property_name: @property method (dynamic evaluation) #or something like this
-    
-    #NOTE: The key below is to use the class definition, not an instance of the class
-    #which below I am just getting with the __class__ attribute
-    #
-    #wtf = [name for name, value in vars(nw.__class__).items() if isinstance(value, property)]
+    #TODO: For ndarrays we should implement size displays instead of length
 
     """
 
@@ -294,7 +286,22 @@ def print_object(obj):
     dict_local = obj.__dict__
 
     key_names = [k for k in dict_local]
+
+    try:
+        names_of_prop_methods = [name for name, value in vars(obj.__class__).items() if isinstance(value, property)]
+        prop_code_ok = True
+    except:
+        prop_code_ok = False
+
+    is_prop = [False]*len(key_names)
+    if prop_code_ok:
+        is_prop += [True]*len(names_of_prop_methods)
+        key_names += names_of_prop_methods
+
     key_lengths = [len(x) for x in key_names]
+
+
+
 
     if len(key_lengths) == 0:
         return ""
@@ -314,38 +321,41 @@ def print_object(obj):
     #   => show actual dictionary, not what is above
 
     value_strings = []
-    for key in dict_local:
-        value = dict_local[key]
-        run_extra_code = False
-        if hasattr(value,'__dict__'):
-            try:  # Not sure how to test for classes :/
-                class_name = value.__class__.__name__
-                module_name = inspect.getmodule(value).__name__
-                temp_str = 'Class::' + module_name + '.' + class_name
-            except:
-                run_extra_code = True
+    for key,is_prop_local in zip(key_names,is_prop):
+        if is_prop_local:
+            temp_str = '@property method'
         else:
-            run_extra_code = True
-            
-        if run_extra_code:
-            #TODO: Change length to shape if available
-            if type(value) is list and len(value) > max_value_length:
-                len_value = len(value)
-                temp_str = 'Type::List, Len %d'%len_value
+            run_extra_code = False
+            value = dict_local[key]
+            if hasattr(value,'__dict__'):
+                try:  # Not sure how to test for classes :/
+                    class_name = value.__class__.__name__
+                    module_name = inspect.getmodule(value).__name__
+                    temp_str = 'Class::' + module_name + '.' + class_name
+                except:
+                    run_extra_code = True
             else:
-                #Perhaps we want str instead?
-                #Changed from repr to str because things Python was not
-                #happy with lists of numpy arrays
-                temp_str = str(value)
-                if len(temp_str) > max_value_length:
-                    #type_str = str(type(value))
-                    #type_str = type_str[7:-2]
-                    try:
-                        len_value = len(value)
-                    except:
-                        len_value = 1
-                    temp_str = str.format(
-                    'Type::{}, Len: {}', type(value).__name__, len_value)        
+                run_extra_code = True
+                
+            if run_extra_code:
+                #TODO: Change length to shape if available
+                if type(value) is list and len(value) > max_value_length:
+                    len_value = len(value)
+                    temp_str = 'Type::List, Len %d'%len_value
+                else:
+                    #Perhaps we want str instead?
+                    #Changed from repr to str because things Python was not
+                    #happy with lists of numpy arrays
+                    temp_str = str(value)
+                    if len(temp_str) > max_value_length:
+                        #type_str = str(type(value))
+                        #type_str = type_str[7:-2]
+                        try:
+                            len_value = len(value)
+                        except:
+                            len_value = 1
+                        temp_str = str.format(
+                        'Type::{}, Len: {}', type(value).__name__, len_value)        
 
         value_strings.append(temp_str)
 

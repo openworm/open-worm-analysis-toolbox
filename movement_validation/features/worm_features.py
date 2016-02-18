@@ -843,9 +843,11 @@ class WormFeaturesDos(object):
         nw : NormalizedWorm object
         specs : 
 
-        #This is eventuallly going to change. We should have the options
+        #The options will most likely change. We should have the options
         #be accessible from the specs    
         processing_options: movement_validation.features.feature_processing_options
+
+        #TODO: Expose just passing in feature names as well
 
 
         """
@@ -863,8 +865,8 @@ class WormFeaturesDos(object):
         self.initialize_features()
 
         #TODO: We should eventually support a list of specs as well
-        #TODO: We might also allow transforming the specs, which this doesn't
-        #handle
+        #TODO: We might also allow transforming the specs (like changing options), 
+        #which this doesn't handle since we are only extracting the names
         if isinstance(specs,pd.core.frame.DataFrame):
             #This wouldn't be good if the specs have changed.
             #We would need to change the initialize_features() call
@@ -1009,15 +1011,18 @@ class WormFeaturesDos(object):
     
     def get_features(self,feature_names):
         """
-        This could be called by the user.
-        We might want to hide get_feature and only expose this ...
+        This is the public interface to the user for retrieving a feature.
+        
+        #TODO: Also support passing in a single name => i.e. string instead 
+        of a list of strings
         """
         for feature_name in feature_names:
-            self.get_feature(feature_name)
+            self._get_and_log_feature(feature_name)
     
-    def get_feature(self,feature_name,internal_request=False):
+    def _get_and_log_feature(self,feature_name,internal_request=False):
         """
-        This is the public interface to the user for retrieving a feature.
+        TODO: Update documentation. get_features is now the public interface
+        
         A feature is returned if it has already been computed. If it has not
         been previously computed it is computed then returned.
         
@@ -1058,7 +1063,7 @@ class WormFeaturesDos(object):
         else:
             raise KeyError('Specified feature name not found in the feature specifications')    
             
-        temp = spec.get_feature(self,internal_request=internal_request)
+        temp = spec.compute_feature(self,internal_request=internal_request)
 
         #TODO: this will change
         #A feature can return None, which means we can't ask the feature
@@ -1320,16 +1325,15 @@ class FeatureProcessingSpec(object):
         self.make_zero_if_empty = d['make_zero_if_empty'] == '1'
         self.is_time_series = d['is_time_series'] == '1'
 
-    def get_feature(self,wf,internal_request=False):
+    def compute_feature(self,wf,internal_request=False):
         """
-        TODO: Consider renaming to compute_feature()
-        Note, the only caller of this function should be from WormFeaturesDos
+        Note, the only caller of this function should be from:
+            WormFeaturesDos._get_and_log_feature()
         
         This method takes care of the logic of retrieving a feature.
         
         ALL features are created or loaded via this method.
-        
-        
+         
         Arguments
         ---------
         wf : WormFeaturesDos
@@ -1359,7 +1363,10 @@ class FeatureProcessingSpec(object):
         if len(self.flags) == 0:
             temp = final_method(wf,self.name)
         else:
-            temp = final_method(wf,self.name,self.flags)   
+            #NOTE: All current flags are just a single string. We don't have
+            #anything fancy in place for multiple parameters or for doing
+            #any fancy parsing
+            temp = final_method(wf,self.name,self.flags)
     
         elapsed_time = timer.toc(self.name)
         

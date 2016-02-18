@@ -2,6 +2,12 @@
 """
 This module handles the base (generic) Feature code that the actual
 computed features inherit from.
+
+Jim's notes on problematic features:
+- missing dependency
+- empty video (Let's not deal with this for now)
+- no events
+
 """
 
 from .. import utils
@@ -20,7 +26,10 @@ _parent_feature_pattern = re.compile('(.*)\.([^\.]+)')
 class Feature(object):
 
     """
-        
+    This is the parent class from which all features inherit.    
+    
+    Unfortunately, with the current setup some of these features are
+    populated in the Specs.compute_feature()    
     
     Attributes
     ----------
@@ -28,11 +37,18 @@ class Feature(object):
     is_temporary :
     spec : worm_features.FeatureProcessingSpec
     value : 
+        This is the value of interest. This generally does not exist for
+        features that are temporary
     dependencies : list
+    
+    Temporary features may have additional attributes that are essentially
+    the values of the feature of interest. The child features grab these 
+    attributes and populate them in their 'value' attributes.
+    TODO: provide example of what I mean by this
 
     See Also
     --------
-    worm_features.FeatureProcessingSpec.get_feature
+    worm_features.FeatureProcessingSpec.compute_feature()
     
     """
     
@@ -59,6 +75,8 @@ class Feature(object):
 
         #1) Do logging - NYI
         #What is the easiest way to initialize without forcing a init super call?
+        #NOTE: We could also support returning all depdencies, in which we get
+        #the dependencies of the parent and add those as well
         if hasattr(self,'dependencies'):
             self.dependencies.append(feature_name)
         else:
@@ -67,12 +85,7 @@ class Feature(object):
         #2) Make the call to WormFeatures
         #Note, we call wf.get_features rather than the spec to ensure that wf
         #is aware of the new features that have been computed
-        #
-        #TODO: We could rename the spec function to something like compute_feature()
-        #
-        #   Actually, we might make the public interface compute_feature()
-        #   or compute_features()
-        return wf.get_feature(feature_name,internal_request=True)
+        return wf._get_and_log_feature(feature_name,internal_request=True)
         
     def copy(self):
         #TODO: We might want to do something special for value
@@ -154,12 +167,11 @@ class EventFeature(Feature):
     This covers features that come from events. This is NOT the temporary 
     event feature parent.
     
+    TODO: Insert example
+    
     Attributes
     ----------
-    name
-    value
-    
-    
+        
     
     """
     def __init__(self,wf,feature_name):
