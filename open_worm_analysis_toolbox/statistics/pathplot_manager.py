@@ -44,8 +44,7 @@ class HistogramManager(object):
     Translated from the seg_worm.stats.hist.manager class
     
     """
-    #%%
-    def __init__(self, feature_path_or_object_list):
+    def __init__(self, feature_path_or_object_list=[]):
         """
         Parameters
         ----------
@@ -56,6 +55,12 @@ class HistogramManager(object):
         """
         print("Number of feature files passed into the histogram manager:", 
               len(feature_path_or_object_list))
+
+        # Consider the case that an empty list is passed 
+        # (useful to initialize the object without having to create histograms)
+        if not feature_path_or_object_list:
+            return
+
 
         # This will have shape (len(feature_path_or_object_list), 726)
         self.hist_cell_array = []
