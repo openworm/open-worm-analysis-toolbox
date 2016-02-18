@@ -509,6 +509,7 @@ class NewRange(Feature):
         self = cls.__new__(cls)
         self.name = feature_name
         self.value = utils.get_nested_h5_field(wf.h,['path','range'])
+        return self
 
 class DurationFeature(Feature):
     
@@ -605,4 +606,5 @@ class Curvature(Feature):
     def from_schafer_file(cls,wf,feature_name):        
         self = cls.__new__(cls)
         self.name = feature_name
-        self.value = utils.get_nested_h5_field(wf.h,['path','curvature'])        
+        self.value = utils.get_nested_h5_field(wf.h,['path','curvature'])
+        return self

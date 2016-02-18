@@ -407,9 +407,11 @@ class AverageBodyAngle(object):
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
-        #This doesn't exist in the file
-        return None
-      
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = None
+        self.missing_from_disk = True
+        return self
       
 class LocomotionVelocitySection(Feature):
     

@@ -21,7 +21,7 @@ from .prefeatures.worm_plotter import NormalizedWormPlottable
 
 # This is temporary; we will eventually remove it when the code is ready
 # to become WormFeatures
-from .features.worm_features import WormFeaturesDos
+from .features.worm_features import WormFeatures
 from .features.worm_features  import get_feature_specs
 from .features import feature_manipulations
 
@@ -32,7 +32,8 @@ from .statistics.histogram_manager import HistogramManager
 from .statistics.statistics_manager import StatisticsManager
 from .statistics.histogram import Histogram, MergedHistogram
 
-from .statistics.pathplot import *
+#JAH: Putting this on hold for now 2016-02-17
+#from .statistics.pathplot import *
 
 try:
     from . import user_config

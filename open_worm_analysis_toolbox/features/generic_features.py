@@ -7,6 +7,8 @@ Jim's notes on problematic features:
 - missing dependency
 - empty video (Let's not deal with this for now)
 - no events
+- missing_from_disk    #i.e. not present in loaded data
+See locomotion_features.AverageBodyAngle
 
 """
 

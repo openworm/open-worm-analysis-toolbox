@@ -13,6 +13,7 @@ WormPosture
 WormPath
 
 WormFeatures
+FeatureProcessingSpec
 
 
 A translation of Matlab code written by Jim Hokanson, in the 
@@ -51,14 +52,6 @@ FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__))
 ===============================================================================
 ===============================================================================
 """
-#http://stackoverflow.com/questions/10408119/generators-to-iterate-over-a-dictionary-uniformly-in-both-python-2-and-3
-#def iteritems(d):
-#    'Factor-out Py2-to-3 differences in dictionary item iterator methods'
-#    try:
-#         return d.iteritems()
-#    except AttributeError:
-#         return d.items()
-
 
 class WormMorphology(object):
     """
@@ -613,184 +606,7 @@ class WormPath(object):
 ===============================================================================
 """
 
-
 class WormFeatures(object):
-    """ 
-    WormFeatures: Takes a NormalizedWorm instance and
-    during initialization calculates all the features of the worm.
-
-    There are two ways to initialize a WormFeatures instance: 
-    1. by passing a NormalizedWorm instance and generating the features, or
-    2. by loading the already-calculated features from an HDF5 file.
-         (via the from_disk method)
-         
-    Attributes
-    ----------      
-    video_info: VideoInfo object
-    options: movement_validation.features.feature_processing_options
-    nw: NormalizedWorm object
-    morphology: WormMorphology object
-    locomotion: WormLocomotion object
-    posture: WormPosture object
-    path: WormPath object
-
-    """
-
-    def __init__(self, nw, processing_options=None):
-        """
-        
-        Parameters
-        ----------
-        nw: NormalizedWorm object
-        processing_options: movement_validation.features.feature_processing_options
-
-        """
-        if processing_options is None:
-            processing_options = \
-                            fpo.FeatureProcessingOptions()
-
-        # These are saved locally for reference by others when processing
-        self.video_info = nw.video_info
-        
-        self.options = processing_options
-        self.nw = nw
-        self.timer = utils.ElementTimer()
-        
-        self.morphology = WormMorphology(self)
-        self.locomotion = WormLocomotion(self)
-        self.posture = \
-            WormPosture(self, self.locomotion.velocity.get_midbody_distance())
-        self.path = WormPath(self)
-
-    @classmethod
-    def from_disk(cls, file_path):
-
-        """
-        This from disk method is currently focused on loading the features
-        files as computed by the Schafer lab. Alternative loading methods
-        should be possible 
-        """
-        h = h5py.File(file_path, 'r')
-        worm = h['worm']
-
-        self = cls.__new__(cls)
-
-        self.morphology = WormMorphology.from_disk(worm['morphology'])
-        self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
-        self.posture = WormPosture.from_disk(worm['posture'])
-        self.path = WormPath.from_disk(worm['path'])
-
-        return self
-
-
-
-    def get_DataFrame(self):
-        """
-        Returns
-        ------------
-        A pandas.DataFrame object
-            Contains all the feature data in one table
-            
-        """
-        feature_dataframe = pd.DataFrame(columns=['sub-extended feature ID',
-                                                  'data_array'])
-
-        
-        #feature_dataframe = \
-        #    pd.DataFrame({'sub-extended feature ID': pd.Series(),
-        #                  'data_array': pd.Series()})
-        
-        #feature_dataframe = \
-        #    pd.DataFrame({'sub-extended feature ID': pd.Series(dtype=int),
-        #                  'data_array': pd.Series(dtype=object)})
-        feature_spec = WormFeatures.get_feature_spec()
-        for index, row in feature_spec.iterrows():
-            sub_extended_feature_ID = row['sub-extended feature ID']
-            nested_attributes = row['feature_field'].split('.')
-                
-           
-            attribute = self
-            for attribute_name in nested_attributes:
-                try:
-                    attribute = getattr(attribute, attribute_name)
-                except AttributeError:
-                    import pdb
-                    pdb.set_trace()
-
-            feature_dataframe.loc[index] = [sub_extended_feature_ID, attribute]
-
-        # Add a column just for length    
-        def length(x):
-            if x is None:
-                return np.NaN
-            try:
-                return len(x)
-            except TypeError:
-                # e.g. len(5) will raise TypeError
-                if isinstance(x, (int, float, complex)):
-                    return 1
-                else:
-                    return np.NaN
-    
-        feature_dataframe['length'] = \
-                            feature_dataframe['data_array'].map(length)
-    
-        pd.set_option('display.max_rows', 500)
-        
-        # Left Outer Join: add columns for feature_field, feature_type.
-        fs = feature_spec[['sub-extended feature ID',
-                           'feature_field',
-                           'feature_type']]
-        feature_dataframe = \
-                feature_dataframe.merge(fs, how='left', 
-                                        on=['sub-extended feature ID'])
-    
-        return feature_dataframe
-
-    def get_movement_DataFrame(self):
-        """
-        Just the movement features, but pivoted
-        so the rows are frames and the columns are the feature names
-
-        NOTE: This only works for movement features.  
-        
-        """
-        feature_df = self.get_DataFrame()
-        movement_df = feature_df[feature_df.feature_type == 'movement']
-
-        # All movement features must have same length
-        assert(np.all(movement_df.length == movement_df.length.iloc[0]))    
-    
-        # Pivot so rows are frames, and features are columns.
-        movement_data = np.array(movement_df.data_array.as_matrix().tolist())
-    
-        # Just the movement features, but pivoted
-        # so the rows are frames and the columns are the feature names
-        # shape (4642, 53)
-        movement_df_pivoted = pd.DataFrame(movement_data.transpose(), 
-                                           columns=movement_df.feature_field)
-        
-        return movement_df_pivoted
-
-    def __repr__(self):
-        return utils.print_object(self)
-
-    def __eq__(self, other):
-        """
-        Compare two WormFeatures instances by value
-
-        """
-        same_morphology = self.morphology == other.morphology
-        same_locomotion = self.locomotion == other.locomotion
-        same_posture = self.posture == other.posture
-        same_path = self.path == other.path
-        return same_morphology and \
-             same_locomotion and \
-             same_posture and \
-             same_path
-                      
-
-class WormFeaturesDos(object):
 
     """
     This is the new features class. It will eventually replace the old class
@@ -877,16 +693,8 @@ class WormFeaturesDos(object):
     def __iter__(self):
         """  Let's allow iteration over the features """
         all_features = self.features
-        for key in all_features:
-            #Eventual code
-            #yield all_features[key]            
-            
-            next_feature = all_features[key]
-            
-            #TODO: This will need to be removed
-            if next_feature is not None:
-                yield next_feature
-            #yield all_features[key]
+        for temp in all_features:
+            yield temp
                 
     def copy(self,new_features):
         """
@@ -991,7 +799,7 @@ class WormFeaturesDos(object):
             spec = spec_dict[key]
             #TODO: We could pass in the spec instance ...
             #rather than resolving the instance from the name
-            self.get_feature(spec.name) 
+            self._get_and_log_feature(spec.name) 
     
     def initialize_features(self):
 
@@ -1013,12 +821,28 @@ class WormFeaturesDos(object):
         """
         This is the public interface to the user for retrieving a feature.
         
-        #TODO: Also support passing in a single name => i.e. string instead 
-        of a list of strings
+        Parameters
+        ----------
+        feature_names : string or list
+        
+        Returns
+        -------
+        TODO: finish
+        
         """
-        for feature_name in feature_names:
-            self._get_and_log_feature(feature_name)
-    
+        if isinstance(feature_names,list):
+            output = []
+            for feature_name in feature_names:
+                self._get_and_log_feature(feature_name)
+                output.append(self._features[feature_name])
+        else:
+            #Currently assuming a string
+            self._get_and_log_feature(feature_names)
+            output = self._features[feature_names]
+            
+        return output
+            
+        
     def _get_and_log_feature(self,feature_name,internal_request=False):
         """
         TODO: Update documentation. get_features is now the public interface
@@ -1372,22 +1196,22 @@ class FeatureProcessingSpec(object):
         
         #This is an assigment of global attributes that the spec knows about
         #This could eventually be handled by a super() call to Feature
-        #but for now this works        
-        if temp is not None:
-            #TODO: We will remove all None features soon ...            
+        #but for now this works. The only problem is that we override values
+        #after the constructor rather than letting the constructor override
+        #values from super()
 
-            #TODO: This is confusing for children features that rely on a 
-            #temporary parent. Unfortunately this is populated after
-            #the feature has been computed.
-            #We could allow children to copy the value from the parent but
-            #then we would need to check for that here ...
-            temp.computation_time = elapsed_time
-            
-            #We can get rid of the name assignments in class and use this ...
-            temp.name = self.name
-            temp.is_temporary = self.is_temporary
-            temp.spec = self
-            temp.is_user_requested = not internal_request
+        #TODO: This is confusing for children features that rely on a 
+        #temporary parent. Unfortunately this is populated after
+        #the feature has been computed.
+        #We could allow children to copy the value from the parent but
+        #then we would need to check for that here ...
+        temp.computation_time = elapsed_time
+        
+        #We can get rid of the name assignments in class and use this ...
+        temp.name = self.name
+        temp.is_temporary = self.is_temporary
+        temp.spec = self
+        temp.is_user_requested = not internal_request
                 
         return temp
         

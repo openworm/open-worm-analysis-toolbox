@@ -12,7 +12,7 @@ import sys, os
 # import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 def main():
     """
@@ -38,7 +38,7 @@ def main():
 
     # Generate the OpenWorm movement validation repo version of the features
     print('Computing example features from normalized worm')
-    openworm_features = mv.WormFeaturesDos(nw,specs=loco_specs)
+    openworm_features = mv.WormFeatures(nw,specs=loco_specs)
     
     f = openworm_features.features
     feature_names = [x.name for x in f]
@@ -47,13 +47,12 @@ def main():
     #that optionally allows temporary features and/or even non-requested features
     d = openworm_features._features
     all_feature_names = [d[x].name for x in d]
-    #all_feature_names contains morphology.length
-    import pdb
-    pdb.set_trace()
+    #all_feature_names contains morphology.length which was not requested
 
     #Not sure what test to run ...
     #Let's marvel at the name filtering!!!!
 
+    print('All done with test_spec_filtering.py')
 
 if __name__ == '__main__':
     print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')

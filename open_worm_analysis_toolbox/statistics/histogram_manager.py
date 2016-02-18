@@ -27,12 +27,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from .. import utils
-from ..features.worm_features import WormFeaturesDos
+from ..features.worm_features import WormFeatures
 
 from .histogram import Histogram, MergedHistogram
-from .specifications import SimpleSpecs, EventSpecs, MovementSpecs
 
 #This is where I'd like to go with things ...
+#Names need some work
 #===================================================
 class HistogramManagerDos(object):
     
