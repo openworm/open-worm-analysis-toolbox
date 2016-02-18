@@ -447,9 +447,8 @@ class BasicWorm(JSON_Serializer):
         except AttributeError:
             # Extrapolate skeleton from contour
             # TODO: improve this: for now
-            self._h_skeleton = \
-                WormParsing.computeWidths(self.h_ventral_contour, 
-                                          self.h_dorsal_contour)[1]
+            self._h_skeleton = WormParsing.compute_skeleton_and_widths(
+                self.h_ventral_contour, self.h_dorsal_contour)[1]
             
             return self._h_skeleton            
     

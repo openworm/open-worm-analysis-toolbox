@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-An example showing how to use the movement_validation package to go from a 
+An example showing how to use the open-worm-analysis-toolbox package to go from a 
 raw video .avi file to a fitness function result.
 
 """
@@ -10,10 +10,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open_worm_analysis_toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 #%%
 def example_worms(num_frames=1000):

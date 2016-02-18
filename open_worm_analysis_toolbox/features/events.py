@@ -55,7 +55,7 @@ DEBUG (add the other uses (e.g. upsilons))
   
 Notes
 ---------------------------------------
-See https://github.com/openworm/movement_validation/blob/master/
+See https://github.com/openworm/open-worm-analysis-toolbox/blob/master/
 documentation/Yemini%20Supplemental%20Data/Locomotion.md#2-motion-states
 for a plain-English description of a motion state.
 

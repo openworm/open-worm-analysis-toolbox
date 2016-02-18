@@ -1,14 +1,14 @@
 [![Stories in
-Ready](https://badge.waffle.io/openworm/movement_validation.png?label=ready&title=Ready)](https://waffle.io/openworm/movement_validation)
+Ready](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 Movement Validation
 ===================
 
-![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
+![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Validation%20Strategy.png?raw=true)
 
 Credit: OpenWorm
 
-![](https://github.com/openworm/movement_validation/blob/master/documentation/images/Test%20process.png?raw=true)
+![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
 
 Images: C. elegans by Bob Goldstein, UNC Chapel Hill
 <http://bio.unc.edu/people/faculty/goldstein/> Freely licensed. Contour
@@ -18,7 +18,7 @@ Objectives:
 -----------
 
 1.  This repository should house a test
-    [pipeline](https://github.com/MichaelCurrie/movement_validation/blob/master/documentation/Processing%20Pipeline.md)
+    [pipeline](https://github.com/MichaelCurrie/open-worm-analysis-toolbox/blob/master/documentation/Processing%20Pipeline.md)
     for the OpenWorm project to run a behavioural phenotyping of its
     virtual worm, using the same statistical tests the Schafer lab used
     on their real worm data.\
@@ -69,7 +69,7 @@ is 15 minutes)
 
 Technical descriptions of the features calculated are [available in
 hyperlinked
-form](https://github.com/openworm/movement_validation/blob/master/documentation/Yemini%20Supplemental%20Data/Schafer%20Lab%20Feature%20Descriptions.md),
+form](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Yemini%20Supplemental%20Data/Schafer%20Lab%20Feature%20Descriptions.md),
 in documents adapted from the original Schafer Lab Supplemental
 Documentation to [4].
 
@@ -82,7 +82,7 @@ repo.
 Reports](https://drive.google.com/folderview?id=0B9dU7zPD0s_LMm5RMGZGX2JEeGc&usp=sharing)
 
 [Movement Validation: White
-Paper](https://github.com/openworm/movement_validation/blob/master/documentation/Movement%20Validation%20White%20Paper.md)
+Paper](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/Movement%20Validation%20White%20Paper.md)
 
 [OpenWorm Journal Club featuring Ev
 Yemini](https://www.youtube.com/watch?v=YdBGbn_g_ls)

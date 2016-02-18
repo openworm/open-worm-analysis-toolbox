@@ -63,7 +63,7 @@ END_S1_WALK_PCT = 0.15;
 %file_path = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_contour_and_skeleton_info.mat';
 %fp2 = 'C:\Users\RNEL\Google Drive\open_worm\example_data\example_video_norm_worm.mat';
 
-base_path = 'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data';
+base_path = 'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_analysis\example_data';
 
 file_path = fullfile(base_path,'example_contour_and_skeleton_info.mat');
 fp2 = fullfile(base_path,'example_video_norm_worm.mat');

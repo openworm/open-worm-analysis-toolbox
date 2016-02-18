@@ -21,7 +21,7 @@ trackers](http://www.wormbook.org/chapters/www_tracking/tracking.html)
     University's MRC Laboratory of Molecular Biology
 
     > -   NOTE: The OpenWorm team has chosen to adapt the codebase of
-    >     this tracker for our movement validation functionality.
+    >     this tracker for our Open Worm Analysis Toolbox.
 
 2.  <https://github.com/samuellab/EarlyVersionWormTracker> (this repo
     provides links to other recommended trackers)

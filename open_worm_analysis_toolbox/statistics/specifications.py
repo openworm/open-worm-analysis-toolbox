@@ -15,7 +15,7 @@ definitions)
 
 The raw information is actually located in csv files in:
 
-    movement_validation/statistics/feature_metadata
+    open-worm-analysis-toolbox/statistics/feature_metadata
 
 These classes instantiate each row of these files as instances.
 
@@ -349,7 +349,7 @@ class MovementSpecs(Specs):
         """
         Parameters
         ----------
-        worm_features : movement_validation.features.WormFeatures
+        worm_features : open-worm-analysis-toolbox.features.WormFeatures
             All the feature data calculated for a single worm video.
             Arranged heirarchically into categories:, posture, morphology, 
             path, locomotion.        

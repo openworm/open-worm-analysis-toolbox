@@ -3,7 +3,7 @@
 Plot the eigenworms file.
 
 For more information see
-https://github.com/openworm/movement_validation/issues/79
+https://github.com/openworm/open-worm-analysis-toolbox/issues/79
 
 """
 
@@ -11,13 +11,13 @@ import sys, os
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-import mpld3
+#import mpld3
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open-worm-analysis-toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 
 def main():
@@ -37,9 +37,9 @@ def main():
     # Plot the eigenworms
     for eigenworm_i in range(np.shape(eigenworms)[1]):
         plt.plot(eigenworms[:,eigenworm_i])
-    mpld3.show()
+    #mpld3.show()
 
-
+    plt.show()
 
 if __name__ == '__main__':
     main()

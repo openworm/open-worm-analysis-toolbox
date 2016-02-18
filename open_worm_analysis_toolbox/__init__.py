@@ -1,6 +1,6 @@
 """
-movement_validation: A Python library
-https://github.com/openworm/movement_validation
+open-worm-analysis-toolbox: A Python library
+https://github.com/openworm/open-worm-analysis-toolbox
 
 Takes raw videos of C. elegans worms and processes them into features and
 statistics.
@@ -11,7 +11,7 @@ simulation is to the behaviour of real worms.
 
 License
 ---------------------------------------
-https://github.com/openworm/movement_validation/LICENSE.md
+https://github.com/openworm/open-worm-analysis-toolbox/LICENSE.md
 
 """
 from .prefeatures.video_info import VideoInfo
@@ -38,7 +38,7 @@ try:
     from . import user_config
 except ImportError:
      raise Exception("user_config.py not found. Copy the "
-                     "user_config_example.txt in the 'movement_validation' "
+                     "user_config_example.txt in the 'open-worm-analysis-toolbox' "
                      "package to user_config.py in the same directory and "
                      "edit the values")
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
   user_config.py: a module to specify installation-specific settings for
-                  the movement_validation repository
+                  the open-worm-analysis-toolbox repository
   
-  This file is in the .gitignore file for the movement_validation repo, so
+  This file is in the .gitignore file for the open-worm-analysis-toolbox repo, so
   you can put configuration settings here that apply to just your computer.
   
 """
 
-EXAMPLE_DATA_PATH = r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\movement_validation\example_data'
+EXAMPLE_DATA_PATH = r'C:\Users\RNEL\Google Drive\OpenWorm\OpenWorm Public\Movement Analysis\example_data'
 
 
 # There is a step that is very slow that can be disabled

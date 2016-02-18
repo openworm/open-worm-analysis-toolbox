@@ -207,9 +207,9 @@ class MotionEvents(object):
     
     Attributes
     ----------
-    forward : movement_validation.features.events.EventListWithFeatures
-    paused : movement_validation.features.events.EventListWithFeatures
-    backward : movement_validation.features.events.EventListWithFeatures
+    forward : open-worm-analysis-toolbox.features.events.EventListWithFeatures
+    paused : open-worm-analysis-toolbox.features.events.EventListWithFeatures
+    backward : open-worm-analysis-toolbox.features.events.EventListWithFeatures
     mode : numpy.array
         - shape num_frames
         - Values are:
@@ -553,9 +553,9 @@ class VelocityDirection(Feature):
 #=====================================================
 
 """
-    forward : movement_validation.features.events.EventListWithFeatures
-    paused : movement_validation.features.events.EventListWithFeatures
-    backward : movement_validation.features.events.EventListWithFeatures
+    forward : open-worm-analysis-toolbox.features.events.EventListWithFeatures
+    paused : open-worm-analysis-toolbox.features.events.EventListWithFeatures
+    backward : open-worm-analysis-toolbox.features.events.EventListWithFeatures
     mode : numpy.array
         - shape num_frames
         - Values are:

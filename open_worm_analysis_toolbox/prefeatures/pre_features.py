@@ -74,7 +74,6 @@ class WormParsing(object):
             Optional list of frames to plot, to show exactly how the 
             widths and skeleton were calculated.
             
-
         Returns
         -------------------------
         (h_widths, h_skeleton): tuple
@@ -121,7 +120,6 @@ class WormParsing(object):
         ----------------
         numpy array of shape (49,n)
             An angle for each normalized point in each frame.
-
 
         Notes
         ----------------

@@ -119,8 +119,10 @@ class SkeletonCalculatorType1(object):
             # Step 1: filter
             filter_width_s1 = utils.round_to_odd(s1.shape[1] * 
                                                  FRACTION_WORM_SMOOTH)    
-            s1[0, :] = sgolay(s1[0, :], filter_width_s1, SMOOTHING_ORDER)
-            s1[1, :] = sgolay(s1[1, :], filter_width_s1, SMOOTHING_ORDER)
+            s1[0, :] = sgolay(s1[0, :], window_length=filter_width_s1, 
+                              polyorder=SMOOTHING_ORDER)
+            s1[1, :] = sgolay(s1[1, :], window_length=filter_width_s1, 
+                              polyorder=SMOOTHING_ORDER)
 
             filter_width_s2 = utils.round_to_odd(s2.shape[1] * 
                                                  FRACTION_WORM_SMOOTH)    

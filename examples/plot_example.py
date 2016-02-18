@@ -7,10 +7,10 @@ An example of plotting an animation of a worm's skeleton and contour
 import sys, os, warnings
 
 # We must add .. to the path so that we can perform the 
-# import of movement_validation while running this as 
+# import of open_worm_analysis_toolbox while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..') 
-import movement_validation as mv
+import open_worm_analysis_toolbox as mv
 
 def main():
     """
@@ -35,11 +35,11 @@ def main():
     # We need to create WormFeatures to get the motion codes
     # (telling us in each frame if the worm is moving forward, backward, etc,
     #  which is nice to have so we can annotate the plot with that info)
-    wf = mv.WormFeatures(nw)
-    motion_codes = wf.locomotion.motion_mode
+    #wf = mv.WormFeatures(nw)
+    #motion_codes = wf.locomotion.motion_mode
 
     # Plot an animation of the worm and its motion codes
-    wp = mv.NormalizedWormPlottable(nw, motion_codes)
+    wp = mv.NormalizedWormPlottable(nw)#, motion_codes)
     wp.show()
 
     # At this point we could save the plot to a file:

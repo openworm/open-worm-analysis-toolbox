@@ -237,7 +237,7 @@ class LocomotionCrawlingBends(object):
         avg_bend_angles: numpy.array
             - [1 x n_frames]
         bound_info:
-        options: movement_validation.features.feature_processing_options.LocomotionCrawlingBends
+        options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
         cur_partition:
         fps: float
             Frames Per Second
@@ -1337,7 +1337,7 @@ class CrawlingBend(Feature):
         avg_bend_angles: numpy.array
             - [1 x n_frames]
         bound_info:
-        options: movement_validation.features.feature_processing_options.LocomotionCrawlingBends
+        options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
         cur_partition:
         fps: float
             Frames Per Second
