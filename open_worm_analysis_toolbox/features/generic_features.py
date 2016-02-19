@@ -195,6 +195,8 @@ class EventFeature(Feature):
     
     TODO: Insert example
     
+    locomotion_features.MotionEvent
+    
     Attributes
     ----------
         
@@ -210,22 +212,25 @@ class EventFeature(Feature):
         event_name, feature_type = get_feature_name_info(feature_name)
         event_name = get_parent_feature_name(feature_name)
         
+        temp_parent_feature = self.get_feature(wf,event_name)
+        
+        if temp_parent_feature.no_events:
+            self.no_events = True
+            self.keep_mask = None
+            self.value = None
+            return
+
+        
         #TODO: I'd like a better name for this
         #---------------------------
         #event_parent?
         #event_main?
-        event_value = self.get_feature(wf,event_name).value      
+        event_value = temp_parent_feature.value      
         #event_value : EventListWithFeatures
         
         
-        #This could potentially be handled a lot more cleanly
-        #Should all features have this?
-        self.is_null = event_value.is_null        
-        
-        if self.is_null:
-            self.keep_mask = None
-            self.value = None
-            return
+
+
         
         
         self.value = get_event_attribute(event_value,feature_type)

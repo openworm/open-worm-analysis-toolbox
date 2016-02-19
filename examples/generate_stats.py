@@ -16,7 +16,7 @@ import sys, os, pickle
 import matplotlib.pyplot as plt
 
 # We must add .. to the path so that we can perform the
-# import of open_worm_analysis_toolbox while running this as 
+# import of movement_validation while running this as 
 # a top-level script (i.e. with __name__ = '__main__')
 sys.path.append('..')
 import open_worm_analysis_toolbox as mv
@@ -107,20 +107,33 @@ def obtain_histograms(root_path, pickle_file_path):
         experiment_path = os.path.join(root_path, 'L')
         control_path = os.path.join(root_path, 'R')
 
-        experiment_files = mv.utils.get_files_of_a_type(experiment_path,
-                                                        '.mat')
+        experiment_files = mv.utils.get_files_of_a_type(experiment_path,'.mat')
         control_files = mv.utils.get_files_of_a_type(control_path, '.mat')
-
+        
         # We need at least 10 files in each
         assert(len(experiment_files) >= 10)
         assert(len(control_files) >= 10)
 
+        print('Loading features from disk')
+        experiment_features = [mv.WormFeaturesDos.from_disk(x) for x in experiment_files]
+        
+        print('Starting feature expansion')
+        new_experiment_features = [mv.feature_manipulations.expand_mrc_features(x) for x in experiment_features]
+
+        print('Starting histograms')
+        exp_histogram_manager = mv.HistogramManager(new_experiment_features)
+
+        import pdb
+        pdb.set_trace()
+
+ 
+
         # Compute histograms on our files
-        exp_histogram_manager = mv.HistogramManager(experiment_files[:10])
+        
         ctl_histogram_manager = mv.HistogramManager(control_files[:10])
         
         # Store a pickle file in the same folder as this script 
-        # (i.e. open-worm-analysis-toolbox/examples/)
+        # (i.e. movement_validation/examples/)
         with open(pickle_file_path, "wb") as pickle_file:
             pickle.dump(exp_histogram_manager, pickle_file)
             pickle.dump(ctl_histogram_manager, pickle_file)

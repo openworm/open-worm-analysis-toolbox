@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 
-
+TODO: The processing for expand_mrc_features should go in its own module. Just
+the entry function should be here ...
 
 """
 
@@ -22,6 +23,9 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     """
     
     cur_spec = e_feature.spec
+    
+    import pdb
+    pdb.set_trace()    
     
     #Removes partials and signs data
     cur_data = e_feature.get_value()

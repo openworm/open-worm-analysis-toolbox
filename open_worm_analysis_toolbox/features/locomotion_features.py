@@ -685,8 +685,11 @@ class MotionEvent(Feature):
         #it will likeely need to move into the method directly above
         m_event.num_video_frames = num_frames                       
 
-        self.value = m_event                                      
+        self.value = m_event   
 
+        #I think this is an equivalence
+        self.no_events = m_event.is_null
+                               
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,motion_type):
 
