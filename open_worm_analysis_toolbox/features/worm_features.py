@@ -1212,6 +1212,11 @@ class FeatureProcessingSpec(object):
         temp.is_temporary = self.is_temporary
         temp.spec = self
         temp.is_user_requested = not internal_request
+        
+        #missing_from_disk
+        #missing_dependency
+        #empty_video
+        #no_events
                 
         return temp
         
