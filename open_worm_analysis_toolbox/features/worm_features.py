@@ -823,14 +823,14 @@ class WormFeatures(object):
         
         Parameters
         ----------
-        feature_names : string or list
+        feature_names : {string, list, pandas.Series}
         
         Returns
         -------
         TODO: finish
         
         """
-        if isinstance(feature_names,list):
+        if isinstance(feature_names,list) or isinstance(feature_names,pd.Series):
             output = []
             for feature_name in feature_names:
                 self._get_and_log_feature(feature_name)
@@ -865,7 +865,7 @@ class WormFeatures(object):
         --------
         FeatureProcessingSpec.get_feature
         """
-        
+                
         #Early return if already computed
         #----------------------------------
         if feature_name in self._features:
@@ -1213,10 +1213,19 @@ class FeatureProcessingSpec(object):
         temp.spec = self
         temp.is_user_requested = not internal_request
         
-        #missing_from_disk
-        #missing_dependency
-        #empty_video
-        #no_events
+        #Problem features
+        #--------------------------
+        if not hasattr(temp,'missing_from_disk'):
+            temp.missing_from_disk = False
+        
+        if not hasattr(temp,'missing_dependency'):
+            temp.missing_dependency = False
+            
+        if not hasattr(temp,'empty_video'):
+            temp.empty_video = False
+            
+        if not hasattr(temp,'no_events'):
+            temp.no_events = False
                 
         return temp
         

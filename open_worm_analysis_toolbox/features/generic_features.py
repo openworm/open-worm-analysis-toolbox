@@ -42,6 +42,17 @@ class Feature(object):
         This is the value of interest. This generally does not exist for
         features that are temporary
     dependencies : list
+    missing_dependency :
+        Unable to compute feature due to a missing dependency
+    missing_from_disk :
+        Unable to load the feature as it was not saved in the loaded file
+    empty_video :
+        Indicates that there was no data in the processed video. Note, I'm
+        not sure that we'll use this one.
+    no_events :
+        Indicates that no events were observed in the video.
+    
+    
     
     Temporary features may have additional attributes that are essentially
     the values of the feature of interest. The child features grab these 
@@ -88,7 +99,20 @@ class Feature(object):
         #Note, we call wf.get_features rather than the spec to ensure that wf
         #is aware of the new features that have been computed
         return wf._get_and_log_feature(feature_name,internal_request=True)
-        
+
+    @property      
+    def is_valid(self):
+        """
+        Note, the properties here are currently assigned in the spec
+        and dependent on the time of debugging may not exist.
+        We might want to wrap with a try/catch
+        """
+        return not self.missing_from_disk and not self.missing_dependency
+    
+    @property
+    def has_data(self):
+        return self.is_valid and not self.no_event and self.no_data
+
     def copy(self):
         #TODO: We might want to do something special for value
     

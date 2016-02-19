@@ -377,7 +377,7 @@ class MotionEvents(object):
 #==============================================================================
 #                               NEW CODE
 #==============================================================================
-class AverageBodyAngle(object):
+class AverageBodyAngle(Feature):
     
     """
     Temporary Feature: locomotion.velocity.avg_body_angle
