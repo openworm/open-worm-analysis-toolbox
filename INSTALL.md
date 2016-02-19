@@ -2,26 +2,34 @@ For developers: Installing the repository
 ==========================================================
 
 ```bash
-Linux (Ubuntu)  (Python 3; modify for Python 2 as needed)
----------------------------------------------------------
+# Linux (Ubuntu)
+# (Python 3.5; modify for Python 2.7 on the first line)
+# (Python 2.7, 3.3, 3.4, 3.5 are supported)
+# ---------------------------------------------------------
+PYTHON_VERSION=3.5
+# Switch the above line to PYTHON_VERSION=2.7 if desired
+
 # Script to configure a fresh ubuntu instance for OWAT
 sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get dist-upgrade
 
-PYTHON_VERSION=3.5
-# Install condas
+# Install condas, numpy, scipy, etc.
 cd ~
-MINICONDA_DIR=~/miniconda3
-wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+if [[ $PYTHON_VERSION == 2.7 ]]; then
+    MINICONDA_DIR=~/miniconda3
+    wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+else
+    MINICONDA_DIR=~/miniconda2
+    wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+fi
 chmod +x miniconda.sh
 ./miniconda.sh -b
 export PATH=$MINICONDA_DIR/bin:$PATH
 conda install --yes python=$PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
 
 # Install OpenCV
-sudo apt-get update
-sudo apt-get install -y python-opencv
-
-# If the above doesn't work, try the below:
+sudo apt-get install -y build-essential
 sudo apt-get install -y make
 sudo apt-get install -y cmake
 DEPS_DIR=/home/ubuntu
@@ -29,9 +37,8 @@ OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
 sudo git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
 sudo mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
 sudo cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
-make -j4
+sudo make -j4
 sudo make install
-
 
 # https://gist.github.com/itguy51/4239282
 echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
