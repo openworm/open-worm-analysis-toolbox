@@ -27,6 +27,10 @@ chmod +x miniconda.sh
 ./miniconda.sh -b
 export PATH=$MINICONDA_DIR/bin:$PATH
 conda install --yes python=$PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+# The above `export` command will revert the PATH after a reboot, which will mean typing `python` will reference
+# the old first path containing `python`, which was `/usr/bin/python`, which was a symlink by default to `/usr/bin/python2.7`
+# to permanently alter the PATH, do this (as per http://stackoverflow.com/questions/11709374/):
+. ~/.profile
 
 # Install OpenCV
 sudo apt-get install -y build-essential
