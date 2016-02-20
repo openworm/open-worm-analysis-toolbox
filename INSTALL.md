@@ -25,7 +25,7 @@ else
 fi
 chmod +x miniconda.sh
 ./miniconda.sh -b
-# Add this Python path to $PATH so typing `python` does not go to `/sr/bin/python` first, which
+# Add this Python path to $PATH so typing `python` does not go to `/src/bin/python` first, which
 # is a symlink by default to `/usr/bin/python2.7`.
 # Also, we make this change permanent by adding this line to ~/.profile
 echo "PATH=~/miniconda3/bin:$PATH; export PATH" >> ~/.profile
