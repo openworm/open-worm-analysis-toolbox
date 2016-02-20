@@ -407,6 +407,7 @@ class AverageBodyAngle(Feature):
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
+        #TODO: Move this into a function in generic_features
         self = cls.__new__(cls)
         self.name = feature_name
         self.value = None
@@ -584,7 +585,11 @@ class MidbodyVelocityDistance(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
         #We could calculate this but the features that need it are already calculated
-        return None
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = None
+        self.missing_from_disk = True
+        return self
 
 class MotionEvent(Feature):
 
@@ -699,6 +704,7 @@ class MotionEvent(Feature):
         ref = utils.get_nested_h5_field(wf.h,['locomotion','motion',motion_type],resolve_value=False)
         
         self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
+        self.no_events = self.value.is_null
 
         return self
         

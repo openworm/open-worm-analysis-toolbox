@@ -1200,6 +1200,10 @@ class FeatureProcessingSpec(object):
         #after the constructor rather than letting the constructor override
         #values from super()
 
+        if temp is None:
+            import pdb
+            pdb.set_trace()
+
         #TODO: This is confusing for children features that rely on a 
         #temporary parent. Unfortunately this is populated after
         #the feature has been computed.

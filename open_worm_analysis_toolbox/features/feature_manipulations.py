@@ -23,28 +23,29 @@ def _expand_event_features(old_features,e_feature,m_masks,num_frames):
     """
     
     cur_spec = e_feature.spec
-    
-    import pdb
-    pdb.set_trace()    
-    
-    #Removes partials and signs data
-    cur_data = e_feature.get_value()
 
-    # Remove the NaN and Inf entries
-    all_data = utils.filter_non_numeric(cur_data)
-    
-    #This is temporary, we need to figure out what we want to do ...
-    if all_data is None:
-        data_entries = {}
-        data_entries['all'] = None
-    else:
+    if e_feature.has_data:
+        #Removes partials and signs data
+        cur_data = e_feature.get_value()
+        # Remove the NaN and Inf entries
+        all_data = utils.filter_non_numeric(cur_data)
+        
         data_entries = {}
         data_entries['all'] = all_data
         if cur_spec.is_signed:
             data_entries['absolute'] = np.absolute(all_data)
             data_entries['positive'] = all_data[all_data > 0]
             data_entries['negative'] = all_data[all_data > 0]       
-                
+      
+    else:
+        data_entries = {}
+        data_entries['all'] = None
+        if cur_spec.is_signed:
+            data_entries['absolute'] = None
+            data_entries['positive'] = None
+            data_entries['negative'] = None     
+
+          
     return [_create_new_event_feature(e_feature,data_entries[x],x) for x in data_entries]
      
     
@@ -202,7 +203,7 @@ def expand_mrc_features(old_features):
     #Value that the current feature is taking on
     data_types = ['all', 'absolute', 'positive', 'negative']
 
-    motion_modes = old_features.get_feature('locomotion.motion_mode').value    
+    motion_modes = old_features.get_features('locomotion.motion_mode').value    
     
     num_frames = len(motion_modes)
     

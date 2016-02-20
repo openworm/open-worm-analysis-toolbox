@@ -275,7 +275,8 @@ def print_object(obj):
           info: [1x1 seg_worm.info]
 
     #TODO: For ndarrays we should implement size displays instead of length
-
+    #TODO: The @property hack doesn't work for @property values from parent
+    classes, I would need to look at __bases__
     """
 
     # TODO - have some way of indicating nested function and not doing fancy
@@ -288,6 +289,7 @@ def print_object(obj):
     key_names = [k for k in dict_local]
 
     try:
+        #TODO: Also include __bases__
         names_of_prop_methods = [name for name, value in vars(obj.__class__).items() if isinstance(value, property)]
         prop_code_ok = True
     except:

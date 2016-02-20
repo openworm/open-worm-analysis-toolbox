@@ -8,8 +8,9 @@ Jim's notes on problematic features:
 - empty video (Let's not deal with this for now)
 - no events
 - missing_from_disk    #i.e. not present in loaded data
-See locomotion_features.AverageBodyAngle
-
+See:
+    - locomotion_features.AverageBodyAngle
+    - locomotion_features.MidbodyVelocityDistance
 """
 
 from .. import utils
@@ -111,7 +112,7 @@ class Feature(object):
     
     @property
     def has_data(self):
-        return self.is_valid and not self.no_event and self.no_data
+        return self.is_valid and not self.no_events and not self.empty_video
 
     def copy(self):
         #TODO: We might want to do something special for value
@@ -195,7 +196,10 @@ class EventFeature(Feature):
     
     TODO: Insert example
     
+    temp main event list:
     locomotion_features.MotionEvent
+    locomotion_turns.(upsilon and omega)
+    posture_features.Coils
     
     Attributes
     ----------
@@ -237,7 +241,11 @@ class EventFeature(Feature):
         start_frames = get_event_attribute(event_value,'start_frames')
         end_frames = get_event_attribute(event_value,'end_frames')
         
-        self.num_video_frames = event_value.num_video_frames
+        try:
+            self.num_video_frames = event_value.num_video_frames
+        except:
+            import pdb
+            pdb.set_trace()
         
         #event_durations - filter on starts and stops
         #distance_during_events - "  "
@@ -337,7 +345,7 @@ class EventFeature(Feature):
         
     def get_value(self,partials=False,signed=True):
         #TODO: Document this function
-        if self.is_null:
+        if not self.has_data:
             return None
         
         temp_values = self.value
