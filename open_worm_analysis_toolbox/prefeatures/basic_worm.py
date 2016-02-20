@@ -2,8 +2,8 @@
 """
 BasicWorm, WormPartition, JSON_Serializer
 
-Credit to Christopher R. Wagner at 
-http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html    
+Credit to Christopher R. Wagner at
+http://robotfantastic.org/serializing-python-data-to-json-some-edge-cases.html
 for the following six functions:
 isnamedtuple
 serialize
@@ -28,15 +28,18 @@ from .pre_features import WormParsing
 from .video_info import VideoInfo
 
 #%%
+
+
 class JSON_Serializer():
     """
-    A class that can save all of its attributes to a JSON file, or 
+    A class that can save all of its attributes to a JSON file, or
     load them from a JSON file.
-    
+
     """
+
     def __init__(self):
         pass
-    
+
     def save_to_JSON(self, JSON_path):
         serialized_data = data_to_json(list(self.__dict__.items()))
 
@@ -48,11 +51,13 @@ class JSON_Serializer():
             serialized_data = infile.read()
 
         member_list = json_to_data(serialized_data)
-        
+
         for member in member_list:
             setattr(self, member[0], member[1])
 
 #%%
+
+
 class UnorderedWorm(JSON_Serializer):
     """
     Encapsulates the notion of worm contour or skeleton data that might have
@@ -61,95 +66,92 @@ class UnorderedWorm(JSON_Serializer):
     * We don't assume the contour or skeleton points are evenly spaced,
     but we do assume they are in order as you walk along the skeleton.
 
-    * We DON'T assume that the head and the tail are at points 0 and -1, 
-    respectively - hence the use of the word "unordered" in the name of this 
+    * We DON'T assume that the head and the tail are at points 0 and -1,
+    respectively - hence the use of the word "unordered" in the name of this
     class.
-    
-    * We don't assume that there is the same number of contour points 
+
+    * We don't assume that there is the same number of contour points
     in each frame.  This means we can't use a simple ndarray representation
-    for the contour.  Instead, we use a list of single-dimension numpy 
+    for the contour.  Instead, we use a list of single-dimension numpy
     arrays.
 
-    
+
     """
+
     def __init__(self, other):
-        attributes = ['unordered_contour', 'unordered_skeleton', 
+        attributes = ['unordered_contour', 'unordered_skeleton',
                       'head', 'tail', 'video_info']
-        
+
         if other is None:
             for a in attributes:
                 setattr(self, a, None)
-                
+
         else:
             # Copy constructor
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
-    
-    
+
     @classmethod
     def from_skeleton_factory(cls, skeleton, head=None, tail=None):
         """
         A factory method taking the simplest possible input: just a skeleton.
         Assumes 0th point is head, n-1th point is tail. No contour.
-        
+
         Parameters
         ----------
-        skeleton : list of ndarray or ndarray 
+        skeleton : list of ndarray or ndarray
             If ndarray, we are in the simpler "homocardinal" case
             If list of ndarray, each frame can have a varying number of points
         head: ndarray containing the position of the head.
         tail: ndarray containing the position of the tail.
-        
+
         """
         uow = cls()
 
-
-        #if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:        
+        # if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
         #   raise Exception("Provided skeleton must have "
         #                   "shape (n_points,2,n_frames)")
         uow.skeleton = skeleton
 
         if tail is None:
-            uow.tail = skeleton[0,:,:]
+            uow.tail = skeleton[0, :, :]
         else:
             uow.tail = tail
 
         if head is None:
-            uow.head = skeleton[-1,:,:]
+            uow.head = skeleton[-1, :, :]
         else:
             uow.head = head
 
-        #TODO: First check for ndarray or list, if ndarray use skeleton.shape
-        #if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
+        # TODO: First check for ndarray or list, if ndarray use skeleton.shape
+        # if len(np.shape(skeleton)) != 3 or np.shape(skeleton)[1] != 2:
         #   raise Exception("Provided skeleton must have "
         #                   "shape (n_points,2,n_frames)")
 
-        #TODO: We need to handle the list case
-        
+        # TODO: We need to handle the list case
+
         return uow
 
     @classmethod
     def from_contour_factory(cls, contour, head=None, tail=None):
         pass
 
-
     def ordered_ventral_contour(self):
         """
         Return the vulva side of the ordered heterocardinal contour.
-        
+
         i.e. with tail at position -1 and head at position 0.
-        
+
         """
         # TODO
         pass
 
-
     def ordered_dorsal_contour(self):
         """
         Return the non-vulva side of the ordered heterocardinal contour.
-        
+
         i.e. with tail at position -1 and head at position 0.
-        
+
         """
         # TODO
         pass
@@ -157,24 +159,26 @@ class UnorderedWorm(JSON_Serializer):
     def ordered_skeleton(self):
         """
         Return the ordered skeleton.
-        
+
         i.e. with tail at position -1 and head at position 0.
-        
+
         """
         # TODO
         pass
 
 #%%
+
+
 class BasicWorm(JSON_Serializer):
     """
     A worm's skeleton and contour, not necessarily "normalized" to 49 points,
-    and possibly heterocardinal (i.e. possibly with a varying number of 
+    and possibly heterocardinal (i.e. possibly with a varying number of
     points per frame).
 
     Attributes
     ----------
     h_skeleton : list, where each element is a numpy array of shape (2,k_i)
-        Each element of the list is a frame.        
+        Each element of the list is a frame.
         Where k_i is the number of skeleton points in frame i.
         The first axis of the numpy array, having len 2, is the x and y.
          Missing frames should be identified by None.
@@ -186,10 +190,11 @@ class BasicWorm(JSON_Serializer):
                  (contains metadata attributes of the worm video)
 
     """
+
     def __init__(self, other=None):
-        attributes = ['_h_skeleton', '_h_ventral_contour', 
+        attributes = ['_h_skeleton', '_h_ventral_contour',
                       '_h_dorsal_contour']
-        
+
         if other is None:
             for a in attributes:
                 setattr(self, a, None)
@@ -200,78 +205,77 @@ class BasicWorm(JSON_Serializer):
             for a in attributes:
                 setattr(self, a, copy.deepcopy(getattr(other, a)))
 
-    
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):
         bw = cls()
-    
+
         with h5py.File(data_file_path, 'r') as h:
             # These are all HDF5 'references'
-            all_ventral_contours_refs     = h['all_vulva_contours'].value
+            all_ventral_contours_refs = h['all_vulva_contours'].value
             all_dorsal_contours_refs = h['all_non_vulva_contours'].value
-            all_skeletons_refs          = h['all_skeletons'].value
-                
-            is_stage_movement = utils._extract_time_from_disk(h,
-                                                              'is_stage_movement')
+            all_skeletons_refs = h['all_skeletons'].value
+
+            is_stage_movement = utils._extract_time_from_disk(
+                h, 'is_stage_movement')
             is_valid = utils._extract_time_from_disk(h, 'is_valid')
 
             all_skeletons = []
             all_ventral_contours = []
             dorsal_contour = []
-    
+
             for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
                 if valid_frame:
                     all_skeletons.append(
-                                h[all_skeletons_refs[iFrame][0]].value) 
+                        h[all_skeletons_refs[iFrame][0]].value)
                     all_ventral_contours.append(
-                                h[all_ventral_contours_refs[iFrame][0]].value)
+                        h[all_ventral_contours_refs[iFrame][0]].value)
                     dorsal_contour.append(
-                                h[all_dorsal_contours_refs[iFrame][0]].value)
+                        h[all_dorsal_contours_refs[iFrame][0]].value)
                 else:
-                    all_skeletons.append(None) 
-                    all_ventral_contours.append(None) 
-                    dorsal_contour.append(None)           
-                
+                    all_skeletons.append(None)
+                    all_ventral_contours.append(None)
+                    dorsal_contour.append(None)
+
         # Video Metadata
         is_stage_movement = is_stage_movement.astype(bool)
         is_valid = is_valid.astype(bool)
 
-        # A kludge, we drop frames in is_stage_movement that are in excess 
-        # of the number of frames in the video.  It's unclear why 
-        # is_stage_movement would be longer by 1, which it was in our 
+        # A kludge, we drop frames in is_stage_movement that are in excess
+        # of the number of frames in the video.  It's unclear why
+        # is_stage_movement would be longer by 1, which it was in our
         # canonical example.
         is_stage_movement = is_stage_movement[0:len(all_skeletons)]
 
         # 5. Derive frame_code from the two pieces of data we have,
         #    is_valid and is_stage_movement.
-        bw.video_info.frame_code = (1   * is_valid +
-                                    2   * is_stage_movement +
+        bw.video_info.frame_code = (1 * is_valid +
+                                    2 * is_stage_movement +
                                     100 * ~(is_valid | is_stage_movement))
-                                   
+
         # We purposely ignore the saved skeleton information contained
-        # in the BasicWorm, preferring to derive it ourselves.        
+        # in the BasicWorm, preferring to derive it ourselves.
         bw.__remove_precalculated_skeleton()
         #bw.h_skeleton = all_skeletons
 
         bw._h_ventral_contour = all_ventral_contours
-        bw._h_dorsal_contour = dorsal_contour 
-        
+        bw._h_dorsal_contour = dorsal_contour
+
         return bw
 
     @classmethod
     def from_contour_factory(cls, ventral_contour, dorsal_contour):
         """
         Return a BasicWorm from a normalized ventral_contour and dorsal_contour
-        
+
         Parameters
         ---------------
         ventral_contour: numpy array of shape (49,2,n)
         dorsal_contour: numpy array of shape (49,2,n)
-        
+
         Returns
         ----------------
         BasicWorm object
-        
+
         """
         assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
         # TODO: more validations, like that the nans are ligned up, etc.
@@ -282,34 +286,32 @@ class BasicWorm(JSON_Serializer):
         # axis 1 back to position 0.
         ventral_contour = np.rollaxis(ventral_contour, axis=1)
         dorsal_contour = np.rollaxis(dorsal_contour, axis=1)
-        
+
         # Pre-allocate the lists to the correct length
-        h_ventral_contour = [None]*num_frames
-        h_dorsal_contour = [None]*num_frames
-        
-        nan_frame_mask = np.isnan(ventral_contour[0,0,:])
-        
+        h_ventral_contour = [None] * num_frames
+        h_dorsal_contour = [None] * num_frames
+
+        nan_frame_mask = np.isnan(ventral_contour[0, 0, :])
+
         for frame_index in range(num_frames):
             # The heterocardinal contour expects to have None entries
-            # in the frame list where we previous had NaN-filled numpy 
-            # arrays, so just avoid those elements since they are 
+            # in the frame list where we previous had NaN-filled numpy
+            # arrays, so just avoid those elements since they are
             # already pre-populated with None as required.
             if not nan_frame_mask[frame_index]:
-                # Otherwise just take the appropriate data from the 
+                # Otherwise just take the appropriate data from the
                 # appropriate frame:
                 h_ventral_contour[frame_index] = \
-                                        ventral_contour[:,:,frame_index]
+                    ventral_contour[:, :, frame_index]
                 h_dorsal_contour[frame_index] = \
-                                        dorsal_contour[:,:,frame_index]
-
+                    dorsal_contour[:, :, frame_index]
 
         # Having converted our normalized contour to a heterocardinal-type
         # contour that just "happens" to have all its frames with the same
         # number of skeleton points, we can just call another factory method
         # and we are done:
-        return BasicWorm.from_h_contour_factory(h_ventral_contour, 
+        return BasicWorm.from_h_contour_factory(h_ventral_contour,
                                                 h_dorsal_contour)
-        
 
     @classmethod
     def from_skeleton_factory(cls, skeleton):
@@ -319,7 +321,7 @@ class BasicWorm(JSON_Serializer):
         TODO: right now the method creates the bulge entirely in the y-axis,
               across the x-axis.  Instead the bulge should be rotated to
               apply across the head-tail orientation.
-              
+
         TODO: the bulge should be more naturalistic than the simple sine wave
               currently used.
 
@@ -329,15 +331,15 @@ class BasicWorm(JSON_Serializer):
         bulge_x = np.zeros((config.N_POINTS_NORMALIZED))
         # Create the "bulge"
         x = np.linspace(0, 1, config.N_POINTS_NORMALIZED)
-        bulge_y = np.sin(x*np.pi)*50
+        bulge_y = np.sin(x * np.pi) * 50
 
         # Shape is (49,2,1):
-        bulge_frame1 = np.rollaxis(np.dstack([bulge_x, bulge_y]), 
+        bulge_frame1 = np.rollaxis(np.dstack([bulge_x, bulge_y]),
                                    axis=0, start=3)
         # Repeat the bulge across all frames:
         num_frames = skeleton.shape[2]
         bulge_frames = np.repeat(bulge_frame1, num_frames, axis=2)
-        
+
         # Apply the bulge above and below the skeleton
         ventral_contour = skeleton + bulge_frames
         dorsal_contour = skeleton - bulge_frames
@@ -349,38 +351,37 @@ class BasicWorm(JSON_Serializer):
         # Now we are reduced to the contour factory case:
         return BasicWorm.from_contour_factory(ventral_contour, dorsal_contour)
 
-
     @classmethod
     def from_h_contour_factory(cls, h_ventral_contour, h_dorsal_contour):
         bw = cls()
-        
+
         bw.h_ventral_contour = h_ventral_contour
         bw.h_dorsal_contour = h_dorsal_contour
 
         nan_mask_ventral = np.array([f is None for f in h_ventral_contour])
         nan_mask_dorsal = np.array([f is None for f in h_dorsal_contour])
-        
+
         assert(np.all(nan_mask_ventral == nan_mask_dorsal))
 
         # Give frame code 1 if the frame is good and the general error
-        # code 100 if the frame is bad.        
+        # code 100 if the frame is bad.
         bw.video_info.frame_code = np.array(1 * ~nan_mask_ventral +
                                             100 * nan_mask_ventral)
-        
+
         return bw
 
     @classmethod
     def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):
         """
-        Factory method         
-        
+        Factory method
+
         Optionally tries to extrapolate a contour from just the skeleton data.
-        
+
         """
         bw = cls()
-        
+
         if extrapolate_contour:
-            # TODO: extrapolate the bw.h_ventral_contour and 
+            # TODO: extrapolate the bw.h_ventral_contour and
             #       bw.h_dorsal_contour from bw._h_skeleton
             # for now we just make the contour on both sides = skeleton
             # which makes for a one-dimensional worm.
@@ -390,7 +391,7 @@ class BasicWorm(JSON_Serializer):
             raise Exception("Creating a basic worm from a heterocardinal "
                             "skeleton without extrapolate_contour=True "
                             "has not yet been implemented")
-        
+
         return bw
 
     @property
@@ -410,34 +411,34 @@ class BasicWorm(JSON_Serializer):
     def h_dorsal_contour(self, x):
         self._h_dorsal_contour = x
         self.__remove_precalculated_skeleton()
-        
+
     def __remove_precalculated_skeleton(self):
         """
         Removes the precalculated self._h_skeleton, if it exists.
-        
-        This is typically called if we've potentially changed something, 
-        i.e. if we've loaded new values for self.h_ventral_contour or 
+
+        This is typically called if we've potentially changed something,
+        i.e. if we've loaded new values for self.h_ventral_contour or
         self.h_non_vulva contour.
-        
-        In these cases we must be sure to delete h_skeleton, since it is 
+
+        In these cases we must be sure to delete h_skeleton, since it is
         derived from ventral_contour and dorsal_contour.
-        
+
         It will be recalculated if it's ever asked for.
-        
+
         """
-        try:        
+        try:
             del(self._h_skeleton)
         except AttributeError:
             pass
-    
+
     @property
     def h_skeleton(self):
         """
         If self._h_skeleton has been defined, then return it.
 
         Otherwise, try to extrapolate it from the contour.
-        
-        Note: This method does not have an obvious use case.  The normal 
+
+        Note: This method does not have an obvious use case.  The normal
         pipeline is to call NormalizedWorm.from_BasicWorm_factory, which will
         calculate a skeleton.
 
@@ -449,46 +450,43 @@ class BasicWorm(JSON_Serializer):
             # TODO: improve this: for now
             self._h_skeleton = WormParsing.compute_skeleton_and_widths(
                 self.h_ventral_contour, self.h_dorsal_contour)[1]
-            
-            return self._h_skeleton            
-    
+
+            return self._h_skeleton
 
     def plot_frame(self, frame_index):
         """
         Plot the contour and skeleton the worm for one of the frames.
-        
+
         Parameters
         ----------------
         frame_index: int
             The desired frame # to plot.
-        
+
         """
         vc = self.h_ventral_contour[frame_index]
         dc = self.h_dorsal_contour[frame_index]
         s = self.h_skeleton[frame_index]
-        
-        plt.scatter(vc[0,:], vc[1,:])
-        plt.scatter(dc[0,:], dc[1,:])
-        plt.scatter(s[0,:], s[1,:])
+
+        plt.scatter(vc[0, :], vc[1, :])
+        plt.scatter(dc[0, :], dc[1, :])
+        plt.scatter(s[0, :], s[1, :])
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 
     def validate(self):
         """
         Validate that self is a well-defined BasicWorm instance.
-        
+
         """
         assert(len(self.h_ventral_contour) == len(self.h_dorsal_contour))
 
-    
     def __repr__(self):
-        return utils.print_object(self)    
-
+        return utils.print_object(self)
 
     def __eq__(self, other):
         """
         Compare this BasicWorm against another.
-        
+
         """
         attribute_list = ['h_ventral_contour', 'h_dorsal_contour',
                           'h_skeleton', 'video_info']
@@ -496,18 +494,16 @@ class BasicWorm(JSON_Serializer):
         return utils.compare_attributes(self, other, attribute_list)
 
 
-
-    
-    
 #%%
 class WormPartition():
+
     def __init__(self):
         # These are RANGE values, so the last value is not inclusive
         self.worm_partitions = {'head': (0, 8),
                                 'neck': (8, 16),
-                                'midbody':  (16, 33),
+                                'midbody': (16, 33),
                                 'old_midbody_velocity': (20, 29),
-                                'hips':  (33, 41),
+                                'hips': (33, 41),
                                 'tail': (41, 49),
                                 # refinements of ['head']
                                 'head_tip': (0, 4),
@@ -519,14 +515,16 @@ class WormPartition():
                                 # neck, midbody, and hips
                                 'body': (8, 41)}
 
-        self.worm_partition_subsets = {'normal': ('head', 'neck', 'midbody', 'hips', 'tail'),
-                                       'first_third': ('head', 'neck'),
-                                       'second_third': ('midbody',),
-                                       'last_third': ('hips', 'tail'),
-                                       'all': ('all',)}
+        self.worm_partition_subsets = {
+            'normal': (
+                'head', 'neck', 'midbody', 'hips', 'tail'), 'first_third': (
+                'head', 'neck'), 'second_third': (
+                'midbody',), 'last_third': (
+                    'hips', 'tail'), 'all': (
+                        'all',)}
 
     def get_partition_subset(self, partition_type):
-        """ 
+        """
         There are various ways of partitioning the worm's 49 points.
         this method returns a subset of the worm partition dictionary
 
@@ -540,7 +538,7 @@ class WormPartition():
 
         Usage
         ---------------------------------------
-        For example, to see the mean of the head and the mean of the neck, 
+        For example, to see the mean of the head and the mean of the neck,
         use the partition subset, 'first_third', like this:
 
         nw = NormalizedWorm(....)
@@ -555,8 +553,8 @@ class WormPartition():
         width_dict = {k: np.mean(nw.get_partition(k), 0) for k in s.keys()}
 
         Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+        ---------------------------------------
+        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses /
         +seg_worm / @skeleton_indices / skeleton_indices.m
 
         """
@@ -569,11 +567,10 @@ class WormPartition():
         # subset of interest, p.
         return {k: self.worm_partitions[k] for k in p}
 
-
     def get_subset_partition_mask(self, name):
         """
         Returns a boolean mask - for working with arrays given a partition.
-        
+
         """
         keys = self.worm_partition_subsets[name]
         mask = np.zeros(49, dtype=bool)
@@ -581,7 +578,6 @@ class WormPartition():
             mask = mask | self.partition_mask(key)
 
         return mask
-
 
     def partition_mask(self, partition_key):
         """
@@ -593,22 +589,21 @@ class WormPartition():
         mask[slice(*slice_val)] = True
         return mask
 
-
     def get_partition(self, partition_key, data_key='skeletons',
                       split_spatial_dimensions=False):
-        """    
+        """
         Retrieve partition of a measurement of the worm, that is, across all
         available frames but across only a subset of the 49 points.
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         partition_key: string
           The desired partition.  e.g. 'head', 'tail', etc.
 
-          #TODO: This should be documented better 
+          #TODO: This should be documented better
 
           INPUT: a partition key, and an optional data key.
-            If split_spatial_dimensions is True, the partition is returned 
+            If split_spatial_dimensions is True, the partition is returned
             separated into x and y
           OUTPUT: a numpy array containing the data requested, cropped to just
                   the partition requested.
@@ -621,14 +616,14 @@ class WormPartition():
           If True, the partition is returned separated into x and y
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         A numpy array containing the data requested, cropped to just
         the partition requested.
         (so the shape might be, say, 4xn if data is 'angles')
 
         Notes
-        ---------------------------------------    
-        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses / 
+        ---------------------------------------
+        Translated from get.ALL_NORMAL_INDICES in SegwormMatlabClasses /
         +seg_worm / @skeleton_indices / skeleton_indices.m
 
         """
@@ -643,14 +638,14 @@ class WormPartition():
         worm_attribute_values = getattr(self, data_key)
         if(len(worm_attribute_values) != 0):
             # Let's suppress the warning about zero arrays being reshaped
-            # since that's irrelevant since we are only looking at the 
+            # since that's irrelevant since we are only looking at the
             # non-zero array in the middle i.e. the 2nd element i.e. [1]
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=FutureWarning)
                 partition = np.split(worm_attribute_values,
-                                 part)[1]
+                                     part)[1]
             if(split_spatial_dimensions):
-                return partition[:, 0, :], partition[:, 1,:]
+                return partition[:, 0, :], partition[:, 1, :]
             else:
                 return partition
         else:
@@ -665,9 +660,10 @@ def isnamedtuple(obj):
 
     """
     return isinstance(obj, tuple) \
-           and hasattr(obj, "_fields") \
-           and hasattr(obj, "_asdict") \
-           and callable(obj._asdict)
+        and hasattr(obj, "_fields") \
+        and hasattr(obj, "_asdict") \
+        and callable(obj._asdict)
+
 
 def serialize(data):
     """
@@ -682,13 +678,14 @@ def serialize(data):
                 [[serialize(k), serialize(v)] for k, v in data.items()]}
     if isnamedtuple(data):
         return {"py/collections.namedtuple": {
-            "type":   type(data).__name__,
+            "type": type(data).__name__,
             "fields": list(data._fields),
             "values": [serialize(getattr(data, f)) for f in data._fields]}}
     if isinstance(data, dict):
         if all(isinstance(k, str) for k in data):
             return {k: serialize(v) for k, v in data.items()}
-        return {"py/dict": [[serialize(k), serialize(v)] for k, v in data.items()]}
+        return {"py/dict": [[serialize(k), serialize(v)]
+                            for k, v in data.items()]}
     if isinstance(data, tuple):
         return {"py/tuple": [serialize(val) for val in data]}
     if isinstance(data, set):
@@ -696,8 +693,9 @@ def serialize(data):
     if isinstance(data, np.ndarray):
         return {"py/numpy.ndarray": {
             "values": data.tolist(),
-            "dtype":  str(data.dtype)}}
+            "dtype": str(data.dtype)}}
     raise TypeError("Type %s not data-serializable" % type(data))
+
 
 def restore(dct):
     """
@@ -719,18 +717,19 @@ def restore(dct):
         return OrderedDict(dct["py/collections.OrderedDict"])
     return dct
 
+
 def data_to_json(data):
     """
     """
 
     return json.dumps(serialize(data))
 
+
 def json_to_data(s):
     """
     """
 
     return json.loads(s, object_hook=restore)
-
 
 
 def nested_equal(v1, v2):

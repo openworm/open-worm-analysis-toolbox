@@ -6,25 +6,25 @@ There are two kinds of turns:
     - omega
     - upsilon.
 
-The only external-facing item is LocomotionTurns.  The rest are internal 
+The only external-facing item is LocomotionTurns.  The rest are internal
 to this module.
 
 
 Classes
----------------------------------------    
+---------------------------------------
 LocomotionTurns
 UpsilonTurns
 OmegaTurns
 
 
 Standalone Functions
----------------------------------------    
+---------------------------------------
 getTurnEventsFromSignedFrames
 
 
 Notes
----------------------------------------    
-For the Nature Methods description see 
+---------------------------------------
+For the Nature Methods description see
 /documentation/Yemini Supplemental Data/Locomotion.md#5-turns
 
 
@@ -57,14 +57,16 @@ from .. import utils
 from . import events
 
 #%%
+
+
 class LocomotionTurns(object):
 
     """
-        
+
     LocomotionTurns
 
     Attributes
-    ----------    
+    ----------
     omegas : OmegaTurns
     upsilons : UpsilonTurns
 
@@ -74,7 +76,14 @@ class LocomotionTurns(object):
 
     """
 
-    def __init__(self, features_ref, bend_angles, is_stage_movement, midbody_distance, sx, sy):
+    def __init__(
+            self,
+            features_ref,
+            bend_angles,
+            is_stage_movement,
+            midbody_distance,
+            sx,
+            sy):
         """
         Initialiser for the LocomotionTurns class
 
@@ -88,10 +97,10 @@ class LocomotionTurns(object):
         sy :
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly getOmegaAndUpsilonTurns
 
-        Old Name: 
+        Old Name:
         - featureProcess.m
         - omegaUpsilonDetectCurvature.m
 
@@ -99,7 +108,8 @@ class LocomotionTurns(object):
 
         nw = features_ref.nw
 
-        if not features_ref.options.should_compute_feature('locomotion.turns',features_ref):
+        if not features_ref.options.should_compute_feature(
+                'locomotion.turns', features_ref):
             self.omegas = None
             self.upsilons = None
             return
@@ -120,18 +130,20 @@ class LocomotionTurns(object):
                                          'body_angles_with_long_nans',
                                          'is_stage_movement'])
 
-        first_third  = nw.get_subset_partition_mask('first_third')
+        first_third = nw.get_subset_partition_mask('first_third')
         second_third = nw.get_subset_partition_mask('second_third')
-        last_third   = nw.get_subset_partition_mask('last_third')
+        last_third = nw.get_subset_partition_mask('last_third')
 
         # NOTE: For some reason the first and last few angles are NaN, so we use
         # nanmean instead of mean.  We could probably avoid this for the body.
-        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # Suppress RuntimeWarning: Mean of empty slice for those frames
         # that are ALL NaN.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            angles.head_angles = np.nanmean(bend_angles[first_third, :], axis=0)
-            angles.body_angles = np.nanmean(bend_angles[second_third, :], axis=0)
+            angles.head_angles = np.nanmean(
+                bend_angles[first_third, :], axis=0)
+            angles.body_angles = np.nanmean(
+                bend_angles[second_third, :], axis=0)
             angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
             angles.is_stage_movement = is_stage_movement
 
@@ -148,19 +160,20 @@ class LocomotionTurns(object):
         # value in each angle vector
         if n_head < 2 or n_body < 2 or n_tail < 2:
             # Make omegas and upsilons into blank events lists and return
-            self.omegas   = events.EventListWithFeatures(fps, make_null=True)
+            self.omegas = events.EventListWithFeatures(fps, make_null=True)
             self.upsilons = events.EventListWithFeatures(fps, make_null=True)
             return
 
         # Interpolate the angles.  angles is modified.
-        self.h__interpolateAngles(angles, options.max_interpolation_gap_allowed)
+        self.h__interpolateAngles(
+            angles, options.max_interpolation_gap_allowed)
 
         # Get frames for each turn type
         #----------------------------------------------------------------------
         # This doesn't match was is written in the supplemental material ...
         # Am I working off of old code??????
 
-        #TODO: Move this all to options ...
+        # TODO: Move this all to options ...
         consts = collections.namedtuple('consts',
                                         ['head_angle_start_const',
                                          'tail_angle_start_const',
@@ -169,13 +182,13 @@ class LocomotionTurns(object):
                                          'body_angle_const'])
 
         yuck = [[20, -20, 15, -15],
-                [30,  30, 30,  30],
-                [40,  40, 30,  30],
+                [30, 30, 30, 30],
+                [40, 40, 30, 30],
                 [20, -20, 15, -15],
                 [20, -20, 15, -15]]
         """
         OLD Matlab CODE:
-    
+
         consts = struct(...
             'head_angle_start_const',{20 -20 15 -15}, ...
             'tail_angle_start_const',{30  30 30  30}, ...
@@ -184,17 +197,17 @@ class LocomotionTurns(object):
             'body_angle_const'   ,   {20 -20 15 -15})
         """
 
-        #NOTE: We need to run omegas first (false values) since upsilons are 
-        #more inclusive, but can not occur if an omega event occurs
+        # NOTE: We need to run omegas first (false values) since upsilons are
+        # more inclusive, but can not occur if an omega event occurs
         is_upsilon = [False, False, True, True]
 
         # NOTE: We assign different values based on the sign of the angles
-        values_to_assign = [1, -1,  1, -1]
+        values_to_assign = [1, -1, 1, -1]
 
         frames = collections.namedtuple('frames',
                                         ['omega_frames', 'upsilon_frames'])
 
-        frames.omega_frames   = np.zeros(n_frames)
+        frames.omega_frames = np.zeros(n_frames)
         frames.upsilon_frames = np.zeros(n_frames)
 
         for i in range(4):
@@ -202,7 +215,7 @@ class LocomotionTurns(object):
             consts.tail_angle_start_const = yuck[1][i]
             consts.head_angle_end_const = yuck[2][i]
             consts.tail_angle_end_const = yuck[3][i]
-            consts.body_angle_const     = yuck[4][i]
+            consts.body_angle_const = yuck[4][i]
             condition_indices = self.h__getConditionIndices(angles, consts)
             self.h__populateFrames(angles,
                                    condition_indices,
@@ -210,19 +223,17 @@ class LocomotionTurns(object):
                                    is_upsilon[i],
                                    values_to_assign[i])
 
-
-
         # Calculate the events from the frame values
-        self.omegas   = OmegaTurns.create(options,
-                                   frames.omega_frames,
-                                   nw,
-                                   body_angles_for_ht_change,
-                                   midbody_distance,
-                                   fps)
+        self.omegas = OmegaTurns.create(options,
+                                        frames.omega_frames,
+                                        nw,
+                                        body_angles_for_ht_change,
+                                        midbody_distance,
+                                        fps)
 
         self.upsilons = UpsilonTurns.create(frames.upsilon_frames,
-                                     midbody_distance,
-                                     fps)
+                                            midbody_distance,
+                                            fps)
 
         timer.toc('locomotion.turns')
 
@@ -234,15 +245,15 @@ class LocomotionTurns(object):
 
         self = cls.__new__(cls)
 
-        self.omegas   = OmegaTurns.from_disk(turns_ref)  
-        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
-        
+        self.omegas = OmegaTurns.from_disk(turns_ref)
+        self.upsilons = UpsilonTurns.from_disk(turns_ref)
+
         return self
 
     def __eq__(self, other):
-        return \
-            self.upsilons.test_equality(other.upsilons,'locomotion.turns.upsilons') and \
-            self.omegas.test_equality(other.omegas,'locomotion.turns.omegas')
+        return self.upsilons.test_equality(
+            other.upsilons, 'locomotion.turns.upsilons') and self.omegas.test_equality(
+            other.omegas, 'locomotion.turns.omegas')
 
     def h__interpolateAngles(self, angles, MAX_INTERPOLATION_GAP_ALLOWED):
         """
@@ -251,10 +262,10 @@ class LocomotionTurns(object):
         to body_angles_with_long_nans
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         angles: a named tuple
-          angles = collections.namedtuple('angles', 
-                                          ['head_angles', 
+          angles = collections.namedtuple('angles',
+                                          ['head_angles',
                                            'body_angles',
                                            'tail_angles',
                                            'body_angles_with_long_nans',
@@ -262,11 +273,11 @@ class LocomotionTurns(object):
 
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         None; instead the angles parameter has been modified in place
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly a = h__interpolateAngles(a, MAX_INTERPOLATION_GAP_ALLOWED)
 
         TODO: Incorporate into the former
@@ -278,10 +289,8 @@ class LocomotionTurns(object):
 
         # This might not actually have been applied - SEGWORM_MC used BodyAngles
         # - @JimHokanson
-        angles.body_angles_with_long_nans = interp(angles.body_angles,
-                                                   MAX_INTERPOLATION_GAP_ALLOWED +
-                                                   1,
-                                                   make_copy=True)
+        angles.body_angles_with_long_nans = interp(
+            angles.body_angles, MAX_INTERPOLATION_GAP_ALLOWED + 1, make_copy=True)
 
         interp(angles.head_angles, make_copy=False)
         interp(angles.body_angles, make_copy=False)
@@ -297,14 +306,14 @@ class LocomotionTurns(object):
         function, h__populateFrames.
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         a:
 
         c:
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly s = h__getConditionIndices(a, c)
 
         """
@@ -366,7 +375,7 @@ class LocomotionTurns(object):
         """
 
         Algorithm
-        ---------------------------------------    
+        ---------------------------------------
         - For the middle angle range, ensure one frame is valid and that
           the frame proceeding the start and following the end are valid
         - Find start indices and end indices that bound this range
@@ -374,7 +383,7 @@ class LocomotionTurns(object):
 
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         a: named tuple
                head_angles: [1x4642 double]
                body_angles: [1x4642 double]
@@ -396,19 +405,19 @@ class LocomotionTurns(object):
          upsilonFrames: [4642x1 double]
 
         get_upsilon_flag: bool
-          Toggled based on whether or not we are getting upsilon events 
+          Toggled based on whether or not we are getting upsilon events
           or omega events
 
-        value_to_assign: 
+        value_to_assign:
 
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         None; modifies parameters in place.
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly f = h__populateFrames(a,s,f,get_upsilon_flag,value_to_assign)
 
         """
@@ -424,9 +433,14 @@ class LocomotionTurns(object):
             if temp.size != 0:
                 cur_mid_end_I = s.midEnds[temp[0]]
 
-                if ~np.all(a.is_stage_movement[cur_mid_start_I:cur_mid_end_I + 1]) and \
-                        s.startCond[cur_mid_start_I - 1] and \
-                        s.endCond[cur_mid_end_I + 1]:
+                if ~np.all(
+                    a.is_stage_movement[
+                        cur_mid_start_I:cur_mid_end_I +
+                        1]) and s.startCond[
+                    cur_mid_start_I -
+                    1] and s.endCond[
+                    cur_mid_end_I +
+                        1]:
 
                     temp2 = np.flatnonzero(s.startInds < cur_mid_start_I)
                     temp3 = np.flatnonzero(s.endInds > cur_mid_end_I)
@@ -437,7 +451,11 @@ class LocomotionTurns(object):
 
                         if get_upsilon_flag:
                             # Don't populate upsilon if the data spans an omega
-                            if ~np.any(np.abs(f.omega_frames[cur_start_I:cur_end_I + 1])):
+                            if ~np.any(
+                                np.abs(
+                                    f.omega_frames[
+                                        cur_start_I:cur_end_I +
+                                        1])):
                                 f.upsilon_frames[
                                     cur_start_I:cur_end_I + 1] = value_to_assign
                         else:
@@ -455,6 +473,8 @@ class LocomotionTurns(object):
 """
 
 #%%
+
+
 class UpsilonTurns(object):
 
     """
@@ -462,7 +482,7 @@ class UpsilonTurns(object):
 
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     Formerly this was not implemented as a class.
 
     """
@@ -478,50 +498,53 @@ class UpsilonTurns(object):
         fps :
 
         Notes
-        ---------------------------------------    
-        Formerly, in the SegWormMatlabClasses repo, this was not the constructor 
-        of a class, but a locomotion method of called 
+        ---------------------------------------
+        Formerly, in the SegWormMatlabClasses repo, this was not the constructor
+        of a class, but a locomotion method of called
         getUpsilonEvents(obj,upsilon_frames,midbody_distance,FPS)
 
         """
 
         self.value = getTurnEventsFromSignedFrames(upsilon_frames,
-                                                      midbody_distance,
-                                                      fps)
-                                                      
+                                                   midbody_distance,
+                                                   fps)
+
         self.no_events = self.value.is_null
 
     @staticmethod
     def create(upsilon_frames, midbody_distance, fps):
 
-        temp = UpsilonTurns(upsilon_frames, midbody_distance, fps)        
-        
+        temp = UpsilonTurns(upsilon_frames, midbody_distance, fps)
+
         return temp.value
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        return events.EventListWithFeatures.from_disk(turns_ref['upsilons'], 'MRC')
-        
-        
+        return events.EventListWithFeatures.from_disk(
+            turns_ref['upsilons'], 'MRC')
+
+
 """
 ===============================================================================
 ===============================================================================
 """
 
 #%%
+
+
 class OmegaTurns(object):
 
     """
     Represents the Omega turn events
 
     Properties
-    ---------------------------------------    
+    ---------------------------------------
     omegas
 
     Methods
-    ---------------------------------------    
-    __init__  
+    ---------------------------------------
+    __init__
     h_getHeadTailDirectionChange
     h__filterAndSignFrames
 
@@ -535,7 +558,7 @@ class OmegaTurns(object):
         Parameters
         ----------
         omega_frames_from_angles: [1 x n_frames]
-          Each frame has the value 0, 1, or -1, 
+          Each frame has the value 0, 1, or -1,
 
         nw: NormalizedWorm instance
           We only use it for its skeleton.
@@ -550,18 +573,18 @@ class OmegaTurns(object):
 
 
         Returns
-        ---------------------------------------    
-        None 
+        ---------------------------------------
+        None
 
 
         Notes
-        ---------------------------------------    
-        Formerly, in the SegWormMatlabClasses repo, this was not the initialiser 
-        of a class, but a locomotion method of called 
+        ---------------------------------------
+        Formerly, in the SegWormMatlabClasses repo, this was not the initialiser
+        of a class, but a locomotion method of called
         omega_events = getOmegaEvents(obj,omega_frames_from_angles,sx,sy,
                        body_angles,midbody_distance,fps)
 
-        omega_events was an event structure.  now self.omegas just contains 
+        omega_events was an event structure.  now self.omegas just contains
         the omega turns.
 
         See also:
@@ -575,15 +598,15 @@ class OmegaTurns(object):
 
         self.omegas = None  # DEBUG: remove once the below code is ready
 
-        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(nw, fps)
-            
-            
+        omega_frames_from_th_change = self.h_getHeadTailDirectionChange(
+            nw, fps)
+
         # Filter:
-        # This is to be consistent with the old code. We filter then merge, 
+        # This is to be consistent with the old code. We filter then merge,
         # then filter again :/
         omega_frames_from_th_change = \
-            self.h__filterAndSignFrames(body_angles_i, 
-                                        omega_frames_from_th_change, 
+            self.h__filterAndSignFrames(body_angles_i,
+                                        omega_frames_from_th_change,
                                         options.min_omega_event_length(fps))
 
         is_omega_frame = (omega_frames_from_angles != 0) | \
@@ -597,31 +620,37 @@ class OmegaTurns(object):
 
         # Convert frames to events ...
         self.value = getTurnEventsFromSignedFrames(signed_omega_frames,
-                                                    midbody_distance,
-                                                    fps)
+                                                   midbody_distance,
+                                                   fps)
 
         self.no_events = self.value.is_null
 
     @staticmethod
-    def create(options, omega_frames_from_angles, nw, body_angles, midbody_distance, fps):
-        
+    def create(
+            options,
+            omega_frames_from_angles,
+            nw,
+            body_angles,
+            midbody_distance,
+            fps):
+
         temp = OmegaTurns(options, omega_frames_from_angles, nw, body_angles,
-                 midbody_distance, fps)
+                          midbody_distance, fps)
 
         return temp.value
-
 
     @classmethod
     def from_disk(cls, turns_ref):
 
-        return events.EventListWithFeatures.from_disk(turns_ref['omegas'], 'MRC')  
+        return events.EventListWithFeatures.from_disk(
+            turns_ref['omegas'], 'MRC')
 
     def h_getHeadTailDirectionChange(self, nw, FPS):
         """
 
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         nw: A NormalizedWorm instance
 
         FPS: int
@@ -629,19 +658,19 @@ class OmegaTurns(object):
 
 
         Returns
-        ---------------------------------------    
-        A boolean numpy array indicating in each frame whether or not 
+        ---------------------------------------
+        A boolean numpy array indicating in each frame whether or not
         it's an omega angle change
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly is_omega_angle_change = h_getHeadTailDirectionChange(FPS,sx,sy)
 
         NOTE: This change in direction of the head and tail indicates that
         either a turn occurred OR that an error in the parsing occurred.
         Basically we look for the angle from the head to the tail to all of a
-        sudden change by 180 degrees. 
+        sudden change by 180 degrees.
 
         """
         MAX_FRAME_JUMP_FOR_ANGLE_DIFF = round(FPS / 2)
@@ -668,7 +697,7 @@ class OmegaTurns(object):
 
         # Take the mean across the partition, so that we are left with a single
         # value for each frame (i.e. 1-d an array of length n_frames)
-        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # Suppress RuntimeWarning: Mean of empty slice for those frames
         # that are ALL NaN.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -740,9 +769,9 @@ class OmegaTurns(object):
         #----------------------------------------------------
         th_angle = \
             utils.interpolate_with_threshold(th_angle,
-                                                       MAX_INTERP_GAP_SIZE + 1,
-                                                       make_copy=False,
-                                                       extrapolate=False)
+                                             MAX_INTERP_GAP_SIZE + 1,
+                                             make_copy=False,
+                                             extrapolate=False)
 
         # Determine frames that might be omega events (we'll filter later based on
         # length)
@@ -769,16 +798,15 @@ class OmegaTurns(object):
             warnings.simplefilter('ignore')
             return avg_angle_change_per_frame > PER_FRAME_DEGREE_CHANGE_CUTOFF
 
-
     def h__filterAndSignFrames(self, body_angles_i, is_omega_frame,
                                min_omega_event_length):
         """
         Filter and sign frames.
 
         Notes
-        ---------------------------------------    
-        Formerly signed_omega_frames = 
-          h__filterAndSignFrames(body_angles_i, is_omega_frame, 
+        ---------------------------------------
+        Formerly signed_omega_frames =
+          h__filterAndSignFrames(body_angles_i, is_omega_frame,
                                  MIN_OMEGA_EVENT_LENGTH)
 
         """
@@ -816,19 +844,21 @@ class OmegaTurns(object):
 """
 
 #%%
+
+
 def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
     """
     Get turn events from signed frames
 
     Parameters
-    ---------------------------------------    
-    signed_frames: 
+    ---------------------------------------
+    signed_frames:
       ??? - I believe the values are -1 or 1, based on
       whether something is dorsal or ventral ....
 
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     This code is common to omega and upsilon turns.
 
     Formerly function turn_events = \
@@ -837,7 +867,7 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
 
     Called by:
     seg_worm.features.locomotion.getUpsilonEvents
-    seg_worm.features.locomotion.getOmegaEvents  
+    seg_worm.features.locomotion.getOmegaEvents
 
     """
 
@@ -871,29 +901,30 @@ def getTurnEventsFromSignedFrames(signed_frames, midbody_distance, FPS):
 
     """
     Note that in the past, the former (Matlab) code for this function
-    added an is_ventral to each FRAME.  EventListForOutput does not have a 
+    added an is_ventral to each FRAME.  EventListForOutput does not have a
     frames variable, so instead we simply have an is_ventral numpy array.
     - @MichaelCurrie
-      
+
     Here is the former code, using correct variable names and Python syntax:
-    
+
     # Add extra field, isVentral ...
     for iEvent = range(len(turn_event_output.frames)):
         turn_event_output.frames[iEvent].isVentral = is_ventral[iEvent]
-  
+
     """
 
     return turn_event_output
 
+
 class TurnProcessor(Feature):
 
     """
-    Feature:   'locomotion.turn_processor'  
-    
+    Feature:   'locomotion.turn_processor'
+
     LocomotionTurns
 
     Attributes
-    ----------    
+    ----------
     omegas : OmegaTurns
     upsilons : UpsilonTurns
 
@@ -903,7 +934,7 @@ class TurnProcessor(Feature):
 
     """
 
-    def __init__(self, wf,feature_name):
+    def __init__(self, wf, feature_name):
         """
         Initialiser for the LocomotionTurns class
 
@@ -917,35 +948,33 @@ class TurnProcessor(Feature):
         sy :
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly getOmegaAndUpsilonTurns
 
-        Old Name: 
+        Old Name:
         - featureProcess.m
         - omegaUpsilonDetectCurvature.m
 
         """
 
-        #features_ref, , , midbody_distance, sx, sy
+        # features_ref, , , midbody_distance, sx, sy
 
         self.name = feature_name
 
-
-        
         options = wf.options.locomotion.locomotion_turns
-        
+
         video_info = wf.video_info
         fps = video_info.fps
         is_stage_movement = video_info.is_stage_movement
-        
+
         nw = wf.nw
         bend_angles = nw.angles
-        
+
         #sx = nw.skeleton_x
         #sy = nw.skeleton_y
-        
-        midbody_distance = self.get_feature(wf,'locomotion.velocity.mibdody.distance').value
-        
+
+        midbody_distance = self.get_feature(
+            wf, 'locomotion.velocity.mibdody.distance').value
 
         timer = wf.timer
         timer.tic()
@@ -959,22 +988,22 @@ class TurnProcessor(Feature):
                                          'body_angles_with_long_nans',
                                          'is_stage_movement'])
 
-        first_third  = nw.get_subset_partition_mask('first_third')
+        first_third = nw.get_subset_partition_mask('first_third')
         second_third = nw.get_subset_partition_mask('second_third')
-        last_third   = nw.get_subset_partition_mask('last_third')
+        last_third = nw.get_subset_partition_mask('last_third')
 
         # NOTE: For some reason the first and last few angles are NaN, so we use
         # nanmean instead of mean.  We could probably avoid this for the body.
-        # Suppress RuntimeWarning: Mean of empty slice for those frames 
+        # Suppress RuntimeWarning: Mean of empty slice for those frames
         # that are ALL NaN.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            angles.head_angles = np.nanmean(bend_angles[first_third, :], axis=0)
-            angles.body_angles = np.nanmean(bend_angles[second_third, :], axis=0)
+            angles.head_angles = np.nanmean(
+                bend_angles[first_third, :], axis=0)
+            angles.body_angles = np.nanmean(
+                bend_angles[second_third, :], axis=0)
             angles.tail_angles = np.nanmean(bend_angles[last_third, :], axis=0)
             angles.is_stage_movement = is_stage_movement
-
-
 
         n_head = np.sum(~np.isnan(angles.head_angles))
         n_body = np.sum(~np.isnan(angles.body_angles))
@@ -984,23 +1013,23 @@ class TurnProcessor(Feature):
         # value in each angle vector
         if n_head < 2 or n_body < 2 or n_tail < 2:
             # Make omegas and upsilons into blank events lists and return
-            self.omegas   = events.EventListWithFeatures(fps, make_null=True)
+            self.omegas = events.EventListWithFeatures(fps, make_null=True)
             self.upsilons = events.EventListWithFeatures(fps, make_null=True)
             return
-
 
         # Deep copy.
         body_angles_for_head_tail_change = np.copy(angles.body_angles)
 
         # Interpolate the angles.  angles is modified.
-        self.h__interpolateAngles(angles, options.max_interpolation_gap_allowed)
+        self.h__interpolateAngles(
+            angles, options.max_interpolation_gap_allowed)
 
         # Get frames for each turn type
         #----------------------------------------------------------------------
         # This doesn't match was is written in the supplemental material ...
         # Am I working off of old code??????
 
-        #TODO: Move this all to options ...
+        # TODO: Move this all to options ...
         consts = collections.namedtuple('consts',
                                         ['head_angle_start_const',
                                          'tail_angle_start_const',
@@ -1009,13 +1038,13 @@ class TurnProcessor(Feature):
                                          'body_angle_const'])
 
         yuck = [[20, -20, 15, -15],
-                [30,  30, 30,  30],
-                [40,  40, 30,  30],
+                [30, 30, 30, 30],
+                [40, 40, 30, 30],
                 [20, -20, 15, -15],
                 [20, -20, 15, -15]]
         """
         OLD Matlab CODE:
-    
+
         consts = struct(...
             'head_angle_start_const',{20 -20 15 -15}, ...
             'tail_angle_start_const',{30  30 30  30}, ...
@@ -1024,17 +1053,17 @@ class TurnProcessor(Feature):
             'body_angle_const'   ,   {20 -20 15 -15})
         """
 
-        #NOTE: We need to run omegas first (false values) since upsilons are 
-        #more inclusive, but can not occur if an omega event occurs
+        # NOTE: We need to run omegas first (false values) since upsilons are
+        # more inclusive, but can not occur if an omega event occurs
         is_upsilon = [False, False, True, True]
 
         # NOTE: We assign different values based on the sign of the angles
-        values_to_assign = [1, -1,  1, -1]
+        values_to_assign = [1, -1, 1, -1]
 
         frames = collections.namedtuple('frames',
                                         ['omega_frames', 'upsilon_frames'])
 
-        frames.omega_frames   = np.zeros(n_frames)
+        frames.omega_frames = np.zeros(n_frames)
         frames.upsilon_frames = np.zeros(n_frames)
 
         for i in range(4):
@@ -1042,7 +1071,7 @@ class TurnProcessor(Feature):
             consts.tail_angle_start_const = yuck[1][i]
             consts.head_angle_end_const = yuck[2][i]
             consts.tail_angle_end_const = yuck[3][i]
-            consts.body_angle_const     = yuck[4][i]
+            consts.body_angle_const = yuck[4][i]
             condition_indices = self.h__getConditionIndices(angles, consts)
             self.h__populateFrames(angles,
                                    condition_indices,
@@ -1050,35 +1079,34 @@ class TurnProcessor(Feature):
                                    is_upsilon[i],
                                    values_to_assign[i])
 
-
-
         # Calculate the events from the frame values
-        self.omegas   = OmegaTurns.create(options,
-                                   frames.omega_frames,
-                                   nw,
-                                   body_angles_for_head_tail_change,
-                                   midbody_distance,
-                                   fps)
+        self.omegas = OmegaTurns.create(options,
+                                        frames.omega_frames,
+                                        nw,
+                                        body_angles_for_head_tail_change,
+                                        midbody_distance,
+                                        fps)
 
         self.upsilons = UpsilonTurns.create(frames.upsilon_frames,
-                                     midbody_distance,
-                                     fps)
+                                            midbody_distance,
+                                            fps)
 
         timer.toc('locomotion.turns')
 
-
-    @classmethod    
+    @classmethod
     def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
-        self.name = feature_name  
+        self.name = feature_name
 
-        #TODO: This should be a method, somewhere ...        
-        ref = utils.get_nested_h5_field(wf.h,['locomotion','turns','omegas'],resolve_value=False)
-        self.omegas = events.EventListWithFeatures.from_disk(ref,'MRC')        
+        # TODO: This should be a method, somewhere ...
+        ref = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'turns', 'omegas'], resolve_value=False)
+        self.omegas = events.EventListWithFeatures.from_disk(ref, 'MRC')
 
-        ref = utils.get_nested_h5_field(wf.h,['locomotion','turns','upsilons'],resolve_value=False)
-        self.upsilons = events.EventListWithFeatures.from_disk(ref,'MRC')
-        
+        ref = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'turns', 'upsilons'], resolve_value=False)
+        self.upsilons = events.EventListWithFeatures.from_disk(ref, 'MRC')
+
         return self
 
 #    @classmethod
@@ -1086,9 +1114,9 @@ class TurnProcessor(Feature):
 #
 #        self = cls.__new__(cls)
 #
-#        self.omegas   = OmegaTurns.from_disk(turns_ref)  
-#        self.upsilons = UpsilonTurns.from_disk(turns_ref)  
-#        
+#        self.omegas   = OmegaTurns.from_disk(turns_ref)
+#        self.upsilons = UpsilonTurns.from_disk(turns_ref)
+#
 #        return self
 #
 #    def __eq__(self, other):
@@ -1103,10 +1131,10 @@ class TurnProcessor(Feature):
         to body_angles_with_long_nans
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         angles: a named tuple
-          angles = collections.namedtuple('angles', 
-                                          ['head_angles', 
+          angles = collections.namedtuple('angles',
+                                          ['head_angles',
                                            'body_angles',
                                            'tail_angles',
                                            'body_angles_with_long_nans',
@@ -1114,11 +1142,11 @@ class TurnProcessor(Feature):
 
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         None; instead the angles parameter has been modified in place
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly a = h__interpolateAngles(a, MAX_INTERPOLATION_GAP_ALLOWED)
 
         TODO: Incorporate into the former
@@ -1130,10 +1158,8 @@ class TurnProcessor(Feature):
 
         # This might not actually have been applied - SEGWORM_MC used BodyAngles
         # - @JimHokanson
-        angles.body_angles_with_long_nans = interp(angles.body_angles,
-                                                   MAX_INTERPOLATION_GAP_ALLOWED +
-                                                   1,
-                                                   make_copy=True)
+        angles.body_angles_with_long_nans = interp(
+            angles.body_angles, MAX_INTERPOLATION_GAP_ALLOWED + 1, make_copy=True)
 
         interp(angles.head_angles, make_copy=False)
         interp(angles.body_angles, make_copy=False)
@@ -1149,14 +1175,14 @@ class TurnProcessor(Feature):
         function, h__populateFrames.
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         a:
 
         c:
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly s = h__getConditionIndices(a, c)
 
         """
@@ -1218,7 +1244,7 @@ class TurnProcessor(Feature):
         """
 
         Algorithm
-        ---------------------------------------    
+        ---------------------------------------
         - For the middle angle range, ensure one frame is valid and that
           the frame proceeding the start and following the end are valid
         - Find start indices and end indices that bound this range
@@ -1226,7 +1252,7 @@ class TurnProcessor(Feature):
 
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         a: named tuple
                head_angles: [1x4642 double]
                body_angles: [1x4642 double]
@@ -1248,19 +1274,19 @@ class TurnProcessor(Feature):
          upsilonFrames: [4642x1 double]
 
         get_upsilon_flag: bool
-          Toggled based on whether or not we are getting upsilon events 
+          Toggled based on whether or not we are getting upsilon events
           or omega events
 
-        value_to_assign: 
+        value_to_assign:
 
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         None; modifies parameters in place.
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly f = h__populateFrames(a,s,f,get_upsilon_flag,value_to_assign)
 
         """
@@ -1268,15 +1294,20 @@ class TurnProcessor(Feature):
         for cur_mid_start_I in s.midStarts:
 
             # JAH NOTE: This type of searching is inefficient since the data
-            #are sorted
+            # are sorted
             temp = np.flatnonzero(s.midEnds > cur_mid_start_I)
 
             if temp.size != 0:
                 cur_mid_end_I = s.midEnds[temp[0]]
 
-                if ~np.all(a.is_stage_movement[cur_mid_start_I:cur_mid_end_I + 1]) and \
-                        s.startCond[cur_mid_start_I - 1] and \
-                        s.endCond[cur_mid_end_I + 1]:
+                if ~np.all(
+                    a.is_stage_movement[
+                        cur_mid_start_I:cur_mid_end_I +
+                        1]) and s.startCond[
+                    cur_mid_start_I -
+                    1] and s.endCond[
+                    cur_mid_end_I +
+                        1]:
 
                     temp2 = np.flatnonzero(s.startInds < cur_mid_start_I)
                     temp3 = np.flatnonzero(s.endInds > cur_mid_end_I)
@@ -1287,7 +1318,11 @@ class TurnProcessor(Feature):
 
                         if get_upsilon_flag:
                             # Don't populate upsilon if the data spans an omega
-                            if ~np.any(np.abs(f.omega_frames[cur_start_I:cur_end_I + 1])):
+                            if ~np.any(
+                                np.abs(
+                                    f.omega_frames[
+                                        cur_start_I:cur_end_I +
+                                        1])):
                                 f.upsilon_frames[
                                     cur_start_I:cur_end_I + 1] = value_to_assign
                         else:
@@ -1297,32 +1332,33 @@ class TurnProcessor(Feature):
         # Nothing needs to be returned since we have modified our parameters
         # in place
         return None
-    
+
+
 class NewUpsilonTurns(Feature):
     """
     Feature: locomotion.upsilon_turns
     """
-    
-    def __init__(self,wf,feature_name):
+
+    def __init__(self, wf, feature_name):
         self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.turn_processor').upsilons
+        self.value = self.get_feature(wf, 'locomotion.turn_processor').upsilons
         self.no_events = self.value.is_null
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):
-        return cls(wf,feature_name)
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf, feature_name)
+
 
 class NewOmegaTurns(Feature):
     """
     Feature: 'locomotion.omega_turns'
     """
 
-    
-    def __init__(self,wf,feature_name):
+    def __init__(self, wf, feature_name):
         self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.turn_processor').omegas
+        self.value = self.get_feature(wf, 'locomotion.turn_processor').omegas
         self.no_events = self.value.is_null
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):
-        return cls(wf,feature_name)        
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf, feature_name)

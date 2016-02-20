@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Package-level configuration settings. The original Schafer Lab code 
-contained many hardcoded values.  These are tracked in a central 
+Package-level configuration settings. The original Schafer Lab code
+contained many hardcoded values.  These are tracked in a central
 location here.
 
 """

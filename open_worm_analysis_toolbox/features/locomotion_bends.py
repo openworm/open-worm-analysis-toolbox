@@ -32,63 +32,74 @@ from .generic_features import Feature
 from .. import utils
 
 #%%
-class LocomotionBend(object):    
+
+
+class LocomotionBend(object):
     """
     Element for LocomotionCrawlingBends
-    
+
     """
-    def __init__(self,amplitude,frequency,name):
+
+    def __init__(self, amplitude, frequency, name):
         self.amplitude = amplitude
         self.frequency = frequency
         self.name = name
-        
+
     @classmethod
-    def from_disk(cls, bend_ref,name):
+    def from_disk(cls, bend_ref, name):
 
         self = cls.__new__(cls)
 
-        self.amplitude = utils._extract_time_from_disk(bend_ref,'amplitude')
-        self.frequency = utils._extract_time_from_disk(bend_ref,'frequency')
+        self.amplitude = utils._extract_time_from_disk(bend_ref, 'amplitude')
+        self.frequency = utils._extract_time_from_disk(bend_ref, 'frequency')
         self.name = name
-        
-        return self    
-   
+
+        return self
+
     def __repr__(self):
         return utils.print_object(self)
-        
+
     def __eq__(self, other):
 
-        #merge_nans=True - utils.separated_peaks works slightly differently
-        #so merge_nans is true here, for now. The utils function works correctly
-        #and the old version works incorrectly but was convoluted enough that
-        #it was hard to replicate        
-        
-        return utils.correlation(self.amplitude, other.amplitude,
-                                  'locomotion.bends.' + self.name + '.amplitude',
-                                  merge_nans=True) and \
-             utils.correlation(self.frequency, other.frequency, 
-                                'locomotion.bends.' + self.name + '.frequency',
-                                merge_nans=True)   
+        # merge_nans=True - utils.separated_peaks works slightly differently
+        # so merge_nans is true here, for now. The utils function works correctly
+        # and the old version works incorrectly but was convoluted enough that
+        # it was hard to replicate
+
+        return utils.correlation(
+            self.amplitude,
+            other.amplitude,
+            'locomotion.bends.' +
+            self.name +
+            '.amplitude',
+            merge_nans=True) and utils.correlation(
+            self.frequency,
+            other.frequency,
+            'locomotion.bends.' +
+            self.name +
+            '.frequency',
+            merge_nans=True)
+
 
 class LocomotionCrawlingBends(object):
     """
     Locomotion Crawling Bends Feature.
 
     Attributes
-    ----------    
+    ----------
     head : LocomotionBend
     midbody : LocomotionBend
     tail : LocomotionBend
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     Formerly +segworm/+features/@locomotion/getLocomotionBends
 
     Originally, part of wormBends.m
 
 
     Note from Ev Yemini on Setup Options
-    ---------------------------------------    
+    ---------------------------------------
     Empirically I've found the values below achieve good signal.
 
     Furthermore:
@@ -102,7 +113,7 @@ class LocomotionCrawlingBends(object):
 
 
     Nature Methods Description
-    ---------------------------------------    
+    ---------------------------------------
 
     Worm crawling is expressed as both an amplitude and frequency
     (Supplementary Fig. 4e). We measure these features instantaneously at
@@ -155,13 +166,18 @@ class LocomotionCrawlingBends(object):
 
     bend_names = ['head', 'midbody', 'tail']
 
-    def __init__(self, features_ref, bend_angles, is_paused, is_segmented_mask):
+    def __init__(
+            self,
+            features_ref,
+            bend_angles,
+            is_paused,
+            is_segmented_mask):
         """
-        Compute the temporal bending frequency at the head, midbody, and tail.    
+        Compute the temporal bending frequency at the head, midbody, and tail.
 
         Parameters:
         -----------
-        features_ref : 
+        features_ref :
         bend_angles : numpy.array
             - [49 x n_frames]
         is_paused : numpy.array
@@ -172,8 +188,9 @@ class LocomotionCrawlingBends(object):
         """
 
         options = features_ref.options.locomotion.crawling_bends
-        
-        if not features_ref.options.should_compute_feature('locomotion.crawling_bends',features_ref):
+
+        if not features_ref.options.should_compute_feature(
+                'locomotion.crawling_bends', features_ref):
             self.head = None
             self.midbody = None
             self.tail = None
@@ -190,17 +207,17 @@ class LocomotionCrawlingBends(object):
             nan_data = np.empty(len(is_segmented_mask)) * np.NaN
             bend_dict = {'frequency': nan_data.copy(),
                          'amplitude': nan_data.copy()}
-                         
+
             raise Exception('This is no longer impelemented properly')
-            self.head    = bend_dict.copy()
+            self.head = bend_dict.copy()
             self.midbody = bend_dict.copy()
-            self.tail    = bend_dict.copy()
+            self.tail = bend_dict.copy()
             return
 
         for cur_partition_name in self.bend_names:
             # Find the mean bend angle for the current partition, across all
             # frames
-        
+
             s = slice(*options.bends_partitions[cur_partition_name])
 
             # Suppress RuntimeWarning: Mean of empty slice
@@ -213,22 +230,35 @@ class LocomotionCrawlingBends(object):
             # - that not everything is segmented (missing) - i.e. data
             # - that something is segmented - i.e. gaps
             if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
-                avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
-                  
-            bound_info = CrawlingBendsBoundInfo(avg_bend_angles,is_paused,options,fps)      
-                  
+                avg_bend_angles = utils.interpolate_with_threshold(
+                    avg_bend_angles)
+
+            bound_info = CrawlingBendsBoundInfo(
+                avg_bend_angles, is_paused, options, fps)
+
             [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                          bound_info,
                                                          options,
                                                          cur_partition_name,
                                                          fps)
 
-            setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
+            setattr(
+                self,
+                cur_partition_name,
+                LocomotionBend(
+                    amplitude,
+                    frequency,
+                    cur_partition_name))
 
         timer.toc('locomotion.crawling_bends')
 
-
-    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
+    def h__getBendData(
+            self,
+            avg_bend_angles,
+            bound_info,
+            options,
+            cur_partition,
+            fps):
         """
         Compute the bend amplitude and frequency.
 
@@ -247,7 +277,7 @@ class LocomotionCrawlingBends(object):
         -------
 
         """
-        
+
         # Compute the short-time Fourier transforms (STFT).
         #--------------------------------------------------
         # Unpack options ...
@@ -258,31 +288,33 @@ class LocomotionCrawlingBends(object):
         peak_energy_threshold = options.peak_energy_threshold
 
         # Maximum index to keep for frequency analysis:
-        fft_max_I   = int(fft_n_samples / 2)
+        fft_max_I = int(fft_n_samples / 2)
 
-        # This gets multiplied by an index to compute the frequency at that index
+        # This gets multiplied by an index to compute the frequency at that
+        # index
         freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
 
         n_frames = len(avg_bend_angles)
-        amps  = np.empty(n_frames) * np.NaN
+        amps = np.empty(n_frames) * np.NaN
         freqs = np.empty(n_frames) * np.NaN
-        
-        left_bounds  = bound_info.left_bounds
+
+        left_bounds = bound_info.left_bounds
         right_bounds = bound_info.right_bounds
-        is_bad_mask  = bound_info.is_bad_mask
-        
-        # This is a processing optimization that in general will speed 
+        is_bad_mask = bound_info.is_bad_mask
+
+        # This is a processing optimization that in general will speed
         # things up
-        max_freq_I = max_freq/freq_scalar
+        max_freq_I = max_freq / freq_scalar
         INIT_MAX_I_FOR_BANDWIDTH = \
-            round(options.initial_max_I_pct * max_freq_I)        
-        
+            round(options.initial_max_I_pct * max_freq_I)
+
         # Convert each element from float to int
         right_bounds = right_bounds.astype(int)
         left_bounds = left_bounds.astype(int)
-        
+
         for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data   = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
+            windowed_data = avg_bend_angles[
+                left_bounds[iFrame]:right_bounds[iFrame]]
             data_win_length = len(windowed_data)
 
             #
@@ -292,16 +324,18 @@ class LocomotionCrawlingBends(object):
             # These two steps take a lot of time ...
             #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
             #fft_data = abs(fft_data[:fft_max_I])
-            
-            #it is faster to use rfft, than using fft and abs to obtain the real part of the transform
+
+            # it is faster to use rfft, than using fft and abs to obtain the
+            # real part of the transform
             fft_data = np.fft.rfft(windowed_data, fft_n_samples)
-            
+
             # Find the peak frequency.
             maxPeakI = np.argmax(fft_data)
-            maxPeak  = fft_data[maxPeakI]
+            maxPeak = fft_data[maxPeakI]
 
             # NOTE: If this is true, we'll never bound the peak on the left.
-            #We are looking for a hump with a peak, not just a decaying signal.
+            # We are looking for a hump with a peak, not just a decaying
+            # signal.
             if maxPeakI == 0:
                 continue
 
@@ -315,14 +349,14 @@ class LocomotionCrawlingBends(object):
                                      fft_data,
                                      maxPeakI,
                                      INIT_MAX_I_FOR_BANDWIDTH)
-                 
+
             # Store data
             #------------------------------------------------------------------
             if not (peakStartI.size == 0 or
-                    peakEndI.size   == 0 or
+                    peakEndI.size == 0 or
                     # The minimums can't be too big:
                     fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data[peakEndI]   > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
                     # Needs to have enough energy:
                     (sum(fft_data[peakStartI:peakEndI] ** 2) <
                      (peak_energy_threshold * sum(fft_data ** 2)))
@@ -330,15 +364,13 @@ class LocomotionCrawlingBends(object):
 
                 # Convert the peak to a time frequency.
                                 # sign the data
-                data_sign     = np.sign(np.nanmean(windowed_data))  
+                data_sign = np.sign(np.nanmean(windowed_data))
                 fft_data_real = np.real(fft_data[maxPeakI])
-                amps[iFrame]  = ((2 * fft_data_real / data_win_length)
-                                 * data_sign)
+                amps[iFrame] = ((2 * fft_data_real / data_win_length)
+                                * data_sign)
                 freqs[iFrame] = unsigned_freq * data_sign
 
         return [amps, freqs]
-
-    
 
     def h__getBandwidth(self, data_win_length, fft_data,
                         max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
@@ -355,7 +387,7 @@ class LocomotionCrawlingBends(object):
         Parameters
         ----------
         data_win_length
-          Length of real data (ignoring zero padding) that 
+          Length of real data (ignoring zero padding) that
           went into computing the FFT
 
         fft_data
@@ -376,9 +408,9 @@ class LocomotionCrawlingBends(object):
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly [peak_start_I,peak_end_I] = \
-               h__getBandwidth(data_win_length, fft_data, 
+               h__getBandwidth(data_win_length, fft_data,
                                max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
 
         See also, formerly: seg_worm.util.maxPeaksDist
@@ -401,9 +433,9 @@ class LocomotionCrawlingBends(object):
 
             del min_peaks   # this part of max_peaks_dist's return is unused
 
-            #TODO: This is wrong, replace add find to utils ...
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+            # TODO: This is wrong, replace add find to utils ...
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
         else:
             peak_start_I = np.array([])
             peak_end_I = np.array([])
@@ -415,53 +447,53 @@ class LocomotionCrawlingBends(object):
         # NOTE: In order to save time we only look at a subset of the FFT data.
         if (peak_end_I.size == 0) | \
                 (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
-            #If true, then rerun on the full set of data
-            [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data,
-                                                             peakWinSize,
-                                                             use_max=False,
-                                                             value_cutoff=np.inf)
+            # If true, then rerun on the full set of data
+            [min_peaks, min_peaks_I] = utils.separated_peaks(
+                fft_data, peakWinSize, use_max=False, value_cutoff=np.inf)
 
             del(min_peaks)  # This part of max_peaks_dist's return is unused
 
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
-            peak_end_I   = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
 
-        #TODO: Why is this not a tuple - tuple would be more consistent
+        # TODO: Why is this not a tuple - tuple would be more consistent
         return [peak_start_I, peak_end_I]
 
     @classmethod
     def from_disk(cls, bend_ref):
 
         self = cls.__new__(cls)
-        
-        self.head    = LocomotionBend.from_disk(bend_ref['head'],'head')
-        self.midbody = LocomotionBend.from_disk(bend_ref['midbody'],'midbody')
-        self.tail    = LocomotionBend.from_disk(bend_ref['tail'],'tail')        
+
+        self.head = LocomotionBend.from_disk(bend_ref['head'], 'head')
+        self.midbody = LocomotionBend.from_disk(bend_ref['midbody'], 'midbody')
+        self.tail = LocomotionBend.from_disk(bend_ref['tail'], 'tail')
 
         return self
 
     def __repr__(self):
         return utils.print_object(self)
-        
+
     def __eq__(self, other):
         return self.head == other.head and \
             self.midbody == other.midbody and \
             self.tail == other.tail
 
 #%%
+
+
 class LocomotionForagingBends(object):
 
     """
     Locomotion Foraging Bends Feature.
 
     Attributes
-    ----------    
+    ----------
     amplitude
     angleSpeed
 
 
     Methods
-    ---------------------------------------    
+    ---------------------------------------
     __init__
     h__computeNoseBends
     h__computeAvgAngles
@@ -471,7 +503,7 @@ class LocomotionForagingBends(object):
     h__getAmps
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     Formerly +segworm/+features/@locomotion/getForaging
 
     Originally, part of wormBends.m
@@ -483,37 +515,37 @@ class LocomotionForagingBends(object):
         Initialize an instance of LocomotionForagingBends
 
         Parameters
-        ----------  
+        ----------
         nw: NormalizedWorm instance
         is_segmented_mask: boolean numpy array [1 x n_frames]
         ventral_mode: int
             0, 1, or 2 depending on the orientation of the worm.
 
         """
-        
-        options = features_ref.options.locomotion.foraging_bends        
 
-        if not features_ref.options.should_compute_feature('locomotion.foraging_bends',features_ref):
+        options = features_ref.options.locomotion.foraging_bends
+
+        if not features_ref.options.should_compute_feature(
+                'locomotion.foraging_bends', features_ref):
             self.amplitude = None
             self.angle_speed = None
-            return        
-        
+            return
+
         timer = features_ref.timer
         timer.tic()
-        
-        
+
         # self.amplitude  = None  # DEBUG
         # self.angleSpeed = None # DEBUG
 
         fps = features_ref.video_info.fps
 
         nose_x, nose_y = \
-            features_ref.nw.get_partition('head_tip', 
+            features_ref.nw.get_partition('head_tip',
                                           data_key='skeleton',
                                           split_spatial_dimensions=True)
 
         neck_x, neck_y = \
-            features_ref.nw.get_partition('head_base', 
+            features_ref.nw.get_partition('head_base',
                                           data_key='skeleton',
                                           split_spatial_dimensions=True)
 
@@ -550,26 +582,25 @@ class LocomotionForagingBends(object):
         neck_yi = interp(neck_y, threshold=max_samples_interp)
         #----------------------------------------------------------------------
 
-
         # Step 2: Calculation of the bend angles
         #---------------------------------------
-        nose_bends = self.h__computeNoseBends(nose_xi, nose_yi, neck_xi, neck_yi)
+        nose_bends = self.h__computeNoseBends(
+            nose_xi, nose_yi, neck_xi, neck_yi)
 
         # Step 3:
         #---------------------------------------
         [nose_amps, nose_freqs] = \
-            self.h__foragingData(fps, nose_bends, 
+            self.h__foragingData(fps, nose_bends,
                                  options.min_nose_window_samples(fps))
 
         if ventral_mode > 1:
             nose_amps = -nose_amps
             nose_freqs = -nose_freqs
 
-        self.amplitude   = nose_amps
+        self.amplitude = nose_amps
         self.angle_speed = nose_freqs
 
         timer.toc('locomotion.foraging_bends')
-
 
     def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
         """
@@ -577,7 +608,7 @@ class LocomotionForagingBends(object):
         head tip and head base).
 
         Parameters
-        ----------    
+        ----------
         nose_x: [4 x n_frames]
         nose_y: [4 x n_frames]
         neck_x: [4 x n_frames]
@@ -588,7 +619,7 @@ class LocomotionForagingBends(object):
         nose_bends_d
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly nose_bends_d = h__computeNoseBends(nose_x,nose_y,neck_x,neck_y)
 
         """
@@ -611,11 +642,11 @@ class LocomotionForagingBends(object):
 
     def h__computeAvgAngles(self, x, y):
         """
-        Take average difference between successive x and y skeleton points, 
+        Take average difference between successive x and y skeleton points,
         then compute the arc tangent from those averages.
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         x : m x n float numpy array
           m is the number of skeleton points
           n is the number of frames
@@ -623,12 +654,12 @@ class LocomotionForagingBends(object):
           (Same as x)
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         1-d float numpy array of length n
           The angles
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Simple helper for h__computeNoseBends
 
         """
@@ -653,26 +684,26 @@ class LocomotionForagingBends(object):
         min_win_size : (scalar)
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         amplitudes : [1 x n_frames]
         speeds : [1 x n_frames]
 
         Notes
-        ---------------------------------------    
-        Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, 
+        ---------------------------------------
+        Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d,
                                                  min_win_size, fps)
 
         """
         if min_win_size > 0:
             # Clean up the signal with a gaussian filter.
-            gauss_filter = utils.gausswin(2*min_win_size+1)/min_win_size
+            gauss_filter = utils.gausswin(2 * min_win_size + 1) / min_win_size
             nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
                                                    gauss_filter,
                                                    cval=0,
                                                    mode='constant')
 
             # Remove partial data frames ...
-            nose_bend_angle_d[:min_win_size]  = np.NaN
+            nose_bend_angle_d[:min_win_size] = np.NaN
             nose_bend_angle_d[-min_win_size:] = np.NaN
 
         # Calculate amplitudes
@@ -706,21 +737,21 @@ class LocomotionForagingBends(object):
         apply to all indices that have the same sign within the stretch
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         nose_bend_angle_d : 1-d numpy array of length n_frames
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         1-d numpy array of length n_frames
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly amps = h__getAmps(nose_bend_angle_d):
 
         NOTE: This code is very similar to wormKinks
 
         Example
-        ---------------------------------------    
+        ---------------------------------------
         >>> h__getAmps(np.array[1, 2, 3, 2, 1, -1, -2, -1, 1, 2, 2, 5])
                           array[3, 3, 3, 3, 3, -2, -2, -2, 5, 5, 5, 5]
         (indentation is used here to line up the returned array for clarity)
@@ -771,17 +802,24 @@ class LocomotionForagingBends(object):
 
         self = cls.__new__(cls)
 
-        self.amplitude = utils._extract_time_from_disk(foraging_ref,'amplitude')
-        self.angle_speed = utils._extract_time_from_disk(foraging_ref,'angleSpeed')
-        
+        self.amplitude = utils._extract_time_from_disk(
+            foraging_ref, 'amplitude')
+        self.angle_speed = utils._extract_time_from_disk(
+            foraging_ref, 'angleSpeed')
+
         return self
-        
+
     def __repr__(self):
         return utils.print_object(self)
-        
+
     def __eq__(self, other):
-        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
-             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+        return utils.correlation(
+            self.amplitude,
+            other.amplitude,
+            'locomotion.foraging.amplitude') and utils.correlation(
+            self.angle_speed,
+            other.angle_speed,
+            'locomotion.foraging.angle_speed')
 
 #%%
 
@@ -789,25 +827,25 @@ class LocomotionForagingBends(object):
 #==============================================================================
 #                       New Feature Organization
 #==============================================================================
-#self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
+# self.crawling_bends = locomotion_bends.LocomotionCrawlingBends(
 #                                            features_ref,
 #                                            nw.angles,
 #                                            self.motion_events.is_paused,
 #                                            video_info.is_segmented)
 #
-#self.foraging_bends = locomotion_bends.LocomotionForagingBends(
-#                                            features_ref, 
-#                                            video_info.is_segmented, 
+# self.foraging_bends = locomotion_bends.LocomotionForagingBends(
+#                                            features_ref,
+#                                            video_info.is_segmented,
 #                                            video_info.ventral_mode)
 
-#locomotion.foraging_bends.amplitude
-#locomotion.foraging_bends.angle_speed
-#locomotion.crawling_bends.head.amplitude
-#locomotion.crawling_bends.midbody.amplitude
-#locomotion.crawling_bends.tail.amplitude
-#locomotion.crawling_bends.head.frequency
-#locomotion.crawling_bends.midbody.frequency
-#locomotion.crawling_bends.tail.frequency
+# locomotion.foraging_bends.amplitude
+# locomotion.foraging_bends.angle_speed
+# locomotion.crawling_bends.head.amplitude
+# locomotion.crawling_bends.midbody.amplitude
+# locomotion.crawling_bends.tail.amplitude
+# locomotion.crawling_bends.head.frequency
+# locomotion.crawling_bends.midbody.frequency
+# locomotion.crawling_bends.tail.frequency
 
 class ForagingBends(Feature):
 
@@ -815,7 +853,7 @@ class ForagingBends(Feature):
     temporary feature: locomotion.foraging_bends
 
     Attributes
-    ----------    
+    ----------
     amplitude
     angle_speed
 
@@ -831,7 +869,7 @@ class ForagingBends(Feature):
     h__getAmps
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     Formerly +segworm/+features/@locomotion/getForaging
 
     Originally, part of wormBends.m
@@ -843,46 +881,42 @@ class ForagingBends(Feature):
         Initialize an instance of LocomotionForagingBends
 
         Parameters
-        ----------  
+        ----------
         nw: NormalizedWorm instance
         is_segmented_mask: boolean numpy array [1 x n_frames]
         ventral_mode: int
             0, 1, or 2 depending on the orientation of the worm.
 
         """
-                
-        #features_ref, is_segmented_mask, ventral_mode        
-        
+
+        #features_ref, is_segmented_mask, ventral_mode
+
         self.name = feature_name
-        
-        options = wf.options.locomotion.foraging_bends   
+
+        options = wf.options.locomotion.foraging_bends
         video_info = wf.video_info
         fps = video_info.fps
         nw = wf.nw
         ventral_mode = video_info.ventral_mode
-        
-        #TODO: Why don't we use this anymore?????
+
+        # TODO: Why don't we use this anymore?????
         is_segmented_mask = video_info.is_segmented
-    
-        
+
         timer = wf.timer
         timer.tic()
-        
-        
+
         # self.amplitude  = None  # DEBUG
         # self.angleSpeed = None # DEBUG
 
-        
-
         nose_x, nose_y = \
-            nw.get_partition('head_tip', 
-                                          data_key='skeleton',
-                                          split_spatial_dimensions=True)
+            nw.get_partition('head_tip',
+                             data_key='skeleton',
+                             split_spatial_dimensions=True)
 
         neck_x, neck_y = \
-            nw.get_partition('head_base', 
-                                          data_key='skeleton',
-                                          split_spatial_dimensions=True)
+            nw.get_partition('head_base',
+                             data_key='skeleton',
+                             split_spatial_dimensions=True)
 
         # TODO: Add "reversed" and "interpolated" options to the get_partition
         # function, to replace the below blocks of code!
@@ -917,26 +951,25 @@ class ForagingBends(Feature):
         neck_yi = interp(neck_y, threshold=max_samples_interp)
         #----------------------------------------------------------------------
 
-
         # Step 2: Calculation of the bend angles
         #---------------------------------------
-        nose_bends = self.h__computeNoseBends(nose_xi, nose_yi, neck_xi, neck_yi)
+        nose_bends = self.h__computeNoseBends(
+            nose_xi, nose_yi, neck_xi, neck_yi)
 
         # Step 3:
         #---------------------------------------
         [nose_amps, nose_freqs] = \
-            self.h__foragingData(fps, nose_bends, 
+            self.h__foragingData(fps, nose_bends,
                                  options.min_nose_window_samples(fps))
 
         if ventral_mode > 1:
             nose_amps = -nose_amps
             nose_freqs = -nose_freqs
 
-        self.amplitude   = nose_amps
+        self.amplitude = nose_amps
         self.angle_speed = nose_freqs
 
         timer.toc('locomotion.foraging_bends')
-
 
     def h__computeNoseBends(self, nose_x, nose_y, neck_x, neck_y):
         """
@@ -944,7 +977,7 @@ class ForagingBends(Feature):
         head tip and head base).
 
         Parameters
-        ----------    
+        ----------
         nose_x: [4 x n_frames]
         nose_y: [4 x n_frames]
         neck_x: [4 x n_frames]
@@ -955,7 +988,7 @@ class ForagingBends(Feature):
         nose_bends_d
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly nose_bends_d = h__computeNoseBends(nose_x,nose_y,neck_x,neck_y)
 
         """
@@ -978,7 +1011,7 @@ class ForagingBends(Feature):
 
     def h__computeAvgAngles(self, x, y):
         """
-        Take average difference between successive x and y skeleton points, 
+        Take average difference between successive x and y skeleton points,
         then compute the arc tangent from those averages.
 
         Parameters
@@ -990,12 +1023,12 @@ class ForagingBends(Feature):
           (Same as x)
 
         Returns
-        -------   
+        -------
         1-d float numpy array of length n
           The angles
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Simple helper for h__computeNoseBends
 
         """
@@ -1020,26 +1053,26 @@ class ForagingBends(Feature):
         min_win_size : (scalar)
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         amplitudes : [1 x n_frames]
         speeds : [1 x n_frames]
 
         Notes
-        ---------------------------------------    
-        Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d, 
+        ---------------------------------------
+        Formerly [amps,speeds] = h__foragingData(nose_bend_angle_d,
                                                  min_win_size, fps)
 
         """
         if min_win_size > 0:
             # Clean up the signal with a gaussian filter.
-            gauss_filter = utils.gausswin(2*min_win_size+1)/min_win_size
+            gauss_filter = utils.gausswin(2 * min_win_size + 1) / min_win_size
             nose_bend_angle_d = filters.convolve1d(nose_bend_angle_d,
                                                    gauss_filter,
                                                    cval=0,
                                                    mode='constant')
 
             # Remove partial data frames ...
-            nose_bend_angle_d[:min_win_size]  = np.NaN
+            nose_bend_angle_d[:min_win_size] = np.NaN
             nose_bend_angle_d[-min_win_size:] = np.NaN
 
         # Calculate amplitudes
@@ -1071,21 +1104,21 @@ class ForagingBends(Feature):
         apply to all indices that have the same sign within the stretch
 
         Parameters
-        ---------------------------------------    
+        ---------------------------------------
         nose_bend_angle_d : 1-d numpy array of length n_frames
 
         Returns
-        ---------------------------------------    
+        ---------------------------------------
         1-d numpy array of length n_frames
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly amps = h__getAmps(nose_bend_angle_d):
 
         NOTE: This code is very similar to wormKinks
 
         Example
-        ---------------------------------------    
+        ---------------------------------------
         >>> h__getAmps(np.array[1, 2, 3, 2, 1, -1, -2, -1, 1, 2, 2, 5])
                           array[3, 3, 3, 3, 3, -2, -2, -2, 5, 5, 5, 5]
         (indentation is used here to line up the returned array for clarity)
@@ -1131,40 +1164,45 @@ class ForagingBends(Feature):
 
         return amps
 
-
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','bends','foraging','amplitude'])
-        self.angle_speed = utils.get_nested_h5_field(wf.h,['locomotion','bends','foraging','angleSpeed'])
+        self.amplitude = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'bends', 'foraging', 'amplitude'])
+        self.angle_speed = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'bends', 'foraging', 'angleSpeed'])
 
         return self
-        
+
 #    def __eq__(self, other):
 #        return utils.correlation(self.amplitude, other.amplitude, 'locomotion.foraging.amplitude') and \
-#             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')     
+#             utils.correlation(self.angle_speed, other.angle_speed, 'locomotion.foraging.angle_speed')
+
 
 class ForagingAmplitude(Feature):
-    
-    def __init__(self,wf,feature_name):
-        self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.foraging_bends').amplitude
 
-        
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):    
-        return cls(wf,feature_name)
+    def __init__(self, wf, feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(
+            wf, 'locomotion.foraging_bends').amplitude
+
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf, feature_name)
+
 
 class ForagingAngleSpeed(Feature):
-    
-    def __init__(self,wf,feature_name):
-        self.name = feature_name
-        self.value = self.get_feature(wf,'locomotion.foraging_bends').angle_speed
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):    
-         return cls(wf,feature_name)
+    def __init__(self, wf, feature_name):
+        self.name = feature_name
+        self.value = self.get_feature(
+            wf, 'locomotion.foraging_bends').angle_speed
+
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
+        return cls(wf, feature_name)
+
 
 class CrawlingBend(Feature):
 
@@ -1172,14 +1210,14 @@ class CrawlingBend(Feature):
     Locomotion Crawling Bends Feature.
 
     Notes
-    ---------------------------------------    
+    ---------------------------------------
     Formerly +segworm/+features/@locomotion/getLocomotionBends
 
     Originally, part of wormBends.m
 
 
     Note from Ev Yemini on Setup Options
-    ---------------------------------------    
+    ---------------------------------------
     Empirically I've found the values below achieve good signal.
 
     Furthermore:
@@ -1191,9 +1229,9 @@ class CrawlingBend(Feature):
     tick, resulting from segmentation noise, will be diluted by the
     additional frame.
 
-    TODO: Move this to a different location and reference in the code 
+    TODO: Move this to a different location and reference in the code
     Nature Methods Description
-    ---------------------------------------    
+    ---------------------------------------
 
     Worm crawling is expressed as both an amplitude and frequency
     (Supplementary Fig. 4e). We measure these features instantaneously at
@@ -1248,11 +1286,11 @@ class CrawlingBend(Feature):
 
     def __init__(self, wf, feature_name, bend_name):
         """
-        Compute the temporal bending frequency at the head, midbody, and tail.    
+        Compute the temporal bending frequency at the head, midbody, and tail.
 
         Parameters:
         -----------
-        features_ref : 
+        features_ref :
         bend_angles : numpy.array
             - [49 x n_frames]
         is_paused : numpy.array
@@ -1270,14 +1308,12 @@ class CrawlingBend(Feature):
         video_info = wf.video_info
         fps = video_info.fps
         is_segmented_mask = video_info.is_segmented
-        is_paused = self.get_feature(wf,'locomotion.motion_events.is_paused').value
+        is_paused = self.get_feature(
+            wf, 'locomotion.motion_events.is_paused').value
         bend_angles = wf.nw.angles
-
 
         timer = wf.timer
         timer.tic()
-
-
 
         # Special Case: No worm data.
         #------------------------------------
@@ -1294,14 +1330,15 @@ class CrawlingBend(Feature):
             warnings.simplefilter('ignore', category=RuntimeWarning)
             avg_bend_angles = np.nanmean(bend_angles[s, :], axis=0)
 
-        #interpolate if:
-        #not all are segmented - if all present we don't need to interpolate
-        #some are segmented - segmented data provides basis for interpolation
+        # interpolate if:
+        # not all are segmented - if all present we don't need to interpolate
+        # some are segmented - segmented data provides basis for interpolation
         if not(np.all(is_segmented_mask)) and np.any(is_segmented_mask):
             avg_bend_angles = utils.interpolate_with_threshold(avg_bend_angles)
-              
-        bound_info = CrawlingBendsBoundInfo(avg_bend_angles,is_paused,options,fps)      
-              
+
+        bound_info = CrawlingBendsBoundInfo(
+            avg_bend_angles, is_paused, options, fps)
+
         [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                      bound_info,
                                                      options,
@@ -1309,7 +1346,7 @@ class CrawlingBend(Feature):
                                                      fps)
         self.amplitude = amplitude
         self.frequency = frequency
-        #setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
+        # setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
 
         timer.toc('locomotion.crawling_bends')
 
@@ -1318,17 +1355,22 @@ class CrawlingBend(Feature):
 #        #merge_nans=True - utils.separated_peaks works slightly differently
 #        #so merge_nans is true here, for now. The utils function works correctly
 #        #and the old version works incorrectly but was convoluted enough that
-#        #it was hard to replicate        
-#        
+#        #it was hard to replicate
+#
 #        return utils.correlation(self.value, other.v,
 #                                  'locomotion.bends.' + self.name + '.amplitude',
 #                                  merge_nans=True) and \
-#             utils.correlation(self.frequency, other.frequency, 
+#             utils.correlation(self.frequency, other.frequency,
 #                                'locomotion.bends.' + self.name + '.frequency',
 #                                merge_nans=True)
 
-
-    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
+    def h__getBendData(
+            self,
+            avg_bend_angles,
+            bound_info,
+            options,
+            cur_partition,
+            fps):
         """
         Compute the bend amplitude and frequency.
 
@@ -1347,7 +1389,7 @@ class CrawlingBend(Feature):
         -------
 
         """
-        
+
         # Compute the short-time Fourier transforms (STFT).
         #--------------------------------------------------
         # Unpack options ...
@@ -1357,30 +1399,32 @@ class CrawlingBend(Feature):
         max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
         peak_energy_threshold = options.peak_energy_threshold
 
-        fft_max_I   = int(fft_n_samples / 2)
-        # This gets multiplied by an index to compute the frequency at that index
+        fft_max_I = int(fft_n_samples / 2)
+        # This gets multiplied by an index to compute the frequency at that
+        # index
         freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
 
         n_frames = len(avg_bend_angles)
-        amps  = np.empty(n_frames) * np.NaN
+        amps = np.empty(n_frames) * np.NaN
         freqs = np.empty(n_frames) * np.NaN
-        
-        left_bounds  = bound_info.left_bounds
+
+        left_bounds = bound_info.left_bounds
         right_bounds = bound_info.right_bounds
-        is_bad_mask  = bound_info.is_bad_mask
-        
-        # This is a processing optimization that in general will speed 
+        is_bad_mask = bound_info.is_bad_mask
+
+        # This is a processing optimization that in general will speed
         # things up
-        max_freq_I = max_freq/freq_scalar
+        max_freq_I = max_freq / freq_scalar
         INIT_MAX_I_FOR_BANDWIDTH = \
-            round(options.initial_max_I_pct * max_freq_I)        
-        
+            round(options.initial_max_I_pct * max_freq_I)
+
         # Convert each element from float to int
         right_bounds = right_bounds.astype(int)
         left_bounds = left_bounds.astype(int)
-                
+
         for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data   = avg_bend_angles[left_bounds[iFrame]:right_bounds[iFrame]]
+            windowed_data = avg_bend_angles[
+                left_bounds[iFrame]:right_bounds[iFrame]]
             data_win_length = len(windowed_data)
 
             #
@@ -1388,21 +1432,22 @@ class CrawlingBend(Feature):
             #
             # Compute the real part of the STFT.
             # These two steps take a lot of time ...
-            
-            #Original Code:
+
+            # Original Code:
             #fft_data = np.fft.fft(windowed_data, fft_n_samples)
             #fft_data = abs(fft_data[:fft_max_I])
-            #Ver code:
+            # Ver code:
             #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
-            #New code:
+            # New code:
             fft_data = abs(np.fft.rfft(windowed_data, fft_n_samples))
-            
+
             # Find the peak frequency.
             maxPeakI = np.argmax(fft_data)
-            maxPeak  = fft_data[maxPeakI]
+            maxPeak = fft_data[maxPeakI]
 
             # NOTE: If this is true, we'll never bound the peak on the left.
-            #We are looking for a hump with a peak, not just a decaying signal.
+            # We are looking for a hump with a peak, not just a decaying
+            # signal.
             if maxPeakI == 0:
                 continue
 
@@ -1416,27 +1461,26 @@ class CrawlingBend(Feature):
                                      fft_data,
                                      maxPeakI,
                                      INIT_MAX_I_FOR_BANDWIDTH)
-                 
+
             # Store data
             #------------------------------------------------------------------
             if not (peakStartI.size == 0 or
-                    peakEndI.size   == 0 or
+                    peakEndI.size == 0 or
                     # The minimums can't be too big:
                     fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data[peakEndI]   > (max_amp_pct_bandwidth * maxPeak) or
+                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
                     # Needs to have enough energy:
                     (sum(fft_data[peakStartI:peakEndI] ** 2) <
                      (peak_energy_threshold * sum(fft_data ** 2)))
                     ):
 
                 # Convert the peak to a time frequency.
-                dataSign      = np.sign(np.nanmean(windowed_data))  # sign the data
-                amps[iFrame]  = (2 * fft_data[maxPeakI] / data_win_length) * dataSign
+                dataSign = np.sign(np.nanmean(windowed_data))  # sign the data
+                amps[iFrame] = (2 * fft_data[maxPeakI] /
+                                data_win_length) * dataSign
                 freqs[iFrame] = unsigned_freq * dataSign
 
         return [amps, freqs]
-
-    
 
     def h__getBandwidth(self, data_win_length, fft_data,
                         max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
@@ -1453,7 +1497,7 @@ class CrawlingBend(Feature):
         Parameters
         ----------
         data_win_length
-          Length of real data (ignoring zero padding) that 
+          Length of real data (ignoring zero padding) that
           went into computing the FFT
 
         fft_data
@@ -1474,9 +1518,9 @@ class CrawlingBend(Feature):
 
 
         Notes
-        ---------------------------------------    
+        ---------------------------------------
         Formerly [peak_start_I,peak_end_I] = \
-               h__getBandwidth(data_win_length, fft_data, 
+               h__getBandwidth(data_win_length, fft_data,
                                max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
 
         See also, formerly: seg_worm.util.maxPeaksDist
@@ -1499,9 +1543,9 @@ class CrawlingBend(Feature):
 
             del min_peaks   # this part of max_peaks_dist's return is unused
 
-            #TODO: This is wrong, replace add find to utils ...
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+            # TODO: This is wrong, replace add find to utils ...
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
         else:
             peak_start_I = np.array([])
             peak_end_I = np.array([])
@@ -1513,34 +1557,35 @@ class CrawlingBend(Feature):
         # NOTE: In order to save time we only look at a subset of the FFT data.
         if (peak_end_I.size == 0) | \
                 (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
-            #If true, then rerun on the full set of data
-            [min_peaks, min_peaks_I] = utils.separated_peaks(fft_data,
-                                                             peakWinSize,
-                                                             use_max=False,
-                                                             value_cutoff=np.inf)
+            # If true, then rerun on the full set of data
+            [min_peaks, min_peaks_I] = utils.separated_peaks(
+                fft_data, peakWinSize, use_max=False, value_cutoff=np.inf)
 
             del(min_peaks)  # This part of max_peaks_dist's return is unused
 
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I,1)]
-            peak_end_I   = min_peaks_I[utils.find(min_peaks_I > max_peak_I,1)]
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
 
-        #TODO: Why is this not a tuple - tuple would be more consistent
+        # TODO: Why is this not a tuple - tuple would be more consistent
         return [peak_start_I, peak_end_I]
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name, bend_name):
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name, bend_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.amplitude = utils.get_nested_h5_field(wf.h,['locomotion','bends',bend_name,'amplitude'])
-        self.frequency = utils.get_nested_h5_field(wf.h,['locomotion','bends',bend_name,'frequency'])
-        
+        self.amplitude = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'bends', bend_name, 'amplitude'])
+        self.frequency = utils.get_nested_h5_field(
+            wf.h, ['locomotion', 'bends', bend_name, 'frequency'])
+
         return self
 
+
 class CrawlingBendsBoundInfo(object):
-    
+
     """
     This class is used by LocomotionCrawlingBends.
-    
+
     Attributes
     ----------
     back_zeros_I :
@@ -1548,42 +1593,41 @@ class CrawlingBendsBoundInfo(object):
     left_bounds :
     right_bounds :
     half_distances :
-    
-    
+
+
     """
-    def __init__(self,avg_bend_angles,is_paused,options,fps):
-        
+
+    def __init__(self, avg_bend_angles, is_paused, options, fps):
+
         # TODO: This needs to be cleaned up ...  - @JimHokanson
-        min_number_frames_for_bend = round(options.min_time_for_bend*fps)
-        max_number_frames_for_bend = round(options.max_time_for_bend*fps)        
-        
-        
+        min_number_frames_for_bend = round(options.min_time_for_bend * fps)
+        max_number_frames_for_bend = round(options.max_time_for_bend * fps)
+
         [back_zeros_I, front_zeros_I] = \
-            self.h__getBoundingZeroIndices(avg_bend_angles, 
+            self.h__getBoundingZeroIndices(avg_bend_angles,
                                            min_number_frames_for_bend)
 
         n_frames = len(avg_bend_angles)
 
-        #Go left and right, and get the 
-        left_distances  = np.array(range(n_frames)) - back_zeros_I
+        # Go left and right, and get the
+        left_distances = np.array(range(n_frames)) - back_zeros_I
         right_distances = front_zeros_I - np.array(range(n_frames))
-        half_distances  = np.maximum(left_distances, right_distances)
+        half_distances = np.maximum(left_distances, right_distances)
 
         left_bounds = np.array(range(n_frames)) - half_distances
-        
+
         #+1 for slicing to be inclusive of the right bound
         right_bounds = np.array(range(n_frames)) + half_distances + 1
-    
-        self.back_zeros_I   = back_zeros_I
-        self.front_zeros_I  = front_zeros_I
-        self.left_bounds    = left_bounds
-        self.right_bounds   = right_bounds
+
+        self.back_zeros_I = back_zeros_I
+        self.front_zeros_I = front_zeros_I
+        self.left_bounds = left_bounds
+        self.right_bounds = right_bounds
         self.half_distances = half_distances
-        
 
         # Compute conditions by which we will ignore frames:
         # -------------------------------------------------
-        #1) frame is not bounded on both sides by a sign change
+        # 1) frame is not bounded on both sides by a sign change
         #- avg_bend_angles is NaN, this will only happen on the edges because we
         #    interpolate over the other frames ... (we just don't extrapolate)
         #- the sign change region is too large
@@ -1593,10 +1637,9 @@ class CrawlingBendsBoundInfo(object):
         #
         #??? - what about large NaN regions, are those paused regions???
 
-        #MRC code placed restriction on half distance, not on the full distance
-        #This is still left in place below
-        #Should be 2*half_distances > max_number_frames_for_bend
-
+        # MRC code placed restriction on half distance, not on the full distance
+        # This is still left in place below
+        # Should be 2*half_distances > max_number_frames_for_bend
 
         self.is_bad_mask  = \
             (back_zeros_I  == -1) | \
@@ -1606,10 +1649,13 @@ class CrawlingBendsBoundInfo(object):
             (left_bounds < 0) | \
             (right_bounds > n_frames) | \
             is_paused
-            
-    def h__getBoundingZeroIndices(self, avg_bend_angles, min_number_frames_for_bend):
+
+    def h__getBoundingZeroIndices(
+            self,
+            avg_bend_angles,
+            min_number_frames_for_bend):
         """
-        The goal of this function is to bound each index of avg_bend_angles by 
+        The goal of this function is to bound each index of avg_bend_angles by
         sign changes.
 
 
@@ -1622,8 +1668,8 @@ class CrawlingBendsBoundInfo(object):
         Returns
         ----------------------
         back_zeros_I    : [1 x n_frames]
-          For each frame, this specifies a preceding frame in which a 
-          change in the bend angle occurs. Invalid entries are 
+          For each frame, this specifies a preceding frame in which a
+          change in the bend angle occurs. Invalid entries are
           indicated by -1.
         front_zeros_I   : [1 x n_frames]
 
@@ -1642,81 +1688,79 @@ class CrawlingBendsBoundInfo(object):
         # have sign changes. We do this in such a way so that if we need to
         # look further to the left or right, it is really easy to get the
         # next answer. In other words, if we are bounded by the 3rd and 4th sign
-        # change, and we are going towards the 3rd sign change, then if the 
+        # change, and we are going towards the 3rd sign change, then if the
         # 3rd sign change doesn't work, we can go to the 2nd sign change index,
         # not by searching the data array, but by getting the 2nd element of
         # the sign change index array.
-        
-        with np.errstate(invalid='ignore'):        
+
+        with np.errstate(invalid='ignore'):
             sign_change_mask = np.sign(avg_bend_angles[:-1]) != \
                 np.sign(avg_bend_angles[1:])
-        
+
         sign_change_I = np.flatnonzero(sign_change_mask)
         n_sign_changes = len(sign_change_I)
         n_frames = len(avg_bend_angles)
-        
+
         if n_sign_changes == 0:
-            #no changes of sign return two zeros arrays
-            return [np.zeros(n_frames),np.zeros(n_frames)]
+            # no changes of sign return two zeros arrays
+            return [np.zeros(n_frames), np.zeros(n_frames)]
 
         """
-        To get the correct frame numbers, we need to do the following 
-        depending on whether or not the bound is the left (backward) 
-        bound or the right (forward) bound. 
-        
-        Note from @JimHokanson: I haven't really thought through why 
+        To get the correct frame numbers, we need to do the following
+        depending on whether or not the bound is the left (backward)
+        bound or the right (forward) bound.
+
+        Note from @JimHokanson: I haven't really thought through why
         this is, but it mimics the old code.
-        
+
         for left bounds   - at sign changes - don't subtract or add
         for right bounds  - we need to add 1
-    
-        
+
+
         Let's say we have sign changes at indices 3  6  9
         What we need ...
                 1 2 3 4 5 6 7  9  10  Indices
         Left  = 0 0 0 3 3 3 6  6  6   - at 4, the left sign change is at 3
         Right = 4 4 4 7 7 7 10 10 0   - at 4, the right sign change is at 7
-        
+
         NOTE: The values above are the final indices or values, but instead we
         want to work with the indices, so we need:
-         
+
                 1 2 3 4 5 6 7  9  10  Indices
         Left  = 0 0 0 1 1 1 2  2  2 - left_sign_change_I
         Right = 1 1 1 2 2 2 3  3  3 - right_sign_change_I
-        
+
         we also need:
         left_values  = [3 6 9]  #the sign change indices
         right_values = [4 7 10] #+1
-        
+
         So this says:
         left_sign_change_I(7) => 2
         left_values(2) => 6, our sign change is at 6
-        
-        Let's say we need to expand further to the left, then we take 
+
+        Let's say we need to expand further to the left, then we take
         left_sign_change_I(7) - 1 => 1
         left_values(1) => 3, our new sign change is at 3
-        
+
         Further:
         left_sign_change_I(7) - 2 => 0
         We've gone too far, nothing at index 0, set to invalid
         """
 
-        
-
-        #For each element, determine the indices to the left and right of the
-        #element at which a sign change occurs.
+        # For each element, determine the indices to the left and right of the
+        # element at which a sign change occurs.
 
         BAD_INDEX_VALUE = -1
 
         # For each element in the array, these values indicate which
         # sign change index to use ...
         left_sign_change_I = np.zeros(n_frames)
-        
+
         left_sign_change_I[sign_change_I + 1] = 1
         # We increment at values to the right of the sign changes
         left_sign_change_I = left_sign_change_I.cumsum() - 1
-        
-        #NOTE: We need to do this after the cumsum :/        
+
+        # NOTE: We need to do this after the cumsum :/
         left_sign_change_I[:sign_change_I[0]] = BAD_INDEX_VALUE
         # The previous line is a little Matlab trick in which
         # something like:
@@ -1728,28 +1772,28 @@ class CrawlingBendsBoundInfo(object):
         # so now at each frame, we get the index of the value that
         # is to the left.
         #
-        #From above; sign_change_I = [0 3 6]
+        # From above; sign_change_I = [0 3 6]
         #
-        #So at index 5, the next sign change is at sign_change_I[left_change_I[5]]
-        # or sign_change_I[1] => 3        
-        
-        #This does:
-        #0  1 0 1 0 0 1  0  0 <= sign change indices
-        #0  1 2 3 4 5 6  7  8 <= indices
-        #0  0 1 1 2 2 2 -1 -1 <= indices of sign change to right    
+        # So at index 5, the next sign change is at sign_change_I[left_change_I[5]]
+        # or sign_change_I[1] => 3
+
+        # This does:
+        # 0  1 0 1 0 0 1  0  0 <= sign change indices
+        # 0  1 2 3 4 5 6  7  8 <= indices
+        # 0  0 1 1 2 2 2 -1 -1 <= indices of sign change to right
         right_sign_change_I = np.zeros(n_frames)
         right_sign_change_I[sign_change_I[:-1] + 1] = 1
         right_sign_change_I[0] = 1
         right_sign_change_I = right_sign_change_I.cumsum() - 1
         # We must have nothing to the right of the last change:
-        right_sign_change_I[sign_change_I[-1]+1:] = BAD_INDEX_VALUE
+        right_sign_change_I[sign_change_I[-1] + 1:] = BAD_INDEX_VALUE
 
-        #Indices that each left_sign_change_I or right_sign_change_I points to
+        # Indices that each left_sign_change_I or right_sign_change_I points to
         left_values = sign_change_I
-        right_values = sign_change_I + 1 #By definition
+        right_values = sign_change_I + 1  # By definition
         #----------------------------------------------------------------
 
-        back_zeros_I  = np.zeros(n_frames)
+        back_zeros_I = np.zeros(n_frames)
         back_zeros_I[:] = BAD_INDEX_VALUE
         front_zeros_I = np.zeros(n_frames)
         back_zeros_I[:] = BAD_INDEX_VALUE
@@ -1772,11 +1816,11 @@ class CrawlingBendsBoundInfo(object):
 
             # Expand the zero-crossing window.
             #----------------------------------
-            # Note from @JimHokanson: 
+            # Note from @JimHokanson:
             #
             # TODO: Fix and move this code to old config
             #
-            # General problem, we specify a minimum acceptable window size, 
+            # General problem, we specify a minimum acceptable window size,
             # and the old code needlessly expands the window past this point
             # by doing the following comparison:
             #
@@ -1813,7 +1857,10 @@ class CrawlingBendsBoundInfo(object):
             #
             #   But in reality, if we stopped now we would be at twice 0.5w
 
-            while (front_zero_I - back_zero_I + 1) < min_number_frames_for_bend:
+            while (
+                    front_zero_I -
+                    back_zero_I +
+                    1) < min_number_frames_for_bend:
                 # Expand the smaller of the two windows
                 # -------------------------------------
                 #  left_window_size       right_window_size
@@ -1841,41 +1888,44 @@ class CrawlingBendsBoundInfo(object):
     def __repr__(self):
         return utils.print_object(self)
 
+
 class BendAmplitude(Feature):
     """
     Feature: locomotion.crawling_bends.[bend_name].amplitude
     """
-    
-    def __init__(self,wf,feature_name,bend_name):
+
+    def __init__(self, wf, feature_name, bend_name):
         parent_name = generic_features.get_parent_feature_name(feature_name)
         self.name = feature_name
-        self.value = self.get_feature(wf,parent_name).amplitude
+        self.value = self.get_feature(wf, parent_name).amplitude
 
     @classmethod
-    def from_schafer_file(cls,wf,feature_name,bend_name):
-        return cls(wf,feature_name,bend_name)
+    def from_schafer_file(cls, wf, feature_name, bend_name):
+        return cls(wf, feature_name, bend_name)
 
-    def __eq__(self,other):
-        
+    def __eq__(self, other):
+
         return utils.correlation(self.value, other.value,
-                                  self.name,
-                                  merge_nans=True)
-        
+                                 self.name,
+                                 merge_nans=True)
+
+
 class BendFrequency(Feature):
     """
     Feature: locomotion.crawling_bends.[bend_name].frequency
     """
-    def __init__(self,wf,feature_name,bend_name):
+
+    def __init__(self, wf, feature_name, bend_name):
         parent_name = generic_features.get_parent_feature_name(feature_name)
         self.name = feature_name
-        self.value = self.get_feature(wf,parent_name).frequency
-        
+        self.value = self.get_feature(wf, parent_name).frequency
+
     @classmethod
-    def from_schafer_file(cls,wf,feature_name,bend_name):
-        return cls(wf,feature_name,bend_name)
-        
-    def __eq__(self,other):
-        
+    def from_schafer_file(cls, wf, feature_name, bend_name):
+        return cls(wf, feature_name, bend_name)
+
+    def __eq__(self, other):
+
         return utils.correlation(self.value, other.value,
-                                  self.name,
-                                  merge_nans=True)        
+                                 self.name,
+                                 merge_nans=True)

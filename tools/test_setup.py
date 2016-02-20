@@ -7,7 +7,7 @@ Run this script to verify that:
 
 
 Jim's Note: I've found managing python packages, particularly on Windows, to
-be frustratingly complex. It is possible that this process could be enhanced 
+be frustratingly complex. It is possible that this process could be enhanced
 but the main goal of this script is to verify the setup rather than automate
 the setup. That being said, help with automating the setup would be appreciated.
 
@@ -28,10 +28,12 @@ Replace all values in the this file with their appropriate values.
 
 """
 
-#TODO: This file should look for all package dependencies and setup issues
-#and provide detailed information as to how to handle things when there are problems
+# TODO: This file should look for all package dependencies and setup issues
+# and provide detailed information as to how to handle things when there
+# are problems
 
-import sys, os
+import sys
+import os
 
 
 """
@@ -40,8 +42,9 @@ import sys, os
 
 print("Python version: " + sys.version)
 
-if sys.version_info[:2] < (2,7):
-    raise Exception("open-worm-analysis-toolbox requires Python version 2.7 or greater")
+if sys.version_info[:2] < (2, 7):
+    raise Exception(
+        "open-worm-analysis-toolbox requires Python version 2.7 or greater")
 else:
     print("The version used is acceptable, since it is >=2.7")
 
@@ -64,7 +67,6 @@ try:
 except ImportError as e:
     print("'Unable to import shapely")
 
-    
 
 """
 h5py
@@ -75,7 +77,7 @@ old feature files from disk
 try:
     import h5py
 except ImportError as e:
-    print('Unable to import h5py')    
+    print('Unable to import h5py')
 
 
 """
@@ -89,9 +91,9 @@ We use numpy for everything ...
 try:
     import numpy as np
 except ImportError as e:
-    print('Unable to import numpy')   
-    
-#TODO: test nan functionality
+    print('Unable to import numpy')
+
+# TODO: test nan functionality
 
 """
 scipy
@@ -104,26 +106,26 @@ scipy
 try:
     import scipy
 except ImportError as e:
-    print('Unable to import scipy')   
+    print('Unable to import scipy')
 
 """
 =====================     Configuration testing    ============================
 """
 
 try:
-    # We must add .. to the path so that we can perform the 
-    # import of open-worm-analysis-toolbox while running this as 
+    # We must add .. to the path so that we can perform the
+    # import of open-worm-analysis-toolbox while running this as
     # a top-level script (i.e. with __name__ = '__main__')
-    sys.path.append('..') 
-    from open-worm-analysis-toolbox import user_config
+    sys.path.append('..')
+    from open - worm - analysis - toolbox import user_config
 except ImportError as e:
     print('Unable to import open-worm-analysis-toolbox/user_config.py module')
-    
-if not hasattr(user_config,'EXAMPLE_DATA_PATH'):
+
+if not hasattr(user_config, 'EXAMPLE_DATA_PATH'):
     print("user_config.py module is missing the 'EXAMPLE_DATA_PATH' attribute")
 else:
     if not os.path.isdir(user_config.EXAMPLE_DATA_PATH):
-       print("user_config.EXAMPLE_DATA_PATH doesn't point to a valid directory")
-       
-       
+        print("user_config.EXAMPLE_DATA_PATH doesn't point to a valid directory")
+
+
 print('Finished running test_setup.py')

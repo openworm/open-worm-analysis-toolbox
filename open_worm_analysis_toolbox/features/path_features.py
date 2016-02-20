@@ -10,59 +10,60 @@ import numpy as np
 
 from .. import config, utils
 
-# To avoid conflicting with variables named 'velocity', we 
+# To avoid conflicting with variables named 'velocity', we
 # import this as 'velocity_module':
-from . import velocity as velocity_module 
+from . import velocity as velocity_module
 from . import generic_features
 from .generic_features import Feature
 
+
 class Coordinates(Feature):
-    
+
     """
     Feature: path.coordinates
-    
+
     Attributes
     ----------
     x :
-    y : 
+    y :
     """
-    def __init__(self,wf,feature_name):
-        
+
+    def __init__(self, wf, feature_name):
+
         self.name = feature_name
         nw = wf.nw
         self.x = nw.contour_x.mean(axis=0)
-        self.y = nw.contour_y.mean(axis=0) 
+        self.y = nw.contour_y.mean(axis=0)
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):        
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.x = utils.get_nested_h5_field(wf.h,['path','coordinates','x'])
-        self.y = utils.get_nested_h5_field(wf.h,['path','coordinates','y'])
+        self.x = utils.get_nested_h5_field(wf.h, ['path', 'coordinates', 'x'])
+        self.y = utils.get_nested_h5_field(wf.h, ['path', 'coordinates', 'y'])
         return self
-        
+
     @classmethod
     def from_disk(cls, c_data):
 
         self = cls.__new__(cls)
 
-        #Use utils loader
+        # Use utils loader
         self.x = c_data['x'].value[:, 0]
         self.y = c_data['y'].value[:, 0]
 
-        return self  
-
+        return self
 
 
 class Range(object):
 
     """
-    
-    This is the old class. 
-    
+
+    This is the old class.
+
     Delete when ready and change "NewRange" to Range
-    both in the code and in the features list.    
-    
+    both in the code and in the features list.
+
     Attributes
     ------------------
     value :
@@ -85,11 +86,12 @@ class Range(object):
             (mean_cx - x_centroid_cx) ** 2 + (mean_cy - y_centroid_cy) ** 2)
 
     @classmethod
-    def from_disk(cls,path_var):
+    def from_disk(cls, path_var):
 
         self = cls.__new__(cls)
 
-        # NOTE: This is of size nx1 for Matlab versions, might want to fix on loading
+        # NOTE: This is of size nx1 for Matlab versions, might want to fix on
+        # loading
         self.value = np.squeeze(path_var['range'].value)
 
         return self
@@ -105,9 +107,9 @@ class Range(object):
 class Duration(Feature):
 
     """
-    
-    Temporary Feature: path.duration    
-    
+
+    Temporary Feature: path.duration
+
     Attributes
     ----------
     arena : Arena
@@ -120,9 +122,9 @@ class Duration(Feature):
 
     def __init__(self, wf, feature_name):
 
-        self.name = feature_name     
-        
-        #Inputs
+        self.name = feature_name
+
+        # Inputs
         #------
         options = wf.options
         nw = wf.nw
@@ -147,7 +149,7 @@ class Duration(Feature):
         if options.mimic_old_behaviour:
             s_points_temp = [nw.worm_partitions[x]
                              for x in ('head', 'midbody', 'tail')]
-            temp_widths   = [widths[x[0]:x[1], :] for x in s_points_temp]
+            temp_widths = [widths[x[0]:x[1], :] for x in s_points_temp]
             mean_widths = [np.nanmean(x.reshape(x.size)) for x in temp_widths]
             mean_width = np.mean(mean_widths)
         else:
@@ -158,7 +160,7 @@ class Duration(Feature):
         # Scale the skeleton and translate so that the minimum values are at 1
         #----------------------------------------------------------------------
         with np.errstate(invalid='ignore'):
-            #Rounding rules are different between Matlab and Numpy
+            # Rounding rules are different between Matlab and Numpy
             scaled_sx = np.round(sx * scale)
             scaled_sy = np.round(sy * scale)
 
@@ -233,14 +235,18 @@ class Duration(Feature):
                     cur_y = sys[s_indices[0]:s_indices[1], cur_frame]
                     temp_arena[cur_y, cur_x] += 1
 
-                arenas[iPoint] = temp_arena[::-1, :] #FLip axis to maintain
+                arenas[iPoint] = temp_arena[::-1, :]  # FLip axis to maintain
                 # consistency with Matlab
 
             return arenas
         #----------------------------------------------------------------------
 
         temp_arenas = h__populateArenas(
-            arena_size, scaled_zeroed_sy, scaled_zeroed_sx, s_points, isnan_mask)
+            arena_size,
+            scaled_zeroed_sy,
+            scaled_zeroed_sx,
+            s_points,
+            isnan_mask)
 
         # For looking at the data
         #------------------------------------
@@ -268,14 +274,14 @@ class Duration(Feature):
                 self.midbody == other.midbody   and \
                 self.tail == other.tail
 
-
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):        
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        duration_ref = utils.get_nested_h5_field(wf.h,['path','duration'],resolve_value=False)
-                
-        self.arena = Arena.from_disk(duration_ref['arena'])        
+        duration_ref = utils.get_nested_h5_field(
+            wf.h, ['path', 'duration'], resolve_value=False)
+
+        self.arena = Arena.from_disk(duration_ref['arena'])
         self.worm = DurationElement.from_disk(duration_ref['worm'])
         self.head = DurationElement.from_disk(duration_ref['head'])
         self.midbody = DurationElement.from_disk(duration_ref['midbody'])
@@ -284,7 +290,7 @@ class Duration(Feature):
         return self
 
     @classmethod
-    def from_disk(cls,duration_group):
+    def from_disk(cls, duration_group):
         self = cls.__new__(cls)
 
         self.arena = Arena.from_disk(duration_group['arena'])
@@ -300,6 +306,7 @@ class DurationElement(object):
     """
     Old class, please delete
     """
+
     def __init__(self, arena_coverage=None, fps=None):
 
         # TODO: Pass in name for __eq__
@@ -321,15 +328,19 @@ class DurationElement(object):
 
     def __eq__(self, other):
 
-        return \
-            utils.correlation(self.indices, other.indices, 'Duration.indices') and \
-            utils.correlation(self.times, other.times, 'Duration.times')
+        return utils.correlation(
+            self.indices,
+            other.indices,
+            'Duration.indices') and utils.correlation(
+            self.times,
+            other.times,
+            'Duration.times')
 
     @classmethod
     def from_disk(cls, saved_duration_elem):
 
         self = cls.__new__(cls)
-        #TODO: Use utils loader 
+        # TODO: Use utils loader
         self.indices = saved_duration_elem['indices'].value[0]
         self.times = saved_duration_elem['times'].value[0]
 
@@ -363,13 +374,27 @@ class Arena(object):
     def __eq__(self, other):
         # NOTE: Due to rounding differences between Matlab and numpy
         # the height and width values are different by 1
-        return \
-            utils.compare_is_equal(self.height, other.height, 'Arena.height', 1) and \
-            utils.compare_is_equal(self.width, other.width, 'Arena.width', 1)   and \
-            utils.compare_is_equal(self.min_x, other.min_x, 'Arena.min_x')   and \
-            utils.compare_is_equal(self.min_y, other.min_y, 'Arena.min_y')   and \
-            utils.compare_is_equal(self.max_x, other.max_x, 'Arena.max_x')   and \
-            utils.compare_is_equal(self.max_y, other.max_y, 'Arena.max_y')
+        return utils.compare_is_equal(
+            self.height,
+            other.height,
+            'Arena.height',
+            1) and utils.compare_is_equal(
+            self.width,
+            other.width,
+            'Arena.width',
+            1) and utils.compare_is_equal(
+            self.min_x,
+            other.min_x,
+            'Arena.min_x') and utils.compare_is_equal(
+                self.min_y,
+                other.min_y,
+                'Arena.min_y') and utils.compare_is_equal(
+                    self.max_x,
+                    other.max_x,
+                    'Arena.max_x') and utils.compare_is_equal(
+                        self.max_y,
+                        other.max_y,
+            'Arena.max_y')
 
     def __repr__(self):
         return utils.print_object(self)
@@ -389,15 +414,13 @@ class Arena(object):
 
 
 def worm_path_curvature(features_ref):
-    
-    
     """
 
-    Delete this class after features refactoring is done    
-        
+    Delete this class after features refactoring is done
+
     Parameters:
     -----------
-    x : 
+    x :
       Worm skeleton x coordinates, []
 
     """
@@ -408,7 +431,7 @@ def worm_path_curvature(features_ref):
     x = nw.skeleton_x
     y = nw.skeleton_y
     fps = features_ref.video_info.fps
-    ventral_mode = nw.video_info.ventral_mode    
+    ventral_mode = nw.video_info.ventral_mode
 
     # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
 
@@ -423,8 +446,8 @@ def worm_path_curvature(features_ref):
     # NOTE: This is what is in the MRC code, but differs from their description.
     # In this case I think the skeleton filtering makes sense so we'll keep it.
     speed, ignored_variable, motion_direction = \
-        velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I,:], \
-                                         avg_body_angles_d, BODY_DIFF, ventral_mode)
+        velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I, :],
+                                      avg_body_angles_d, BODY_DIFF, ventral_mode)
 
     frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
     half_frame_scale = int((frame_scale - 1) / 2)
@@ -441,7 +464,8 @@ def worm_path_curvature(features_ref):
     diff_motion[:] = np.NAN
 
     right_max_I = len(diff_motion) - frame_scale
-    diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1):] - motion_direction[0:(right_max_I + 1)]
+    diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1)
+                   :] - motion_direction[0:(right_max_I + 1)]
 
     with np.errstate(invalid='ignore'):
         diff_motion[diff_motion >= 180] -= 360
@@ -460,7 +484,7 @@ def worm_path_curvature(features_ref):
         distance[distance < 1] = np.NAN
 
     return (diff_motion / distance) * (np.pi / 180)
-    
+
 #======================================================================
 #                   New Feature Reorganization
 #======================================================================
@@ -470,12 +494,13 @@ def worm_path_curvature(features_ref):
 #
 #        #Curvature
 #        self.curvature = path_features.worm_path_curvature(features_ref)
-    
+
+
 class NewRange(Feature):
 
     """
-    Feature: path.range    
-    
+    Feature: path.range
+
     Attributes
     ------------------
     value :
@@ -502,77 +527,80 @@ class NewRange(Feature):
 
         self.value = np.sqrt(
             (mean_cx - x_centroid_cx) ** 2 + (mean_cy - y_centroid_cy) ** 2)
-    
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.value = utils.get_nested_h5_field(wf.h,['path','range'])
+        self.value = utils.get_nested_h5_field(wf.h, ['path', 'range'])
         return self
 
+
 class DurationFeature(Feature):
-    
+
     """
     Feature: path.duration.[section_name]
 
     This currently borrowing heavily from DurationElement. Eventually we'll
     want to move that code here
-    
+
     """
-    def __init__(self,wf,feature_name,section_name):
+
+    def __init__(self, wf, feature_name, section_name):
         self.name = feature_name
 
-        parent_name = generic_features.get_parent_feature_name(feature_name)    
-        duration_main = self.get_feature(wf,parent_name)  
-        duration_element = getattr(duration_main,section_name)
-        self.value = duration_element.times  
+        parent_name = generic_features.get_parent_feature_name(feature_name)
+        duration_main = self.get_feature(wf, parent_name)
+        duration_element = getattr(duration_main, section_name)
+        self.value = duration_element.times
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name,section_name):
-        return cls(wf,feature_name,section_name)
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name, section_name):
+        return cls(wf, feature_name, section_name)
+
 
 class Curvature(Feature):
 
     """
     Feature: path.curvature
     """
-    
-    def __init__(self,wf,feature_name):
-        
+
+    def __init__(self, wf, feature_name):
+
         self.name = feature_name
         BODY_DIFF = 0.5
-    
+
         nw = wf.nw
         x = nw.skeleton_x
         y = nw.skeleton_y
-        
+
         video_info = wf.video_info
         fps = video_info.fps
-        ventral_mode = video_info.ventral_mode    
-    
+        ventral_mode = video_info.ventral_mode
+
         # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
-    
+
         BODY_I = slice(44, 3, -1)
-    
+
         # This was nanmean but I think mean will be fine. nanmean was
         # causing the program to crash
         diff_x = np.mean(np.diff(x[BODY_I, :], axis=0), axis=0)
         diff_y = np.mean(np.diff(y[BODY_I, :], axis=0), axis=0)
         avg_body_angles_d = np.arctan2(diff_y, diff_x) * 180 / np.pi
-    
+
         # NOTE: This is what is in the MRC code, but differs from their description.
-        # In this case I think the skeleton filtering makes sense so we'll keep it.
+        # In this case I think the skeleton filtering makes sense so we'll keep
+        # it.
         speed, ignored_variable, motion_direction = \
-            velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I,:], \
-                                             avg_body_angles_d, BODY_DIFF, ventral_mode)
-    
+            velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I, :],
+                                          avg_body_angles_d, BODY_DIFF, ventral_mode)
+
         frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
         half_frame_scale = int((frame_scale - 1) / 2)
-    
+
         # Compute the angle differentials and distances.
         speed = np.abs(speed)
-    
+
         # At each frame, we'll compute the differences in motion direction using
         # some frame in the future relative to the current frame
         #
@@ -580,31 +608,32 @@ class Curvature(Feature):
         #------------------------------------------------
         diff_motion = np.empty(speed.shape)
         diff_motion[:] = np.NAN
-    
+
         right_max_I = len(diff_motion) - frame_scale
-        diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1):] - motion_direction[0:(right_max_I + 1)]
-    
+        diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1)
+                       :] - motion_direction[0:(right_max_I + 1)]
+
         with np.errstate(invalid='ignore'):
             diff_motion[diff_motion >= 180] -= 360
             diff_motion[diff_motion <= -180] += 360
-    
+
         distance_I_base = slice(half_frame_scale, -(frame_scale + 1), 1)
         distance_I_shifted = slice(half_frame_scale + frame_scale, -1, 1)
-    
+
         distance = np.empty(speed.shape)
         distance[:] = np.NaN
-    
+
         distance[distance_I_base] = speed[distance_I_base] + \
             speed[distance_I_shifted] * BODY_DIFF / 2
-    
+
         with np.errstate(invalid='ignore'):
             distance[distance < 1] = np.NAN
-    
+
         self.value = (diff_motion / distance) * (np.pi / 180)
 
-    @classmethod    
-    def from_schafer_file(cls,wf,feature_name):        
+    @classmethod
+    def from_schafer_file(cls, wf, feature_name):
         self = cls.__new__(cls)
         self.name = feature_name
-        self.value = utils.get_nested_h5_field(wf.h,['path','curvature'])
+        self.value = utils.get_nested_h5_field(wf.h, ['path', 'curvature'])
         return self

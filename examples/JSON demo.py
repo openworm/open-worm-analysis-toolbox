@@ -3,19 +3,20 @@
 Demonstrates loading and saving to a JSON file
 
 """
-import sys, os
+import sys
+import os
 import warnings
 
-# We must add .. to the path so that we can perform the 
-# import of open-worm-analysis-toolbox while running this as 
+# We must add .. to the path so that we can perform the
+# import of open-worm-analysis-toolbox while running this as
 # a top-level script (i.e. with __name__ = '__main__')
-sys.path.append('..') 
+sys.path.append('..')
 from open_worm_analysis_toolbox import user_config, BasicWorm, NormalizedWorm
 
 
 def main():
     warnings.filterwarnings('error')
-    
+
     base_path = os.path.abspath(user_config.EXAMPLE_DATA_PATH)
 
     JSON_path = os.path.join(base_path, 'test.JSON')
@@ -29,12 +30,7 @@ def main():
     c.load_from_JSON(JSON_path)
     print(c.contour)
 
-    #dat.save_to_JSON(JSON_path)
+    # dat.save_to_JSON(JSON_path)
 
 if __name__ == '__main__':
     main()
-    
-    
-    
-    
-    

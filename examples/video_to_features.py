@@ -1,30 +1,33 @@
 # -*- coding: utf-8 -*-
 """
-An example showing how to use the open-worm-analysis-toolbox package to go from a 
+An example showing how to use the open-worm-analysis-toolbox package to go from a
 raw video .avi file to a fitness function result.
 
 """
-import sys, os
+import sys
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# We must add .. to the path so that we can perform the 
-# import of open_worm_analysis_toolbox while running this as 
+# We must add .. to the path so that we can perform the
+# import of open_worm_analysis_toolbox while running this as
 # a top-level script (i.e. with __name__ = '__main__')
-sys.path.append('..') 
+sys.path.append('..')
 import open_worm_analysis_toolbox as mv
 
 #%%
+
+
 def example_worms(num_frames=1000):
     """
     Construct a simple set of worm positions over time, for testing purposes.
 
     Returns
     ------------
-    Tuple of BasicWorm objects    
+    Tuple of BasicWorm objects
         One moving, one not
-    
+
     """
     # Start the worm at position 10000 for 1000 microns.
     skeleton_x = np.linspace(10000, 11000, mv.config.N_POINTS_NORMALIZED)
@@ -35,7 +38,7 @@ def example_worms(num_frames=1000):
                                   axis=0, start=3)
     # Shape is (49,2,1000):
     skeleton = np.repeat(skeleton_frame1, num_frames, axis=2)
-    
+
     bw = mv.BasicWorm.from_skeleton_factory(skeleton)
 
     # Have the worm move in a square
@@ -45,30 +48,31 @@ def example_worms(num_frames=1000):
     # Shape is (1000,2,1):   (DEBUG: we need it to be (1,2,1000))
     motion_overlay = np.rollaxis(np.dstack([motion_overlay_x,
                                             motion_overlay_y]),
-                                  axis=0, start=3)
+                                 axis=0, start=3)
 
-    # Broadcast the motion_overlay across axis 0 (i.e. apply the 
+    # Broadcast the motion_overlay across axis 0 (i.e. apply the
     # motion_overlay evenly across all skeleton points)
-    #skeleton_moving = skeleton + motion_overlay  # DEBUG
+    # skeleton_moving = skeleton + motion_overlay  # DEBUG
 
     return bw
 
 #%%
+
+
 def main():
     # TODO:
-    #h_ventral_contour, h_dorsal_contour, video_info = \
+    # h_ventral_contour, h_dorsal_contour, video_info = \
     #    Kezhi_CV_Algorithm('test.avi')
 
     #experiment_info = mv.ExperimentInfo.from_CSV_factory('test.csv')
-   
+
     #bw = BasicWorm.from_h_contour_factory(h_ventral_contour, h_dorsal_contour)
     #bw.video_info = video_info
 
-
     # TEMPORARY----------------------------
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
-    schafer_bw_file_path = os.path.join(base_path, 
-                                     "example_contour_and_skeleton_info.mat")  
+    schafer_bw_file_path = os.path.join(
+        base_path, "example_contour_and_skeleton_info.mat")
     bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
     # -------------------------------------
 
@@ -76,17 +80,17 @@ def main():
     #bw = example_worms()
 
     nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
-    
+
     # DEBUG
     #wp = mv.NormalizedWormPlottable(nw, interactive=False)
-    #wp.show()
-    #return
+    # wp.show()
+    # return
 
     wf = mv.WormFeaturesDos(nw)
 
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     control_path = os.path.join(base_path, '30m_wait', 'R')
-    
+
     experiment_files = [wf, wf]
     control_files = get_matlab_filepaths(control_path)
 
@@ -124,16 +128,17 @@ def get_matlab_filepaths(root_path):
     return matlab_filepaths
 
 #%%
+
+
 def geppetto_to_features(minimal_worm_spec_path):
     pass
 
 pd.set_option('expand_frame_repr', False)
-pd.set_option('display.float_format', lambda x:'%.4f'%x)
+pd.set_option('display.float_format', lambda x: '%.4f' % x)
 #fs = mv.WormFeaturesDos.get_feature_spec()
 #%%
 if __name__ == '__main__':
     start_time = mv.utils.timing_function()
     main()
-    print("Time elapsed: %.2fs" % 
+    print("Time elapsed: %.2fs" %
           (mv.utils.timing_function() - start_time))
-        

@@ -7,7 +7,9 @@ side".
 The framework being used must support web sockets.
 """
 
-import os, io, sys
+import os
+import io
+import sys
 
 try:
     import tornado
@@ -30,20 +32,21 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-# We must add .. to the path so that we can perform the 
-# import of open_worm_analysis_toolbox while running this as 
+# We must add .. to the path so that we can perform the
+# import of open_worm_analysis_toolbox while running this as
 # a top-level script (i.e. with __name__ = '__main__')
-sys.path.append('..') 
+sys.path.append('..')
 import open_worm_analysis_toolbox as mv
 
 
 def update_line(num, data, line):
-    line.set_data(data[...,:num])
+    line.set_data(data[..., :num])
     return line,
+
 
 def create_figure():
     fig1 = plt.figure()
-    
+
     data = np.random.rand(2, 25)
     l, = plt.plot([], [], 'r-')
     plt.xlim(0, 1)
@@ -51,7 +54,7 @@ def create_figure():
     plt.xlabel('x')
     plt.title('test')
     line_ani = animation.FuncAnimation(fig1, update_line, 25, fargs=(data, l),
-        interval=50, blit=True)
+                                       interval=50, blit=True)
 
     return fig1
 
@@ -59,8 +62,8 @@ def create_figure():
 def create_figure3():
     # Load from file a normalized worm, as calculated by Schafer Lab code
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
-    schafer_nw_file_path = os.path.join(base_path, 
-                                     "example_video_norm_worm.mat")
+    schafer_nw_file_path = os.path.join(base_path,
+                                        "example_video_norm_worm.mat")
     nw = mv.NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)
 
     # Placeholder for video metadata
@@ -74,8 +77,6 @@ def create_figure3():
 
     # Plot an animation of the worm and its motion codes
     wp = mv.NormalizedWormPlottable(nw, motion_codes)
-    
-
 
 
 def create_figure2():
@@ -145,6 +146,7 @@ html_content = """
 
 
 class MyApplication(tornado.web.Application):
+
     class MainPage(tornado.web.RequestHandler):
         """
         Serves the main HTML page.
@@ -276,9 +278,9 @@ class MyApplication(tornado.web.Application):
 
 if __name__ == "__main__":
     figure = create_figure()
-    
-    #figure.show()
-    
+
+    # figure.show()
+
     application = MyApplication(figure)
 
     http_server = tornado.httpserver.HTTPServer(application)

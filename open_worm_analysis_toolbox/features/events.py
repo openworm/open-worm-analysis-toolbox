@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A module for finding and describing frames-spanning "events" given a 
+A module for finding and describing frames-spanning "events" given a
 worm video.
 
 Use EventFinder() to get an EventList()
@@ -24,7 +24,7 @@ Classes:
     __init__
     from_disk
     test_equality
-      
+
 
 Usage
 -----
@@ -34,16 +34,16 @@ Places used (Not exhaustive):
 - locomotion_turns.LocomotionTurns
 
 One usage is in locomotion features.
-  
+
 LocomotionFeatures.get_motion_codes() calculates the motion codes for the
-worm, and to do so, for each of the possible motion states (forward, 
+worm, and to do so, for each of the possible motion states (forward,
 backward, paused) it creates an instance of the EventFinder class,
 sets up appropriate parameters, and then calls EventFinder.get_events()
 to obtain an instance of EventList, the "result" class.
-  
-Then to format the result appropriately, the EventListWithFeatures class is 
+
+Then to format the result appropriately, the EventListWithFeatures class is
 instantiated with our "result" and then get_feature_dict is called.
-  
+
 So the flow from within LocomotionFeatures.get_motion_codes() is:
     # (approximately):
     ef = EventFinder()
@@ -52,14 +52,14 @@ So the flow from within LocomotionFeatures.get_motion_codes() is:
 
 EventListWithFeatures is used by not just get_motion_codes but also ...
 DEBUG (add the other uses (e.g. upsilons))
-  
+
 Notes
 ---------------------------------------
 See https://github.com/openworm/open-worm-analysis-toolbox/blob/master/
 documentation/Yemini%20Supplemental%20Data/Locomotion.md#2-motion-states
 for a plain-English description of a motion state.
 
-The code for this module came from several files in the 
+The code for this module came from several files in the
 @event_finder, @event, and @event_ss folders from:
 https://github.com/JimHokanson/SegwormMatlabClasses/blob/
     master/%2Bseg_worm/%2Bfeature/
@@ -80,7 +80,7 @@ class EventFinder:
     To use this, create an instance, then specify the options.  Default
     options are initialized in __init__.
 
-    Then call get_events() to obtain an EventList instance 
+    Then call get_events() to obtain an EventList instance
     containing the desired events from a given block of data.
 
     """
@@ -101,7 +101,6 @@ class EventFinder:
         self.min_speed_threshold = None  # (scalar or [1 x n_frames])
         self.max_speed_threshold = None  # (scalar or [1 x n_frames])
         self.include_at_speed_threshold = True
-
 
     def get_events(self, speed_data, distance_data=None):
         """
@@ -126,7 +125,7 @@ class EventFinder:
         If the first/last event are solely preceded/followed by NaN
         frames, these frames are swallowed into the respective event.
 
-        Formerly getEvents.m.  Originally it was findEvent.m.  
+        Formerly getEvents.m.  Originally it was findEvent.m.
 
         """
         # Override distance_data with speed_data if it was not provided
@@ -158,9 +157,10 @@ class EventFinder:
 
             # In this function we remove time gaps between events if the gaps
             # are too small (max_inter_frames_threshold)
-            event_candidates = self.remove_gaps(event_candidates,
-                                                self.max_inter_frames_threshold,
-                                                inter_frames_comparison_operator)
+            event_candidates = self.remove_gaps(
+                event_candidates,
+                self.max_inter_frames_threshold,
+                inter_frames_comparison_operator)
 
         if self.min_frames_threshold:
             # Remove events that aren't at least
@@ -176,10 +176,8 @@ class EventFinder:
 
         return EventList(event_candidates)
 
-
     def __repr__(self):
         return utils.print_object(self)
-
 
     def get_speed_threshold_mask(self, event_data):
         """
@@ -192,13 +190,13 @@ class EventFinder:
         Returns
         ---------------------------------------
         A 1-d boolean numpy array masking any instantaneous speeds falling
-        frame-by-frame within the boundaries specified by 
-        self.min_speed_threshold and self.max_speed_threshold, 
+        frame-by-frame within the boundaries specified by
+        self.min_speed_threshold and self.max_speed_threshold,
         which are themselves 1-d arrays.
 
         Notes
         ---------------------------------------
-        Formerly h__getPossibleEventsByThreshold, in 
+        Formerly h__getPossibleEventsByThreshold, in
         seg_worm/feature/event_finder/getEvents.m
 
         """
@@ -208,14 +206,13 @@ class EventFinder:
         event_mask = np.ones((len(event_data)), dtype=bool)
 
         if self.min_speed_threshold is not None:
-            #suppress runtime warning of comparison to None
+            # suppress runtime warning of comparison to None
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=RuntimeWarning)
                 if self.include_at_speed_threshold:
                     event_mask = event_data >= self.min_speed_threshold
                 else:
                     event_mask = event_data > self.min_speed_threshold
-
 
         if self.max_speed_threshold is not None:
             with warnings.catch_warnings():
@@ -229,7 +226,6 @@ class EventFinder:
 
         return event_mask
 
-
     def get_start_stop_indices(self, event_data, event_mask):
         """
         From a numpy event mask, get the start and stop indices.  For
@@ -239,14 +235,14 @@ class EventFinder:
           F F T T F F   <- event_mask
         F F F T T F F F <- bracketed_event_mask
               s s       <- start and stop
-        So in this case we'd have as an output [(2,3)], for the one run 
+        So in this case we'd have as an output [(2,3)], for the one run
         that starts at 2 and ends at 3.
 
         Parameters
         ---------------------------------------
-        event_data: 1-d float numpy array 
+        event_data: 1-d float numpy array
           Instantaneous worm speeds
-        event_mask: 1-d boolean numpy array 
+        event_mask: 1-d boolean numpy array
           True if the frame is a possible event candidate for this event.
 
         Returns
@@ -258,19 +254,19 @@ class EventFinder:
 
         Notes
         ---------------------------------------
-        Formerly h__getStartStopIndices, in 
+        Formerly h__getStartStopIndices, in
         seg_worm/feature/event_finder/getEvents.m
 
         """
-        #NO        
-        ## Go from shape == (1, 4642) to (4642,) (where 4642 is the number of 
-        ## frames, for instance)
+        # NO
+        # Go from shape == (1, 4642) to (4642,) (where 4642 is the number of
+        # frames, for instance)
         #event_data = event_data.flatten()
         #event_mask = event_mask.flatten()
 
         # Make sure our parameters are of the correct type and dimension
-        assert(type(event_data) == np.ndarray)
-        assert(type(event_mask) == np.ndarray)
+        assert(isinstance(event_data, np.ndarray))
+        assert(isinstance(event_mask, np.ndarray))
         assert(len(np.shape(event_data)) == 1)
         assert(np.shape(event_data) == np.shape(event_mask))
         assert(event_mask.dtype == bool)
@@ -292,10 +288,10 @@ class EventFinder:
         # group consecutive integers together
         # e.g. [[(0, 3)], [(1, 5), (2, 6), (3, 7)]]
         # list(group)
-        x_grouped = [list(group) for key, group in 
-                                groupby(enumerate(x),lambda i:i[0] - i[1])]
+        x_grouped = [list(group) for key, group in
+                     groupby(enumerate(x), lambda i:i[0] - i[1])]
 
-        # We want to know the first element from each "run", and the 
+        # We want to know the first element from each "run", and the
         # last element e.g. [[3, 4], [5, 7]]
         event_candidates = [(i[0][1], i[-1][1]) for i in x_grouped]
 
@@ -316,14 +312,13 @@ class EventFinder:
 
         return np.array(event_candidates)
 
-
     def remove_gaps(self, event_candidates, threshold,
                     comparison_operator):
         """
-        Remove time gaps in the events that are smaller/larger than a given 
+        Remove time gaps in the events that are smaller/larger than a given
         threshold value.
 
-        That is, apply a greedy right-concatenation to any (start, stop) duples 
+        That is, apply a greedy right-concatenation to any (start, stop) duples
         within threshold of each other.
 
         Parameters
@@ -337,7 +332,7 @@ class EventFinder:
 
         Returns
         ---------------------------------------
-        A new numpy array of (start, stop) duples giving the indexes 
+        A new numpy array of (start, stop) duples giving the indexes
         of the events with the gaps removed.
 
         """
@@ -367,14 +362,13 @@ class EventFinder:
 
         return np.array(new_event_candidates)
 
-
     def remove_too_small_events(self, event_candidates):
         """
         This function filters events based on time (really sample count)
 
         Parameters
         ---------------------------------------
-        event_candidates: numpy array of (start, stop) duples    
+        event_candidates: numpy array of (start, stop) duples
 
         Returns
         ---------------------------------------
@@ -395,23 +389,22 @@ class EventFinder:
 
         return event_candidates[np.flatnonzero(~events_to_remove)]
 
-
     def remove_events_by_data_sum(self, event_candidates, distance_data):
         """
         This function removes events by data sum.  An event is only valid
-        if the worm has moved a certain minimum proportion of its mean length 
+        if the worm has moved a certain minimum proportion of its mean length
         over the course of the event.
 
-        For example, a forward motion state is only a forward event if the 
+        For example, a forward motion state is only a forward event if the
         worm has moved at least 5% of its mean length over the entire period.
 
-        For a given event candidate, to calculate the worm's movement we 
-        SUM the worm's distance travelled per frame (distance_data) over the 
+        For a given event candidate, to calculate the worm's movement we
+        SUM the worm's distance travelled per frame (distance_data) over the
         frames in the event.
 
         Parameters
         ---------------------------------------
-        event_candidates: numpy array of (start, stop) duples    
+        event_candidates: numpy array of (start, stop) duples
 
         Returns
         ---------------------------------------
@@ -440,8 +433,10 @@ class EventFinder:
         # event
         event_sums = np.empty(num_runs, dtype=float)
         for i in range(num_runs):
-            event_sums[i] = np.nansum(distance_data
-                                      [event_candidates[i][0]:(event_candidates[i][1] + 1)])
+            event_sums[i] = np.nansum(
+                distance_data[
+                    event_candidates[i][0]:(
+                        event_candidates[i][1] + 1)])
 
         # self.min_distance_threshold contains a 1-d n-element array of
         # skeleton lengths * 5% or whatever proportion we've decided the
@@ -455,15 +450,19 @@ class EventFinder:
         min_threshold_sums = np.empty(num_runs, dtype=float)
         if self.min_distance_threshold is not None:
             for i in range(num_runs):
-                min_threshold_sums[i] = np.nanmean(self.min_distance_threshold
-                                                   [event_candidates[i][0]:(event_candidates[i][1] + 1)])
+                min_threshold_sums[i] = np.nanmean(
+                    self.min_distance_threshold[
+                        event_candidates[i][0]:(
+                            event_candidates[i][1] + 1)])
 
         # Same procedure as above, but for the maximum distance threshold.
         max_threshold_sums = np.empty(num_runs, dtype=float)
         if self.max_distance_threshold is not None:
             for i in range(num_runs):
-                max_threshold_sums[i] = np.nanmean(self.max_distance_threshold
-                                                   [event_candidates[i][0]:(event_candidates[i][1] + 1)])
+                max_threshold_sums[i] = np.nanmean(
+                    self.max_distance_threshold[
+                        event_candidates[i][0]:(
+                            event_candidates[i][1] + 1)])
 
         # Actual filtering of the candidate events
         # --------------------------------------------------------
@@ -493,8 +492,8 @@ class EventList(object):
     """
     The EventList class is a relatively straightforward class specifying
     when "events" start and stop.
-    
-    The EventListWithFeatures class, on the other hand, computes other 
+
+    The EventListWithFeatures class, on the other hand, computes other
     statistics on the data over which the event occurs.
 
     An event is a contiguous subset of frame indices.
@@ -526,17 +525,17 @@ class EventList(object):
     seg_worm.feature.event_ss ("ss" stands for "simple structure")
 
 
-    @JimHokanson: This class is the encapsulation of the raw 
+    @JimHokanson: This class is the encapsulation of the raw
     substructure, or output from finding the event.
 
     """
 
     def __init__(self, event_starts_and_stops=None):
         """
-        
+
         Parameters
         ----------
-        
+
         """
         # self.start_frames and self.end_frames will be the internal representation
         # of the events within this class.
@@ -544,8 +543,8 @@ class EventList(object):
         self.end_frames = None
 
         # Check if our events array exists and there is at least one event
-        if (event_starts_and_stops is not None and 
-            event_starts_and_stops.size != 0):
+        if (event_starts_and_stops is not None and
+                event_starts_and_stops.size != 0):
             self.start_frames = event_starts_and_stops[:, 0]
             self.end_frames = event_starts_and_stops[:, 1]
 
@@ -555,10 +554,8 @@ class EventList(object):
         if(self.end_frames is None):
             self.end_frames = np.array([], dtype=int)
 
-
     def __repr__(self):
         return utils.print_object(self)
-
 
     @property
     def starts_and_stops(self):
@@ -577,10 +574,9 @@ class EventList(object):
         else:
             return np.array([])
 
-
     @property
     def __len__(self):
-        """ 
+        """
         Return the number of events stored by a given instance of this class.
 
         Notes
@@ -588,13 +584,12 @@ class EventList(object):
         Formerly n_events
 
         """
-        #TODO: I think we are mixing lists and numpy arrays - let's remove the lists
-        #TypeError: object of type 'numpy.float64' has no len()
+        # TODO: I think we are mixing lists and numpy arrays - let's remove the lists
+        # TypeError: object of type 'numpy.float64' has no len()
         try:
             return len(self.start_frames)
         except TypeError:
             return self.start_frames.size
-
 
     @property
     def last_event_frame(self):
@@ -603,8 +598,8 @@ class EventList(object):
 
         Notes
         ---------------------------------------
-        Note that the events represented by a given instance 
-        must have come from a video of at least this many 
+        Note that the events represented by a given instance
+        must have come from a video of at least this many
         frames.
 
         """
@@ -613,7 +608,6 @@ class EventList(object):
             return self.end_frames[-1]
         else:
             return 0
-
 
     @property
     def num_events_for_stats(self):
@@ -632,17 +626,16 @@ class EventList(object):
 
         return value
 
-
     def get_event_mask(self, num_frames=None):
         """
-        
+
         This was developed for locomotion_features.MotionEvents in which
-        the goal was to go from events back to the original timeline to 
+        the goal was to go from events back to the original timeline to
         calculate for every frame which event that frame is a part of.
-            
-        Returns an array with True entries only between 
-        start_frames[i] and end_frames[i], for all i such that 
-        0 <= end_frames[i] < num_frames    
+
+        Returns an array with True entries only between
+        start_frames[i] and end_frames[i], for all i such that
+        0 <= end_frames[i] < num_frames
 
         Parameters
         ----------
@@ -661,19 +654,19 @@ class EventList(object):
         if num_frames is None:
             num_frames = self.last_event_frame + 1
 
-        mask = np.zeros(max(self.last_event_frame + 1, num_frames), dtype='bool')
+        mask = np.zeros(max(self.last_event_frame +
+                            1, num_frames), dtype='bool')
 
         for i_event in range(self.__len__):
             mask[self.start_frames[i_event]:self.end_frames[i_event] + 1] = True
 
         #??? Why are we slicing the output?
-        #This appears to be because last_event_frame+1 could be larger
-        #than num_frames
-        #TODO: This should be fixed, let's make this truncation more explicit
+        # This appears to be because last_event_frame+1 could be larger
+        # than num_frames
+        # TODO: This should be fixed, let's make this truncation more explicit
         #in the documentation. We should also consider embedding the #
-        #of frames into the event
+        # of frames into the event
         return mask[0:num_frames]
-
 
     @classmethod
     def merge(cls, obj1, obj2):
@@ -681,7 +674,7 @@ class EventList(object):
         Merge two EventList instances into a single, larger, EventList
 
         Acts as a factory, producing a third instance of the EventList class
-        that is the concatenation of the first two, with the start indices 
+        that is the concatenation of the first two, with the start indices
         blended and properly in order.
 
         Parameters
@@ -718,7 +711,7 @@ class EventList(object):
 class EventListWithFeatures(EventList):
 
     """
-    An list of events, but also with a set of features calculated for those 
+    An list of events, but also with a set of features calculated for those
     events.  e.g. time_between_events, etc.
 
     The list of events can also be embued with another dimension of data,
@@ -726,8 +719,8 @@ class EventListWithFeatures(EventList):
     given frame) but which can be generalized to anything that can happen
     over time to the worm.
 
-    With this extra dimension other features can be calculated, such as 
-    distance_during_events.  
+    With this extra dimension other features can be calculated, such as
+    distance_during_events.
 
     Properties
     ---------------------------------------
@@ -742,7 +735,7 @@ class EventListWithFeatures(EventList):
     frequency
     time_ratio
     data_ratio
-    num_events_for_stats    
+    num_events_for_stats
 
     Notes
     ---------------------------------------
@@ -754,7 +747,7 @@ class EventListWithFeatures(EventList):
     posture.coils
     locomotion.turns.omegas
     locomotion.turns.upsilons
-    locomotion.motion.forward  
+    locomotion.motion.forward
     locomotion.motion.backward
     locomotion.motion.paused
 
@@ -793,21 +786,21 @@ class EventListWithFeatures(EventList):
         event_list : EventList (default None)
             A list of all events
         distance_per_frame : numpy.array (default None)
-            Distance moved per frame.  In fact, as discussed in the class 
-            definition for EventListWithFeatures, this parameter can be used 
-            for any quantifiable behaviour the worm is engaged in over time, 
-            not just distance travelled.  Perhaps therefore could be renamed 
+            Distance moved per frame.  In fact, as discussed in the class
+            definition for EventListWithFeatures, this parameter can be used
+            for any quantifiable behaviour the worm is engaged in over time,
+            not just distance travelled.  Perhaps therefore could be renamed
             to something more general.
         compute_distance_during_event: boolean (default False)
             Whether or not to compute the distance during the even.
         make_null: boolean (default False)
-            Whether or not the caller wants simply a blank instance 
+            Whether or not the caller wants simply a blank instance
             to be returned. This is for cases in which there are no events
             for a particular feature.
-            
+
             This is different than if the event has not been computed, in which
             case the object itself should be None
-            
+
 
         Parameters:
         -----------
@@ -816,10 +809,10 @@ class EventListWithFeatures(EventList):
         Used by:
         get_motion_codes  - computes data and interdata
         get_coils         - computes only interdata
-        omega and upsilon - computes only interdata  
+        omega and upsilon - computes only interdata
 
         """
-        if event_list == None:
+        if event_list is None:
             # If no event_list instance is supplied, instantiate
             EventList.__init__(self, None)
         else:
@@ -845,7 +838,6 @@ class EventListWithFeatures(EventList):
             self.time_ratio = np.NaN
             self.data_ratio = np.NaN
 
-
     def calculate_features(self, fps, compute_distance_during_event):
         """
         num_video_frames
@@ -860,7 +852,7 @@ class EventListWithFeatures(EventList):
         time_ratio
         data_ratio
         num_events_for_stats
-        
+
         """
 
         self.num_video_frames = len(self.distance_per_frame)
@@ -877,9 +869,9 @@ class EventListWithFeatures(EventList):
         if compute_distance_during_event:
             self.distance_during_events = np.zeros(self.__len__)
             for i in range(self.__len__):
-                self.distance_during_events[i] = \
-                    np.nansum(
-                        self.distance_per_frame[self.start_frames[i]:self.end_frames[i] + 1])
+                self.distance_during_events[i] = np.nansum(
+                    self.distance_per_frame[
+                        self.start_frames[i]:self.end_frames[i] + 1])
             self.data_ratio = np.nansum(self.distance_during_events) \
                 / np.nansum(self.distance_per_frame)
         else:
@@ -890,14 +882,14 @@ class EventListWithFeatures(EventList):
         # Distance moved between events
         self.distance_between_events = np.zeros(self.__len__ - 1)
         for i in range(self.__len__ - 1):
-            # Suppress "FutureWarning: In Numpy 1.9 the sum along empty 
+            # Suppress "FutureWarning: In Numpy 1.9 the sum along empty
             # slices will be zero."
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=FutureWarning)
                 self.distance_between_events[i] = \
                     np.nansum(
                         self.distance_per_frame[self.end_frames[i] + 1:
-                                                self.start_frames[i+1]])
+                                                self.start_frames[i + 1]])
 
         #self.distance_between_events[-1] = np.NaN
 
@@ -907,7 +899,6 @@ class EventListWithFeatures(EventList):
         self.frequency = self.num_events_for_stats / self.total_time
 
         self.time_ratio = np.nansum(self.event_durations) / self.total_time
-
 
     def get_event_mask(self):
         """
@@ -921,13 +912,12 @@ class EventListWithFeatures(EventList):
         ---------------------------------------
 
         EventListWithFeatures has overridden its superclass, EventList's,
-        get_event_mask with its own here, since self.distance_per_frame 
-        gives it the precise number of frames so it no longer needs to 
+        get_event_mask with its own here, since self.distance_per_frame
+        gives it the precise number of frames so it no longer needs to
         accept it as a parameter.
 
         """
-        return EventList.get_event_mask(self,self.num_video_frames)
-
+        return EventList.get_event_mask(self, self.num_video_frames)
 
     @classmethod
     def from_disk(cls, event_ref, ref_format):
@@ -964,14 +954,14 @@ class EventListWithFeatures(EventList):
         if ref_format is 'MRC':
             frames = event_ref['frames']
 
-            if type(frames) == h5py._hl.dataset.Dataset:
+            if isinstance(frames, h5py._hl.dataset.Dataset):
                 self.is_null = True
                 return self
             else:
                 self.is_null = False
 
             # In Matlab this is a structure array
-            # Our goal is to go from an array of structures to a 
+            # Our goal is to go from an array of structures to a
             # single "structure" with arrays of values
             #
             # If only a single element is present, the data are saved
@@ -983,31 +973,32 @@ class EventListWithFeatures(EventList):
                 ref_array = frames[key]
                 try:
                     # Yikes, getting the indexing right here was a PITA
-                
+
                     # (1,5) -> second option - <HDF5 dataset "start": shape (1, 5), type "|O8">
-                    #Seriously Matlab :/
+                    # Seriously Matlab :/
                     if ref_array.shape[0] > 1:
-                        frame_values[key] = np.array([file_ref[x[0]][0][0] for x in ref_array])
+                        frame_values[key] = np.array(
+                            [file_ref[x[0]][0][0] for x in ref_array])
                     else:
-                        #This is correct for omegas ...
-                        frame_values[key] = np.array([file_ref[x][0][0] for x in ref_array[0]])   
-                    
+                        # This is correct for omegas ...
+                        frame_values[key] = np.array(
+                            [file_ref[x][0][0] for x in ref_array[0]])
+
                 except AttributeError:
-                    # AttributeError: 'numpy.float64' object has no attribute 
+                    # AttributeError: 'numpy.float64' object has no attribute
                     #                 'encode'
                     ref_element = ref_array
                     frame_values[key] = [ref_element[0][0]]
-            
+
             self.start_frames = np.array(frame_values['start'], dtype=int)
             self.end_frames = np.array(frame_values['end'], dtype=int)
             self.event_durations = np.array(frame_values['time'])
             if('isVentral' in frame_values.keys()):
-                # For isVentral to even exist we must be at a signed event, 
+                # For isVentral to even exist we must be at a signed event,
                 # such as where
                 # frames.name == '/worm/locomotion/turns/omegas/frames
-                self.is_ventral = np.array(frame_values['isVentral'], 
+                self.is_ventral = np.array(frame_values['isVentral'],
                                            dtype=bool)
-
 
             # Remove NaN value at end
             n_events = self.start_frames.size
@@ -1015,17 +1006,20 @@ class EventListWithFeatures(EventList):
                 self.time_between_events = np.zeros(0)
                 self.distance_between_events = np.zeros(0)
             else:
-                self.time_between_events = np.array(frame_values['interTime'][:-1])
-                self.distance_between_events = np.array(frame_values['interDistance'][:-1])
+                self.time_between_events = np.array(
+                    frame_values['interTime'][:-1])
+                self.distance_between_events = np.array(
+                    frame_values['interDistance'][:-1])
 
-            #JAH: I found float was needed as the calculated frequency was also
-            #of this type. I'm not sure why we lost the numpy array entry
-            #for the calculated frequency ...
+            # JAH: I found float was needed as the calculated frequency was also
+            # of this type. I'm not sure why we lost the numpy array entry
+            # for the calculated frequency ...
             self.frequency = event_ref['frequency'].value[0][0]
 
             if 'ratio' in event_ref.keys():
                 ratio = event_ref['ratio']
-                self.distance_during_events = np.array(frame_values['distance'])
+                self.distance_during_events = np.array(
+                    frame_values['distance'])
                 self.time_ratio = ratio['time'][0][0]
                 self.data_ratio = ratio['distance'][0][0]
             else:
@@ -1060,15 +1054,48 @@ class EventListWithFeatures(EventList):
             raise Exception("Problem while testing inequality")
 
         # TODO: Add an integer equality comparison with name printing
-        return \
-            utils.compare_is_equal(self.num_video_frames, other.num_video_frames, event_name + '.num_video_frames') and \
-            utils.correlation(self.start_frames, other.start_frames, event_name + '.start_frames') and \
-            utils.correlation(self.end_frames, other.end_frames, event_name + '.end_frames')   and \
-            utils.correlation(self.event_durations, other.event_durations, event_name + '.event_durations')   and \
-            utils.correlation(self.distance_during_events, other.distance_during_events, event_name + '.distance_during_events')   and \
-            utils.compare_is_equal(self.total_time, other.total_time, event_name + '.total_time', 0.01) and \
-            utils.compare_is_equal(self.frequency, other.frequency, event_name + '.frequency', 0.01) and \
-            utils.compare_is_equal(self.time_ratio, other.time_ratio, event_name + '.time_ratio', 0.01) and \
-            utils.compare_is_equal(self.data_ratio, other.data_ratio, event_name + '.data_ratio', 0.01) and \
-            utils.compare_is_equal(self.num_events_for_stats, other.num_events_for_stats, event_name + '.total_time')
-           
+        return utils.compare_is_equal(
+            self.num_video_frames,
+            other.num_video_frames,
+            event_name +
+            '.num_video_frames') and utils.correlation(
+            self.start_frames,
+            other.start_frames,
+            event_name +
+            '.start_frames') and utils.correlation(
+            self.end_frames,
+            other.end_frames,
+            event_name +
+            '.end_frames') and utils.correlation(
+                self.event_durations,
+                other.event_durations,
+                event_name +
+                '.event_durations') and utils.correlation(
+                    self.distance_during_events,
+                    other.distance_during_events,
+                    event_name +
+                    '.distance_during_events') and utils.compare_is_equal(
+                        self.total_time,
+                        other.total_time,
+                        event_name +
+                        '.total_time',
+                        0.01) and utils.compare_is_equal(
+                            self.frequency,
+                            other.frequency,
+                            event_name +
+                            '.frequency',
+                            0.01) and utils.compare_is_equal(
+                                self.time_ratio,
+                                other.time_ratio,
+                                event_name +
+                                '.time_ratio',
+                                0.01) and utils.compare_is_equal(
+                                    self.data_ratio,
+                                    other.data_ratio,
+                                    event_name +
+                                    '.data_ratio',
+                                    0.01) and utils.compare_is_equal(
+                                        self.num_events_for_stats,
+                                        other.num_events_for_stats,
+                                        event_name +
+            '.total_time')
