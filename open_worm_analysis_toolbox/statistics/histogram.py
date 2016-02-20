@@ -411,9 +411,10 @@ class MergedHistogram(Histogram):
     p_normal: float
     
     """
-    def __init__(self, data, specs, histogram_type, motion_type, data_type):
-        super(MergedHistogram, self).__init__(data, specs, histogram_type, 
-                                              motion_type, data_type)
+    def __init__(self, specs):
+        self.data = None
+        self.specs = specs
+        #super(MergedHistogram, self).__init__(data, specs)
 
     #%%
     @classmethod
@@ -450,11 +451,7 @@ class MergedHistogram(Histogram):
         
         """
         # Create an output object with same meta properties
-        merged_hist = cls(data=None,
-                          specs=histograms[0].specs,
-                          histogram_type=histograms[0].histogram_type,
-                          motion_type=histograms[0].motion_type,
-                          data_type=histograms[0].data_type)
+        merged_hist = cls(specs=histograms[0].specs)
 
         # Let's concatenate all the underlying data in case anyone downstream
         # wants to see it.  It's not needed for the bin and count calculation,

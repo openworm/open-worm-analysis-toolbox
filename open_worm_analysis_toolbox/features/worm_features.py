@@ -1120,12 +1120,18 @@ class FeatureProcessingSpec(object):
         
         #TODO: Wrap this in a try clause with clear error if the module
         #hasn't been specified in the dictionary
-        self.module = self.modules_dict[self.module_name]
+        self.module_name = self.module_name
+        
+        #We won't store these so as to facilitate pickeling
+        #-----------------------------------------------------
+        #self.module = self.modules_dict[self.module_name]
+        #self.class_method = getattr(self.module, self.class_name)
         
         self.class_name = d['class_name']
 
         #We retrieve the class constructor or function from the module
-        self.class_method = getattr(self.module, self.class_name) 
+
+        
         
         
         self.flags = d['processing_flags']
@@ -1172,10 +1178,14 @@ class FeatureProcessingSpec(object):
         #--------------------------------------------
         #'source' should be overwritten by the feature loading method
         #after loading all the specs
+
+        module = self.modules_dict[self.module_name]
+        class_method = getattr(module, self.class_name)
+
         if self.source == 'new':
-            final_method = self.class_method     
+            final_method = class_method    
         else: #mrc #TODO: make explicit check for MRC otherwise throw an error
-            final_method = getattr(self.class_method,'from_schafer_file')
+            final_method = getattr(class_method,'from_schafer_file')
 
 
         timer = wf.timer

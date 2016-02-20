@@ -101,10 +101,6 @@ class HistogramManager(object):
             new_histogram_set = self.init_histograms(worm_features)
             self.hist_cell_array.append(new_histogram_set)
             
-        #0 through 3 - 706
-        #4 - 697
-        import pdb
-        pdb.set_trace()
 
         #JAH TODO: I'm not sure what this is doing ..., add documentation
         #----------------------------------------------------------------
@@ -249,17 +245,6 @@ class HistogramManager(object):
         # Make sure that the hist_cell_array is a numpy array
         hist_cell_array = np.array(hist_cell_array)
 
-        #Bah humbug, no idea how this code worked before
-        for hist in hist_cell_array.flatten():
-            try:
-                wtf = hist.num_videos
-            except:
-                import pdb
-                pdb.set_trace()
-
-        import pdb
-        pdb.set_trace()
-
         # Check that we don't have any multiple videos in any histogram,
         # since it's not implemented to merge already-merged histograms
         num_videos_per_histogram = np.array([hist.num_videos for hist
@@ -291,7 +276,7 @@ class HistogramManager(object):
                           % feature_index)
                 else:
                     if histograms[0] is not None:
-                        long_field = histograms[0].specs.long_field
+                        long_field = histograms[0].specs.name
                     else:
                         long_field = 'NAME UNAVAILABLE'
                     print("For feature #%d (%s), at least one video is None. "

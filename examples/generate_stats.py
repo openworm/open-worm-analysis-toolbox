@@ -114,7 +114,7 @@ def obtain_histograms(root_path, pickle_file_path):
         assert(len(experiment_files) >= 10)
         assert(len(control_files) >= 10)
 
-        print('Loading features from disk')
+        print('Loading features from disk: experiment_files')
         experiment_features = [mv.WormFeatures.from_disk(x) for x in experiment_files]
         
         print('Starting feature expansion')
@@ -123,14 +123,14 @@ def obtain_histograms(root_path, pickle_file_path):
         print('Starting histograms')
         exp_histogram_manager = mv.HistogramManager(new_experiment_features)
 
-        import pdb
-        pdb.set_trace()
-
- 
-
-        # Compute histograms on our files
+        print('Loading features from disk: experiment_files')
+        control_features = [mv.WormFeatures.from_disk(x) for x in control_files]
         
-        ctl_histogram_manager = mv.HistogramManager(control_files[:10])
+        print('Starting feature expansion')
+        new_control_features = [mv.feature_manipulations.expand_mrc_features(x) for x in control_features]
+
+        print('Starting histograms')
+        ctl_histogram_manager = mv.HistogramManager(new_control_features)
         
         # Store a pickle file in the same folder as this script 
         # (i.e. movement_validation/examples/)
