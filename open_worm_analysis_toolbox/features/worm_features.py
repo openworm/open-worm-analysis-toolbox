@@ -13,6 +13,7 @@ WormPosture
 WormPath
 
 WormFeatures
+FeatureProcessingSpec
 
 
 A translation of Matlab code written by Jim Hokanson, in the 
@@ -23,11 +24,14 @@ SegwormMatlabClasses/+seg_worm/@feature_calculator/features.m
 
 """
 
+import copy
 import csv, os, warnings
 import h5py  # For loading from disk
 import numpy as np
 import collections  # For namedtuple, OrderedDict
 import pandas as pd
+
+from .. import utils
 
 from . import feature_processing_options as fpo
 from . import events
@@ -39,21 +43,15 @@ from . import locomotion_bends
 from . import locomotion_turns
 from . import morphology_features
 
-from .. import utils
 
+FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                'feature_metadata',
+                                'features_list.csv')  
 
 """
 ===============================================================================
 ===============================================================================
 """
-#http://stackoverflow.com/questions/10408119/generators-to-iterate-over-a-dictionary-uniformly-in-both-python-2-and-3
-#def iteritems(d):
-#    'Factor-out Py2-to-3 differences in dictionary item iterator methods'
-#    try:
-#         return d.iteritems()
-#    except AttributeError:
-#         return d.items()
-
 
 class WormMorphology(object):
     """
@@ -608,184 +606,7 @@ class WormPath(object):
 ===============================================================================
 """
 
-
 class WormFeatures(object):
-    """ 
-    WormFeatures: Takes a NormalizedWorm instance and
-    during initialization calculates all the features of the worm.
-
-    There are two ways to initialize a WormFeatures instance: 
-    1. by passing a NormalizedWorm instance and generating the features, or
-    2. by loading the already-calculated features from an HDF5 file.
-         (via the from_disk method)
-         
-    Attributes
-    ----------      
-    video_info: VideoInfo object
-    options: open-worm-analysis-toolbox.features.feature_processing_options
-    nw: NormalizedWorm object
-    morphology: WormMorphology object
-    locomotion: WormLocomotion object
-    posture: WormPosture object
-    path: WormPath object
-
-    """
-
-    def __init__(self, nw, processing_options=None):
-        """
-        
-        Parameters
-        ----------
-        nw: NormalizedWorm object
-        processing_options: open-worm-analysis-toolbox.features.feature_processing_options
-
-        """
-        if processing_options is None:
-            processing_options = \
-                            fpo.FeatureProcessingOptions()
-
-        # These are saved locally for reference by others when processing
-        self.video_info = nw.video_info
-        
-        self.options = processing_options
-        self.nw = nw
-        self.timer = utils.ElementTimer()
-        
-        self.morphology = WormMorphology(self)
-        self.locomotion = WormLocomotion(self)
-        self.posture = \
-            WormPosture(self, self.locomotion.velocity.get_midbody_distance())
-        self.path = WormPath(self)
-
-    @classmethod
-    def from_disk(cls, file_path):
-
-        """
-        This from disk method is currently focused on loading the features
-        files as computed by the Schafer lab. Alternative loading methods
-        should be possible 
-        """
-        h = h5py.File(file_path, 'r')
-        worm = h['worm']
-
-        self = cls.__new__(cls)
-
-        self.morphology = WormMorphology.from_disk(worm['morphology'])
-        self.locomotion = WormLocomotion.from_disk(worm['locomotion'])
-        self.posture = WormPosture.from_disk(worm['posture'])
-        self.path = WormPath.from_disk(worm['path'])
-
-        return self
-
-
-
-    def get_DataFrame(self):
-        """
-        Returns
-        ------------
-        A pandas.DataFrame object
-            Contains all the feature data in one table
-            
-        """
-        feature_dataframe = pd.DataFrame(columns=['sub-extended feature ID',
-                                                  'data_array'])
-
-        
-        #feature_dataframe = \
-        #    pd.DataFrame({'sub-extended feature ID': pd.Series(),
-        #                  'data_array': pd.Series()})
-        
-        #feature_dataframe = \
-        #    pd.DataFrame({'sub-extended feature ID': pd.Series(dtype=int),
-        #                  'data_array': pd.Series(dtype=object)})
-        feature_spec = WormFeatures.get_feature_spec()
-        for index, row in feature_spec.iterrows():
-            sub_extended_feature_ID = row['sub-extended feature ID']
-            nested_attributes = row['feature_field'].split('.')
-                
-           
-            attribute = self
-            for attribute_name in nested_attributes:
-                try:
-                    attribute = getattr(attribute, attribute_name)
-                except AttributeError:
-                    import pdb
-                    pdb.set_trace()
-
-            feature_dataframe.loc[index] = [sub_extended_feature_ID, attribute]
-
-        # Add a column just for length    
-        def length(x):
-            if x is None:
-                return np.NaN
-            try:
-                return len(x)
-            except TypeError:
-                # e.g. len(5) will raise TypeError
-                if isinstance(x, (int, float, complex)):
-                    return 1
-                else:
-                    return np.NaN
-    
-        feature_dataframe['length'] = \
-                            feature_dataframe['data_array'].map(length)
-    
-        pd.set_option('display.max_rows', 500)
-        
-        # Left Outer Join: add columns for feature_field, feature_type.
-        fs = feature_spec[['sub-extended feature ID',
-                           'feature_field',
-                           'feature_type']]
-        feature_dataframe = \
-                feature_dataframe.merge(fs, how='left', 
-                                        on=['sub-extended feature ID'])
-    
-        return feature_dataframe
-
-    def get_movement_DataFrame(self):
-        """
-        Just the movement features, but pivoted
-        so the rows are frames and the columns are the feature names
-
-        NOTE: This only works for movement features.  
-        
-        """
-        feature_df = self.get_DataFrame()
-        movement_df = feature_df[feature_df.feature_type == 'movement']
-
-        # All movement features must have same length
-        assert(np.all(movement_df.length == movement_df.length.iloc[0]))    
-    
-        # Pivot so rows are frames, and features are columns.
-        movement_data = np.array(movement_df.data_array.as_matrix().tolist())
-    
-        # Just the movement features, but pivoted
-        # so the rows are frames and the columns are the feature names
-        # shape (4642, 53)
-        movement_df_pivoted = pd.DataFrame(movement_data.transpose(), 
-                                           columns=movement_df.feature_field)
-        
-        return movement_df_pivoted
-
-    def __repr__(self):
-        return utils.print_object(self)
-
-    def __eq__(self, other):
-        """
-        Compare two WormFeatures instances by value
-
-        """
-        same_morphology = self.morphology == other.morphology
-        same_locomotion = self.locomotion == other.locomotion
-        same_posture = self.posture == other.posture
-        same_path = self.path == other.path
-        return same_morphology and \
-             same_locomotion and \
-             same_posture and \
-             same_path
-                      
-
-class WormFeaturesDos(object):
 
     """
     This is the new features class. It will eventually replace the old class
@@ -793,7 +614,21 @@ class WormFeaturesDos(object):
     
     Accessing Features
     ------------------
-    Features should normally be accessed via get_feature(). Alternatively 
+    Features should normally be accessed via get_feature() or via iteration
+    over this object.
+
+    Design Decisions
+    ----------------
+    # When iterating over the features, should we include null features? 
+            => YES? => this introduces stability between different videos
+    # What should be returned from get_feature when it doesn't exist?
+            => An empty feature object NYI
+    # What is returned when a feature can't be computed because of a missing
+    dependency?    
+            => An empty feature object NYI    
+    
+    
+    . Alternatively 
     it is possible to access features directly via the 'features' attribute
     however this attribute only contains computed features.
         
@@ -806,9 +641,8 @@ class WormFeaturesDos(object):
     timer :
     specs : {FeatureProcessingSpec}
     features : {Feature}
-        Contains all computed features.
-            
-    _temp_features : {Feature}
+        Contains all computed features that have been requested by the user.
+
 
     When loading from Schafer File
     h : hdf5 file reference
@@ -817,13 +651,20 @@ class WormFeaturesDos(object):
     
     """
     
-    def __init__(self, nw, processing_options=None,load_features=True):
+    def __init__(self, nw, processing_options=None,specs='all'):
         """
         
         Parameters
         ----------
-        nw: NormalizedWorm object
-        processing_options: open-worm-analysis-toolbox.features.feature_processing_options
+        nw : NormalizedWorm object
+        specs : 
+
+        #The options will most likely change. We should have the options
+        #be accessible from the specs    
+        processing_options: movement_validation.features.feature_processing_options
+
+        #TODO: Expose just passing in feature names as well
+
 
         """
         if processing_options is None:
@@ -839,18 +680,80 @@ class WormFeaturesDos(object):
 
         self.initialize_features()
 
-        if load_features:
+        #TODO: We should eventually support a list of specs as well
+        #TODO: We might also allow transforming the specs (like changing options), 
+        #which this doesn't handle since we are only extracting the names
+        if isinstance(specs,pd.core.frame.DataFrame):
+            #This wouldn't be good if the specs have changed.
+            #We would need to change the initialize_features() call
+            self.get_features(specs['feature_name'])
+        else:
             self._retrieve_all_features()
+            
+    def __iter__(self):
+        """  Let's allow iteration over the features """
+        all_features = self.features
+        for temp in all_features:
+            yield temp
+                
+    def copy(self,new_features):
+        """
+        This method was introduced for "feature expansion"        
+        
+        Parameters
+        ----------
+        new_features : list or dict (only list supported)
+        """
+        new_self = self.__new__(self.__class__)
+        
+        #We need to setup features and specs
+        #get specs from features
+
+        #specs : {FeatureProcessingSpec}
+        #features : {Feature}
+        
+        d = self.__dict__
+        for key in d:
+            temp = d[key]
+            if key in ['features','specs','h','_temp_features']:
+                pass
+                #do nothing
+                #setattr(new_self,'spec',temp.copy())
+            else:
+                setattr(new_self,key,copy.copy(temp))
+        
+        #Currently assuming a list for features
+        
+        temp_features = collections.OrderedDict()
+        new_specs = collections.OrderedDict()
+        for cur_feature in new_features:
+            feature_name = cur_feature.name
+            temp_features[feature_name] = cur_feature
+            new_specs[feature_name] = cur_feature.spec
+        
+        new_self._features = temp_features
+        new_self.specs = new_specs
+        
+        return new_self
 
     @classmethod
     def from_disk(cls,data_file_path):
+        """
+        Creates an instance of the class from disk.
+        
+        Ideally we would support loading of any file type. For now
+        we'll punt on building in any logic until we have more types to deal
+        with.
+        """
         #This ideally would allow us to load any file from disk.
         #
         #For now we'll punt on this logic
-        return cls.from_schafer_file(data_file_path)
+        return cls._from_schafer_file(data_file_path)
+        
+    
 
     @classmethod
-    def from_schafer_file(cls, data_file_path):
+    def _from_schafer_file(cls, data_file_path):
         """
         Load features from the Schafer lab feature (.mat) files.
         """
@@ -877,6 +780,15 @@ class WormFeaturesDos(object):
 
         return self
     
+    @property
+    def features(self):
+        """ 
+        We need to filter out temporary features and features that are 
+        not user requested        
+        """
+        d = self._features
+        return [d[x] for x in d if (x is not None and not d[x].is_temporary and d[x].is_user_requested)]
+    
     def _retrieve_all_features(self):
         """
         Simple function for retrieving all features.
@@ -887,7 +799,7 @@ class WormFeaturesDos(object):
             spec = spec_dict[key]
             #TODO: We could pass in the spec instance ...
             #rather than resolving the instance from the name
-            self.get_feature(spec.name) 
+            self._get_and_log_feature(spec.name) 
     
     def initialize_features(self):
 
@@ -895,17 +807,46 @@ class WormFeaturesDos(object):
         Reads the feature specs and initializes necessary attributes.
         """
 
-        f_specs = get_feature_processing_specs()
+        f_specs = get_feature_specs(as_table=False)
         
         self.specs = \
             collections.OrderedDict([(value.name, value) for value in f_specs])        
 
-        self.features = collections.OrderedDict()
+        self._features = collections.OrderedDict()
+        
+        #This will be removed soon
         self._temp_features = collections.OrderedDict()
     
-    def get_feature(self,feature_name):
+    def get_features(self,feature_names):
         """
         This is the public interface to the user for retrieving a feature.
+        
+        Parameters
+        ----------
+        feature_names : {string, list, pandas.Series}
+        
+        Returns
+        -------
+        TODO: finish
+        
+        """
+        if isinstance(feature_names,list) or isinstance(feature_names,pd.Series):
+            output = []
+            for feature_name in feature_names:
+                self._get_and_log_feature(feature_name)
+                output.append(self._features[feature_name])
+        else:
+            #Currently assuming a string
+            self._get_and_log_feature(feature_names)
+            output = self._features[feature_names]
+            
+        return output
+            
+        
+    def _get_and_log_feature(self,feature_name,internal_request=False):
+        """
+        TODO: Update documentation. get_features is now the public interface
+        
         A feature is returned if it has already been computed. If it has not
         been previously computed it is computed then returned.
         
@@ -917,60 +858,75 @@ class WormFeaturesDos(object):
         - retrieve multiple features, probably via a different method
         - allow passing in specs
         - have a feature that returns specs by regex or wildcard
+        - have this call an internal requester that exposes the internal_request
+        rather than exposing it to the user
         
         See Also
         --------
         FeatureProcessingSpec.get_feature
         """
-        
-        #If we've already computed the feature, then we return it, otherwise
-        #we need to compute it.
-        if feature_name in self.features:
-            return self.features[feature_name]
-        elif feature_name in self._temp_features:
-            return self._temp_features[feature_name]
-        
-    
+                
+        #Early return if already computed
+        #----------------------------------
+        if feature_name in self._features:
+            #Check if it is being requested now via the user instead of internally
+            cur_feature = self._features[feature_name]
+            if not cur_feature.is_user_requested and not internal_request:
+                #If the logged feature is not currently user requested but 
+                #this request is from the user, then toggle the value
+                #
+                #otherwise we don't care, leave it as it currently is
+                cur_feature.is_user_requested = True
+            
+            return cur_feature
+            
         #Ensure that the feature name is valid
+        #-------------------------------------------
         if feature_name in self.specs:    
             spec = self.specs[feature_name]
         else:
             raise KeyError('Specified feature name not found in the feature specifications')    
             
-        temp = spec.get_feature(self)
+        temp = spec.compute_feature(self,internal_request=internal_request)
 
+        #TODO: this will change
         #A feature can return None, which means we can't ask the feature
         #what the name is, so we go based on the spec
-        if spec.is_temporary:
-            self._temp_features[spec.name] = temp
-        else:
-            self.features[spec.name] = temp
-    
+        self._features[spec.name] = temp
         return temp
-
-    def list_specs(self,filter=None):
-        #TODO: similar to list_features except for the feature specs
-        #TODO: We might want get_specs as well
-        pass
-
-    def list_features(self,filter=None):
-        #TODO: I'd like to have this print all computed features that
-        #match a filter (if specified)
-        #e.g. wf.list_features('locomotion.*')
-        pass
 
     def __repr__(self):
         return utils.print_object(self)    
 
+    def get_histograms(self,other_feature_sets=None):
+        """
+        
+        TODO:
+        - Create histogram manager
+        - 
+        
+        Improvements:
+        - allow filtering of which features should be included
+
+        """
+        
+        
+
+        pass
 
     @staticmethod
     def get_feature_spec(extended=False, show_temp_features=False):
         """
         TODO: This method needs to be documented!        
         
+        I think this method is old. Jim and Michael need to talk about what
+        this is trying to do and how to incorporate this into the current
+        design. Most likely we would load via pandas and then have our current
+        methods rely on processing of the loaded pandas data.        
+        
         Parameters
-        ------------
-        extended: boolean
+        ----------
+        extended: boolean (default False)
             If True, return the full 726 features, not just the 93.
         show_temp_features: boolean
             If False, return only actual features.  Raises an exception
@@ -1041,14 +997,20 @@ class WormFeaturesDos(object):
 
             return feature_spec_expanded
 
-        
-def get_feature_processing_specs():
+
+def get_feature_specs(as_table=True):
     
     """
 
     Loads all specs that specify how features should be processed/created.
     
     Currently in /features/feature_metadata/features_list.csv
+
+    Parameters
+    ----------
+    as_table : logical
+        If true, returns a Pandas dataframe. Otherwise it returns a list of 
+        FeatureProcessingSpec objects.
 
     See Also
     --------
@@ -1060,19 +1022,40 @@ def get_feature_processing_specs():
     
     """    
     
-    FEATURE_SPEC_CSV_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                'feature_metadata',
-                                'features_list.csv')        
-    
-    f_specs = []    
-    
-    with open(FEATURE_SPEC_CSV_PATH) as feature_metadata_file:
-        feature_metadata = csv.DictReader(feature_metadata_file)
+      
+    if as_table:
+        #spec_df = pd.read_csv(FEATURE_SPEC_CSV_PATH,dtype={'is_final_feature':bool},true_values=['y'],false_values =['f'])
+        #I don't like not specifying data types initially since I don't trust
+        #them to guess correctly. TODO: Need to make things explicit
+        #there are already some incorrect guesses
+        df = pd.read_csv(FEATURE_SPEC_CSV_PATH)
+        df.is_final_feature = df.is_final_feature == 'y'
+        df['is_temporary'] = ~df.is_final_feature
         
-        for row in feature_metadata: 
-            f_specs.append(FeatureProcessingSpec(row))
+        #self.flags = d['processing_flags']
+
+        #This number conversion shouldn't have happened since I think it is
+        #better to compare to '1'            
+        df.is_signed = df.is_signed == 1
+        df.has_zero_bin = df.has_zero_bin == 1        
+        df.remove_partial_events = df.remove_partial_events == 1
+        
+        #Why didn't these convert to numbers then?
+        df.make_zero_if_empty = df.make_zero_if_empty == '1'
+        df.is_time_series = df.is_time_series == '1'
+        
+        return df
+
+    else:
+        f_specs = []    
+    
+        with open(FEATURE_SPEC_CSV_PATH) as feature_metadata_file:
+            feature_metadata = csv.DictReader(feature_metadata_file)
+        
+            for row in feature_metadata: 
+                f_specs.append(FeatureProcessingSpec(row))
             
-    return f_specs
+        return f_specs
 
 
 class FeatureProcessingSpec(object):
@@ -1123,42 +1106,86 @@ class FeatureProcessingSpec(object):
         d: dict
             Data in a row of the features file
 
+        See Also
+        --------
+        get_feature_processing_specs    
+
         """
 
         self.source = 'new'
         
-        self.name = d['Feature Name']
-        self.module_name = d['Module']
+        self.is_temporary = d['is_final_feature'] == 'n'
+        self.name = d['feature_name']
+        self.module_name = d['module']
         
         #TODO: Wrap this in a try clause with clear error if the module
         #hasn't been specified in the dictionary
-        self.module = self.modules_dict[self.module_name]
+        self.module_name = self.module_name
         
-        self.class_name = d['Class Name']
-
-        self.class_method = getattr(self.module, self.class_name) 
+        #We won't store these so as to facilitate pickeling
+        #-----------------------------------------------------
+        #self.module = self.modules_dict[self.module_name]
+        #self.class_method = getattr(self.module, self.class_name)
         
-        self.flags = d['Flags']
-        self.is_temporary = d['is_feature'] == 'n'
+        self.class_name = d['class_name']
 
-    def get_feature(self,wf):
+        #We retrieve the class constructor or function from the module
+
+        
+        
+        
+        self.flags = d['processing_flags']
+        
+        #TODO: We might write a __getattr__ function and just hold 
+        #onto the dict
+        self.type = d['type']
+        self.category = d['category']
+        self.display_name = d['display_name']
+        self.short_display_name = d['short_display_name']
+        self.units = d['units']
+        if self.is_temporary:
+            self.bin_width = 1
+        else:
+            self.bin_width = float(d['bin_width'])
+            
+        self.is_signed = d['is_signed'] == '1'
+        self.has_zero_bin = d['has_zero_bin'] == '1'
+        self.signing_field = d['signing_field']
+        self.remove_partial_events = d['remove_partial_events'] == '1'
+        self.make_zero_if_empty = d['make_zero_if_empty'] == '1'
+        self.is_time_series = d['is_time_series'] == '1'
+
+    def compute_feature(self,wf,internal_request=False):
         """
+        Note, the only caller of this function should be from:
+            WormFeaturesDos._get_and_log_feature()
+        
         This method takes care of the logic of retrieving a feature.
         
-        ALl features are created or loaded via this method.
-        
+        ALL features are created or loaded via this method.
+         
         Arguments
         ---------
         wf : WormFeaturesDos
+            This is primarily needed to facilitate requesting additional
+            features from the feature currently being computed
         
         """
         
         #print("feature: " + self.name)        
 
+        #Resolve who is going to populate the feature
+        #--------------------------------------------
+        #'source' should be overwritten by the feature loading method
+        #after loading all the specs
+
+        module = self.modules_dict[self.module_name]
+        class_method = getattr(module, self.class_name)
+
         if self.source == 'new':
-            final_method = self.class_method     
+            final_method = class_method    
         else: #mrc #TODO: make explicit check for MRC otherwise throw an error
-            final_method = getattr(self.class_method,'from_schafer_file')
+            final_method = getattr(class_method,'from_schafer_file')
 
 
         timer = wf.timer
@@ -1170,16 +1197,55 @@ class FeatureProcessingSpec(object):
         if len(self.flags) == 0:
             temp = final_method(wf,self.name)
         else:
-            temp = final_method(wf,self.name,self.flags)   
+            #NOTE: All current flags are just a single string. We don't have
+            #anything fancy in place for multiple parameters or for doing
+            #any fancy parsing
+            temp = final_method(wf,self.name,self.flags)
     
-        timer.toc(self.name)
-                
-        if temp is not None:
-            #We can get rid of the name assignments in class and use this ...
-            temp.name = self.name
-            temp.is_temporary = self.is_temporary               
+        elapsed_time = timer.toc(self.name)
+        
+        #This is an assigment of global attributes that the spec knows about
+        #This could eventually be handled by a super() call to Feature
+        #but for now this works. The only problem is that we override values
+        #after the constructor rather than letting the constructor override
+        #values from super()
+
+        if temp is None:
+            import pdb
+            pdb.set_trace()
+
+        #TODO: This is confusing for children features that rely on a 
+        #temporary parent. Unfortunately this is populated after
+        #the feature has been computed.
+        #We could allow children to copy the value from the parent but
+        #then we would need to check for that here ...
+        temp.computation_time = elapsed_time
+        
+        #We can get rid of the name assignments in class and use this ...
+        temp.name = self.name
+        temp.is_temporary = self.is_temporary
+        temp.spec = self
+        temp.is_user_requested = not internal_request
+        
+        #Problem features
+        #--------------------------
+        if not hasattr(temp,'missing_from_disk'):
+            temp.missing_from_disk = False
+        
+        if not hasattr(temp,'missing_dependency'):
+            temp.missing_dependency = False
+            
+        if not hasattr(temp,'empty_video'):
+            temp.empty_video = False
+            
+        if not hasattr(temp,'no_events'):
+            temp.no_events = False
                 
         return temp
         
     def __repr__(self):
-        return utils.print_object(self)       
+        return utils.print_object(self)
+    
+    def copy(self):
+        #Not sure if I'll need to do anything here ...
+        return copy.copy(self)

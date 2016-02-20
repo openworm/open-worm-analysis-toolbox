@@ -1,0 +1,5 @@
+is_final_feature :
+	- y : Indicates that the computed feature should have a 'value' attribute which contains a value of interest.
+	- n : Indicates that the computed value is generally not interesting on its own. This is usually the case for features that temporarily hold multiple features that are computed together before they are broken up into their own individual features at a later processing step.
+feature_name : 
+	Hopefully this one is pretty self explanatory. Naming is somewhat arbitrary although I think we would prefer lower case with underscore spelling and periods to delineate different "sections"

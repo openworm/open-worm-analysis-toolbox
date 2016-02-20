@@ -377,7 +377,7 @@ class MotionEvents(object):
 #==============================================================================
 #                               NEW CODE
 #==============================================================================
-class AverageBodyAngle(object):
+class AverageBodyAngle(Feature):
     
     """
     Temporary Feature: locomotion.velocity.avg_body_angle
@@ -407,9 +407,12 @@ class AverageBodyAngle(object):
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
-        #This doesn't exist in the file
-        return None
-      
+        #TODO: Move this into a function in generic_features
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = None
+        self.missing_from_disk = True
+        return self
       
 class LocomotionVelocitySection(Feature):
     
@@ -582,7 +585,11 @@ class MidbodyVelocityDistance(Feature):
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
         #We could calculate this but the features that need it are already calculated
-        return None
+        self = cls.__new__(cls)
+        self.name = feature_name
+        self.value = None
+        self.missing_from_disk = True
+        return self
 
 class MotionEvent(Feature):
 
@@ -683,8 +690,11 @@ class MotionEvent(Feature):
         #it will likeely need to move into the method directly above
         m_event.num_video_frames = num_frames                       
 
-        self.value = m_event                                      
+        self.value = m_event   
 
+        #I think this is an equivalence
+        self.no_events = m_event.is_null
+                               
     @classmethod    
     def from_schafer_file(cls,wf,feature_name,motion_type):
 
@@ -694,6 +704,7 @@ class MotionEvent(Feature):
         ref = utils.get_nested_h5_field(wf.h,['locomotion','motion',motion_type],resolve_value=False)
         
         self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
+        self.no_events = self.value.is_null
 
         return self
         

@@ -488,6 +488,8 @@ class UpsilonTurns(object):
         self.value = getTurnEventsFromSignedFrames(upsilon_frames,
                                                       midbody_distance,
                                                       fps)
+                                                      
+        self.no_events = self.value.is_null
 
     @staticmethod
     def create(upsilon_frames, midbody_distance, fps):
@@ -598,6 +600,7 @@ class OmegaTurns(object):
                                                     midbody_distance,
                                                     fps)
 
+        self.no_events = self.value.is_null
 
     @staticmethod
     def create(options, omega_frames_from_angles, nw, body_angles, midbody_distance, fps):
@@ -1303,6 +1306,7 @@ class NewUpsilonTurns(Feature):
     def __init__(self,wf,feature_name):
         self.name = feature_name
         self.value = self.get_feature(wf,'locomotion.turn_processor').upsilons
+        self.no_events = self.value.is_null
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):
@@ -1317,6 +1321,7 @@ class NewOmegaTurns(Feature):
     def __init__(self,wf,feature_name):
         self.name = feature_name
         self.value = self.get_feature(wf,'locomotion.turn_processor').omegas
+        self.no_events = self.value.is_null
 
     @classmethod    
     def from_schafer_file(cls,wf,feature_name):

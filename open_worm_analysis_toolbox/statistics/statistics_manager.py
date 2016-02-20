@@ -251,11 +251,11 @@ class WormStatistics(object):
             return
 
         # Ensure that we are comparing the same feature!
-        assert(exp_histogram.specs.long_field == 
-               ctl_histogram.specs.long_field)
-        assert(exp_histogram.histogram_type == ctl_histogram.histogram_type)
-        assert(exp_histogram.motion_type == ctl_histogram.motion_type)
-        assert(exp_histogram.data_type == ctl_histogram.data_type)
+        assert(exp_histogram.specs.name == 
+               ctl_histogram.specs.name)
+        #assert(exp_histogram.histogram_type == ctl_histogram.histogram_type)
+        #assert(exp_histogram.motion_type == ctl_histogram.motion_type)
+        #assert(exp_histogram.data_type == ctl_histogram.data_type)
 
         self.exp_histogram = exp_histogram
         self.ctl_histogram = ctl_histogram
@@ -415,25 +415,21 @@ class WormStatistics(object):
     #%%     
     @property    
     def specs(self):
-        assert(self.exp_histogram.specs.long_field == 
-               self.ctl_histogram.specs.long_field)
+        assert(self.exp_histogram.specs.name == 
+               self.ctl_histogram.specs.name)
         return self.exp_histogram.specs
 
     @property    
     def histogram_type(self):
-        assert(self.exp_histogram.histogram_type == self.ctl_histogram.histogram_type)
-        return self.exp_histogram.histogram_type
+        return "histogram_type"
 
     @property    
     def motion_type(self):
-        assert(self.exp_histogram.motion_type == 
-               self.ctl_histogram.motion_type)
-        return self.exp_histogram.motion_type
+        return "motion_type"
 
     @property    
     def data_type(self):
-        assert(self.exp_histogram.data_type == self.ctl_histogram.data_type)
-        return self.exp_histogram.data_type
+        return "data_type"
 
     #%%
     # Internal methods: not really intended for others to consume.     

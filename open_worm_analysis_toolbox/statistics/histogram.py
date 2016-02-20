@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+
+TODO: Most of the attributes here are not computed initially.
+We should add a paragraph or two regarding design decisions made here
+
+
+
 This code is generally interfaced with by the HistogramManager.
 
 The Histogram class, and its subclass, MergedHistogram:
@@ -57,7 +63,7 @@ class Histogram(object):
 
     """    
     #%%
-    def __init__(self, data, specs, histogram_type, motion_type, data_type):
+    def __init__(self, feature):
         """
         Initializer
         
@@ -80,15 +86,23 @@ class Histogram(object):
         
         """
         # The underlying data itself
-        self.data        = data
+        self.data = feature.value
+        self.specs = feature.spec
 
-        # Features specifications
-        self.specs       = specs
-
-        # "Expanded" features specifications
-        self.histogram_type = histogram_type
-        self.motion_type    = motion_type
-        self.data_type      = data_type
+        #JAH TODO: Should this be added to the spec
+        #in the expansion?
+        #TODO: This should also work without expanded features, so this
+        #would need to be in the default spec as well (or have defaults in
+        #the code)
+        #
+        # Maybe this could be made generic such as "feature_manipulations"
+        # with a list of strings that get concatenated together
+        #
+        #=======================================
+        ## "Expanded" features specifications
+        #self.histogram_type = histogram_type
+        #self.motion_type    = motion_type
+        #self.data_type      = data_type
 
         if self.data is not None:
             # Find a set of bins that will cover the data
@@ -98,8 +112,7 @@ class Histogram(object):
 
     #%%
     @classmethod
-    def create_histogram(cls, data, specs, histogram_type, 
-                         motion_type, data_type):
+    def create_histogram(cls, feature):
         """
         Factory method to create a Histogram instance.
 
@@ -127,10 +140,11 @@ class Histogram(object):
                                                  data_type)
         
         """
+        data = feature.value
         if data is None or not isinstance(data, np.ndarray) or data.size == 0:
             return None
         else:
-            return cls(data, specs, histogram_type, motion_type, data_type)
+            return cls(feature)
     #%%
     @property
     def num_samples(self):
@@ -397,9 +411,10 @@ class MergedHistogram(Histogram):
     p_normal: float
     
     """
-    def __init__(self, data, specs, histogram_type, motion_type, data_type):
-        super(MergedHistogram, self).__init__(data, specs, histogram_type, 
-                                              motion_type, data_type)
+    def __init__(self, specs):
+        self.data = None
+        self.specs = specs
+        #super(MergedHistogram, self).__init__(data, specs)
 
     #%%
     @classmethod
@@ -436,11 +451,7 @@ class MergedHistogram(Histogram):
         
         """
         # Create an output object with same meta properties
-        merged_hist = cls(data=None,
-                          specs=histograms[0].specs,
-                          histogram_type=histograms[0].histogram_type,
-                          motion_type=histograms[0].motion_type,
-                          data_type=histograms[0].data_type)
+        merged_hist = cls(specs=histograms[0].specs)
 
         # Let's concatenate all the underlying data in case anyone downstream
         # wants to see it.  It's not needed for the bin and count calculation,

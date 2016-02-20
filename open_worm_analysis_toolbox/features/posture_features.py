@@ -1346,6 +1346,8 @@ class Coils(Feature):
         timer.toc('posture.coils')  
     
         self.value = events.EventListWithFeatures(fps, temp, midbody_distance)
+        
+        self.no_events = self.value.is_null
 
     @classmethod    
     def from_schafer_file(cls, wf, feature_name):
@@ -1353,6 +1355,7 @@ class Coils(Feature):
         self.name = feature_name
         ref = utils.get_nested_h5_field(wf.h,['posture','coils'],resolve_value=False)
         self.value = events.EventListWithFeatures.from_disk(ref,'MRC')
+        self.no_events = self.value.is_null
         return self
     
 class Kinks(Feature):
