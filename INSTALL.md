@@ -28,7 +28,7 @@ chmod +x miniconda.sh
 # Add this Python path to $PATH so typing `python` does not go to `/sr/bin/python` first, which
 # is a symlink by default to `/usr/bin/python2.7`.
 # Also, we make this change permanent by adding this line to ~/.profile
-echo "export PATH=~/miniconda3/bin:$PATH" >> ~/.profile
+echo "PATH=~/miniconda3/bin:$PATH; export PATH" >> ~/.profile
 # Put the path change into immediate effect
 . ~/.profile
 conda install --yes python=$PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
