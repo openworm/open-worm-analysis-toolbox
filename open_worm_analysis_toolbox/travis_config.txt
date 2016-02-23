@@ -1,13 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun 15 21:41:46 2015
+Configuration file used for Travis-CI.  It is renamed to user_config.py by the CI script in .travis.yml
 
-@author: RNEL
 """
-
 EXAMPLE_DATA_PATH = '/home/travis/build/openworm/open-worm-analysis-toolbox/example_data'
 PERFORM_SLOW_ECCENTRICITY_CALC = True
 
-
-#example_video_feature_file = https://drive.google.com/file/d/0B7to9gBdZEyGX2tFQ1JyRzdUYUE/view?usp=sharing
-#example_video_norm_worm.mat = https://drive.google.com/file/d/0B7to9gBdZEyGakg5U3loVUktRm8/view?usp=sharing
