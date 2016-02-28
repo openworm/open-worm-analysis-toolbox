@@ -13,6 +13,8 @@ import warnings
 sys.path.append('..')
 import open_worm_analysis_toolbox as mv
 
+
+sys.path.append('../../tracker-commons/src/Python')
 import wcon
 import pandas as pd
 import numpy as np
@@ -25,7 +27,6 @@ class BasicWorm2(wcon.WCONWorms):
 if __name__ == '__main__':
     warnings.filterwarnings('error')
     print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
-    start_time = mv.utils.timing_function()
 
     base_path = os.path.abspath(
         mv.user_config.EXAMPLE_DATA_PATH)
@@ -67,6 +68,11 @@ if __name__ == '__main__':
                                         for findex in range(num_frames)]
 
     w.data = wcon.wcon_data.parse_data(worm_data_segment)
+    
+    # Shrink the data to make it more manageable
+    #w.data = w.data.loc[:12,:]
+
+    start_time = mv.utils.timing_function()
 
     w.save_to_file('testfile2.wcon', pretty_print=True)
 
