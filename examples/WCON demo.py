@@ -70,7 +70,7 @@ if __name__ == '__main__':
     w.data = wcon.wcon_data.parse_data(worm_data_segment)
     
     # Shrink the data to make it more manageable
-    w.data = w.data.loc[:200,:]
+    #w.data = w.data.loc[:200,:]
 
     start_time = mv.utils.timing_function()
 
