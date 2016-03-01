@@ -78,6 +78,16 @@ if __name__ == '__main__':
 
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))   
+
+    print("NOW, let's LOAD this file!")
+    start_time = mv.utils.timing_function()
+
+    w2 = wcon.WCONWorms.load_from_file('testfile2.wcon')
+    
+    print("Time elapsed: %.2f seconds" %
+          (mv.utils.timing_function() - start_time))
+
+
     
     """
     with open('testfile.wcon', 'w') as f:
