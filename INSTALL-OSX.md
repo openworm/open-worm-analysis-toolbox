@@ -6,9 +6,10 @@ For Developers: Installing the repository on Mac OS X
 # Created: 3/4/2016
 # Modified: 3/4/2016
 # Mac OS X 10.11.3 (El Capitan)
-# Python 3.5
+# Python 3.5 - there are some issues with OpenCV for now. Punting for now.
+# Python 2.7
 # ----------------------------
-PYTHON_VERSION=3.5
+PYTHON_VERSION=2.7
 # CWL Notes: Replace $PWD as needed
 export INSTALL_DIR=$PWD
 
@@ -56,7 +57,11 @@ conda update conda
 #  2) atlas refuses to be recognized explicitly as a conda package for osx-64
 #     hence the following installation sequence follow by the use of pip.
 conda install anaconda-client
-conda create -n owat numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+# CWL Notes:
+# For python 3:
+# conda create -n owat numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+# For python 2 (using the above installation of miniconda3):
+conda create -n owat numpy scipy matplotlib nose pandas statsmodels h5py seaborn python=2
 source activate owat
 pip install atlas
 
@@ -82,4 +87,25 @@ wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
 wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
 chmod 777 *.mat
+
+# CWL Notes: Mac-specific post-processing and workarounds
+
+# 1. To handle the somewhat common "ValueError: unknown local: UTF-8" error,
+# http://stackoverflow.com/questions/19961239/pelican-3-3-pelican-quickstart-error-valueerror-unknown-locale-utf-8
+#    suggests setting two environment variables which I've done here, but on my own system
+#    I've packaged this with miniconda3's modules environment for flexibility and for software
+#    package orthogonality (somewhat) issues.
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+# 2. Helping our code find opencv (in this case my homebrew-installed version)
+export PYTHONPATH=/usr/local/Cellar/opencv/2.4.12_2/lib/python2.7/site-packages:$PYTHONPATH
+
+# 3. matplotlib.pyplot.show() (see plt.show() in 
+#    open_worm_analysis_toolbox/prefeatures/worm_plotter.py) 
+#    has some serious issues with Mac OS X.
+#    
+#  TODO: find a reasonable workaround for what we need for Mac OS X. Interactive window
+#    display is apparently a no-go.
+
 ```

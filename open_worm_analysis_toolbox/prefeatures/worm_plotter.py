@@ -29,6 +29,10 @@ extensible into other visualization possibilities.
 
 """
 
+# *CWL*
+#import matplotlib
+#matplotlib.use('WXAgg')
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -89,6 +93,10 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # interactive, or by default it is set to NOT interactive, which
         # means that NormalizedWormPlottable.show() must be called to get
         # it to display.
+
+        # *CWL* 
+        #plt.ion()
+        #plt.ioff()
         plt.interactive(interactive)
 
         self._paused = False
@@ -105,6 +113,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         # 2. create the figure
         fig = plt.figure(figsize=(5, 5))
+        fig.set_tight_layout(True)
 
         # We have blit=True, so the animation only redraws the elements that
         # have changed.  This means that if the window is resized, everything
@@ -378,6 +387,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         """
         plt.show()
+        #plt.draw()
 
     def _draw_frame(self, frame_index):
         """
