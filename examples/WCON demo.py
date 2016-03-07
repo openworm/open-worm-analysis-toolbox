@@ -21,10 +21,7 @@ import numpy as np
 
 import pickle
 
-class BasicWorm2(wcon.WCONWorms):
-    pass
-
-if __name__ == '__main__':
+if __name__ == '__main__000':
     warnings.filterwarnings('error')
     print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
 
@@ -70,66 +67,67 @@ if __name__ == '__main__':
     w.data = wcon.wcon_data.parse_data(worm_data_segment)
     
     # Shrink the data to make it more manageable
-    #w.data = w.data.loc[:200,:]
+    w.data = w.data.loc[:200,:]
 
     start_time = mv.utils.timing_function()
 
     w.save_to_file('testfile2.wcon', pretty_print=True)
 
+    w = wcon.WCONWorms.load_from_file('testfile2.wcon')
+    with open('w.pickle', 'wb') as f:
+        pickle.dump(w, f)
+
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))   
+
+
+if __name__ == '__main__333':    
+
 
     print("NOW, let's LOAD this file!")
     start_time = mv.utils.timing_function()
 
-    w2 = wcon.WCONWorms.load_from_file('testfile2.wcon')
+    from multiprocessing import Process, Queue
+
+    def load_file(q, l):
+        print("loading file %s" % l)
+        w = wcon.WCONWorms.load_from_file(l)
+        print("done loading file %s" % l)
+        q.put(w)
+        q.put("SURPRISE! %s" % l)
+
+    q = Queue()
+    q.put('hello')
+    p1 = Process(target=load_file, args=(q, 'testfile2.wcon'))
+    #p2 = Process(target=load_file, args=(q, 'testfile3.wcon'))
+
+    p1.start()
+    #p2.start()
+
+
+
+    print("Do we get to after the start()?")
+    w1 = q.get()
+    print(str(w1))
+    print("Past the first get")
+    w2 = q.get()
+    print(str(w2))
+    print("Past the second get")
+    p1.join()
+    print("Past the first p1.join()")
+    #p2.join()
+    #print("Past the SECOND p2.join()")
+    
+    #w1 = q.get()
+    #print("We have w1!")
+    #w2 = q.get()
+    #print("We even have w1 and w2!")
+
+if __name__ == '__main__':
+    print("try LOAD this file")
+    start_time = mv.utils.timing_function()
+    w2 = wcon.WCONWorms.load_from_file('testfile4.wcon')
     
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))
 
-
-    
-    """
-    with open('testfile.wcon', 'w') as f:
-        f.write('{\n    ,\n    {"data":[{')
-        num_timeframes = len(bw.h_dorsal_contour)
-        f.write('"t":%s,' % str(list(range(num_timeframes))))
-        for dimension_index, dimension in enumerate(['x', 'y']):
-            f.write('\n"x":[')
-            for frame_index in range(1): #num_timeframes):
-                    f.write('%s,' % repr(list(bw.h_dorsal_contour[frame_index][dimension_index])))
-            f.write(']')
-        f.write('}]}}')
-    """
-
-    #for bw.h_skeleton
-
-    #nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
-
-    #wp = mv.NormalizedWormPlottable(nw, interactive=False)
-
-    # wp.show()
-
-    # TODO:
-    # bw.save_to_wcon('test.wcon')
-    #bw2 = mv.BasicWorm.load_from_wcon('test.wcon')
-
-    #assert(bw == bw2)
-
-
-def main2():
-    base_path = os.path.abspath(
-        mv.user_config.EXAMPLE_DATA_PATH)
-
-    JSON_path = os.path.join(base_path, 'test.JSON')
-
-    b = mv.BasicWorm()
-    #b.contour[0] = 100.2
-    #b.metadata['vulva'] = 'CCW'
-    b.save_to_JSON(JSON_path)
-
-    c = mv.BasicWorm()
-    c.load_from_JSON(JSON_path)
-    print(c.contour)
-
-    # dat.save_to_JSON(JSON_path)
