@@ -18,26 +18,23 @@ sys.path.append('../../tracker-commons/src/Python')
 import wcon
 import pandas as pd
 import numpy as np
-
+from collections import OrderedDict
 import pickle
 
-if __name__ == '__main__000':
-    warnings.filterwarnings('error')
-    print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
 
-    base_path = os.path.abspath(
-        mv.user_config.EXAMPLE_DATA_PATH)
-    schafer_bw_file_path = \
-        os.path.join(base_path,
-                     "example_contour_and_skeleton_info.mat")
-    bw = mv.BasicWorm.from_schafer_file_factory(
-        schafer_bw_file_path)
+def schafer_to_WCON(MAT_path):
+    """
+    Load a Schafer .mat skeleton file and return a WCONWorms
+    object.
+
+    """
+    bw = mv.BasicWorm.from_schafer_file_factory(MAT_path)
 
     #with open('testfile.pickle', 'wb') as f:
     #    pickle.dump(bw, f)
 
     w = wcon.WCONWorms()
-    w.units = {"t":"s","x":"mm","y":"mm"}
+    w.units = {"t":"0.04*s","x":"um","y":"um"}
     for key in w.units:
         w.units[key] = wcon.MeasurementUnit.create(w.units[key])
     w.units['aspect_size'] = wcon.MeasurementUnit.create('')
@@ -61,21 +58,37 @@ if __name__ == '__main__000':
     #h_dorsal_contour = none_fixer(h_dorsal_contour)
     
     for dimension_index, dimension in enumerate(['x', 'y']):
-        worm_data_segment[dimension] = [list(h_dorsal_contour[findex][0]) 
-                                        for findex in range(num_frames)]
+        worm_data_segment[dimension] = \
+            [list(h_dorsal_contour[findex][dimension_index])
+             for findex in range(num_frames)]
 
-    w.data = wcon.wcon_data.parse_data(worm_data_segment)
-    
+    w._data = wcon.wcon_data.parse_data(worm_data_segment)
+
+    return w
+
+
+if __name__ == '__main__':
+    warnings.filterwarnings('error')
+    print('RUNNING TEST ' + os.path.split(__file__)[1] + ':')
+
+    base_path = os.path.abspath(
+        mv.user_config.EXAMPLE_DATA_PATH)
+    schafer_bw_file_path = \
+        os.path.join(base_path,
+                     "example_contour_and_skeleton_info.mat")
+   
+    w = schafer_to_WCON(schafer_bw_file_path)
+ 
     # Shrink the data to make it more manageable
-    w.data = w.data.loc[:200,:]
+    #w.data = w.data.loc[:200,:]
 
     start_time = mv.utils.timing_function()
 
-    w.save_to_file('testfile2.wcon', pretty_print=True)
+    w.save_to_file('testfile_new.wcon', pretty_print=True)
 
-    w = wcon.WCONWorms.load_from_file('testfile2.wcon')
-    with open('w.pickle', 'wb') as f:
-        pickle.dump(w, f)
+    #w = wcon.WCONWorms.load_from_file('testfile2.wcon')
+    #with open('w.pickle', 'wb') as f:
+    #    pickle.dump(w, f)
 
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))   
@@ -98,7 +111,7 @@ if __name__ == '__main__333':
 
     q = Queue()
     q.put('hello')
-    p1 = Process(target=load_file, args=(q, 'testfile2.wcon'))
+    p1 = Process(target=load_file, args=(q, 'testfile4.wcon'))
     #p2 = Process(target=load_file, args=(q, 'testfile3.wcon'))
 
     p1.start()
@@ -123,10 +136,10 @@ if __name__ == '__main__333':
     #w2 = q.get()
     #print("We even have w1 and w2!")
 
-if __name__ == '__main__':
+if __name__ == '__main__999':
     print("try LOAD this file")
     start_time = mv.utils.timing_function()
-    w2 = wcon.WCONWorms.load_from_file('testfile4.wcon')
+    w2 = wcon.WCONWorms().load_from_file(sys.argv[1])
     
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))
