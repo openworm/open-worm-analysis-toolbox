@@ -46,21 +46,27 @@ def schafer_to_WCON(MAT_path):
     num_frames = len(bw.h_dorsal_contour)
     worm_data_segment = {'id':0, 't':list(range(num_frames))}
 
-    h_dorsal_contour = np.array(bw.h_dorsal_contour)
-    empty_xy = np.empty((2,0))
+    skel_prefixes = {'dorsal_contour': 'dc_',
+                     'ventral_contour': 'vc_',
+                     'skeleton': ''}
 
-    # Replace None entries with empty articulations for both x and y dimensions
-    for frame_index in range(num_frames):
-        if h_dorsal_contour[frame_index] is None:
-            h_dorsal_contour[frame_index] = empty_xy
+    skel_lists = {'dorsal_contour': bw.h_dorsal_contour,
+                  'ventral_contour': bw.h_ventral_contour,
+                  'skeleton': bw.h_skeleton}
 
-    #none_fixer = np.vectorize(lambda a: empty_xy if (a is None) else a)
-    #h_dorsal_contour = none_fixer(h_dorsal_contour)
-    
-    for dimension_index, dimension in enumerate(['x', 'y']):
-        worm_data_segment[dimension] = \
-            [list(h_dorsal_contour[findex][dimension_index])
-             for findex in range(num_frames)]
+    for k in skel_lists.keys():
+        skel = np.array(skel_lists[k])
+
+        # Replace None entries with empty articulations for both x and y dimensions
+        empty_xy = np.empty((2,0))
+        for frame_index in range(num_frames):
+            if skel[frame_index] is None:
+                skel[frame_index] = empty_xy
+
+        for dimension_index, dimension in enumerate(['x', 'y']):
+            worm_data_segment[skel_prefixes + dimension] = \
+                [list(h_dorsal_contour[findex][dimension_index])
+                 for findex in range(num_frames)]
 
     w._data = wcon.wcon_data.parse_data(worm_data_segment)
 
