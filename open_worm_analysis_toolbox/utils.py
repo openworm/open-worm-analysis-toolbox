@@ -236,7 +236,7 @@ def separated_peaks(x, dist, use_max, value_cutoff):
             # whether they are the min or max within their
             # else from being used, so we might as well mark those indices
             # within it's distance as taken as well
-            temp_indices = slice(start_I[cur_index], end_I[cur_index])
+            temp_indices = slice(int(start_I[cur_index]), int(end_I[cur_index]))
             could_be_a_peak[temp_indices] = False
 
             # This line is really slow ...
