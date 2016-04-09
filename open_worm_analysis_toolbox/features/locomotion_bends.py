@@ -55,6 +55,10 @@ class BendHelper(object):
         # Compute the short-time Fourier transforms (STFT).
         #--------------------------------------------------
         # Unpack options ...
+        
+        #make sure the frames per seconds is an integer
+        fps = int(fps)
+
         max_freq = options.max_frequency(fps)
         min_freq = options.min_frequency
         fft_n_samples = options.fft_n_samples
