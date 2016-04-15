@@ -3,4 +3,3 @@
 *.dat
 __pycache__/*
 /open_worm_analysis_toolbox/user_config.py
-/open_worm_analysis_toolbox.egg-info
