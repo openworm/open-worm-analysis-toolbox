@@ -12,10 +12,7 @@ from setuptools import setup
 from codecs import open
 from os import path
 import os
-
-#get __version__ without having to call all the extra modules in __init__
-exec(open('open_worm_analysis_toolbox/version.py').read())
-
+#from open_worm_analysis_toolbox.version import __version__
 
 here = path.abspath(path.dirname(__file__))
 readme_path = path.join(here, 'README.md')
@@ -32,7 +29,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=__version__,
+    version=0,#__version__,
     description='Worm tracker Commons Object Notation',
     long_description=long_description,
     url='https://github.com/openworm/open-worm-analysis-toolbox',

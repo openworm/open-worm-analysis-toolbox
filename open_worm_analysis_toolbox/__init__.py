@@ -14,8 +14,6 @@ License
 https://github.com/openworm/open-worm-analysis-toolbox/LICENSE.md
 
 """
-from .version import __version__
-
 from .prefeatures.video_info import VideoInfo
 from .prefeatures.basic_worm import BasicWorm
 from .prefeatures.normalized_worm import NormalizedWorm
