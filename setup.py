@@ -40,7 +40,7 @@ setup(
     long_description=long_description,
     url='https://github.com/openworm/open-worm-analysis-toolbox',
     author=('Yemini, E; Jucikas, T; Schafer, W; Brown, A; Hokanson, J;'
-            'Currie, M; Javer, A; OpenWorm',
+            'Currie, M; Javer, A; OpenWorm'),
     author_email='mcurrie@openworm.org',
     license='MIT',
     classifiers=[
