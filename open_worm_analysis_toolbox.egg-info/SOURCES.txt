@@ -1,0 +1,11 @@
+setup.py
+open_worm_analysis_toolbox/__init__.py
+open_worm_analysis_toolbox/config.py
+open_worm_analysis_toolbox/user_config.py
+open_worm_analysis_toolbox/utils.py
+open_worm_analysis_toolbox/version.py
+open_worm_analysis_toolbox.egg-info/PKG-INFO
+open_worm_analysis_toolbox.egg-info/SOURCES.txt
+open_worm_analysis_toolbox.egg-info/dependency_links.txt
+open_worm_analysis_toolbox.egg-info/requires.txt
+open_worm_analysis_toolbox.egg-info/top_level.txt

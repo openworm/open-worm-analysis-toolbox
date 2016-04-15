@@ -31,8 +31,219 @@ from . import generic_features
 from .generic_features import Feature
 from .. import utils
 
-#%%
+class BendHelper(object):
+    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
+        """
+        Compute the bend amplitude and frequency.
 
+        Parameters
+        ----------
+        avg_bend_angles: numpy.array
+            - [1 x n_frames]
+        bound_info:
+        options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
+        cur_partition:
+        fps: float
+            Frames Per Second
+
+
+        Returns
+        -------
+
+        """
+
+        # Compute the short-time Fourier transforms (STFT).
+        #--------------------------------------------------
+        # Unpack options ...
+        
+        #make sure the frames per seconds is an integer
+        fps = int(fps)
+
+        max_freq = options.max_frequency(fps)
+        min_freq = options.min_frequency
+        fft_n_samples = options.fft_n_samples
+        max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
+        peak_energy_threshold = options.peak_energy_threshold
+
+        # Maximum index to keep for frequency analysis:
+        fft_max_I = int(fft_n_samples / 2)
+        # This gets multiplied by an index to compute the frequency at that
+        # index
+        freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
+
+        n_frames = len(avg_bend_angles)
+        amps = np.empty(n_frames) * np.NaN
+        freqs = np.empty(n_frames) * np.NaN
+
+        left_bounds = bound_info.left_bounds
+        right_bounds = bound_info.right_bounds
+        is_bad_mask = bound_info.is_bad_mask
+
+        # This is a processing optimization that in general will speed
+        # things up
+        max_freq_I = max_freq / freq_scalar
+        INIT_MAX_I_FOR_BANDWIDTH = \
+            round(options.initial_max_I_pct * max_freq_I)
+
+        # Convert each element from float to int
+        right_bounds = right_bounds.astype(int)
+        left_bounds = left_bounds.astype(int)
+
+        for iFrame in np.flatnonzero(~is_bad_mask):
+            windowed_data = avg_bend_angles[
+                left_bounds[iFrame]:right_bounds[iFrame]]
+            data_win_length = len(windowed_data)
+
+            #
+            # fft frequency and bandwidth
+            #
+            # Compute the real part of the STFT.
+            # These two steps take a lot of time ...
+
+            # New code:
+            fft_data = abs(np.fft.rfft(windowed_data, fft_n_samples))
+
+            # Find the peak frequency.
+            maxPeakI = np.argmax(fft_data)
+            maxPeak = fft_data[maxPeakI]
+
+            # NOTE: If this is true, we'll never bound the peak on the left.
+            # We are looking for a hump with a peak, not just a decaying
+            # signal.
+            if maxPeakI == 0:
+                continue
+
+            unsigned_freq = freq_scalar * maxPeakI
+
+            if not (min_freq <= unsigned_freq <= max_freq):
+                continue
+
+            peakStartI, peakEndI = \
+                self.h__getBandwidth(data_win_length,
+                                     fft_data,
+                                     maxPeakI,
+                                     INIT_MAX_I_FOR_BANDWIDTH)
+            
+            if np.isnan(peakStartI) or np.isnan(peakEndI):
+                #wrong indexes, next loop
+                continue
+
+            # Store data
+            #------------------------------------------------------------------
+            fenergy = fft_data**2
+            tot_energy = np.sum(fenergy)
+            peak_energy = np.sum(fenergy[peakStartI:peakEndI])
+
+            peak_amplitud_treshold = (max_amp_pct_bandwidth * maxPeak)
+            if not (# The minima can't be too big:
+                    fft_data[peakStartI] > peak_amplitud_treshold or
+                    fft_data[peakEndI] > peak_amplitud_treshold or
+                    # Needs to have enough energy:
+                    (peak_energy < (peak_energy_threshold * tot_energy))
+                    ):
+
+                # Convert the peak to a time frequency.
+                dataSign = np.sign(np.nanmean(windowed_data))  # sign the data
+                amps[iFrame] = (2 * fft_data[maxPeakI] /
+                                data_win_length) * dataSign
+                freqs[iFrame] = unsigned_freq * dataSign
+
+        return amps, freqs
+
+
+    def h__getBandwidth(self, data_win_length, fft_data,
+                        max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
+        """
+        The goal is to find minimum 'peaks' that border the maximal frequency
+        response.
+
+        Since this is a time-intensive process, we try and start with a small
+        range of frequencies, as execution time is proportional to the length
+        of the input data.  If this fails we use the full data set.
+
+        Called by: h__getBendData
+
+        Parameters
+        ----------
+        data_win_length
+          Length of real data (ignoring zero padding) that
+          went into computing the FFT
+
+        fft_data
+          Output of the fft function
+
+        max_peak_I
+          Location (index) of the maximum of fft_data
+
+        INIT_MAX_I_FOR_BANDWIDTH
+          See code
+
+
+        Returns
+        -------
+        peak_start_I: scalar
+
+        peak_end_I: scalar
+
+
+        Notes
+        ---------------------------------------
+        Formerly [peak_start_I,peak_end_I] = \
+               h__getBandwidth(data_win_length, fft_data,
+                               max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
+
+        See also, formerly: seg_worm.util.maxPeaksDist
+
+        """
+
+        peakWinSize = round(np.sqrt(data_win_length))
+
+        # Find the peak bandwidth.
+        if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
+            # NOTE: It is incorrect to filter by the maximum here, as we want to
+            # allow matching a peak that will later be judged invalid. If we
+            # filter here we may find another smaller peak which will not be
+            # judged invalid later on.
+            min_peaks, min_peaks_I = utils.separated_peaks(
+                fft_data[:INIT_MAX_I_FOR_BANDWIDTH],
+                peakWinSize,
+                use_max=False,
+                value_cutoff=np.inf)
+
+            del min_peaks   # this part of max_peaks_dist's return is unused
+
+            # TODO: This is wrong, replace add find to utils ...
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
+        else:
+            peak_start_I = np.array([])
+            peak_end_I = np.array([])
+
+        # NOTE: Besides checking for an empty value, we also need to ensure that
+        # the minimum didn't come too close to the data border, as more data
+        # could invalidate the result we have.
+        #
+        # NOTE: In order to save time we only look at a subset of the FFT data.
+        if (peak_end_I.size == 0) | \
+                (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
+            # If true, then rerun on the full set of data
+            [min_peaks, min_peaks_I] = utils.separated_peaks(
+                fft_data, peakWinSize, use_max=False, value_cutoff=np.inf)
+
+            del(min_peaks)  # This part of max_peaks_dist's return is unused
+
+            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
+            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
+
+        assert peak_start_I.size <= 1
+        assert peak_end_I.size <= 1
+        
+        #return an array it is problematic, and can give rise to deprecation errors. Let's return a tuple instead.
+        peak_start_Int = int(peak_start_I[0]) if peak_start_I.size == 1 else np.nan
+        peak_end_Int = int(peak_end_I[0]) if peak_end_I.size == 1 else np.nan
+
+        # TODO: Why is this not a tuple - tuple would be more consistent
+        return (peak_start_Int, peak_end_Int)
 
 class LocomotionBend(object):
     """
@@ -81,7 +292,7 @@ class LocomotionBend(object):
             merge_nans=True)
 
 
-class LocomotionCrawlingBends(object):
+class LocomotionCrawlingBends(BendHelper):
     """
     Locomotion Crawling Bends Feature.
 
@@ -252,212 +463,6 @@ class LocomotionCrawlingBends(object):
 
         timer.toc('locomotion.crawling_bends')
 
-    def h__getBendData(
-            self,
-            avg_bend_angles,
-            bound_info,
-            options,
-            cur_partition,
-            fps):
-        """
-        Compute the bend amplitude and frequency.
-
-        Parameters
-        ----------
-        avg_bend_angles: numpy.array
-            - [1 x n_frames]
-        bound_info:
-        options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
-        cur_partition:
-        fps: float
-            Frames Per Second
-
-
-        Returns
-        -------
-
-        """
-
-        # Compute the short-time Fourier transforms (STFT).
-        #--------------------------------------------------
-        # Unpack options ...
-        max_freq = options.max_frequency(fps)
-        min_freq = options.min_frequency
-        fft_n_samples = options.fft_n_samples
-        max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
-        peak_energy_threshold = options.peak_energy_threshold
-
-        # Maximum index to keep for frequency analysis:
-        fft_max_I = int(fft_n_samples / 2)
-
-        # This gets multiplied by an index to compute the frequency at that
-        # index
-        freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
-
-        n_frames = len(avg_bend_angles)
-        amps = np.empty(n_frames) * np.NaN
-        freqs = np.empty(n_frames) * np.NaN
-
-        left_bounds = bound_info.left_bounds
-        right_bounds = bound_info.right_bounds
-        is_bad_mask = bound_info.is_bad_mask
-
-        # This is a processing optimization that in general will speed
-        # things up
-        max_freq_I = max_freq / freq_scalar
-        INIT_MAX_I_FOR_BANDWIDTH = \
-            round(options.initial_max_I_pct * max_freq_I)
-
-        # Convert each element from float to int
-        right_bounds = right_bounds.astype(int)
-        left_bounds = left_bounds.astype(int)
-
-        for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data = avg_bend_angles[
-                left_bounds[iFrame]:right_bounds[iFrame]]
-            data_win_length = len(windowed_data)
-
-            #
-            # fft frequency and bandwidth
-            #
-            # Compute the real part of the STFT.
-            # These two steps take a lot of time ...
-            #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
-            #fft_data = abs(fft_data[:fft_max_I])
-
-            # it is faster to use rfft, than using fft and abs to obtain the
-            # real part of the transform
-            fft_data = np.fft.rfft(windowed_data, fft_n_samples)
-
-            # Find the peak frequency.
-            maxPeakI = np.argmax(fft_data)
-            maxPeak = fft_data[maxPeakI]
-
-            # NOTE: If this is true, we'll never bound the peak on the left.
-            # We are looking for a hump with a peak, not just a decaying
-            # signal.
-            if maxPeakI == 0:
-                continue
-
-            unsigned_freq = freq_scalar * maxPeakI
-
-            if not (min_freq <= unsigned_freq <= max_freq):
-                continue
-
-            [peakStartI, peakEndI] = \
-                self.h__getBandwidth(data_win_length,
-                                     fft_data,
-                                     maxPeakI,
-                                     INIT_MAX_I_FOR_BANDWIDTH)
-
-            # Store data
-            #------------------------------------------------------------------
-            if not (peakStartI.size == 0 or
-                    peakEndI.size == 0 or
-                    # The minimums can't be too big:
-                    fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
-                    # Needs to have enough energy:
-                    (sum(fft_data[peakStartI:peakEndI] ** 2) <
-                     (peak_energy_threshold * sum(fft_data ** 2)))
-                    ):
-
-                # Convert the peak to a time frequency.
-                                # sign the data
-                data_sign = np.sign(np.nanmean(windowed_data))
-                fft_data_real = np.real(fft_data[maxPeakI])
-                amps[iFrame] = ((2 * fft_data_real / data_win_length)
-                                * data_sign)
-                freqs[iFrame] = unsigned_freq * data_sign
-
-        return [amps, freqs]
-
-    def h__getBandwidth(self, data_win_length, fft_data,
-                        max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
-        """
-        The goal is to find minimum 'peaks' that border the maximal frequency
-        response.
-
-        Since this is a time-intensive process, we try and start with a small
-        range of frequencies, as execution time is proportional to the length
-        of the input data.  If this fails we use the full data set.
-
-        Called by: h__getBendData
-
-        Parameters
-        ----------
-        data_win_length
-          Length of real data (ignoring zero padding) that
-          went into computing the FFT
-
-        fft_data
-          Output of the fft function
-
-        max_peak_I
-          Location (index) of the maximum of fft_data
-
-        INIT_MAX_I_FOR_BANDWIDTH
-          See code
-
-
-        Returns
-        -------
-        peak_start_I: scalar
-
-        peak_end_I: scalar
-
-
-        Notes
-        ---------------------------------------
-        Formerly [peak_start_I,peak_end_I] = \
-               h__getBandwidth(data_win_length, fft_data,
-                               max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
-
-        See also, formerly: seg_worm.util.maxPeaksDist
-
-        """
-
-        peakWinSize = round(np.sqrt(data_win_length))
-
-        # Find the peak bandwidth.
-        if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
-            # NOTE: It is incorrect to filter by the maximum here, as we want to
-            # allow matching a peak that will later be judged invalid. If we
-            # filter here we may find another smaller peak which will not be
-            # judged invalid later on.
-            [min_peaks, min_peaks_I] = utils.separated_peaks(
-                fft_data[:INIT_MAX_I_FOR_BANDWIDTH],
-                peakWinSize,
-                use_max=False,
-                value_cutoff=np.inf)
-
-            del min_peaks   # this part of max_peaks_dist's return is unused
-
-            # TODO: This is wrong, replace add find to utils ...
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
-        else:
-            peak_start_I = np.array([])
-            peak_end_I = np.array([])
-
-        # NOTE: Besides checking for an empty value, we also need to ensure that
-        # the minimum didn't come too close to the data border, as more data
-        # could invalidate the result we have.
-        #
-        # NOTE: In order to save time we only look at a subset of the FFT data.
-        if (peak_end_I.size == 0) | \
-                (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
-            # If true, then rerun on the full set of data
-            [min_peaks, min_peaks_I] = utils.separated_peaks(
-                fft_data, peakWinSize, use_max=False, value_cutoff=np.inf)
-
-            del(min_peaks)  # This part of max_peaks_dist's return is unused
-
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
-
-        # TODO: Why is this not a tuple - tuple would be more consistent
-        return [peak_start_I, peak_end_I]
 
     @classmethod
     def from_disk(cls, bend_ref):
@@ -1204,7 +1209,7 @@ class ForagingAngleSpeed(Feature):
         return cls(wf, feature_name)
 
 
-class CrawlingBend(Feature):
+class CrawlingBend(Feature, BendHelper):
 
     """
     Locomotion Crawling Bends Feature.
@@ -1364,210 +1369,6 @@ class CrawlingBend(Feature):
 #                                'locomotion.bends.' + self.name + '.frequency',
 #                                merge_nans=True)
 
-    def h__getBendData(
-            self,
-            avg_bend_angles,
-            bound_info,
-            options,
-            cur_partition,
-            fps):
-        """
-        Compute the bend amplitude and frequency.
-
-        Parameters
-        ----------
-        avg_bend_angles: numpy.array
-            - [1 x n_frames]
-        bound_info:
-        options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
-        cur_partition:
-        fps: float
-            Frames Per Second
-
-
-        Returns
-        -------
-
-        """
-
-        # Compute the short-time Fourier transforms (STFT).
-        #--------------------------------------------------
-        # Unpack options ...
-        max_freq = options.max_frequency(fps)
-        min_freq = options.min_frequency
-        fft_n_samples = options.fft_n_samples
-        max_amp_pct_bandwidth = options.max_amplitude_pct_bandwidth
-        peak_energy_threshold = options.peak_energy_threshold
-
-        fft_max_I = int(fft_n_samples / 2)
-        # This gets multiplied by an index to compute the frequency at that
-        # index
-        freq_scalar = (fps / 2) * 1 / (fft_max_I - 1)
-
-        n_frames = len(avg_bend_angles)
-        amps = np.empty(n_frames) * np.NaN
-        freqs = np.empty(n_frames) * np.NaN
-
-        left_bounds = bound_info.left_bounds
-        right_bounds = bound_info.right_bounds
-        is_bad_mask = bound_info.is_bad_mask
-
-        # This is a processing optimization that in general will speed
-        # things up
-        max_freq_I = max_freq / freq_scalar
-        INIT_MAX_I_FOR_BANDWIDTH = \
-            round(options.initial_max_I_pct * max_freq_I)
-
-        # Convert each element from float to int
-        right_bounds = right_bounds.astype(int)
-        left_bounds = left_bounds.astype(int)
-
-        for iFrame in np.flatnonzero(~is_bad_mask):
-            windowed_data = avg_bend_angles[
-                left_bounds[iFrame]:right_bounds[iFrame]]
-            data_win_length = len(windowed_data)
-
-            #
-            # fft frequency and bandwidth
-            #
-            # Compute the real part of the STFT.
-            # These two steps take a lot of time ...
-
-            # Original Code:
-            #fft_data = np.fft.fft(windowed_data, fft_n_samples)
-            #fft_data = abs(fft_data[:fft_max_I])
-            # Ver code:
-            #fft_data = np.fft.rfft(windowed_data, fft_n_samples)
-            # New code:
-            fft_data = abs(np.fft.rfft(windowed_data, fft_n_samples))
-
-            # Find the peak frequency.
-            maxPeakI = np.argmax(fft_data)
-            maxPeak = fft_data[maxPeakI]
-
-            # NOTE: If this is true, we'll never bound the peak on the left.
-            # We are looking for a hump with a peak, not just a decaying
-            # signal.
-            if maxPeakI == 0:
-                continue
-
-            unsigned_freq = freq_scalar * maxPeakI
-
-            if not (min_freq <= unsigned_freq <= max_freq):
-                continue
-
-            [peakStartI, peakEndI] = \
-                self.h__getBandwidth(data_win_length,
-                                     fft_data,
-                                     maxPeakI,
-                                     INIT_MAX_I_FOR_BANDWIDTH)
-
-            # Store data
-            #------------------------------------------------------------------
-            if not (peakStartI.size == 0 or
-                    peakEndI.size == 0 or
-                    # The minimums can't be too big:
-                    fft_data[peakStartI] > (max_amp_pct_bandwidth * maxPeak) or
-                    fft_data[peakEndI] > (max_amp_pct_bandwidth * maxPeak) or
-                    # Needs to have enough energy:
-                    (sum(fft_data[peakStartI:peakEndI] ** 2) <
-                     (peak_energy_threshold * sum(fft_data ** 2)))
-                    ):
-
-                # Convert the peak to a time frequency.
-                dataSign = np.sign(np.nanmean(windowed_data))  # sign the data
-                amps[iFrame] = (2 * fft_data[maxPeakI] /
-                                data_win_length) * dataSign
-                freqs[iFrame] = unsigned_freq * dataSign
-
-        return [amps, freqs]
-
-    def h__getBandwidth(self, data_win_length, fft_data,
-                        max_peak_I, INIT_MAX_I_FOR_BANDWIDTH):
-        """
-        The goal is to find minimum 'peaks' that border the maximal frequency
-        response.
-
-        Since this is a time-intensive process, we try and start with a small
-        range of frequencies, as execution time is proportional to the length
-        of the input data.  If this fails we use the full data set.
-
-        Called by: h__getBendData
-
-        Parameters
-        ----------
-        data_win_length
-          Length of real data (ignoring zero padding) that
-          went into computing the FFT
-
-        fft_data
-          Output of the fft function
-
-        max_peak_I
-          Location (index) of the maximum of fft_data
-
-        INIT_MAX_I_FOR_BANDWIDTH
-          See code
-
-
-        Returns
-        -------
-        peak_start_I: scalar
-
-        peak_end_I: scalar
-
-
-        Notes
-        ---------------------------------------
-        Formerly [peak_start_I,peak_end_I] = \
-               h__getBandwidth(data_win_length, fft_data,
-                               max_peak_I, INIT_MAX_I_FOR_BANDWIDTH)
-
-        See also, formerly: seg_worm.util.maxPeaksDist
-
-        """
-
-        peakWinSize = round(np.sqrt(data_win_length))
-
-        # Find the peak bandwidth.
-        if max_peak_I < INIT_MAX_I_FOR_BANDWIDTH:
-            # NOTE: It is incorrect to filter by the maximum here, as we want to
-            # allow matching a peak that will later be judged invalid. If we
-            # filter here we may find another smaller peak which will not be
-            # judged invalid later on.
-            [min_peaks, min_peaks_I] = utils.separated_peaks(
-                fft_data[:INIT_MAX_I_FOR_BANDWIDTH],
-                peakWinSize,
-                use_max=False,
-                value_cutoff=np.inf)
-
-            del min_peaks   # this part of max_peaks_dist's return is unused
-
-            # TODO: This is wrong, replace add find to utils ...
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
-        else:
-            peak_start_I = np.array([])
-            peak_end_I = np.array([])
-
-        # NOTE: Besides checking for an empty value, we also need to ensure that
-        # the minimum didn't come too close to the data border, as more data
-        # could invalidate the result we have.
-        #
-        # NOTE: In order to save time we only look at a subset of the FFT data.
-        if (peak_end_I.size == 0) | \
-                (peak_end_I + peakWinSize >= INIT_MAX_I_FOR_BANDWIDTH):
-            # If true, then rerun on the full set of data
-            [min_peaks, min_peaks_I] = utils.separated_peaks(
-                fft_data, peakWinSize, use_max=False, value_cutoff=np.inf)
-
-            del(min_peaks)  # This part of max_peaks_dist's return is unused
-
-            peak_start_I = min_peaks_I[utils.find(min_peaks_I < max_peak_I, 1)]
-            peak_end_I = min_peaks_I[utils.find(min_peaks_I > max_peak_I, 1)]
-
-        # TODO: Why is this not a tuple - tuple would be more consistent
-        return [peak_start_I, peak_end_I]
 
     @classmethod
     def from_schafer_file(cls, wf, feature_name, bend_name):
