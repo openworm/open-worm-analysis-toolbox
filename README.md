@@ -5,8 +5,7 @@
 [![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 
-<img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125">
-Open Worm Analysis Toolbox
+| <img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
 ====================
 
 The **Open Worm Analysis Toolbox** is a Python port of the Schafer Lab's [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
