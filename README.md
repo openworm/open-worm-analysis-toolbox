@@ -5,6 +5,7 @@
 [![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 
+<img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125">
 Open Worm Analysis Toolbox
 ====================
 
@@ -61,7 +62,7 @@ print("Nonparametric p and q values are %.2f and %.2f, respectively." %
 
 ------------------------
 
-![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
+![](documentation/images/Test%20process.png?raw=true)
 
 Images: *C. elegans* by Bob Goldstein, UNC Chapel Hill
 <http://bio.unc.edu/people/faculty/goldstein/> Freely licensed. Contour
