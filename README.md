@@ -14,7 +14,13 @@ It can be used to process videos of *C. elegans* into statistics so the behaviou
 
 It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms. It was started as a sub-project of the [OpenWorm project](https://github.com/openworm).
 
-It is only about 75% complete. Please see:
+[OWAT is on PyPI](https://pypi.python.org/pypi/open_worm_analysis_toolbox), so to install, simply type:
+
+```
+pip install open_worm_analysis_toolbox
+```
+
+Contributors please see:
 
 -   [Installation
     Guide](INSTALL.md)
