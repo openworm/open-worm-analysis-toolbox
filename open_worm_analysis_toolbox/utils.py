@@ -507,8 +507,6 @@ def interpolate_with_threshold(array,
 
   """
 
-    assert(threshold is None or threshold >= 0)
-
     if make_copy:
         # Use a new array so we don't modify the original array passed to us
         new_array = np.copy(array)
