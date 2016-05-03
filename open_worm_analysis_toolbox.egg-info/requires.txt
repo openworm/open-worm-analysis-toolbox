@@ -1,6 +1,0 @@
-atlas
-nose
-pandas
-statsmodels
-h5py
-seaborn

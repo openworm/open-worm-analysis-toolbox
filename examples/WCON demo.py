@@ -30,9 +30,6 @@ def schafer_to_WCON(MAT_path):
     """
     bw = mv.BasicWorm.from_schafer_file_factory(MAT_path)
 
-    #with open('testfile.pickle', 'wb') as f:
-    #    pickle.dump(bw, f)
-
     w = wcon.WCONWorms()
     w.units = {"t":"0.04*s","x":"um","y":"um"}
     for key in w.units:
@@ -52,7 +49,7 @@ def schafer_to_WCON(MAT_path):
 
     skel_lists = {'dorsal_contour': bw.h_dorsal_contour,
                   'ventral_contour': bw.h_ventral_contour,
-                  'skeleton': bw.h_skeleton}
+                  'skeleton': bw.h_dorsal_contour}  # DEBUG
 
     for k in skel_lists.keys():
         skel = np.array(skel_lists[k])
@@ -64,8 +61,8 @@ def schafer_to_WCON(MAT_path):
                 skel[frame_index] = empty_xy
 
         for dimension_index, dimension in enumerate(['x', 'y']):
-            worm_data_segment[skel_prefixes + dimension] = \
-                [list(h_dorsal_contour[findex][dimension_index])
+            worm_data_segment[skel_prefixes[k] + dimension] = \
+                [list(skel[findex][dimension_index])
                  for findex in range(num_frames)]
 
     w._data = wcon.wcon_data.parse_data(worm_data_segment)
@@ -82,71 +79,14 @@ if __name__ == '__main__':
     schafer_bw_file_path = \
         os.path.join(base_path,
                      "example_contour_and_skeleton_info.mat")
-   
+  
     w = schafer_to_WCON(schafer_bw_file_path)
  
-    # Shrink the data to make it more manageable
-    #w.data = w.data.loc[:200,:]
-
     start_time = mv.utils.timing_function()
 
-    w.save_to_file('testfile_new.wcon', pretty_print=True)
+    w.save_to_file('testfile_new.wcon.zip',
+                   pretty_print=True, compress_file=True)
 
-    #w = wcon.WCONWorms.load_from_file('testfile2.wcon')
-    #with open('w.pickle', 'wb') as f:
-    #    pickle.dump(w, f)
-
-    print("Time elapsed: %.2f seconds" %
-          (mv.utils.timing_function() - start_time))   
-
-
-if __name__ == '__main__333':    
-
-
-    print("NOW, let's LOAD this file!")
-    start_time = mv.utils.timing_function()
-
-    from multiprocessing import Process, Queue
-
-    def load_file(q, l):
-        print("loading file %s" % l)
-        w = wcon.WCONWorms.load_from_file(l)
-        print("done loading file %s" % l)
-        q.put(w)
-        q.put("SURPRISE! %s" % l)
-
-    q = Queue()
-    q.put('hello')
-    p1 = Process(target=load_file, args=(q, 'testfile4.wcon'))
-    #p2 = Process(target=load_file, args=(q, 'testfile3.wcon'))
-
-    p1.start()
-    #p2.start()
-
-
-
-    print("Do we get to after the start()?")
-    w1 = q.get()
-    print(str(w1))
-    print("Past the first get")
-    w2 = q.get()
-    print(str(w2))
-    print("Past the second get")
-    p1.join()
-    print("Past the first p1.join()")
-    #p2.join()
-    #print("Past the SECOND p2.join()")
-    
-    #w1 = q.get()
-    #print("We have w1!")
-    #w2 = q.get()
-    #print("We even have w1 and w2!")
-
-if __name__ == '__main__999':
-    print("try LOAD this file")
-    start_time = mv.utils.timing_function()
-    w2 = wcon.WCONWorms().load_from_file(sys.argv[1])
-    
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))
 

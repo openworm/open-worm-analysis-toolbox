@@ -5,7 +5,7 @@
 [![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 
-Open Worm Analysis Toolbox
+| <img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
 ====================
 
 The **Open Worm Analysis Toolbox** is a Python port of the Schafer Lab's [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
@@ -14,7 +14,13 @@ It can be used to process videos of *C. elegans* into statistics so the behaviou
 
 It is also the package used by the OpenWorm project to determine how closely its simulated worm behaves like real worms. It was started as a sub-project of the [OpenWorm project](https://github.com/openworm).
 
-It is only about 75% complete. Please see:
+[OWAT is on PyPI](https://pypi.python.org/pypi/open_worm_analysis_toolbox), so to install, simply type:
+
+```
+pip install open_worm_analysis_toolbox
+```
+
+Contributors please see:
 
 -   [Installation
     Guide](INSTALL.md)
@@ -61,7 +67,7 @@ print("Nonparametric p and q values are %.2f and %.2f, respectively." %
 
 ------------------------
 
-![](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/images/Test%20process.png?raw=true)
+![](documentation/images/Test%20process.png?raw=true)
 
 Images: *C. elegans* by Bob Goldstein, UNC Chapel Hill
 <http://bio.unc.edu/people/faculty/goldstein/> Freely licensed. Contour
