@@ -552,7 +552,7 @@ def get_frames_per_sample(fps, sample_time):
 
     ostensive_sampling_scale = sample_time * fps
 
-    half_scale = round(ostensive_sampling_scale / 2)
+    half_scale = int(round(ostensive_sampling_scale / 2))
     sampling_scale = 2 * half_scale + 1
 
     assert(isinstance(sampling_scale, int) or sampling_scale.is_integer())
