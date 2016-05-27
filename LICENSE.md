@@ -1,7 +1,7 @@
 License
 =======
 
-Copyright © 2015 OpenWorm
+Copyright © OpenWorm Foundation (Delaware #5785727)
 
 The **Open Worm Analysis Toolbox**, as with all software written as part of the
 [OpenWorm](https://github.com/openworm/) project, is free software under
