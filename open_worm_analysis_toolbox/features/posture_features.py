@@ -11,7 +11,6 @@ import scipy.ndimage.filters as filters
 import numpy as np
 import warnings
 import os
-import inspect
 import h5py
 
 import cv2
@@ -1513,13 +1512,12 @@ def load_eigen_worms():
     From http://stackoverflow.com/questions/50499/
 
     """
-    current_module_path = inspect.getfile(inspect.currentframe())
-    package_path = os.path.dirname(os.path.abspath(current_module_path))
 
-    repo_path = os.path.split(package_path)[0]
-    eigen_worm_file_path = os.path.join(repo_path,
-                                        'features',
-                                        config.EIGENWORM_FILE)
+    eigen_worm_file_path = os.path.join(
+    os.path.dirname(
+        os.path.realpath(__file__)),
+    'feature_metadata',
+    config.EIGENWORM_FILE)
 
     h = h5py.File(eigen_worm_file_path, 'r')
     eigen_worms = h['eigenWorms'].value
