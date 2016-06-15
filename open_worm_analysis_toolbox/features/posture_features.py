@@ -1514,9 +1514,7 @@ def load_eigen_worms():
     """
 
     eigen_worm_file_path = os.path.join(
-    os.path.dirname(
-        os.path.realpath(__file__)),
-    'feature_metadata',
+    os.path.dirname(os.path.realpath(__file__)),
     config.EIGENWORM_FILE)
 
     h = h5py.File(eigen_worm_file_path, 'r')
