@@ -4,8 +4,18 @@ shortDescription: "A testing pipeline that allows us to run a behavioural phenot
 coordinator: mcurrie@openworm.org
 documentation: https://github.com/openworm/open-worm-analysis-toolbox/blob/master/README.md
 gitter: https://gitter.im/openworm/open-worm-analysis-toolbox
+keywords:
+  - data
+  - tools
+languages:
+  - python
+members:
+  - cheelee@openworm.org
 outputs: 
   - openworm/sibernetic
   - openworm/org.geppetto
+parent:
+  - openworm/OpenWorm
 children:
   - openworm/tracker-commons
+tests: true
