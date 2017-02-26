@@ -108,18 +108,20 @@ class SkeletonCalculatorType1(object):
 
         for frame_index, (s1, s2) in \
                 enumerate(zip(h_ventral_contour, h_dorsal_contour)):
-
+                    
             # If the frame has no contour values, assign no skeleton
             # or widths values
             if s1 is None:
                 continue
-
+            assert s1.shape[0] == 2 #x-y must be in the first dimension
+            
             # Smoothing of the contour
             #------------------------------------------
             start = utils.timing_function()
             # Step 1: filter
             filter_width_s1 = utils.round_to_odd(s1.shape[1] *
                                                  FRACTION_WORM_SMOOTH)
+            
             s1[0, :] = sgolay(s1[0, :], window_length=filter_width_s1,
                               polyorder=SMOOTHING_ORDER)
             s1[1, :] = sgolay(s1[1, :], window_length=filter_width_s1,
@@ -127,6 +129,7 @@ class SkeletonCalculatorType1(object):
 
             filter_width_s2 = utils.round_to_odd(s2.shape[1] *
                                                  FRACTION_WORM_SMOOTH)
+            
             s2[0, :] = sgolay(s2[0, :], filter_width_s2, SMOOTHING_ORDER)
             s2[1, :] = sgolay(s2[1, :], filter_width_s2, SMOOTHING_ORDER)
             profile_times['sgolay'] += utils.timing_function() - start
@@ -378,7 +381,7 @@ class SkeletonCalculatorType1(object):
         start_indices[start_indices < 0] = 0
         stop_indices[stop_indices >= n2] = n2 - 1
 
-        return start_indices, stop_indices
+        return start_indices.astype(np.int), stop_indices.astype(np.int)
 
     #%%
     @staticmethod
@@ -550,12 +553,16 @@ class SkeletonCalculatorType1(object):
         n_s2 = s2.shape[1]
 
         end_s1_walk_I = np.ceil(n_s1 * END_S1_WALK_PCT)
+        end_s1_walk_I = end_s1_walk_I.astype(np.int)
         end_s2_walk_I = 2 * end_s1_walk_I
+        
         p1_I, p2_I = SkeletonCalculatorType1.h__getPartnersViaWalk(
             0, end_s1_walk_I,
             0, end_s2_walk_I,
             d_across,
             s1, s2)
+        
+        
 
         # Alter the matches somewhat
         match_I1[p1_I] = p2_I

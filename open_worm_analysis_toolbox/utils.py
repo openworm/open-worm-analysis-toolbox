@@ -983,8 +983,9 @@ def round_to_odd(num):
     num = np.floor(num)
     if num % 2 == 0:
         num = num + 1
-
-    return num
+    
+    #ensure this value is an int
+    return int(num)
 
 
 def compute_normal_vectors(curve, clockwise_orientation=True):

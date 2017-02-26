@@ -367,9 +367,9 @@ class NormalizedWorm(WormPartition):
         except AttributeError:
             s = self.skeleton
             # obtain vector between first and last skeleton point
-            v = s[48, :, :] - s[0, :, :]
+            v = s[-1, :, :] - s[0, :, :]
             # find the angle of this vector
-            self._angle = np.arctan(v[1, :] / v[0, :]) * (180 / np.pi)
+            self._angle = np.arctan2(v[1, :], v[0, :]) * (180 / np.pi)
 
             return self._angle
 
