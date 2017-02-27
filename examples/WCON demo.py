@@ -49,8 +49,8 @@ def schafer_to_WCON(MAT_path):
 
     skel_lists = {'dorsal_contour': bw.h_dorsal_contour,
                   'ventral_contour': bw.h_ventral_contour,
-                  'skeleton': bw.h_dorsal_contour}  # DEBUG
-
+                  'skeleton': bw._h_loaded_skeleton}
+                  
     for k in skel_lists.keys():
         skel = np.array(skel_lists[k])
 
@@ -80,12 +80,16 @@ if __name__ == '__main__':
         os.path.join(base_path,
                      "example_contour_and_skeleton_info.mat")
   
-    w = schafer_to_WCON(schafer_bw_file_path)
+    bw = schafer_to_WCON(schafer_bw_file_path)
  
     start_time = mv.utils.timing_function()
 
-    w.save_to_file('testfile_new.wcon.zip',
-                   pretty_print=True, compress_file=True)
+    bw.save_to_file('testfile_new.wcon',
+                    pretty_print=True, compress_file=True)
+
+    bw_loaded = 
+    
+    nw = mv.NormalizedWorm.from_schafer_file_factory(schafer_nw_file_path)    
 
     print("Time elapsed: %.2f seconds" %
           (mv.utils.timing_function() - start_time))
