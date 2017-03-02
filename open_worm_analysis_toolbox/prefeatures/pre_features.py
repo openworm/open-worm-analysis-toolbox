@@ -96,8 +96,19 @@ class WormParsing(object):
             frames_to_plot=[])
 
         return (h_widths, h_skeleton)
-
     #%%
+
+    @staticmethod
+    def _h_array2list(h_vector):
+        ''' we need to change the data from a (49,2,n) array to a list of (2,49),
+        a bit annoying but necessary
+        '''
+        # we need it to be shape (2,49) instead of (49,2) so we transpose
+        h_list = [h_vector[:,:, ii].T for ii in range(h_vector.shape[2])]
+        # let's use None instead of a all nan vector to indicate an invalid skeleton
+        h_list = [None if np.all(np.isnan(x)) else x for x in h_list]
+        return h_list
+
     @staticmethod
     def compute_angles(h_skeleton):
         """
@@ -151,12 +162,19 @@ class WormParsing(object):
         TODO: sign these angles using ventral_mode ?? - @MichaelCurrie
 
         """
+        #%%
         temp_angle_list = []  # TODO: pre-allocate the space we need
-
+        
+        #i am changing the skeleton to a list, this function can deal with 3D numpy arrays (like in the case of normalized worm)
+        if not isinstance(h_skeleton, list):
+            h_skeleton = WormParsing._h_array2list(h_skeleton)
+            
         for frame_index, cur_skeleton in enumerate(h_skeleton):
             if cur_skeleton is None:
                 temp_angle_list.append([])
             else:
+                assert cur_skeleton.shape[0] == 2
+                
                 sx = cur_skeleton[0, :]
                 sy = cur_skeleton[1, :]
                 cur_skeleton2 = np.rollaxis(cur_skeleton, 1)
@@ -203,10 +221,11 @@ class WormParsing(object):
                 all_frame_angles[valid_vertices_I] = frame_angles
 
                 temp_angle_list.append(all_frame_angles)
-
-        return WormParserHelpers.normalize_all_frames(
+                
+                
+        return  WormParserHelpers.normalize_all_frames(
             temp_angle_list, h_skeleton, config.N_POINTS_NORMALIZED)
-
+        #%%
     #%%
     @staticmethod
     def compute_area(contour):
@@ -254,16 +273,7 @@ class WormParsing(object):
         # Now we use the Shoelace formula to calculate the area of a simple
         # polygon for each frame.
         # Credit to Avelino Javer for suggesting this.
-        signed_area = np.nansum(contour[:,
-                                        0,
-                                        :] * contour_plus_one[:,
-                                                              1,
-                                                              :] - contour[:,
-                                                                           1,
-                                                                           :] * contour_plus_one[:,
-                                                                                                 0,
-                                                                                                 :],
-                                0) / 2
+        signed_area = np.nansum(contour[:,0,:] * contour_plus_one[:,1,:] - contour[:,1,:] * contour_plus_one[:,0,:],0) / 2
 
         # Frames where the contour[:,:,k] is all NaNs will result in a
         # signed_area[k] = 0.  We must replace these 0s with NaNs.
