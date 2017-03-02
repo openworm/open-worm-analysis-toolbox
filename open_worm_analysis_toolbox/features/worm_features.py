@@ -806,8 +806,12 @@ class WormFeatures(object):
             spec = spec_dict[key]
             # TODO: We could pass in the spec instance ...
             # rather than resolving the instance from the name
-            self._get_and_log_feature(spec.name)
-
+            
+            try:
+                self._get_and_log_feature(spec.name)
+            except Exception as e:
+                warnings.warn('Feature {} was not calculated. The following error occured: {}'.format(spec.name, e))
+            
     def initialize_features(self):
         """
         Reads the feature specs and initializes necessary attributes.
