@@ -7,7 +7,6 @@ This module defines the NormalizedWorm class
 import numpy as np
 import scipy.io
 
-import collections
 import copy
 import warnings
 import os
@@ -96,10 +95,6 @@ class NormalizedWorm(WormPartition):
                 WormParsing.compute_skeleton_and_widths(bw.h_ventral_contour,
                                                         bw.h_dorsal_contour,
                                                         frames_to_plot_widths)
-
-            # 2. Calculate the angles along the skeleton for each frame
-            nw.angles = WormParsing.compute_angles(h_skeleton)
-
             # 3. Normalize the skeleton, widths and contour to 49 points
             #    per frame
             nw.skeleton = WormParserHelpers.\
@@ -117,26 +112,81 @@ class NormalizedWorm(WormPartition):
             nw.dorsal_contour = WormParserHelpers.\
                 normalize_all_frames_xy(bw.h_dorsal_contour,
                                         config.N_POINTS_NORMALIZED)
-
-            # 4. Calculate area for each frame
-            nw.area = WormParsing.compute_area(nw.contour)
-
         else:
             # With no contour, let's assume we have a skeleton.
             # Measurements that cannot be calculated (e.g. areas) are simply
             # marked None.
-            nw.angles = WormParsing.compute_angles(bw.skeleton)
             nw.skeleton = WormParserHelpers.\
                 normalize_all_frames_xy(bw.h_skeleton,
                                         config.N_POINTS_NORMALIZED)
             nw.ventral_contour = None
             nw.dorsal_contour = None
-            nw.area = None
 
-        # 6. Calculate length
-        nw.length = WormParsing.compute_skeleton_length(nw.skeleton)
+
+        # Give frame code 1 if the frame is good and the general error
+        # code 100 if the frame is bad.
+        nan_mask = np.all(np.isnan(nw.skeleton), axis=(0,1))
+        nw.video_info.frame_code = 1 * ~nan_mask + 100 * nan_mask
 
         return nw
+
+    @classmethod
+    def from_normalized_array_factory(cls, skeleton, widths, ventral_contour, dorsal_contour):
+        '''
+        I want to be able to construct a normalized worm by giving previously normalized data as input.
+        Probably some inputs could be made optional, but in that case it is better to use BasicWorm
+        '''
+        #check the dimensions are correct
+        dat = (skeleton, ventral_contour, dorsal_contour, widths) #pack to make calculations easier
+        tot_frames = skeleton.shape[-1]
+        assert all(x.shape[0] == config.N_POINTS_NORMALIZED for x in dat)
+        assert all(x.shape[-1] == tot_frames for x in dat)
+        assert all(x.shape[1] == 2 for x in (skeleton, ventral_contour, dorsal_contour))
+
+        nw = cls()
+        nw.ventral_contour = ventral_contour
+        nw.dorsal_contour = dorsal_contour
+        nw.skeleton = skeleton
+        nw.widths = widths
+
+        # Give frame code 1 if the frame is good and the general error
+        # code 100 if the frame is bad.
+        nan_mask = np.all(np.isnan(nw.skeleton), axis=(0,1))
+        nw.video_info.frame_code = 1 * ~nan_mask + 100 * nan_mask
+
+        return nw
+
+
+
+    
+    @property
+    def length(self):
+        try:
+            return self._length
+        except:
+            self._length = WormParsing.compute_skeleton_length(self.skeleton)
+            return self._length
+
+
+    @property
+    def area(self):
+        try:
+            return self._area
+        except:
+            if self.ventral_contour is not None:
+                self._area = WormParsing.compute_area(self.contour)
+            else:
+                self._area = None
+            return self._area
+
+    @property
+    def angles(self):
+        try:
+            return self._angles 
+        except:
+            #I could use the original angles, but it shouldn't make much a huge difference, otherwise we should keep more points for the skeleton
+            self._angles = WormParsing.compute_angles(self.skeleton)
+            return self._angles
 
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):
@@ -237,12 +287,10 @@ class NormalizedWorm(WormPartition):
             del(nw.skeletons)
             del(nw.vulva_contours)
             del(nw.non_vulva_contours)
-            nw.length = nw.lengths
             nw.head_area = nw.head_areas
             nw.tail_area = nw.tail_areas
             nw.vulva_area = nw.vulva_areas
             nw.non_vulva_area = nw.non_vulva_areas
-            del(nw.lengths)
             del(nw.head_areas)
             del(nw.tail_areas)
             del(nw.vulva_areas)
@@ -256,13 +304,18 @@ class NormalizedWorm(WormPartition):
             # of the worm.  No feature requires knowing anything more
             # than just the total area of the worm, so for NormalizedWorm
             # we just store one variable, area, for the whole worm's area.
-            nw.area = nw.head_area + nw.tail_area + \
+            
+            nw._area = nw.head_area + nw.tail_area + \
                 nw.vulva_area + nw.non_vulva_area
             del(nw.head_area)
             del(nw.tail_area)
             del(nw.vulva_area)
             del(nw.non_vulva_area)
 
+
+            nw._length = nw.lengths
+            del(nw.lengths)
+            
             return nw
 
     def get_BasicWorm(self):
@@ -287,6 +340,7 @@ class NormalizedWorm(WormPartition):
         bw.video_info = self.video_info
 
         return bw
+
 
     def validate(self):
         """
