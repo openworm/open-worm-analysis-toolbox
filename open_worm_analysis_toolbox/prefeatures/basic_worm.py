@@ -278,122 +278,79 @@ class BasicWorm(JSON_Serializer):
 
         """
         assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
-        # TODO: more validations, like that the nans are ligned up, etc.
+        assert ventral_contour.shape[1] == 2
 
-        num_frames = np.shape(ventral_contour)[2]
+        # we need to change the data from a (49,2,n) array to a list of (2,49)
+        h_ventral_contour = WormParsing._h_array2list(ventral_contour)
+        h_dorsal_contour = WormParsing._h_array2list(dorsal_contour)
 
-        # we need it to be shape (2,49,n) instead of (49,2,n) so we roll
-        # axis 1 back to position 0.
-        ventral_contour = np.rollaxis(ventral_contour, axis=1)
-        dorsal_contour = np.rollaxis(dorsal_contour, axis=1)
 
-        # Pre-allocate the lists to the correct length
-        h_ventral_contour = [None] * num_frames
-        h_dorsal_contour = [None] * num_frames
-
-        nan_frame_mask = np.isnan(ventral_contour[0, 0, :])
-
-        for frame_index in range(num_frames):
-            # The heterocardinal contour expects to have None entries
-            # in the frame list where we previous had NaN-filled numpy
-            # arrays, so just avoid those elements since they are
-            # already pre-populated with None as required.
-            if not nan_frame_mask[frame_index]:
-                # Otherwise just take the appropriate data from the
-                # appropriate frame:
-                h_ventral_contour[frame_index] = \
-                    ventral_contour[:, :, frame_index]
-                h_dorsal_contour[frame_index] = \
-                    dorsal_contour[:, :, frame_index]
+        # Here I am checking that the contour missing frames are aligned. 
+        # I prefer to populate the frame_code in normalized worm.
+        assert all( v == d for v,d in zip(h_ventral_contour, h_dorsal_contour) if v is None or d is None)
 
         # Having converted our normalized contour to a heterocardinal-type
         # contour that just "happens" to have all its frames with the same
         # number of skeleton points, we can just call another factory method
         # and we are done:
-        return BasicWorm.from_h_contour_factory(h_ventral_contour,
-                                                h_dorsal_contour)
 
-    @classmethod
-    def from_skeleton_factory(cls, skeleton):
-        """
-        Derives a contour from the skeleton
-
-        TODO: right now the method creates the bulge entirely in the y-axis,
-              across the x-axis.  Instead the bulge should be rotated to
-              apply across the head-tail orientation.
-
-        TODO: the bulge should be more naturalistic than the simple sine wave
-              currently used.
-
-        """
-        # Make ventral_contour != dorsal_contour by making them "bulge"
-        # in the middle, in a basic simulation of what a real worm looks like
-        bulge_x = np.zeros((config.N_POINTS_NORMALIZED))
-        # Create the "bulge"
-        x = np.linspace(0, 1, config.N_POINTS_NORMALIZED)
-        bulge_y = np.sin(x * np.pi) * 50
-
-        # Shape is (49,2,1):
-        bulge_frame1 = np.rollaxis(np.dstack([bulge_x, bulge_y]),
-                                   axis=0, start=3)
-        # Repeat the bulge across all frames:
-        num_frames = skeleton.shape[2]
-        bulge_frames = np.repeat(bulge_frame1, num_frames, axis=2)
-
-        # Apply the bulge above and below the skeleton
-        ventral_contour = skeleton + bulge_frames
-        dorsal_contour = skeleton - bulge_frames
-
-        #plt.plot(skeleton[:,0,0], skeleton[:,1,0])
-        #plt.plot(ventral_contour[:,0,0], ventral_contour[:,1,0])
-        #plt.plot(dorsal_contour[:,0,0], dorsal_contour[:,1,0])
-
-        # Now we are reduced to the contour factory case:
-        return BasicWorm.from_contour_factory(ventral_contour, dorsal_contour)
-
-    @classmethod
-    def from_h_contour_factory(cls, h_ventral_contour, h_dorsal_contour):
         bw = cls()
-
         bw.h_ventral_contour = h_ventral_contour
         bw.h_dorsal_contour = h_dorsal_contour
 
-        nan_mask_ventral = np.array([f is None for f in h_ventral_contour])
-        nan_mask_dorsal = np.array([f is None for f in h_dorsal_contour])
-
-        assert(np.all(nan_mask_ventral == nan_mask_dorsal))
-
-        # Give frame code 1 if the frame is good and the general error
-        # code 100 if the frame is bad.
-        bw.video_info.frame_code = np.array(1 * ~nan_mask_ventral +
-                                            100 * nan_mask_ventral)
-
         return bw
 
     @classmethod
-    def from_h_skeleton_factory(cls, h_skeleton, extrapolate_contour=False):
-        """
-        Factory method
+    def from_skeleton_factory(cls, skeleton, extrapolate_contour=False):
+        if not extrapolate_contour:
+            '''
+            Construct the object using only the skeletons without contours. 
+            This is a better default because the contour interpolation will produce a fake contour.
+            '''
+            bw = cls()
 
-        Optionally tries to extrapolate a contour from just the skeleton data.
+            #other option will be to give a list of None, but this make more obvious when there is a mistake
+            bw.h_ventral_contour = None 
+            bw.h_dorsal_contour = None
+            bw._h_skeleton =  WormParsing._h_array2list(skeleton)
+            return bw
 
-        """
-        bw = cls()
-
-        if extrapolate_contour:
-            # TODO: extrapolate the bw.h_ventral_contour and
-            #       bw.h_dorsal_contour from bw._h_skeleton
-            # for now we just make the contour on both sides = skeleton
-            # which makes for a one-dimensional worm.
-            bw.h_ventral_contour = h_skeleton
-            bw.h_dorsal_contour = h_skeleton
         else:
-            raise Exception("Creating a basic worm from a heterocardinal "
-                            "skeleton without extrapolate_contour=True "
-                            "has not yet been implemented")
 
-        return bw
+            """
+            Derives a contour from the skeleton
+            THIS PART IS BUGGY, THE INTERPOLATION WORKS ONLY IN A LIMITED NUMBER OF CASES
+            TODO: right now the method creates the bulge entirely in the y-axis,
+                  across the x-axis.  Instead the bulge should be rotated to
+                  apply across the head-tail orientation.
 
+            TODO: the bulge should be more naturalistic than the simple sine wave
+                  currently used.
+
+
+            """
+            # Make ventral_contour != dorsal_contour by making them "bulge"
+            # in the middle, in a basic simulation of what a real worm looks like
+            bulge_x = np.zeros((config.N_POINTS_NORMALIZED))
+            # Create the "bulge"
+            x = np.linspace(0, 1, config.N_POINTS_NORMALIZED)
+            bulge_y = np.sin(x * np.pi) * 50
+
+            # Shape is (49,2,1):
+            bulge_frame1 = np.rollaxis(np.dstack([bulge_x, bulge_y]),
+                                       axis=0, start=3)
+            # Repeat the bulge across all frames:
+            num_frames = skeleton.shape[2]
+            bulge_frames = np.repeat(bulge_frame1, num_frames, axis=2)
+
+            # Apply the bulge above and below the skeleton
+            ventral_contour = skeleton + bulge_frames
+            dorsal_contour = skeleton - bulge_frames
+
+            # Now we are reduced to the contour factory case:
+            return  BasicWorm.from_contour_factory(ventral_contour, dorsal_contour)
+
+    
     @property
     def h_ventral_contour(self):
         return self._h_ventral_contour
@@ -448,8 +405,9 @@ class BasicWorm(JSON_Serializer):
         except AttributeError:
             # Extrapolate skeleton from contour
             # TODO: improve this: for now
-            self._h_skeleton = WormParsing.compute_skeleton_and_widths(
-                self.h_ventral_contour, self.h_dorsal_contour)[1]
+            self._h_widths, self._h_skeleton = \
+            WormParsing.compute_skeleton_and_widths(self.h_ventral_contour, self.h_dorsal_contour)
+            #how can i call _h_widths???
 
             return self._h_skeleton
 
