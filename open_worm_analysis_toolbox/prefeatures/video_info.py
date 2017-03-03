@@ -95,6 +95,15 @@ class VideoInfo(object):
         self.ventral_mode = config.DEFAULT_VENTRAL_MODE
         self.video_type = 'Not specified'
 
+    def set_ventral_mode(self, ventral_side):
+        if ventral_side == 'clockwise':
+            self.ventral_mode = 1
+        elif ventral_side == 'anticlockwise':
+            self.ventral_mode = 2
+        else:
+            self.ventral_mode = 0
+
+
     @staticmethod
     def sniff_video_properties(file_path):
         """
