@@ -808,9 +808,10 @@ class WormFeatures(object):
             # rather than resolving the instance from the name
             
             try:
+                #print(spec.name)
                 self._get_and_log_feature(spec.name)
             except Exception as e:
-                warnings.warn('Feature {} was not calculated. The following error occured: {}'.format(spec.name, e))
+                warnings.warn('{} was NOT calculated. {}'.format(spec.name, e))
             
     def initialize_features(self):
         """

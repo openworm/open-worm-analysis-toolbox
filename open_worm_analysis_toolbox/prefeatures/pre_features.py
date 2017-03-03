@@ -228,16 +228,18 @@ class WormParsing(object):
         #%%
     #%%
     @staticmethod
-    def compute_area(contour):
+    def compute_signed_area(contour):
         """
-        Compute the area of the worm, for each frame of video, from a
-        normalized contour.
+        Compute the signed area of the worm, for each frame of video, from a
+        normalized contour. The area should be negative for an clockwise contour
+        and positive for a anticlockwise.
 
         Parameters
         -------------------------
         contour: a (98,2,n)-shaped numpy array
             The contour points, in order around the worm, with two redundant
             points at the head and tail.
+
 
         Returns
         -------------------------
@@ -279,7 +281,7 @@ class WormParsing(object):
         # signed_area[k] = 0.  We must replace these 0s with NaNs.
         signed_area[np.flatnonzero(np.isnan(contour[0, 0, :]))] = np.NaN
 
-        return np.abs(signed_area)
+        return signed_area
 
     #%%
     @staticmethod

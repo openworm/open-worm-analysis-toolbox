@@ -173,20 +173,46 @@ class NormalizedWorm(WormPartition):
         try:
             return self._area
         except:
-            if self.ventral_contour is not None:
-                self._area = WormParsing.compute_area(self.contour)
+            if self.signed_area is not None:
+                self._area = np.abs(self.signed_area)
             else:
                 self._area = None
             return self._area
+
+    @property
+    def signed_area(self):
+        try:
+            return self._signed_area
+        except:
+            if self.ventral_contour is not None:
+                self._signed_area = WormParsing.compute_signed_area(self.contour)
+            else:
+                self._x = None
+            return self._signed_area
 
     @property
     def angles(self):
         try:
             return self._angles 
         except:
-            #I could use the original angles, but it shouldn't make much a huge difference, otherwise we should keep more points for the skeleton
+            #I could use the unnormalized skeleton (more points), but it shouldn't make much a huge difference.
             self._angles = WormParsing.compute_angles(self.skeleton)
+            
+            if self.signed_area is not None:
+                #I want to use the signed area to determine the contour orientation.
+                #first assert all the contours have the same orientation. This might be a problem 
+                #if the worm does change ventral/dorsal orientation, but for the moment let's make it a requirement.
+                valid = self.signed_area[~np.isnan(self.signed_area)]
+                assert np.all(valid>=0) if valid[0]>=0 else np.all(valid<=0) 
+
+                #if the orientation is anticlockwise (negative signed area) change the sign of the angles
+                if valid[0] < 0:
+                    self._angles *= -1
+
             return self._angles
+
+
+
 
     @classmethod
     def from_schafer_file_factory(cls, data_file_path):

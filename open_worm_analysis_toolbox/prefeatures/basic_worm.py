@@ -312,7 +312,11 @@ class BasicWorm(JSON_Serializer):
             #other option will be to give a list of None, but this make more obvious when there is a mistake
             bw.h_ventral_contour = None 
             bw.h_dorsal_contour = None
-            bw._h_skeleton =  WormParsing._h_array2list(skeleton)
+            if isinstance(skeleton, list):
+                bw._h_skeleton =  skeleton
+            else:
+                assert skeleton.shape[1] == 2
+                bw._h_skeleton =  WormParsing._h_array2list(skeleton)
             return bw
 
         else:
