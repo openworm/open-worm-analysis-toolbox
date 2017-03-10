@@ -277,13 +277,17 @@ class BasicWorm(JSON_Serializer):
         BasicWorm object
 
         """
-        assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
-        assert ventral_contour.shape[1] == 2
-
-        # we need to change the data from a (49,2,n) array to a list of (2,49)
-        h_ventral_contour = WormParsing._h_array2list(ventral_contour)
-        h_dorsal_contour = WormParsing._h_array2list(dorsal_contour)
-
+        
+        
+        if not isinstance(ventral_contour, (list,tuple)):
+            # we need to change the data from a (49,2,n) array to a list of (2,49)
+            assert(np.shape(ventral_contour) == np.shape(dorsal_contour))
+            assert ventral_contour.shape[1] == 2
+            h_ventral_contour = WormParsing._h_array2list(ventral_contour)
+            h_dorsal_contour = WormParsing._h_array2list(dorsal_contour)
+        else:
+            h_ventral_contour = ventral_contour
+            h_dorsal_contour = dorsal_contour
 
         # Here I am checking that the contour missing frames are aligned. 
         # I prefer to populate the frame_code in normalized worm.
@@ -312,7 +316,7 @@ class BasicWorm(JSON_Serializer):
             #other option will be to give a list of None, but this make more obvious when there is a mistake
             bw.h_ventral_contour = None 
             bw.h_dorsal_contour = None
-            if isinstance(skeleton, list):
+            if isinstance(skeleton,  (list,tuple)):
                 bw._h_skeleton =  skeleton
             else:
                 assert skeleton.shape[1] == 2
