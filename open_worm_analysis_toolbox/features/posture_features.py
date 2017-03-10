@@ -153,116 +153,6 @@ class BendSection(object):
                               high_corr_value=0.60)
 
 
-def get_eccentricity_and_orientation(features_ref):
-    """
-     Get the eccentricity and orientation of a contour using the moments
-
-     http://en.wikipedia.org/wiki/Image_moment
-
-     Calculated by opencv:moments (http://docs.opencv.org/modules/imgproc/
-     doc/structural_analysis_and_shape_descriptors.html).
-    """
-
-    """
-    OLD CODE FROM JIM DESCRIPTION:
-
-   get_eccentricity
-
-    [eccentricity, orientation] = \
-        seg_worm.utils.posture.getEccentricity(xOutline, yOutline, gridSize)
-
-    Given x and y coordinates of the outline of a region of interest, fill
-    the outline with a grid of evenly spaced points and use these points in
-    a center of mass calculation to calculate the eccentricity and
-    orientation of the equivalent ellipse.
-
-    Placing points in the contour is a well known computer science problem
-    known as the Point-in-Polygon problem.
-
-    http://en.wikipedia.org/wiki/Point_in_polygon
-
-    This function became a lot more complicated in an attempt to make it
-    go much faster. The complication comes from the simplication that can
-    be made when the worm doesn't bend back on itself at all.
-
-
-    OldName: getEccentricity.m
-
-
-    Inputs:
-    =======================================================================
-    xOutline : [96 x num_frames] The x coordinates of the contour. In
-                particular the contour
-                starts at the head and goes to the tail and then back to
-                the head (although no points are redundant)
-    yOutline : [96 x num_frames]  The y coordinates of the contour "  "
-
-    N_ECCENTRICITY (a constant from config.py):
-               (scalar) The # of points to place in the long dimension.
-               More points gives a more accurate estimate of the ellipse
-               but increases the calculation time.
-
-    Outputs: a namedtuple containing:
-    =======================================================================
-    eccentricity - [1 x num_frames]
-        The eccentricity of the equivalent ellipse
-    orientation  - [1 x num_frames]
-        The orientation angle of the equivalent ellipse
-
-    Nature Methods Description
-    =======================================================================
-    Eccentricity.
-    ------------------
-    The eccentricity of the worm’s posture is measured using
-    the eccentricity of an equivalent ellipse to the worm’s filled contour.
-    The orientation of the major axis for the equivalent ellipse is used in
-    computing the amplitude, wavelength, and track length (described
-    below).
-
-    Status
-    =======================================================================
-    The code below is finished although I want to break it up into smaller
-    functions. I also need to submit a bug report for the inpoly FEX code.
-
-    Translation of: SegwormMatlabClasses /
-    +seg_worm / +utils / +posture / getEccentricity.m
-    """
-
-    features_ref.timer.tic()
-
-    contour = features_ref.nw.contour_without_redundant_points
-
-    # OpenCV does not like float64, this actually make sense for image
-    # data where we do not require a large precition in the decimal part.
-    # This could save quite a lot of space
-    contour = contour.astype(np.float32)
-    tot = contour.shape[-1]
-
-    eccentricity = np.full(tot, np.nan)
-    orientation = np.full(tot, np.nan)
-    for ii in range(tot):
-        worm_cnt = contour[:, :, ii]
-        if ~np.any(np.isnan(worm_cnt)):
-            moments = cv2.moments(worm_cnt)
-
-            a1 = (moments['mu20'] + moments['mu02']) / 2
-            a2 = np.sqrt(4 * moments['mu11']**2 +
-                         (moments['mu20'] - moments['mu02'])**2) / 2
-
-            minor_axis = a1 - a2
-            major_axis = a1 + a2
-
-            eccentricity[ii] = np.sqrt(1 - minor_axis / major_axis)
-            orientation[ii] = \
-                np.arctan2(2 * moments['mu11'],
-                           (moments['mu20'] - moments['mu02'])) / 2
-            # Convert from radians to degrees
-            orientation[ii] *= 180 / np.pi
-
-    features_ref.timer.toc('posture.eccentricity_and_orientation')
-
-    return (eccentricity, orientation)
-
 
 class AmplitudeAndWavelength(object):
 
@@ -881,39 +771,63 @@ class EccentricityAndOrientationProcessor(Feature):
 
         Calculated by opencv moments():
         http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html
+        
+        
+        This code might not work if there are redundant points in the contour (green approximation fails if the)
 
         """
+        
+        def _cnt_eccentricty_orientation(cnt):
+            moments = cv2.moments(cnt)
+            a1 = (moments['mu20'] + moments['mu02']) / 2
+            a2 = np.sqrt(4 * moments['mu11']**2 +
+                         (moments['mu20'] - moments['mu02'])**2) / 2
+
+            minor_axis = a1 - a2
+            major_axis = a1 + a2
+            
+            ecc = np.sqrt(1 - minor_axis / major_axis)
+            ang = \
+                np.arctan2(2 * moments['mu11'],
+                           (moments['mu20'] - moments['mu02'])) / 2
+            
+            return ecc, ang
+
+        def _skel_eccentricity_orientation(skel):
+            (CMx, CMy), (L, W), angle = cv2.minAreaRect(skel)
+            quirkiness = np.sqrt(1 - W**2 / L**2)
+            return quirkiness, angle
 
         self.name = feature_name
 
         wf.timer.tic()
 
-        contour = wf.nw.contour_without_redundant_points
+        #Try to use the contour, otherwise use the skeleton
+        try:
+            points = wf.nw.contour_without_redundant_points
+            _eccentricity_orientation = _cnt_eccentricty_orientation
+            
+        except:
+            points = wf.nw.skeleton
+            _eccentricity_orientation = _skel_eccentricity_orientation
 
+        
+        
+        
         # OpenCV does not like float64, this actually make sense for image
         # data where we do not require a large precition in the decimal part.
         # This could save quite a lot of space
-        contour = contour.astype(np.float32)
-        tot = contour.shape[-1]
+        points = points.astype(np.float32)
+        
+        tot = points.shape[-1]
 
         eccentricity = np.full(tot, np.nan)
         orientation = np.full(tot, np.nan)
         for ii in range(tot):
-            worm_cnt = contour[:, :, ii]
-            if ~np.any(np.isnan(worm_cnt)):
-                moments = cv2.moments(worm_cnt)
-
-                a1 = (moments['mu20'] + moments['mu02']) / 2
-                a2 = np.sqrt(4 * moments['mu11']**2 +
-                             (moments['mu20'] - moments['mu02'])**2) / 2
-
-                minor_axis = a1 - a2
-                major_axis = a1 + a2
-
-                eccentricity[ii] = np.sqrt(1 - minor_axis / major_axis)
-                orientation[ii] = \
-                    np.arctan2(2 * moments['mu11'],
-                               (moments['mu20'] - moments['mu02'])) / 2
+            frame_points = points[:, :, ii]
+            
+            if ~np.any(np.isnan(frame_points)):
+                eccentricity[ii], orientation[ii] = _eccentricity_orientation(frame_points)
                 # Convert from radians to degrees
                 orientation[ii] *= 180 / np.pi
 
