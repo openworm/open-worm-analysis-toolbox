@@ -773,8 +773,13 @@ class EccentricityAndOrientationProcessor(Feature):
         http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html
         
         
-        This code might not work if there are redundant points in the contour (green approximation fails if the)
-
+        This code might not work if there are redundant points in the contour (green approximation fails if the).
+        
+        If there are not contours the code will use the minimal rectangular area.
+        http://docs.opencv.org/2.4/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=minarearect#minarearect
+        The function moments only work on a close non overlaping contour.
+        The box width and length are used instead of the ellipse minor and major axis
+        to get an estimate of the eccentricity.
         """
         
         def _cnt_eccentricty_orientation(cnt):
@@ -795,6 +800,8 @@ class EccentricityAndOrientationProcessor(Feature):
 
         def _skel_eccentricity_orientation(skel):
             (CMx, CMy), (L, W), angle = cv2.minAreaRect(skel)
+            if W > L:
+                L, W = W, L  # switch if width is larger than length
             quirkiness = np.sqrt(1 - W**2 / L**2)
             return quirkiness, angle
 
