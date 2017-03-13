@@ -154,241 +154,6 @@ class BendSection(object):
 
 
 
-class AmplitudeAndWavelength(object):
-
-    """
-    Attributes
-    ----------
-    amplitude_max
-    amplitude_ratio
-    primary_wavelength
-    secondary_wavelength
-    track_length
-    """
-
-    def __init__(self, theta_d, features_ref):
-        """
-        Calculates amplitude of rotated worm (relies on orientation
-        aka theta_d)
-
-        Parameters
-        ----------
-        theta_d
-        sx
-        sy
-        worm_lengths
-
-        """
-
-        timer = features_ref.timer
-        timer.tic()
-
-        options = features_ref.options
-
-        # TODO: Check if we should even compute this code
-
-        nw = features_ref.nw
-        sx = nw.skeleton_x
-        sy = nw.skeleton_y
-        worm_lengths = nw.length
-
-        # TODO: Move these into posture options
-
-        wave_options = features_ref.options.posture.wavelength
-
-        # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/
-        # %2Bseg_worm/%2Bfeatures/%40posture/getAmplitudeAndWavelength.m
-        N_POINTS_FFT = wave_options.n_points_fft
-        HALF_N_FFT = int(N_POINTS_FFT / 2)
-        MIN_DIST_PEAKS = wave_options.min_dist_peaks
-        WAVELENGTH_PCT_MAX_CUTOFF = wave_options.pct_max_cutoff
-        WAVELENGTH_PCT_CUTOFF = wave_options.pct_cutoff
-
-        # TODO: Write in Python
-        # assert(size(sx,1) <= N_POINTS_FFT,'# of points used in the FFT
-        # must be more than the # of points in the skeleton')
-
-        # Rotate the worm so that it lies primarily along a single axis
-        #-------------------------------------------------------------
-        theta_r = theta_d * (np.pi / 180)
-        wwx = sx * np.cos(theta_r) + sy * np.sin(theta_r)
-        wwy = sx * -np.sin(theta_r) + sy * np.cos(theta_r)
-
-        # Subtract mean
-        #-----------------------------------------------------------------
-        #??? - Why isn't this done before the rotation?
-        wwx = wwx - np.mean(wwx, axis=0)
-        wwy = wwy - np.mean(wwy, axis=0)
-
-        # Calculate track amplitude
-        #-----------------------------------------------------------------
-        amp1 = np.amax(wwy, axis=0)
-        amp2 = np.amin(wwy, axis=0)
-        amplitude_max = amp1 - amp2
-        amp2 = np.abs(amp2)
-
-        # Ignore NaN division warnings
-        with np.errstate(invalid='ignore'):
-            amplitude_ratio = np.divide(np.minimum(amp1, amp2),
-                                        np.maximum(amp1, amp2))
-
-        # Calculate track length
-        #-----------------------------------------------------------------
-        # This is the x distance after rotation, and is different from the
-        # worm length which follows the skeleton. This will always be smaller
-        # than the worm length. If the worm were perfectly straight these
-        # values would be the same.
-        track_length = np.amax(wwx, axis=0) - np.amin(wwx, axis=0)
-
-        # Wavelength calculation
-        #-----------------------------------------------------------------
-        dwwx = np.diff(wwx, 1, axis=0)
-
-        # Does the sign change? This is a check to make sure that the
-        # change in x is always going one way or the other. Is sign of all
-        # differences the same as the sign of the first, or rather, are any
-        # of the signs not the same as the first sign, indicating a "bad
-        # worm orientation".
-        #
-        # NOT: This means that within a frame, if the worm x direction
-        #      changes, then it is considered a bad worm and is not
-        #      evaluated for wavelength
-        #
-
-        with np.errstate(invalid='ignore'):
-            bad_worm_orientation = np.any(
-                np.not_equal(np.sign(dwwx), np.sign(dwwx[0, :])), axis=0)
-
-        n_frames = bad_worm_orientation.size
-
-        primary_wavelength = np.zeros(n_frames)
-        primary_wavelength[:] = np.NaN
-        secondary_wavelength = np.zeros(n_frames)
-        secondary_wavelength[:] = np.NaN
-
-        # NOTE: Right now this varies from worm to worm which means the
-        # spectral resolution varies as well from worm to worm
-        spatial_sampling_frequency = (wwx.shape[0] - 1) / track_length
-
-        ds = 1 / spatial_sampling_frequency
-
-        frames_to_calculate = \
-            (np.logical_not(bad_worm_orientation)).nonzero()[0]
-
-        for cur_frame in frames_to_calculate:
-
-            # Create an evenly sampled x-axis, note that ds varies
-            x1 = wwx[0, cur_frame]
-            x2 = wwx[-1, cur_frame]
-            if x1 > x2:
-                iwwx = utils.colon(x1, -ds[cur_frame], x2)
-                iwwy = np.interp(iwwx,
-                                 wwx[::-1, cur_frame],
-                                 wwy[::-1, cur_frame])
-                iwwy = iwwy[::-1]
-            else:
-                iwwx = utils.colon(x1, ds[cur_frame], x2)
-                iwwy = np.interp(iwwx,
-                                 wwx[:, cur_frame],
-                                 wwy[:, cur_frame])
-                iwwy = iwwy[::-1]
-
-            temp = np.fft.fft(iwwy, N_POINTS_FFT)
-
-            if options.mimic_old_behaviour:
-                iY = temp[0:HALF_N_FFT]
-                iY = iY * np.conjugate(iY) / N_POINTS_FFT
-            else:
-                iY = np.abs(temp[0:HALF_N_FFT])
-
-            # Find peaks that are greater than the cutoff
-            peaks, indx = utils.separated_peaks(iY,
-                                                MIN_DIST_PEAKS,
-                                                True,
-                                                (WAVELENGTH_PCT_MAX_CUTOFF *
-                                                 np.amax(iY)))
-
-            # This is what the supplemental says, not what was done in
-            # the previous code. I'm not sure what was done for the actual
-            # paper, but I would guess they used power.
-            #
-            # This gets used when determining the secondary wavelength, as
-            # it must be greater than half the maximum to be considered a
-            # secondary wavelength.
-
-            # NOTE: True Amplitude = 2*abs(fft)/
-            #                    (length_real_data i.e. 48 or 49, not 512)
-            #
-            # i.e. for a sinusoid of a given amplitude, the above formula
-            # would give you the amplitude of the sinusoid
-
-            # We sort the peaks so that the largest is at the first index
-            # and will be primary, this was not done in the previous
-            # version of the code
-            I = np.argsort(-1 * peaks)
-            indx = indx[I]
-
-            frequency_values = (indx - 1) / N_POINTS_FFT * \
-                spatial_sampling_frequency[cur_frame]
-
-            all_wavelengths = 1 / frequency_values
-
-            p_temp = all_wavelengths[0]
-
-            if indx.size > 1:
-                s_temp = all_wavelengths[1]
-            else:
-                s_temp = np.NaN
-
-            worm_wavelength_max = (WAVELENGTH_PCT_CUTOFF *
-                                   worm_lengths[cur_frame])
-
-            # Cap wavelengths ...
-            if p_temp > worm_wavelength_max:
-                p_temp = worm_wavelength_max
-
-            # ??? Do we really want to keep this as well if p_temp == worm_2x?
-            # i.e., should the secondary wavelength be valid if the primary is
-            # also limited in this way ?????
-            if s_temp > worm_wavelength_max:
-                s_temp = worm_wavelength_max
-
-            primary_wavelength[cur_frame] = p_temp
-            secondary_wavelength[cur_frame] = s_temp
-
-        if options.mimic_old_behaviour:
-            # In the old code, the first peak (i.e. larger wavelength,
-            # lower frequency) was always the primary wavelength, where as
-            # the new definition is based on the amplitude of the peaks,
-            # not their position along the frequency axis
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                mask = secondary_wavelength > primary_wavelength
-
-            temp = secondary_wavelength[mask]
-            secondary_wavelength[mask] = primary_wavelength[mask]
-            primary_wavelength[mask] = temp
-
-        self.amplitude_max = amplitude_max
-        self.amplitude_ratio = amplitude_ratio
-        self.primary_wavelength = primary_wavelength
-        self.secondary_wavelength = secondary_wavelength
-        self.track_length = track_length
-
-        timer.toc('posture.amplitude_and_wavelength')
-
-"""
-
-Old Vs New Code:
-  - power instead of magnitude is used for comparison
-  - primary and secondary wavelength may be switched ...
-  - error in maxPeaksDist for distance threshold, not sure where in code
-        - see frame 880 for example
-        - minus 1 just gives new problem - see 1794
-
-"""
-
-
 def get_worm_kinks(features_ref):
     """
     Parameters
@@ -782,26 +547,36 @@ class EccentricityAndOrientationProcessor(Feature):
         to get an estimate of the eccentricity.
         """
         
-        def _cnt_eccentricty_orientation(cnt):
+        def _cnt_momentum(cnt):
             moments = cv2.moments(cnt)
-            a1 = (moments['mu20'] + moments['mu02']) / 2
-            a2 = np.sqrt(4 * moments['mu11']**2 +
-                         (moments['mu20'] - moments['mu02'])**2) / 2
+            return moments['mu11'], moments['mu20'], moments['mu02']
+            
+        def _skel_momentum(skel):
+            mat_cov = np.cov(skel.T)
+            mu20 = mat_cov[0,0]
+            mu02 = mat_cov[1,1]
+            mu11 = mat_cov[0,1]
+            return mu11, mu20, mu02
+            
+            
+        def _momentum_eccentricty_orientation(mu11, mu20, mu02):
+            a1 = (mu20 + mu02) / 2
+            a2 = np.sqrt(4 * mu11**2 +
+                         (mu20 - mu02)**2) / 2
 
             minor_axis = a1 - a2
             major_axis = a1 + a2
             
             ecc = np.sqrt(1 - minor_axis / major_axis)
-            ang = \
-                np.arctan2(2 * moments['mu11'],
-                           (moments['mu20'] - moments['mu02'])) / 2
-            
+            ang = np.arctan2(2 * mu11, (mu20 - mu02)) / 2
+            ang *= 180 / np.pi
             return ecc, ang
 
-        def _skel_eccentricity_orientation(skel):
+        def _box_eccentricity_orientation(skel):
             (CMx, CMy), (L, W), angle = cv2.minAreaRect(skel)
             if W > L:
                 L, W = W, L  # switch if width is larger than length
+                angle += 90 # this means that the angle is shifted too
             quirkiness = np.sqrt(1 - W**2 / L**2)
             return quirkiness, angle
 
@@ -812,12 +587,11 @@ class EccentricityAndOrientationProcessor(Feature):
         #Try to use the contour, otherwise use the skeleton
         try:
             points = wf.nw.contour_without_redundant_points
-            _eccentricity_orientation = _cnt_eccentricty_orientation
+            _get_momentum = _cnt_momentum
             
         except:
             points = wf.nw.skeleton
-            _eccentricity_orientation = _skel_eccentricity_orientation
-
+            _get_momentum = _skel_momentum
         
         
         
@@ -834,10 +608,10 @@ class EccentricityAndOrientationProcessor(Feature):
             frame_points = points[:, :, ii]
             
             if ~np.any(np.isnan(frame_points)):
-                eccentricity[ii], orientation[ii] = _eccentricity_orientation(frame_points)
-                # Convert from radians to degrees
-                orientation[ii] *= 180 / np.pi
-
+                mu11, mu20, mu02 = _get_momentum(frame_points)
+                eccentricity[ii], orientation[ii] = \
+                _momentum_eccentricty_orientation(mu11, mu20, mu02)
+                
         wf.timer.toc(self.name)
 
         self.eccentricity = eccentricity
@@ -924,9 +698,8 @@ class AmplitudeAndWavelengthProcessor(Feature):
         WAVELENGTH_PCT_MAX_CUTOFF = wave_options.pct_max_cutoff
         WAVELENGTH_PCT_CUTOFF = wave_options.pct_cutoff
 
-        # TODO: Write in Python
-        # assert(size(sx,1) <= N_POINTS_FFT,'# of points used in the FFT
-        # must be more than the # of points in the skeleton')
+        assert sx.shape[0] <= N_POINTS_FFT # of points used in the FFT
+        # must be more than the number of points in the skeleton
 
         # Rotate the worm so that it lies primarily along a single axis
         #-------------------------------------------------------------
@@ -963,7 +736,7 @@ class AmplitudeAndWavelengthProcessor(Feature):
         # Wavelength calculation
         #-----------------------------------------------------------------
         dwwx = np.diff(wwx, 1, axis=0)
-
+        
         # Does the sign change? This is a check to make sure that the
         # change in x is always going one way or the other. Is sign of all
         # differences the same as the sign of the first, or rather, are any
@@ -980,11 +753,8 @@ class AmplitudeAndWavelengthProcessor(Feature):
                 np.not_equal(np.sign(dwwx), np.sign(dwwx[0, :])), axis=0)
 
         n_frames = bad_worm_orientation.size
-
-        primary_wavelength = np.zeros(n_frames)
-        primary_wavelength[:] = np.NaN
-        secondary_wavelength = np.zeros(n_frames)
-        secondary_wavelength[:] = np.NaN
+        primary_wavelength = np.full(n_frames, np.nan)
+        secondary_wavelength = np.full(n_frames, np.nan)
 
         # NOTE: Right now this varies from worm to worm which means the
         # spectral resolution varies as well from worm to worm
@@ -996,38 +766,34 @@ class AmplitudeAndWavelengthProcessor(Feature):
             (np.logical_not(bad_worm_orientation)).nonzero()[0]
 
         for cur_frame in frames_to_calculate:
-
             # Create an evenly sampled x-axis, note that ds varies
-            x1 = wwx[0, cur_frame]
-            x2 = wwx[-1, cur_frame]
-            if x1 > x2:
-                iwwx = utils.colon(x1, -ds[cur_frame], x2)
-                iwwy = np.interp(iwwx,
-                                 wwx[::-1, cur_frame],
-                                 wwy[::-1, cur_frame])
-                iwwy = iwwy[::-1]
-            else:
-                iwwx = utils.colon(x1, ds[cur_frame], x2)
-                iwwy = np.interp(iwwx,
-                                 wwx[:, cur_frame],
-                                 wwy[:, cur_frame])
-                iwwy = iwwy[::-1]
-
+            xx = wwx[:, cur_frame]
+            yy = wwy[:, cur_frame]
+            if xx[0] > xx[-1]: #switch we want to have monotonically inceasing values
+                xx = xx[::-1]
+                yy = yy[::-1]
+            
+            iwwx = utils.colon(xx[0], ds[cur_frame], xx[-1])
+            iwwy = np.interp(iwwx, xx, yy)
+            iwwy = iwwy[::-1]
+            
             temp = np.fft.fft(iwwy, N_POINTS_FFT)
+
 
             if options.mimic_old_behaviour:
                 iY = temp[0:HALF_N_FFT]
                 iY = iY * np.conjugate(iY) / N_POINTS_FFT
             else:
                 iY = np.abs(temp[0:HALF_N_FFT])
-
+            
+            
             # Find peaks that are greater than the cutoff
             peaks, indx = utils.separated_peaks(iY,
                                                 MIN_DIST_PEAKS,
                                                 True,
                                                 (WAVELENGTH_PCT_MAX_CUTOFF *
                                                  np.amax(iY)))
-
+            
             # This is what the supplemental says, not what was done in
             # the previous code. I'm not sure what was done for the actual
             # paper, but I would guess they used power.
