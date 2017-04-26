@@ -63,6 +63,10 @@ class Bends(object):
                 # dorsal/ventral orientation)
                 temp_std[temp_mean < 0] *= -1
 
+
+
+
+
             setattr(self, partition_key,
                     BendSection(temp_mean, temp_std, partition_key))
 
@@ -696,87 +700,7 @@ def get_worm_coils(features_ref, midbody_distance):
     return events.EventListWithFeatures(fps, temp, midbody_distance)
 
 
-class Directions(object):
 
-    """
-
-    Attributes
-    ----------
-    tail2head : numpy.array
-    head : numpy.array
-    tail : numpy.array
-
-    """
-
-    # These are the names of the final fields
-    direction_keys = ['tail2head', 'head', 'tail']
-
-    def __init__(self, features_ref):
-        """
-
-        Parameters
-        ----------
-        features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
-
-        """
-
-        timer = features_ref.timer
-        timer.tic()
-
-        nw = features_ref.nw
-
-        sx = nw.skeleton_x
-        sy = nw.skeleton_y
-        wp = nw.worm_partitions
-
-        # For each set of indices, compute the centroids of the tip and tail
-        # then compute a direction vector between them (tip - tail)
-
-        # I - "indices" - really a tuple of start,stop
-        TIP_I = [wp['head'], wp['head_tip'], wp['tail_tip']]
-        TAIL_I = [wp['tail'], wp['head_base'], wp['tail_base']]
-
-        TIP_S = [slice(*x) for x in TIP_I]  # S - slice
-        TAIL_S = [slice(*x) for x in TAIL_I]
-
-        for iVector, attribute_name in enumerate(self.direction_keys):
-            tip_x = np.mean(sx[TIP_S[iVector], :], axis=0)
-            tip_y = np.mean(sy[TIP_S[iVector], :], axis=0)
-            tail_x = np.mean(sx[TAIL_S[iVector], :], axis=0)
-            tail_y = np.mean(sy[TAIL_S[iVector], :], axis=0)
-
-            dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y,
-                                                 tip_x - tail_x)
-            setattr(self, attribute_name, dir_value)
-
-        timer.toc('posture.directions')
-
-    @classmethod
-    def from_disk(cls, data):
-
-        self = cls.__new__(cls)
-
-        for key in self.direction_keys:
-            temp_value = utils._extract_time_from_disk(data, key)
-            setattr(self, key, temp_value)
-
-        return self
-
-    def __repr__(self):
-        return utils.print_object(self)
-
-    def __eq__(self, other):
-
-        same_values = True
-        for partition_key in self.direction_keys:
-            value1 = getattr(self, partition_key)
-            value2 = getattr(self, partition_key)
-            same_values = same_values and \
-                utils.correlation(value1, value2,
-                                  'posture.directions.' + partition_key,
-                                  high_corr_value=0.99)
-
-        return same_values
 
 
 def get_eigenworms(features_ref):
@@ -1598,6 +1522,12 @@ class EigenProjectionProcessor(Feature):
         angles = angles - np.mean(angles, axis=0)
 
         eigen_projections = np.dot(eigen_worms[0:N_EIGENWORMS_USE, :], angles)
+        
+        #change signs for anticlockwise
+        #if nw.video_info.ventral_mode == 2:
+        #    eigen_projections = -eigen_projections
+
+
         timer.toc('posture.eigenworms')
 
         self.value = eigen_projections
@@ -1819,9 +1749,13 @@ class Direction(Feature):
         tail_x = np.mean(sx[tail_slice, :], axis=0)
         tail_y = np.mean(sy[tail_slice, :], axis=0)
 
+
+        #attempt to match segworm behaviour. This should shift the angles by 180.
+        # dy = (tip_y - tail_y)
+        # dx = (tip_x - tail_x)
+        # dir_value = 180 / np.pi * (-np.arctan2(dy,-dx))
         dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y,
                                              tip_x - tail_x)
-
         self.value = dir_value
 
     @classmethod
@@ -1830,3 +1764,4 @@ class Direction(Feature):
         self.value = utils.get_nested_h5_field(
             wf.h, ['posture', 'directions', key_name])
         return self
+
