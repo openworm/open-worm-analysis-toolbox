@@ -190,6 +190,9 @@ class NormalizedWorm(WormPartition):
                 self._x = None
             return self._signed_area
 
+
+
+
     @property
     def angles(self):
         try:
@@ -197,19 +200,26 @@ class NormalizedWorm(WormPartition):
         except:
             #I could use the unnormalized skeleton (more points), but it shouldn't make much a huge difference.
             self._angles = WormParsing.compute_angles(self.skeleton)
+
+            if self.video_info.ventral_mode == 2:
+
+                #switch in the angle sign in case of of anticlockwise
+                self._angles = -self._angles
+                return self._angles
+
+            #A second option would be to use the contour orientation to find the correct side
+            # if self.signed_area is not None:
+            #     #I want to use the signed area to determine the contour orientation.
+            #     #first assert all the contours have the same orientation. This might be a problem 
+            #     #if the worm does change ventral/dorsal orientation, but for the moment let's make it a requirement.
+            #     valid = self.signed_area[~np.isnan(self.signed_area)]
+            #     assert np.all(valid>=0) if valid[0]>=0 else np.all(valid<=0) 
+
+            #     #if the orientation is anticlockwise (negative signed area) change the sign of the angles
+            #     if valid[0] < 0:
+            #         self._angles *= -1
+
             
-            if self.signed_area is not None:
-                #I want to use the signed area to determine the contour orientation.
-                #first assert all the contours have the same orientation. This might be a problem 
-                #if the worm does change ventral/dorsal orientation, but for the moment let's make it a requirement.
-                valid = self.signed_area[~np.isnan(self.signed_area)]
-                assert np.all(valid>=0) if valid[0]>=0 else np.all(valid<=0) 
-
-                #if the orientation is anticlockwise (negative signed area) change the sign of the angles
-                if valid[0] < 0:
-                    self._angles *= -1
-
-            return self._angles
 
 
 
