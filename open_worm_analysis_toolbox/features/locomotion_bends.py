@@ -32,7 +32,7 @@ from .generic_features import Feature
 from .. import utils
 
 class BendHelper(object):
-    def h__getBendData(self, avg_bend_angles, bound_info, options, cur_partition, fps):
+    def h__getBendData(self, avg_bend_angles, bound_info, options, fps):
         """
         Compute the bend amplitude and frequency.
 
@@ -42,7 +42,6 @@ class BendHelper(object):
             - [1 x n_frames]
         bound_info:
         options: open-worm-analysis-toolbox.features.feature_processing_options.LocomotionCrawlingBends
-        cur_partition:
         fps: float
             Frames Per Second
 
@@ -450,7 +449,6 @@ class LocomotionCrawlingBends(BendHelper):
             [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                          bound_info,
                                                          options,
-                                                         cur_partition_name,
                                                          fps)
 
             setattr(
@@ -967,7 +965,7 @@ class ForagingBends(Feature):
             self.h__foragingData(fps, nose_bends,
                                  options.min_nose_window_samples(fps))
 
-        if ventral_mode > 1:
+        if ventral_mode == 2:
             nose_amps = -nose_amps
             nose_freqs = -nose_freqs
 
@@ -1347,8 +1345,8 @@ class CrawlingBend(Feature, BendHelper):
         [amplitude, frequency] = self.h__getBendData(avg_bend_angles,
                                                      bound_info,
                                                      options,
-                                                     bend_name,
                                                      fps)
+
         self.amplitude = amplitude
         self.frequency = frequency
         # setattr(self,cur_partition_name,LocomotionBend(amplitude,frequency,cur_partition_name))
@@ -1730,3 +1728,4 @@ class BendFrequency(Feature):
         return utils.correlation(self.value, other.value,
                                  self.name,
                                  merge_nans=True)
+
