@@ -1197,8 +1197,6 @@ class FeatureProcessingSpec(object):
         else:  # mrc #TODO: make explicit check for MRC otherwise throw an error
             final_method = getattr(class_method, 'from_schafer_file')
 
-        if 'locomotion.velocity.tail_tip' == self.name:
-            print(self.name, final_method)
         
         timer = wf.timer
         timer.tic()
