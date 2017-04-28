@@ -419,8 +419,6 @@ class VelocitySpeed(Feature):
     def __init__(self, wf, feature_name, segment):
         self.name = feature_name
         parent_feature_name = get_parent_feature_name(feature_name)
-
-        print(feature_name, parent_feature_name)
         self.value = self.get_feature(wf, parent_feature_name).speed
 
     @classmethod
