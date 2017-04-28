@@ -808,10 +808,11 @@ class WormFeatures(object):
             # rather than resolving the instance from the name
             
             try:
-                #print(spec.name)
+                
                 self._get_and_log_feature(spec.name)
             except Exception as e:
-                warnings.warn('{} was NOT calculated. {}'.format(spec.name, e))
+                msg_warn = '{} was NOT calculated. {}'.format(spec.name, e)
+                warnings.warn(msg_warn)
             
     def initialize_features(self):
         """
@@ -1196,6 +1197,9 @@ class FeatureProcessingSpec(object):
         else:  # mrc #TODO: make explicit check for MRC otherwise throw an error
             final_method = getattr(class_method, 'from_schafer_file')
 
+        if 'locomotion.velocity.tail_tip' == self.name:
+            print(self.name, final_method)
+        
         timer = wf.timer
         timer.tic()
 
