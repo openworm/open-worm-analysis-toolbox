@@ -205,7 +205,8 @@ class NormalizedWorm(WormPartition):
 
                 #switch in the angle sign in case of of anticlockwise
                 self._angles = -self._angles
-                return self._angles
+            
+            return self._angles
 
             #A second option would be to use the contour orientation to find the correct side
             # if self.signed_area is not None:

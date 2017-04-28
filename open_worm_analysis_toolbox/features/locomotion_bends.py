@@ -1314,7 +1314,7 @@ class CrawlingBend(Feature, BendHelper):
         is_paused = self.get_feature(
             wf, 'locomotion.motion_events.is_paused').value
         bend_angles = wf.nw.angles
-
+        
         timer = wf.timer
         timer.tic()
 
