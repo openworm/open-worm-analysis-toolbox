@@ -130,7 +130,7 @@ def get_partition_angles(nw, partition_key, data_key='skeleton',
     return get_angles(segment_x, segment_y, head_to_tail)
 
 
-def h__computeAngularSpeed(fps, segment_x, segment_y,
+def h__computeAngularSpeed(time, segment_x, segment_y,
                            left_I, right_I, ventral_mode):
     """
 
@@ -141,7 +141,7 @@ def h__computeAngularSpeed(fps, segment_x, segment_y,
 
     Parameters
     ----------
-    fps :
+    time :
     segment_x : numpy array, shape (p,n)
         The x's of the partition being considered.
     segment_y : numpy array, shape (p,n)
@@ -180,7 +180,7 @@ def h__computeAngularSpeed(fps, segment_x, segment_y,
     angular_speed = (angular_speed + 180) % (360) - 180
 
     # Change units from degrees per frame to degrees per second
-    angular_speed = angular_speed * (1 / fps)
+    angular_speed = angular_speed  / time
 
     # Sign the direction for dorsal/ventral locomotion.
     # if ventral_mode is anything but anticlockwise, then negate angular_speed:
@@ -490,7 +490,7 @@ def compute_speed(fps, sx, sy, avg_body_angle, sample_time, ventral_mode=0):
 
     # 2) Compute angular speed (Formally known as direction :/)
     # --------------------------------------------------------
-    angular_speed[keep_mask] = h__computeAngularSpeed(fps, sx, sy,
+    angular_speed[keep_mask] = h__computeAngularSpeed(time, sx, sy,
                                                       left_I, right_I,
                                                       ventral_mode)
 
