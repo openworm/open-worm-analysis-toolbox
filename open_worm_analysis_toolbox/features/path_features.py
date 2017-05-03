@@ -177,13 +177,8 @@ class Duration(Feature):
         scaled_zeroed_sx = (scaled_sx - x_scaled_min).astype(int)
         scaled_zeroed_sy = (scaled_sy - y_scaled_min).astype(int)
 
-        arena_size = [
-            y_scaled_max - y_scaled_min + 1, x_scaled_max - x_scaled_min + 1]
+        arena_size = (int(y_scaled_max - y_scaled_min + 1), int(x_scaled_max - x_scaled_min + 1))
         ar = Arena(sx, sy, arena_size)
-
-        # Arena_size must be a list of whole numbers or else we'll get an
-        # error when calling np.zeroes(arena_size) later on
-        arena_size = np.array(arena_size, dtype=int)
 
         #----------------------------------------------------------------------
         def h__populateArenas(arena_size, sys, sxs, s_points, isnan_mask):
@@ -233,10 +228,11 @@ class Duration(Feature):
                     cur_frame = frames_run[iFrame]
                     cur_x = sxs[s_indices[0]:s_indices[1], cur_frame]
                     cur_y = sys[s_indices[0]:s_indices[1], cur_frame]
+                    
                     temp_arena[cur_y, cur_x] += 1
 
-                arenas[iPoint] = temp_arena[::-1, :]  # FLip axis to maintain
-                # consistency with Matlab
+                # Flip y-axis to maintain consistency with Matlab
+                arenas[iPoint] = temp_arena[::-1, :]
 
             return arenas
         #----------------------------------------------------------------------
@@ -313,11 +309,13 @@ class DurationElement(object):
 
         if arena_coverage is None:
             return
+            
+        self.indices = np.flatnonzero(arena_coverage)
+        self.times = arena_coverage.flat[self.indices] / fps
 
-        arena_coverage_r = np.reshape(arena_coverage, arena_coverage.size, 'F')
-        self.indices = np.nonzero(arena_coverage_r)[0]
-        self.times = arena_coverage_r[self.indices] / fps
-
+        #arena_coverage_r = np.reshape(arena_coverage, arena_coverage.size, 'F')
+        #self.indices = np.nonzero(arena_coverage_r)[0]
+        #self.times = arena_coverage_r[self.indices] / fps
         #wtf3 = np.nonzero(arena_coverage)
 
         #self.indices = np.transpose(np.nonzero(arena_coverage))
@@ -412,88 +410,6 @@ class Arena(object):
 
         return self
 
-
-def worm_path_curvature(features_ref):
-    """
-
-    Delete this class after features refactoring is done
-
-    Parameters:
-    -----------
-    x :
-      Worm skeleton x coordinates, []
-
-    """
-
-    BODY_DIFF = 0.5
-
-    nw = features_ref.nw
-    x = nw.skeleton_x
-    y = nw.skeleton_y
-    fps = features_ref.video_info.fps
-    ventral_mode = nw.video_info.ventral_mode
-
-    # https://github.com/JimHokanson/SegwormMatlabClasses/blob/master/%2Bseg_worm/%2Bfeatures/%40path/wormPathCurvature.m
-
-    BODY_I = slice(44, 3, -1)
-
-    # This was nanmean but I think mean will be fine. nanmean was
-    # causing the program to crash
-    diff_x = np.mean(np.diff(x[BODY_I, :], axis=0), axis=0)
-    diff_y = np.mean(np.diff(y[BODY_I, :], axis=0), axis=0)
-    avg_body_angles_d = np.arctan2(diff_y, diff_x) * 180 / np.pi
-
-    # NOTE: This is what is in the MRC code, but differs from their description.
-    # In this case I think the skeleton filtering makes sense so we'll keep it.
-    speed, ignored_variable, motion_direction = \
-        velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I, :],
-                                      avg_body_angles_d, BODY_DIFF, ventral_mode)
-
-    frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
-    half_frame_scale = int((frame_scale - 1) / 2)
-
-    # Compute the angle differentials and distances.
-    speed = np.abs(speed)
-
-    # At each frame, we'll compute the differences in motion direction using
-    # some frame in the future relative to the current frame
-    #
-    #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
-    #------------------------------------------------
-    diff_motion = np.empty(speed.shape)
-    diff_motion[:] = np.NAN
-
-    right_max_I = len(diff_motion) - frame_scale
-    diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1)
-                   :] - motion_direction[0:(right_max_I + 1)]
-
-    with np.errstate(invalid='ignore'):
-        diff_motion[diff_motion >= 180] -= 360
-        diff_motion[diff_motion <= -180] += 360
-
-    distance_I_base = slice(half_frame_scale, -(frame_scale + 1), 1)
-    distance_I_shifted = slice(half_frame_scale + frame_scale, -1, 1)
-
-    distance = np.empty(speed.shape)
-    distance[:] = np.NaN
-
-    distance[distance_I_base] = speed[distance_I_base] + \
-        speed[distance_I_shifted] * BODY_DIFF / 2
-
-    with np.errstate(invalid='ignore'):
-        distance[distance < 1] = np.NAN
-
-    return (diff_motion / distance) * (np.pi / 180)
-
-#======================================================================
-#                   New Feature Reorganization
-#======================================================================
-#        nw = features_ref.nw
-#
-
-#
-#        #Curvature
-#        self.curvature = path_features.worm_path_curvature(features_ref)
 
 
 class NewRange(Feature):
@@ -595,9 +511,7 @@ class Curvature(Feature):
             velocity_module.compute_speed(fps, x[BODY_I, :], y[BODY_I, :],
                                           avg_body_angles_d, BODY_DIFF, ventral_mode)
 
-        frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
-        half_frame_scale = int((frame_scale - 1) / 2)
-
+        
         # Compute the angle differentials and distances.
         speed = np.abs(speed)
 
@@ -606,28 +520,29 @@ class Curvature(Feature):
         #
         #i.e. diff_motion[current_frame] = motion_direction[current_frame + frame_scale] - motion_direction[current_frame]
         #------------------------------------------------
-        diff_motion = np.empty(speed.shape)
-        diff_motion[:] = np.NAN
+        
+        frame_scale = velocity_module.get_frames_per_sample(fps, BODY_DIFF)
+        
+        half_frame_scale = int(round((frame_scale + 1) / 2))
+        #substract one to deal with python indexes
+        fs_ind = frame_scale -1 
+        h_fs_ind = half_frame_scale - 1
 
-        right_max_I = len(diff_motion) - frame_scale
-        diff_motion[0:(right_max_I + 1)] = motion_direction[(frame_scale - 1)
-                       :] - motion_direction[0:(right_max_I + 1)]
+        diff_motion = np.full(speed.shape, np.nan)
+        diff_motion[:-fs_ind] = motion_direction[fs_ind:] - motion_direction[:-fs_ind]
 
+
+        s1 = speed[h_fs_ind:-fs_ind]
+        s2 = speed[(h_fs_ind+fs_ind):]
+        distance = np.full(speed.shape, np.nan)
+        distance[h_fs_ind:-fs_ind] =  (s1+s2)/2 * BODY_DIFF
+
+        
+        #correct out of range
         with np.errstate(invalid='ignore'):
             diff_motion[diff_motion >= 180] -= 360
             diff_motion[diff_motion <= -180] += 360
-
-        distance_I_base = slice(half_frame_scale, -(frame_scale + 1), 1)
-        distance_I_shifted = slice(half_frame_scale + frame_scale, -1, 1)
-
-        distance = np.empty(speed.shape)
-        distance[:] = np.NaN
-
-        distance[distance_I_base] = speed[distance_I_base] + \
-            speed[distance_I_shifted] * BODY_DIFF / 2
-
-        with np.errstate(invalid='ignore'):
-            distance[distance < 1] = np.NAN
+            distance[distance < 1] = np.nan
 
         self.value = (diff_motion / distance) * (np.pi / 180)
 

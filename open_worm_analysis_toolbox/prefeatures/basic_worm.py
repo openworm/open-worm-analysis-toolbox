@@ -472,11 +472,11 @@ class WormPartition():
                                 'hips': (33, 41),
                                 'tail': (41, 49),
                                 # refinements of ['head']
-                                'head_tip': (0, 4),
-                                'head_base': (4, 8),    # ""
+                                'head_tip': (0, 3),
+                                'head_base': (5, 8),    # ""
                                 # refinements of ['tail']
-                                'tail_base': (40, 45),
-                                'tail_tip': (45, 49),   # ""
+                                'tail_base': (41, 44),
+                                'tail_tip': (46, 49),   # ""
                                 'all': (0, 49),
                                 # neck, midbody, and hips
                                 'body': (8, 41)}

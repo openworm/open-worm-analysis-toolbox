@@ -202,8 +202,7 @@ class NormalizedWorm(WormPartition):
             self._angles = WormParsing.compute_angles(self.skeleton)
 
             if self.video_info.ventral_mode == 2:
-
-                #switch in the angle sign in case of of anticlockwise
+                #switch in the angle sign in case of the contour orientation is anticlockwise
                 self._angles = -self._angles
             
             return self._angles

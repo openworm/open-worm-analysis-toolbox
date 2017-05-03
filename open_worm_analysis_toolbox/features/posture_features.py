@@ -354,88 +354,6 @@ def get_worm_coils(features_ref, midbody_distance):
 
     return events.EventListWithFeatures(fps, temp, midbody_distance)
 
-
-
-
-
-def get_eigenworms(features_ref):
-    """
-
-
-    THIS WILL BE DELETED SOON:
-    Moved to EigenProjectionProcessor
-
-
-    Parameters
-    ----------
-    features_ref : open-worm-analysis-toolbox.features.worm_features.WormFeatures
-
-    Returns
-    -------
-    eigen_projections: [N_EIGENWORMS_USE, n_frames]
-
-    """
-
-    nw = features_ref.nw
-    sx = nw.skeleton_x
-    sy = nw.skeleton_y
-    posture_options = features_ref.options.posture
-    N_EIGENWORMS_USE = posture_options.n_eigenworms_use
-
-    timer = features_ref.timer
-    timer.toc
-
-    # eigen_worms: [7,48]
-    eigen_worms = load_eigen_worms()
-
-    #???? How does this differ from nw.angles???
-    angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
-
-    n_frames = sx.shape[1]
-
-    # need to deal with cases where angle changes discontinuously from -pi
-    # to pi and pi to -pi.  In these cases, subtract 2pi and add 2pi
-    # respectively to all remaining points.  This effectively extends the
-    # range outside the -pi to pi range.  Everything is re-centred later
-    # when we subtract off the mean.
-    false_row = np.zeros((1, n_frames), dtype=bool)
-
-    # NOTE: By adding the row of falses, we shift the trues
-    # to the next value, which allows indices to match. Otherwise after every
-    # find statement we would need to add 1, I think this is a bit faster ...
-
-    with np.errstate(invalid='ignore'):
-        mask_pos = np.concatenate(
-            (false_row, np.diff(angles, n=1, axis=0) > np.pi), axis=0)
-        mask_neg = np.concatenate(
-            (false_row, np.diff(angles, n=1, axis=0) < -np.pi), axis=0)
-
-    # Only fix the frames we need to, in which there is a jump in going
-    # from one segment to the next ...
-    fix_frames_I = (
-        np.any(np.logical_or(mask_pos, mask_neg), axis=0)).nonzero()[0]
-
-    for cur_frame in fix_frames_I:
-
-        positive_jump_I = (mask_pos[:, cur_frame]).nonzero()[0]
-        negative_jump_I = (mask_neg[:, cur_frame]).nonzero()[0]
-
-        # subtract 2pi from remainging data after positive jumps
-        # Note that the jumps impact all subsequent frames
-        for cur_pos_jump in positive_jump_I:
-            angles[cur_pos_jump:, cur_frame] -= 2 * np.pi
-
-        # add 2pi to remaining data after negative jumps
-        for cur_neg_jump in negative_jump_I:
-            angles[cur_neg_jump:, cur_frame] += 2 * np.pi
-
-    angles = angles - np.mean(angles, axis=0)
-
-    eigen_projections = np.dot(eigen_worms[0:N_EIGENWORMS_USE, :], angles)
-    timer.toc('posture.eigenworms')
-
-    return eigen_projections
-
 #=====================================================================
 #                           New Features
 #=====================================================================
@@ -1152,22 +1070,25 @@ class EigenProjectionProcessor(Feature):
 
         self.name = feature_name
 
-        nw = wf.nw
-        sx = nw.skeleton_x
-        sy = nw.skeleton_y
         posture_options = wf.options.posture
         N_EIGENWORMS_USE = posture_options.n_eigenworms_use
-
         timer = wf.timer
         timer.toc
-
         # eigen_worms: [7,48]
         eigen_worms = load_eigen_worms()
 
-        #???? How does this differ from nw.angles???
-        angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
+        
 
-        n_frames = sx.shape[1]
+        sx = wf.nw.skeleton_x
+        sy = wf.nw.skeleton_y
+        #nw.angles calculation is inconsistent with this one...
+        # I think bends angles should be between -180 to 180, while for the eigenworms they must be continous.
+        angles = np.arctan2(np.diff(sy, n=1, axis=0), np.diff(sx, n=1, axis=0))
+        if wf.nw.video_info.ventral_mode == 2:
+            #switch in the angle sign in case of the contour orientation is anticlockwise
+            angles = -angles
+
+        n_frames = angles.shape[1]
 
         # need to deal with cases where angle changes discontinuously from -pi
         # to pi and pi to -pi.  In these cases, subtract 2pi and add 2pi
@@ -1207,7 +1128,8 @@ class EigenProjectionProcessor(Feature):
                 angles[cur_neg_jump:, cur_frame] += 2 * np.pi
 
         angles = angles - np.mean(angles, axis=0)
-
+        
+        
         eigen_projections = np.dot(eigen_worms[0:N_EIGENWORMS_USE, :], angles)
         
         #change signs for anticlockwise
@@ -1441,8 +1363,7 @@ class Direction(Feature):
         # dy = (tip_y - tail_y)
         # dx = (tip_x - tail_x)
         # dir_value = 180 / np.pi * (-np.arctan2(dy,-dx))
-        dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y,
-                                             tip_x - tail_x)
+        dir_value = 180 / np.pi * np.arctan2(tip_y - tail_y, tip_x - tail_x)
         self.value = dir_value
 
     @classmethod
