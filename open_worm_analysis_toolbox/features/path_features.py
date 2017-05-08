@@ -525,13 +525,11 @@ class Curvature(Feature):
         
         half_frame_scale = int(round((frame_scale + 1) / 2))
         #substract one to deal with python indexes
-        fs_ind = frame_scale -1 
-        h_fs_ind = half_frame_scale - 1
+        fs_ind = max(1, frame_scale -1) #ensure this values are larger than 1
+        h_fs_ind = max(1, half_frame_scale - 1)
 
         diff_motion = np.full(speed.shape, np.nan)
         diff_motion[:-fs_ind] = motion_direction[fs_ind:] - motion_direction[:-fs_ind]
-
-
         s1 = speed[h_fs_ind:-fs_ind]
         s2 = speed[(h_fs_ind+fs_ind):]
         distance = np.full(speed.shape, np.nan)
