@@ -947,8 +947,7 @@ class Kinks(Feature):
 
         # Compute the kinks for the worms.
         n_frames = bend_angles.shape[1]
-        n_kinks_all = np.zeros(n_frames, dtype=float)
-        n_kinks_all[:] = np.NaN
+        n_kinks_all = np.full(n_frames, np.nan, dtype=float)
 
         #(np.any(np.logical_or(mask_pos,mask_neg),axis=0)).nonzero()[0]
 
@@ -972,7 +971,10 @@ class Kinks(Feature):
                 #
                 # but it counts for both if sign change
                 # + + 0 - - - => 3 +s and 4 -s
-                raise Exception("Unhandled code case")
+                
+                #this case does happend. I will continue (default nan) instead of risign an error (AEJ)
+                #raise Exception("Unhandled code case")
+                continue
 
             sign_change_I = (
                 np.not_equal(dataSign[1:], dataSign[0:-1])).nonzero()[0]
@@ -998,7 +1000,9 @@ class Kinks(Feature):
             # edges should you have NaN values.
             if start_I.size != 0 and \
                np.any(np.isnan(smoothed_bend_angles[start_I[0]:end_I[-1]])):
-                raise Exception("Unhandled code case")
+                #this case does happend. I will continue (default nan) instead of risign an error (AEJ)
+                #raise Exception("Unhandled code case")
+                continue
 
             #-------------------------------------------------------
             # End of identical code ...
