@@ -100,8 +100,10 @@ class VideoInfo(object):
             self.ventral_mode = 1
         elif ventral_side == 'anticlockwise':
             self.ventral_mode = 2
-        else:
+        elif ventral_side == 'unknown':
             self.ventral_mode = 0
+        else:
+            raise ValueError('{} is not a recognizable ventral_mode.'.format(ventral_side))
 
 
     @staticmethod
