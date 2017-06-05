@@ -96,6 +96,9 @@ class VideoInfo(object):
         self.video_type = 'Not specified'
 
     def set_ventral_mode(self, ventral_side):
+        '''
+        Set the ventral side mode. Valid options are "clockwise", "anticlockwise" and "unknown".
+        '''
         if ventral_side == 'clockwise':
             self.ventral_mode = 1
         elif ventral_side == 'anticlockwise':
