@@ -54,7 +54,8 @@ def schafer_to_WCON(MAT_path):
     for k in skel_lists.keys():
         skel = np.array(skel_lists[k])
 
-        # Replace None entries with empty articulations for both x and y dimensions
+        # Replace None entries with empty articulations for both
+        # x and y dimensions
         empty_xy = np.empty((2,0))
         for frame_index in range(num_frames):
             if skel[frame_index] is None:
