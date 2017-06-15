@@ -94,8 +94,7 @@ list](https://groups.google.com/forum/#!forum/openworm-discuss) if you
 encounter issues with the above steps.
 
 You can also try running `test_setup.py` in the `/tools` folder to check
-if your setup is correctly configured. Note that this tool is not
-complete.
+if your setup is correctly configured. Note that this tool is not 100% comprehensive.
 
 Tools used
 ==========
@@ -120,9 +119,6 @@ H5PY to extract the information from these files.
 **Data storage:** Google Drive. To store examples of worm videos and
 HDF5 (.mat) feature files so the open-worm-analysis-toolbox package can be put
 through its paces.
-
-**Markdown editor:** [MarkdownPad](http://markdownpad.com/). Optional.
-For editing documents like this one.
 
 **HDF reader:** [HDF
 viewer](http://www.hdfgroup.org/hdf-java-html/hdfview/). Optional. This
