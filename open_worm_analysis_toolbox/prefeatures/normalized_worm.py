@@ -291,7 +291,13 @@ class NormalizedWorm(WormPartition):
             # that is, getattr(s, x)  works syntactically just like s.x,
             # only x is a variable, so we can do a list comprehension with it!
             for key in data_keys:
-                setattr(nw, key, getattr(staging_data, key))
+                # Some pre-features are dynamically calculated so their actual
+                # data is stored with a '_' prefix.
+                if key == 'angles':
+                    out_key = '_' + key
+                else:
+                    out_key = key
+                setattr(nw, out_key, getattr(staging_data, key))
 
             # We don't need the eigenworm path here, as it's the same
             # for all worm files.
