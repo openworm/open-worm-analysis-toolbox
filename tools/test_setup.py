@@ -1,17 +1,10 @@
 """
-Run this script to verify that:
+Run this script to verify your setup, checking that:
 1) All necessary packages are installed
 2) The packages are sufficiently recent
 3) User options are specified correctly
 
-
-
-Jim's Note: I've found managing python packages, particularly on Windows, to
-be frustratingly complex. It is possible that this process could be enhanced
-but the main goal of this script is to verify the setup rather than automate
-the setup. That being said, help with automating the setup would be appreciated.
-
-Links to windows installs for required packages
+Links to Windows installs for required packages:
 -----------------------------------------------
 http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely
 http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib
@@ -20,18 +13,16 @@ http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy
 Manual user config specification
 --------------------------------
 Some settings must be set manually by the user. To do this make a copy of the
-user_config_example.txt file in the open-worm-analysis-toolbox folder and rename
-it in the same folder as user_config.py
+user_config_example.txt file in the open_worm_analysis_toolbox folder and
+rename it in the same folder as user_config.py.
 
 Replace all values in the this file with their appropriate values.
-
 
 """
 
 # TODO: This file should look for all package dependencies and setup issues
 # and provide detailed information as to how to handle things when there
 # are problems
-
 import sys
 import os
 
@@ -55,20 +46,6 @@ else:
 
 
 """
-Shapely
--------
-Shapely is currently only used for calculating the worm eccentricity. More
-specifically, it is only used for solving the point-in-polygon problem.
-
-    http://en.wikipedia.org/wiki/Point_in_polygon
-"""
-try:
-    import shapely
-except ImportError as e:
-    print("'Unable to import shapely")
-
-
-"""
 h5py
 ----
 h5py can be used to read and write hdf5 files. It is currently used to load
@@ -82,12 +59,8 @@ except ImportError as e:
 
 """
 numpy
------
-
-We use numpy for everything ...
 
 """
-
 try:
     import numpy as np
 except ImportError as e:
@@ -97,12 +70,8 @@ except ImportError as e:
 
 """
 scipy
------
-
-??? Why do we need scipy?
 
 """
-
 try:
     import scipy
 except ImportError as e:
@@ -117,15 +86,15 @@ try:
     # import of open-worm-analysis-toolbox while running this as
     # a top-level script (i.e. with __name__ = '__main__')
     sys.path.append('..')
-    from open - worm - analysis - toolbox import user_config
+    from open_worm_analysis_toolbox import user_config
 except ImportError as e:
-    print('Unable to import open-worm-analysis-toolbox/user_config.py module')
+    print('Unable to import open_worm_analysis_toolbox/user_config.py module')
 
 if not hasattr(user_config, 'EXAMPLE_DATA_PATH'):
     print("user_config.py module is missing the 'EXAMPLE_DATA_PATH' attribute")
 else:
     if not os.path.isdir(user_config.EXAMPLE_DATA_PATH):
-        print("user_config.EXAMPLE_DATA_PATH doesn't point to a valid directory")
+        print("user_config.EXAMPLE_DATA_PATH doesn't point to a valid folder")
 
 
 print('Finished running test_setup.py')
