@@ -4,7 +4,7 @@
 [![BountySource](https://api.bountysource.com/badge/team?team_id=23852)](https://www.bountysource.com/teams/openworm)
 
 
-| <img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
+| <img src="documentation/OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
 ====================
 
 The **Open Worm Analysis Toolbox** is a Python port of the Schafer Lab's [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
