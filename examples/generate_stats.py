@@ -5,12 +5,6 @@ statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Experiment" files and
 - 10 "Control" files.
 
-Notes
---------------
-Formerly:
-https://github.com/JimHokanson/SegwormMatlabClasses/
-blob/master/%2Bseg_worm/%2Btesting/%2Bstats/t001_oldVsNewStats.m
-
 """
 import sys
 import os
@@ -69,7 +63,7 @@ def main():
     # Y-axis is features, labeled
     # X-axis is worm videos
     # then list the p and q values
-    # List if the mean is vailable or golor red if not.
+    # List if the mean is available or color red if not.
 
 
 def obtain_histograms(root_path, pickle_file_path):

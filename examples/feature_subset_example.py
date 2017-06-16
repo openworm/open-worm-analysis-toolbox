@@ -8,12 +8,9 @@ also save time.
 import sys
 import os
 
-# TODO: This seems like a bold move. Do we really want to do this. My guess is
-# that we shouldn't . We need to decide how we want to handle this for all
-# examples
 sys.path.append('..')
 
-import open - worm - analysis - toolbox as mv
+import open_worm_analysis_toolbox as mv
 
 
 def main():

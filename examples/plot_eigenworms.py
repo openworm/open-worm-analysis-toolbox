@@ -12,7 +12,6 @@ import os
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-#import mpld3
 
 # We must add .. to the path so that we can perform the
 # import of open-worm-analysis-toolbox while running this as
@@ -38,7 +37,6 @@ def main():
     # Plot the eigenworms
     for eigenworm_i in range(np.shape(eigenworms)[1]):
         plt.plot(eigenworms[:, eigenworm_i])
-    # mpld3.show()
 
     plt.show()
 
