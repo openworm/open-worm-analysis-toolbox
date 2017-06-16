@@ -123,11 +123,10 @@ encouragement and support.
     Library](https://github.com/JimHokanson/matlab_standard_library).
 -   [Chee Wai Lee](https://github.com/cheelee) for his work on this repository and tracker-commons.
 -   [Michael Currie](https://github.com/MichaelCurrie) for helping with
-    the translation into Python, and helping with repository
-    documentation.
--   [Aidan Rocke](https://github.com/AidanRocke) for his work translation Dr. Brown's behavioural syntax code into Python.
+    the translation into Python, and helping with repository documentation.
    
 Past team members:
+-   [Aidan Rocke](https://github.com/AidanRocke) who worked on porting Dr. Brown's behavioural syntax code into Python.
 -   [Chris Linzy]
 -   [Chris Barnes]
 -   [Joe Bowen]
