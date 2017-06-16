@@ -1,0 +1,94 @@
+feature_type,feature_category,feature_field,old_feature_field,name,short_name,bin_width,is_signed,is_zero_bin,units,sub_field,old_sub_field,signed_field,remove_partial_events,make_zero_if_empty,index,is_time_series
+simple,Path,path.duration.worm.times,,Worm Dwelling,Worm,1,0,0,seconds,,,,,,,
+simple,Path,path.duration.head.times,,Head Dwelling,Head,0.5,0,0,seconds,,,,,,,
+simple,Path,path.duration.midbody.times,,Midbody Dwelling,Midbody,1,0,0,seconds,,,,,,,
+simple,Path,path.duration.tail.times,,Tail Dwelling,Tail,0.5,0,0,seconds,,,,,,,
+movement,Morphology,morphology.length,morphology.length,Length,Length,1,0,0,Microns,,,,,,,1
+movement,Morphology,morphology.width.head,morphology.width.head,Head Width,Head,1,0,0,Microns,,,,,,,1
+movement,Morphology,morphology.width.midbody,morphology.width.midbody,Midbody Width,Midbody,1,0,0,Microns,,,,,,,1
+movement,Morphology,morphology.width.tail,morphology.width.tail,Tail Width,Tail,1,0,0,Microns,,,,,,,1
+movement,Morphology,morphology.area,morphology.area,Area,Area,100,0,0,Microns^2,,,,,,,1
+movement,Morphology,morphology.area_per_length,morphology.areaPerLength,Area/Length,Area/Length,0.1,0,0,Microns,,,,,,,1
+movement,Morphology,morphology.width_per_length,morphology.widthPerLength,Width/Length,Width/Length,0.0001,0,0,No Units,,,,,,,1
+movement,Posture,posture.bends.head.mean,posture.bends.head.mean,Head Bend Mean (+/- = D/V Inside),Head,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.neck.mean,posture.bends.neck.mean,Neck Bend Mean (+/- = D/V Inside),Neck,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.midbody.mean,posture.bends.midbody.mean,Midbody Bend Mean (+/- = D/V Inside),Midbody,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.hips.mean,posture.bends.hips.mean,Hips Bend Mean (+/- = D/V Inside),Hips,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.tail.mean,posture.bends.tail.mean,Tail Bend Mean (+/- = D/V Inside),Tail,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.head.std_dev,posture.bends.head.stdDev,Head Bend S.D. (+/- = D/V Inside),Head,0.5,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.neck.std_dev,posture.bends.neck.stdDev,Neck Bend S.D. (+/- = D/V Inside),Neck,0.5,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.midbody.std_dev,posture.bends.midbody.stdDev,Midbody Bend S.D. (+/- = D/V Inside),Midbody,0.5,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.hips.std_dev,posture.bends.hips.stdDev,Hips Bend S.D. (+/- = D/V Inside),Hips,0.5,1,1,Degrees,,,,,,,1
+movement,Posture,posture.bends.tail.std_dev,posture.bends.tail.stdDev,Tail Bend S.D. (+/- = D/V Inside),Tail,0.5,1,1,Degrees,,,,,,,1
+movement,Posture,posture.amplitude_max,posture.amplitude.max,Max Amplitude,Amplitude,1,0,0,Microns,,,,,,,1
+movement,Posture,posture.amplitude_ratio,posture.amplitude.ratio,Amplitude Ratio,Ratio,0.01,0,0,No Units,,,,,,,1
+movement,Posture,posture.primary_wavelength,posture.wavelength.primary,Primary Wavelength,Primary,1,0,0,Microns,,,,,,,1
+movement,Posture,posture.secondary_wavelength,posture.wavelength.secondary,Secondary Wavelength,Secondary,1,0,0,Microns,,,,,,,1
+movement,Posture,posture.track_length,posture.tracklength,Track Length,Track,1,0,0,Microns,,,,,,,1
+movement,Posture,posture.eccentricity,posture.eccentricity,Eccentricity,Eccentricity,0.01,0,0,No Units,,,,,,,1
+movement,Posture,posture.kinks,posture.kinks,Bend Count,Bends,1,0,1,Counts,,,,,,,1
+movement,Posture,posture.directions.tail2head,posture.directions.tail2head,Tail-To-Head Orientation,Tail-To-Head,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.directions.head,posture.directions.head,Head Orientation,Head,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.directions.tail,posture.directions.tail,Tail Orientation,Tail,1,1,1,Degrees,,,,,,,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 1,Projection 1,1,1,1,No Units,,,,,,0,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 2,Projection 2,1,1,1,No Units,,,,,,1,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 3,Projection 3,1,1,1,No Units,,,,,,2,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 4,Projection 4,1,1,1,No Units,,,,,,3,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 5,Projection 5,1,1,1,No Units,,,,,,4,1
+movement,Posture,posture.eigen_projection,posture.eigenProjection,Eigen Projection 6,Projection 6,1,1,1,No Units,,,,,,5,1
+movement,Locomotion,locomotion.velocity.head_tip.speed,locomotion.velocity.headTip.speed,Head Tip Speed (+/- = Forward/Backward),Head Tip,1,1,1,Microns/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.head.speed,locomotion.velocity.head.speed,Head Speed (+/- = Forward/Backward),Head,1,1,1,Microns/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.midbody.speed,locomotion.velocity.midbody.speed,Midbody Speed (+/- = Forward/Backward),Midbody,1,1,1,Microns/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.tail.speed,locomotion.velocity.tail.speed,Tail Speed (+/- = Forward/Backward),Tail,1,1,1,Microns/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.tail_tip.speed,locomotion.velocity.tailTip.speed,Tail Tip Speed (+/- = Forward/Backward),Tail Tip,1,1,1,Microns/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.head_tip.direction,locomotion.velocity.headTip.direction,Head Tip Motion Direction (+/- = Toward D/V),Head Tip,0.01,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.head.direction,locomotion.velocity.head.direction,Head Motion Direction (+/- = Toward D/V),Head,0.01,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.midbody.direction,locomotion.velocity.midbody.direction,Midbody Motion Direction (+/- = Toward D/V),Midbody,0.01,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.tail.direction,locomotion.velocity.tail.direction,Tail Motion Direction (+/- = Toward D/V),Tail,0.01,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.velocity.tail_tip.direction,locomotion.velocity.tailTip.direction,Tail Tip Motion Direction (+/- = Toward D/V),Tail Tip,0.01,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.foraging_bends.amplitude,locomotion.bends.foraging.amplitude,Foraging Amplitude (+/- = Toward D/V),Amplitude,1,1,1,Microns,,,,,,,1
+movement,Locomotion,locomotion.foraging_bends.angle_speed,locomotion.bends.foraging.angleSpeed,Foraging Speed (+/- = Toward D/V),Speed,10,1,1,Degrees/Seconds,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.head.amplitude,locomotion.bends.head.amplitude,Head Crawling Amplitude (+/- = D/V Inside),Head,1,1,1,Degrees,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.midbody.amplitude,locomotion.bends.midbody.amplitude,Midbody Crawling Amplitude (+/- = D/V Inside),Midbody,1,1,1,Degrees,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.tail.amplitude,locomotion.bends.tail.amplitude,Tail Crawling Amplitude (+/- = D/V Inside),Tail,1,1,1,Degrees,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.head.frequency,locomotion.bends.head.frequency,Head Crawling Frequency (+/- = D/V Inside),Head,0.1,1,1,Hz,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.midbody.frequency,locomotion.bends.midbody.frequency,Midbody Crawling Frequency (+/- = D/V Inside),Midbody,0.1,1,1,Hz,,,,,,,1
+movement,Locomotion,locomotion.crawling_bends.tail.frequency,locomotion.bends.tail.frequency,Tail Crawling Frequency (+/- = D/V Inside),Tail,0.1,1,1,Hz,,,,,,,1
+movement,Path,path.range.value,path.range,Path Range,Range,10,0,0,Microns,,,,,,,1
+movement,Path,path.curvature,path.curvature,Path Curvature (+/- = D/V Inside),Curvature,0.005,1,1,Radians/Microns,,,,,,,1
+event,Posture,posture.coils,posture.coils.frames,Coil Time,Time,0.1,0,0,seconds,event_durations,time,,1,0,,
+event,Posture,posture.coils,posture.coils.frames,Inter Coil Time,Inter Time,5,0,0,seconds,time_between_events,interTime,,1,0,,
+event,Posture,posture.coils,posture.coils.frames,Inter Coil Distance,Inter Distance,100,0,0,microns,distance_between_events,interDistance,,1,0,,
+event,Posture,posture.coils,posture.coils.frequency,Coils Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Posture,posture.coils,posture.coils.timeRatio,Coils Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,,,0,1,,
+event,Locomotion,locomotion.turns.omegas.omegas,locomotion.turns.omegas.frames,Omega Turn Time (+/- = D/V Inside),Time,0.1,1,0,seconds,event_durations,time,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.omegas.omegas,locomotion.turns.omegas.frames,Inter Omega Time (+/- = Previous D/V),Inter Time,5,1,0,seconds,time_between_events,interTime,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.omegas.omegas,locomotion.turns.omegas.frames,Inter Omega Distance (+/- = Previous D/V),Inter Distance,100,1,0,microns,distance_between_events,interDistance,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.omegas.omegas,locomotion.turns.omegas.frequency,Omega Turns Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Locomotion,locomotion.turns.omegas.omegas,locomotion.turns.omegas.timeRatio,Omega Turns Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,,,0,1,,
+event,Locomotion,locomotion.turns.upsilons.upsilons,locomotion.turns.upsilons.frames,Upsilon Turn Time (+/- = D/V Inside),Time,0.1,1,0,seconds,event_durations,time,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.upsilons.upsilons,locomotion.turns.upsilons.frames,Inter Upsilon Time (+/- = Previous D/V),Inter Time,5,1,0,seconds,time_between_events,interTime,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.upsilons.upsilons,locomotion.turns.upsilons.frames,Inter Upsilon Distance (+/- = Previous D/V),Inter Distance,100,1,0,microns,distance_between_events,interDistance,is_ventral,1,0,,
+event,Locomotion,locomotion.turns.upsilons.upsilons,locomotion.turns.upsilons.frequency,Upsilon Turns Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Locomotion,locomotion.turns.upsilons.upsilons,locomotion.turns.upsilons.timeRatio,Upsilon Turns Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,,,0,1,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.frames,Forward Time,Time,0.5,0,0,seconds,event_durations,time,,1,0,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.frames,Forward Distance,Distance,10,0,0,microns,distance_during_events,distance,,1,0,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.frames,Inter Forward Time,Inter Time,5,0,0,seconds,time_between_events,interTime,,1,0,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.frames,Inter Forward Distance,Inter Distance,100,0,0,microns,distance_between_events,interDistance,,1,0,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.frequency,Forward Motion Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.ratio,Forward Motion Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,time,,0,1,,
+event,Locomotion,locomotion.motion_events.forward,locomotion.motion.forward.ratio,Forward Motion Distance Ratio,Distance Ratio,0.001,0,0,no units,data_ratio,distance,,0,1,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.frames,Paused Time,Time,0.5,0,0,seconds,event_durations,time,,1,0,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.frames,Paused Distance,Distance,10,0,0,microns,distance_during_events,distance,,1,0,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.frames,Inter Paused Time,Inter Time,5,0,0,seconds,time_between_events,interTime,,1,0,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.frames,Inter Paused Distance,Inter Distance,100,0,0,microns,distance_between_events,interDistance,,1,0,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.frequency,Paused Motion Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.ratio,Paused Motion Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,time,,0,1,,
+event,Locomotion,locomotion.motion_events.paused,locomotion.motion.paused.ratio,Paused Motion Distance Ratio,Distance Ratio,0.001,0,0,no units,data_ratio,distance,,0,1,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.frames,Backward Time,Time,0.5,0,0,seconds,event_durations,time,,1,0,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.frames,Backward Distance,Distance,10,0,0,microns,distance_during_events,distance,,1,0,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.frames,Inter Backward Time,Inter Time,5,0,0,seconds,time_between_events,interTime,,1,0,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.frames,Inter Backward Distance,Inter Distance,100,0,0,microns,distance_between_events,interDistance,,1,0,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.frequency,Backward Motion Frequency,Frequency,0.001,0,0,Hz,frequency,,,0,1,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.ratio,Backward Motion Time Ratio,Time Ratio,0.001,0,0,no units,time_ratio,time,,0,1,,
+event,Locomotion,locomotion.motion_events.backward,locomotion.motion.backward.ratio,Backward Motion Distance Ratio,Distance Ratio,0.001,0,0,no units,data_ratio,distance,,0,1,,
