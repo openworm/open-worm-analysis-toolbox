@@ -2,7 +2,6 @@
 [![Travis-CI](https://travis-ci.org/openworm/open-worm-analysis-toolbox.svg?branch=master)](https://travis-ci.org/openworm/open-worm-analysis-toolbox)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/openworm/open-worm-analysis-toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![BountySource](https://api.bountysource.com/badge/team?team_id=23852)](https://www.bountysource.com/teams/openworm)
-[![Waffle](https://badge.waffle.io/openworm/open-worm-analysis-toolbox.png?label=ready&title=Ready)](https://waffle.io/openworm/open-worm-analysis-toolbox)
 
 
 | <img src="OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
@@ -22,13 +21,8 @@ pip install open_worm_analysis_toolbox
 
 Contributors please see:
 
--   [Installation
-    Guide](INSTALL.md)
--   [Guide for
-    Contributors](documentation/Guide%20for%20contributors.md)
--   [Kanban Board with current GitHub
-    Issues](https://waffle.io/openworm/open-worm-analysis-toolbox)
--   [Movement Validation Cloud](https://github.com/openworm/movement_validation_cloud) - Code for running this package on the cloud via Amazon Web Services
+-   [Installation Guide](documentation/INSTALL.md)
+-   [Installation Guide for OS X](documentation/INSTALL-OSX.md)
 
 Usage Example
 -------------
@@ -64,11 +58,3 @@ stat[0].plot(ax=None, use_alternate_plot=True)
 print("Nonparametric p and q values are %.2f and %.2f, respectively." %
       (stat.min_p_wilcoxon, stat.min_q_wilcoxon))
 ```
-
-------------------------
-
-![](documentation/images/Test%20process.png?raw=true)
-
-Images: *C. elegans* by Bob Goldstein, UNC Chapel Hill
-<http://bio.unc.edu/people/faculty/goldstein/> Freely licensed. Contour
-credit: MRC Schafer Lab. Simulated worm: OpenWorm.
