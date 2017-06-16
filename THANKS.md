@@ -127,6 +127,6 @@ encouragement and support.
    
 Past team members:
 -   [Aidan Rocke](https://github.com/AidanRocke) who worked on porting Dr. Brown's behavioural syntax code into Python.
--   [Chris Linzy]
--   [Chris Barnes]
--   [Joe Bowen]
+-   Chris Linzy
+-   Chris Barnes
+-   Joe Bowen
