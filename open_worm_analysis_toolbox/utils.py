@@ -1202,3 +1202,21 @@ def get_files_of_a_type(root_path, file_extension='.mat'):
             filepaths_found.append(os.path.join(root, f))
 
     return filepaths_found
+
+
+def get_matlab_filepaths(root_path):
+    """
+    Recursively traverses from root_path to find all .mat files
+    Returns a list of .mat files, with full path
+    Parameters
+    -----------------------
+    root_path: string
+        The absolute path to start searching from
+    """
+    matlab_filepaths = []
+    for root, dirs, files in os.walk(root_path):
+        mat_files = [f for f in files if f[-4:] == '.mat']
+        for f in mat_files:
+            matlab_filepaths.append(os.path.join(root, f))
+
+    return matlab_filepaths

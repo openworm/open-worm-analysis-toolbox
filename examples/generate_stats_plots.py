@@ -727,8 +727,8 @@ class ShafferPlotDocument(PlotDocument):
             experiment_path = os.path.join(root_path, 'L')
             control_path = os.path.join(root_path, 'R')
 
-            experiment_files = get_matlab_filepaths(experiment_path)
-            control_files = get_matlab_filepaths(control_path)
+            experiment_files = mv.utils.get_matlab_filepaths(experiment_path)
+            control_files = mv.utils.get_matlab_filepaths(control_path)
 
             # We need at least 10 files in each
             assert(len(experiment_files) >= 10)
@@ -753,6 +753,7 @@ class ShafferPlotDocument(PlotDocument):
               " histograms")
 
         return exp_histogram_manager, ctl_histogram_manager, exp_pathplot_manager, ctl_pathplot_manager
+
 
 if __name__ == '__main__':
     plt.ioff()
