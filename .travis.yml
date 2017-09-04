@@ -76,6 +76,9 @@ before_install:
   
   - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
   - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
+  # Upgrade the cmake version
+  - sudo -E apt-get update
+  - sudo apt-get install cmake
   
   # https://scivision.co/anaconda-python-opencv3/
   # ------------------------------------------
