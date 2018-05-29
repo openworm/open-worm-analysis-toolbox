@@ -57,7 +57,8 @@ def compute_area_by_rasterization(contour):
 
         # TODO: it might be necessary to rescale the contour so the sampling
         #       is the same, in all cases
-        im_dum = np.zeros(im_size)
+        #JAH: 2018-05-29 - Numpy deprecated indexing with floats
+        im_dum = np.zeros(im_size.astype(int))
 
         # Draw contours
         cv2.drawContours(im_dum, [worm_cnt.astype(np.int32)], 0, 1, -1)
