@@ -23,6 +23,7 @@ before_install:
   # http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start" 
+  - echo `date`
 
   # Anaconda installation
   - |
@@ -121,9 +122,17 @@ before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
   - cd $TRAVIS_BUILD_DIR/example_data
   # TODO: Presumably the initial address could be a variable
-  - wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_and_skeleton_info.mat" -O example_contour_and_skeleton_info.mat
-  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
-  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
+  #- wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_and_skeleton_info.mat" -O example_contour_and_skeleton_info.mat
+  #- wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
+  #- wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
+  
+  #From https://gist.github.com/iamtekeste/3cdfd0366ebfd2c0d805
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat && rm -rf /tmp/cookies.txt
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat && rm -rf /tmp/cookies.txt
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGWVAzUlYwbk1ad0E' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGWVAzUlYwbk1ad0E" -O example_contour_and_skeleton_info.mat && rm -rf /tmp/cookies.txt
+
+  
+  
   # TODO: Presumably we could run some command on the directory
   # This may no longer be necessary, found other bugs ...
   - ls -l
@@ -132,6 +141,7 @@ before_script:
   - chmod 777 example_video_norm_worm.mat
   - pwd
   - ls -l
+  - echo `date`
  
 # Run test
 script:
@@ -148,6 +158,7 @@ script:
   # # Push these changes to GitHub
   # git commit -a -m "autopep8"
 
+  - echo `date`
   - cd $TRAVIS_BUILD_DIR/tests
   - pwd
   - nosetests --nocapture
