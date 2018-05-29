@@ -1,0 +1,17 @@
+Frame Code;System;Code Name;Description,,,
+1;segWorm;Success;'The worm was successfully segmented.',,,
+2;findStageMovement;StageMovement;'The video frame contains stage motion.',,,
+3;segWorm;DroppedFrame;'The video frame was dropped.',,,
+100;open-worm-analysis-toolbox;UnknownFailure;'The worm failed to be segmented for an unknown reason.'
+101;segWorm;NoWormFound;'No worm was found in the video frame.',,,
+102;segWorm;ContourTouchesBoundary;'The worm contour touches the image boundary.',,,
+103;segWorm;ContourTooSmall;'The worm contour is too small.',,,
+104;segWorm;TooManyEnds;'The worm has 3 or more low-frequency sampled convexities sharper than 90 degrees (possible head/tail points).',,,
+105;segWorm;TooFewEnds;'The worm contour has less than 2 high-frequency sampled convexities sharper than 60 degrees (the head and tail). Therefore, the worm is coiled or obscured and cannot be segmented.',,
+106;segWorm;DoubleLengthSide;'The worm length, from head to tail, is more than twice as large on one side than it is on the other. Therefore, the worm is coiled or obscured and cannot be segmented.'
+107;segWorm;DoubleHeadWidth;'The worm more than doubles its width from the end of its head. Therefore, the worm is coiled, laid an egg, and/or is significantly obscured and cannot be segmented'
+108;segWorm;DoubleTailWidth;'The worm more than doubles its width from the end of its tail. Therefore, the worm is coiled, laid an egg, and/or is significantly obscured and cannot be segmented.'
+109;segWorm;SmallTail;'The worm tail is less than half the size of its head. Therefore, the worm is significantly obscured and cannot be segmented.',,
+110;segWorm;SmallHead;'The worm head is less than half the size of its tail. Therefore, the worm is significantly obscured and cannot be segmented.',,
+111;segWorm;SmallHeadTail;'The worm head and tail are less than 1/4 the size of its remaining body. Therefore, the worm is significantly obscured and cannot be segmented.',,
+1001;normWorms;TooShort;'The worm is shorter than the sampling points requested.',,,

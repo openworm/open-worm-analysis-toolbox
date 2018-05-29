@@ -6,9 +6,13 @@
 language: python
 python:
   - 2.7
-  - 3.3
-  - 3.4
+  #Requires: https://stackoverflow.com/questions/39111886/python-3-4-64-bit-download
+  #Basically for conda you need to setup a virtual environment to support older python versions
+  #- 3.3
+  #- 3.4
   - 3.5
+  - 3.6
+  
 notifications:
   email: false
 
@@ -23,20 +27,30 @@ before_install:
   # http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start" 
+  - echo `date`
 
   # Anaconda installation
+  # See https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
   - |
       if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
         MINICONDA_DIR=/home/travis/miniconda2
-        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh    
       else
         MINICONDA_DIR=/home/travis/miniconda3
         wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
       fi
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=$MINICONDA_DIR/bin:$PATH
-  #- conda update --yes conda
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+   
+  # Old - replaced with above as verbatim from Conda website   
+  # - chmod +x miniconda.sh
+  # - ./miniconda.sh -b
+  # - export PATH=$MINICONDA_DIR/bin:$PATH
+  # - conda update --yes conda
+  
   # To get the correct version you have to do a conda install
   # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
   # match Python versions and it seems like continuum doesn't want you 
@@ -44,6 +58,7 @@ before_install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
 
   # Diagnostic information
+  #----------------------------
   - which python
   - python --version
   - cmake --version
@@ -52,49 +67,11 @@ before_install:
   - echo $TRAVIS_PYTHON_VERSION
   
   # INSTALL OPENCV
-  # OpenCV
-  #-------------
-  # Anaconda doesn't support conda install opencv & binstart wasn't working
-  # so instead we download and build from source. The only other trick is making
-  # sure we move the correct files to the correct Python installation, which is 
-  # done via specifying PYTHON_PACKAGES_PATH
-  # - @JimHokanson
-  #
-  # Ordinarily installing opencv would be as simple as `sudo apt-get install opencv`
-  # but because the Travis-CI build machine is wrapped in a virtualenv, we can't 
-  # access packages outside of our hermetically-sealed build environment
-  # So we build from source, as Jim says.
-  # - @MichaelCurrie
-  #
-  # References:
-  # https://github.com/kevin-brown/blog.kevin-brown.com/blob/
-  #     2d5296a8c1ac76dc5cbd2b98d765749c043fc521/_posts/
-  #     2014-09-27-building-and-installing-opencv-3.markdown
-  # https://github.com/kashefy/elm/blob/
-  #     76dbd0214dbab91a7de3bdd94767ef08aa67d0f4/.travis.yml
-  # 1) Get from source, currently master is v3.0.0 (supporting Python 3)
+  #---------------------------------------
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION opencv
   
-  - travis_retry git clone --depth 1 https://github.com/Itseez/opencv.git $DEPS_DIR/opencv
-  - mkdir $OPENCV_BUILD_DIR && cd $OPENCV_BUILD_DIR
   
-  # https://scivision.co/anaconda-python-opencv3/
-  # ------------------------------------------
-  - |
-      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-        cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python) -DPYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
-      else
-        cmake -DBUILD_TIFF=ON -DBUILD_opencv_java=OFF -DWITH_CUDA=OFF -DENABLE_AVX=ON -DWITH_OPENGL=ON -DWITH_OPENCL=ON -DWITH_IPP=ON -DWITH_TBB=ON -DWITH_EIGEN=ON -DWITH_V4L=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$(python3 -c "import sys; print(sys.prefix)") -DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_INCLUDE_DIR=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") -DPYTHON_PACKAGES_PATH=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") ..
-      fi
-  - make -j4
-  - sudo make install
-
-    # https://gist.github.com/itguy51/4239282
-    # ------------------------------------------
-  - echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/opencv.conf
-  - sudo ldconfig
-  - echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" | sudo tee -a /etc/bash.bashrc
-  - echo "export PKG_CONFIG_PATH" | sudo tee -a /etc/bash.bashrc
-  - export PYTHONPATH=$OPENCV_BUILD_DIR/lib/python3.3/site-packages:$PYTHONPATH 
+  
 
   # Diagnostic: list all installed Python modules
   - pydoc modules
@@ -118,9 +95,17 @@ before_script:
   - mkdir $TRAVIS_BUILD_DIR/example_data
   - cd $TRAVIS_BUILD_DIR/example_data
   # TODO: Presumably the initial address could be a variable
-  - wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_and_skeleton_info.mat" -O example_contour_and_skeleton_info.mat
-  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
-  - wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
+  #- wget "https://googledrive.com/host/0B7to9gBdZEyGNWtWUElWVzVxc0E/example_contour_and_skeleton_info.mat" -O example_contour_and_skeleton_info.mat
+  #- wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat
+  #- wget "https://drive.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat
+  
+  #From https://gist.github.com/iamtekeste/3cdfd0366ebfd2c0d805
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGakg5U3loVUktRm8' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGakg5U3loVUktRm8" -O example_video_norm_worm.mat && rm -rf /tmp/cookies.txt
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGX2tFQ1JyRzdUYUE" -O example_video_feature_file.mat && rm -rf /tmp/cookies.txt
+  - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0B7to9gBdZEyGWVAzUlYwbk1ad0E' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0B7to9gBdZEyGWVAzUlYwbk1ad0E" -O example_contour_and_skeleton_info.mat && rm -rf /tmp/cookies.txt
+
+  
+  
   # TODO: Presumably we could run some command on the directory
   # This may no longer be necessary, found other bugs ...
   - ls -l
@@ -129,6 +114,7 @@ before_script:
   - chmod 777 example_video_norm_worm.mat
   - pwd
   - ls -l
+  - echo `date`
  
 # Run test
 script:
@@ -145,6 +131,7 @@ script:
   # # Push these changes to GitHub
   # git commit -a -m "autopep8"
 
+  - echo `date`
   - cd $TRAVIS_BUILD_DIR/tests
   - pwd
   - nosetests --nocapture

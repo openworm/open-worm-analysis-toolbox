@@ -3,7 +3,7 @@
 This code is testing moving features from a nested structure to being
 iterated over.
 
-Status: Still in development (by Jim)
+By: Jim Hokanson
 
 """
 import sys

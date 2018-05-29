@@ -173,7 +173,17 @@ class BasicWorm(JSON_Serializer):
     """
     A worm's skeleton and contour, not necessarily "normalized" to 49 points,
     and possibly heterocardinal (i.e. possibly with a varying number of
-    points per frame).
+    points per frame).  We also try to allow for the following possibilities:
+
+    - skeleton specified in the file, but no contour
+       - in this case the contour should be left blank (TODO)
+    - contour specified in the file, but no skeleton
+       - in this case the skeleton is derived using the algorithm
+         WormParsing.compute_skeleton_and_widths
+    - both contour and skeleton are specified in the file
+       - in this case you can use either:
+           - .h_skeleton, the derived skeleton, or
+           - ._h_loaded_skeleton, the skeleton from the file.
 
     Attributes
     ----------
@@ -252,11 +262,13 @@ class BasicWorm(JSON_Serializer):
                                     2 * is_stage_movement +
                                     100 * ~(is_valid | is_stage_movement))
 
-        # We purposely ignore the saved skeleton information contained
-        # in the BasicWorm, preferring to derive it ourselves.
+        # Remove any derived skeleton, since we are loading new contours
+        # and therefore we'll want any call to .h_skeleton to derive a new one.
         bw.__remove_precalculated_skeleton()
-        #bw.h_skeleton = all_skeletons
+        # Also save the skeleton that was specified in the file, if it exists.
+        bw._h_loaded_skeleton = all_skeletons
 
+        # Load the contours that were specified in the file, if they exist.
         bw._h_ventral_contour = all_ventral_contours
         bw._h_dorsal_contour = dorsal_contour
 

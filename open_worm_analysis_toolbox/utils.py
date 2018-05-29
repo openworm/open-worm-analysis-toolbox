@@ -792,7 +792,7 @@ def compare_is_equal(x, y, variable_name, tol=1e-6):
         return False
 
 
-def correlation(x, y, variable_name, high_corr_value=0.99,
+def correlation(x, y, variable_name, high_corr_value=0.95,
                 merge_nans=False, pct_data_agreement_threshold=0.9):
     """
     Compare two numpy arrays using a tolerance threshold
@@ -821,6 +821,10 @@ def correlation(x, y, variable_name, high_corr_value=0.99,
     if not isinstance(x, type(y)):
         print('Type mismatch %s vs %s: %s' % (type(x), type(y),
                                               variable_name))
+    elif not hasattr(x, "shape"):
+        print('%s has no attribute "shape": %s' % (type(x), variable_name))
+    elif not hasattr(y, "shape"):
+        print('%s has no attribute "shape": %s' % (type(y), variable_name))
     elif x.shape != y.shape:
         print('Shape mismatch %s vs %s: %s' % (str(x.shape), str(y.shape),
                                                variable_name))
@@ -1198,3 +1202,21 @@ def get_files_of_a_type(root_path, file_extension='.mat'):
             filepaths_found.append(os.path.join(root, f))
 
     return filepaths_found
+
+
+def get_matlab_filepaths(root_path):
+    """
+    Recursively traverses from root_path to find all .mat files
+    Returns a list of .mat files, with full path
+    Parameters
+    -----------------------
+    root_path: string
+        The absolute path to start searching from
+    """
+    matlab_filepaths = []
+    for root, dirs, files in os.walk(root_path):
+        mat_files = [f for f in files if f[-4:] == '.mat']
+        for f in mat_files:
+            matlab_filepaths.append(os.path.join(root, f))
+
+    return matlab_filepaths
