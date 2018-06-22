@@ -13,7 +13,10 @@ import warnings
 import os
 import h5py
 
-import cv2
+try:
+    import cv2
+except ModuleNotFoundError:
+    raise Exception("OpenCV not installed")
 
 from . import generic_features
 from .generic_features import Feature
