@@ -38,6 +38,7 @@ setup(
     version=__version__,
     description='Open Worm Analysis Toolbox',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/openworm/open-worm-analysis-toolbox',
     author=('Yemini, E; Jucikas, T; Schafer, W; Brown, A; Hokanson, J; '
             'Currie, M; Javer, A; OpenWorm'),
@@ -56,7 +57,12 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     keywords='C. elegans worm tracking',
-    packages=['open_worm_analysis_toolbox'],
+    packages=['open_worm_analysis_toolbox',
+    'open_worm_analysis_toolbox.features',
+    'open_worm_analysis_toolbox.features.feature_metadata',
+    'open_worm_analysis_toolbox.prefeatures',
+    'open_worm_analysis_toolbox.statistics',
+    'open_worm_analysis_toolbox.statistics.feature_metadata'],
     install_requires=['atlas', 'nose', 'pandas', 'statsmodels',
                       'h5py', 'seaborn']
     # Actually also requires openCV, numpy, scipy, matplotlib and numpy
