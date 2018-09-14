@@ -36,6 +36,8 @@ from .histogram import Histogram, MergedHistogram
 #===================================================
 
 
+#JAH 2018-08 - I think this was going to include code to clean
+#up this code but we never got to it ....
 class HistogramManagerDos(object):
 
     def __init__(self, feature_sets):
@@ -58,7 +60,9 @@ class HistogramManager(object):
 
     Attributes
     ----------
-    hist_cell_array:
+    hist_matrix : [n_features x n_videos] open_worm_analysis_toolbox.statistics.histogram.Histogram
+        The individual histograms.
+    row_names : feature names for each row
     merged_histograms: numpy array of MergedHistogram objects
         This can be accessed via the overloaded [] operator
 
@@ -73,17 +77,35 @@ class HistogramManager(object):
         """
         Parameters
         ----------
+        feature_path :
+            
+        object_list : TODO: What type????
         feature_path_or_object_list: list of strings or feature objects
             Full paths to all feature files making up this histogram, or
             their in-memory object equivalents.
 
+        Outline:
+        -------
+        1) Create individual histograms for the features on a per video basis
+        2) Merge histograms across all video
+
         """
+        
+        if len(feature_path_or_object_list) == 0:
+            raise Exception('Empty input to histogram manager not supported')
+        
+        #TODO: We need better type checking ...
+        
         if verbose:
             print("Number of feature files passed into the histogram manager:",
                   len(feature_path_or_object_list))
 
         # This will have shape (len(feature_path_or_object_list), 726)
-        self.hist_cell_array = []
+        temp_hist_array = []
+        
+        all_hist_names = [];
+
+        n_videos = len(feature_path_or_object_list)
 
         # Loop over all feature files and get histogram objects for each
         for feature_path_or_object in feature_path_or_object_list:
@@ -92,7 +114,7 @@ class HistogramManager(object):
             if isinstance(feature_path_or_object, six.string_types):
                 # If we have a string, it's a filepath to an HDF5 feature file
                 file_path = feature_path_or_object
-                worm_features = WormFeaturesDos.from_disk(file_path)
+                worm_features = WormFeatures.from_disk(file_path)
             else:
                 # Otherwise the worm features have been passed directly
                 # as an instance of WormFeatures (we hope)
@@ -102,26 +124,40 @@ class HistogramManager(object):
             # worm_features.info -> obj.info
 
             new_histogram_set = self.init_histograms(worm_features)
-            self.hist_cell_array.append(new_histogram_set)
+            
+            #Note that names from features are always valid, unlike
+            #the histogram
+            hist_names = np.array([x.spec.name for x in worm_features])
+            
+            temp_hist_array.append(new_histogram_set)
 
-        # JAH TODO: I'm not sure what this is doing ..., add documentation
-        #----------------------------------------------------------------
-        # Convert to a numpy array
+            all_hist_names.extend(hist_names)
 
-        # If self.hist_cell_array elements are the same size (e.g we have n of m long arrays)
-        # then the result is a single array of (m,n)
-        # However if of those n elements, some are not m long, then we get
-        # an array of length n, where each contains its elements
-        #[(m1),(m2),(m3),(m4),...etc]
-        self.hist_cell_array = np.array(self.hist_cell_array)
 
-        # At this point hist_cell_array is a list, with one element for
-        # each video.
-        # Each element is a numpy array of 700+ Histogram instances.
-        # Here we merge them and we assign to self.merged_histograms a
-        # numpy array of 700+ Histogram instances, for the merged video
+        unique_names = np.unique(all_hist_names)
+        
+        n_features = len(unique_names)
+        
+        #JAH: I rewrote this code to ensure that we had a matrix shaped
+        #group of histograms, with None as the default value for missing
+        hist_matrix = np.full([n_features,n_videos],None,object)
+        
+        #TODO: This could be sped up a bit ...
+        for i in range(n_videos):
+            vid_hists = temp_hist_array[i]
+            for hist in vid_hists:
+                if hist is not None:
+                    hist_name = hist.name
+                    for k, name in enumerate(unique_names):
+                        if name == hist_name:
+                            hist_matrix[k,i] = hist
+        
+        self.row_names = unique_names
+        self.hist_matrix = hist_matrix
+                    
+        #Merge histogram objects across all videos ...
         self.merged_histograms = \
-            HistogramManager.merge_histograms(self.hist_cell_array)
+            HistogramManager.merge_histograms(self.hist_matrix)
 
     def __getitem__(self, index):
         return self.merged_histograms[index]
@@ -143,7 +179,11 @@ class HistogramManager(object):
 
     @property
     def num_videos(self):
-        return self.hist_cell_array.shape[0]
+        return self.hist_matrix.shape[1]
+    
+    @property
+    def num_features(self):
+        return self.hist_matrix.shape[0]
 
     @property
     def valid_2d_mask(self):
@@ -152,7 +192,7 @@ class HistogramManager(object):
 
         """
         valid_mean_detector = lambda h: True if h is not None else False
-        return np.vectorize(valid_mean_detector)(self.hist_cell_array)
+        return np.vectorize(valid_mean_detector)(self.hist_matrix)
 
     @property
     def means_2d_dataframe(self):
@@ -161,25 +201,43 @@ class HistogramManager(object):
         -----------
         Pandas dataframe
             Shape (10,726)
+            
+        #??? Where does this come from????
 
         """
+        
         valid_mean_detector = lambda h: h.mean if h is not None else np.NaN
-        means_array = np.vectorize(valid_mean_detector)(self.hist_cell_array)
-
-        # Change shape to (726,10) since pandas wants the first axis
-        # to be the rows of the dataframe
-        means_array = np.rollaxis(means_array, axis=1)
+        means_array = np.vectorize(valid_mean_detector)(self.hist_matrix)
 
         df = pd.DataFrame(data=means_array)
+        
         # Give a more human-readable column name
         df.columns = ['Video %d mean' % i for i in range(self.num_videos)]
+        
+        df2 = pd.DataFrame(data = self.row_names)
+        df2.columns = ['Feature name']
+        
+        return df2.join(df)
 
-        feature_spec = WormFeaturesDos.get_feature_spec(extended=True)
-        feature_spec = feature_spec[['feature_field',
-                                     'data_type',
-                                     'motion_type']]
-
-        return feature_spec.join(df)
+        #Old Code
+        #-------------------------------
+        #feature_spec
+        #set_index('sub-extended feature ID',
+        #          'motion_type', 'data_type')
+        #feature_spec = WormFeatures.get_feature_spec(extended=True)
+        #feature_spec = feature_spec[['feature_field',
+        #                             'data_type',
+        #                             'motion_type']]
+        
+        #??? feature_spec index is a tuple of (extended_id, regular_id)
+        #df.index is now a RangeIndex(start=0, stop=93, step=1)
+        
+        #cannot join with no level specified and no overlapping names
+        #try:
+        #    return feature_spec.join(df)
+        #except:
+        #    import pdb
+        #    pdb.set_trace()
 
     #%%
     def init_histograms(self, worm_features):
@@ -203,7 +261,7 @@ class HistogramManager(object):
         return np.array([Histogram.create_histogram(f) for f in worm_features])
 
     @staticmethod
-    def merge_histograms(hist_cell_array):
+    def merge_histograms(hist_matrix, verbose=False):
         """
         The goal of this function is to go from n collections of 708
         histogram summaries of features each, to one set of 708 histogram
@@ -214,7 +272,7 @@ class HistogramManager(object):
 
         to:
 
-        a.b, where .b is of size [n x m], in this case [4 x m]
+        a.b, where .b is of size [n x m], in this example above [4 x m]
 
         Parameters
         -------------------------
@@ -235,58 +293,30 @@ class HistogramManager(object):
         of (not merged) Histogram objects.
 
         Formerly objs = seg_worm.stats.hist.mergeObjects(hist_cell_array)
+        
+        
+        JAH: I'm not sure if this needs to be a static method. Perhaps 2 methods
+        would be better, 1 for creating from self, and another from merging two
+        objects
 
         """
-
-        # DEBUG
-        print("In HistogramManager.merge_histograms... # of "
-              "histograms to merge:", len(hist_cell_array))
-
-        # Make sure that the hist_cell_array is a numpy array
-        hist_cell_array = np.array(hist_cell_array)
-
-        # Check that we don't have any multiple videos in any histogram,
-        # since it's not implemented to merge already-merged histograms
-        num_videos_per_histogram = np.array([hist.num_videos for hist
-                                             in hist_cell_array.flatten()
-                                             if hist is not None])
-        if np.count_nonzero(num_videos_per_histogram != 1) > 0:
-            raise Exception("Merging already-merged histograms is not yet "
-                            "implemented")
-
-        # Let's assign some nicer names to the dimensions of hist_cell_array
-        (num_histograms_per_feature, num_features) = hist_cell_array.shape
-
-        # Pre-allocate space for the 700+ Histogram objects
-        merged_histograms = np.array([None] * num_features)
-
-        # Go through each feature and create a merged histogram
-        for feature_index in range(num_features):
-            histograms = hist_cell_array[:, feature_index]
-
-            # This is @MichaelCurrie's kludge to step over features that
-            # for some reason didn't get all their histograms populated
-            none_hist_found = False
-            for hist in histograms:
-                if hist is None:
-                    none_hist_found = True
-            if none_hist_found:
-                if num_histograms_per_feature == 1:
-                    print("The histogram is None for feature #%d.  Bypassing."
-                          % feature_index)
-                else:
-                    if histograms[0] is not None:
-                        long_field = histograms[0].specs.name
-                    else:
-                        long_field = 'NAME UNAVAILABLE'
-                    print("For feature #%d (%s), at least one video is None. "
-                          "Bypassing." % (feature_index, long_field))
-
-                continue
-
-            merged_histograms[feature_index] = \
-                MergedHistogram.merged_histogram_factory(histograms)
-
+        
+        #TODO: add print verbose support
+        #print("In HistogramManager.merge_histograms... # of "
+        #      "histograms to merge:", len(hist_matrix))
+        
+        #TODO: readd video check ... (old code)
+        #        num_videos_per_histogram = np.array([hist.num_videos for hist
+        #                                     in flat_array
+        #                                     if hist is not None])
+        
+        n_features = hist_matrix.shape[0]
+        merged_histograms = np.full(n_features,None)
+        
+        for i, row in enumerate(hist_matrix):
+            merged_histograms[i] = \
+                MergedHistogram.merged_histogram_factory(row)
+                            
         return merged_histograms
 
     def plot_information(self):
@@ -298,47 +328,56 @@ class HistogramManager(object):
 
         # Cumulative chart of false entries (line chart)
         plt.figure()
-        plt.plot(np.cumsum(np.sum(~valid_2d_mask, axis=0)))
+        plt.plot(np.cumsum(np.sum(~valid_2d_mask, axis=1)))
         plt.xlabel('Feature #')
         plt.ylabel('Number of invalid histograms')
         plt.show()
 
         # False entries by video (bar chart)
         plt.figure()
-        plt.bar(left=np.arange(valid_2d_mask.shape[0]),
-                height=np.sum(~valid_2d_mask, axis=1))
+        plt.bar(x=np.arange(valid_2d_mask.shape[1]),
+                height=np.sum(~valid_2d_mask, axis=0))
         plt.xlabel('Video #')
         plt.ylabel('Number of unavailable histograms')
         plt.show()
 
+        #JAH: This information was not being used so I commented it out
         # List of features with no histograms
-        blank_feature_list = np.flatnonzero(np.all(~valid_2d_mask, axis=0))
-        valid_feature_list = np.flatnonzero(~np.all(~valid_2d_mask, axis=0))
+        #blank_feature_list = np.flatnonzero(np.all(~valid_2d_mask, axis=1))
+        #valid_feature_list = np.flatnonzero(~np.all(~valid_2d_mask, axis=1))
 
-        feature_spec = WormFeatures.get_feature_spec(extended=True)
-        print('Features that had no histograms for any video:')
-        print(feature_spec.ix[blank_feature_list][['feature_field',
-                                                   'data_type',
-                                                   'motion_type']])
+        
+        #This can never be correct, assumes a feature manipulation
+        #feature_spec = WormFeatures.get_feature_spec(extended=True)
+        
+        #TODO: This needs to be done differently
+        #print('Features that had no histograms for any video:')
+        #print(feature_spec.ix[blank_feature_list][['feature_field',
+        #                                           'data_type',
+        #                                           'motion_type']])
+        #
 
         # Pie chart of features that are:
         # - totally good
         # - partially bad
         # - all bad
-        all_bad = len(np.flatnonzero(np.all(~valid_2d_mask, axis=0)))
-        all_good = len(np.flatnonzero(np.all(valid_2d_mask, axis=0)))
-        partially_bad = valid_2d_mask.shape[1] - all_bad - all_good
+        all_bad = len(np.flatnonzero(np.all(~valid_2d_mask, axis=1)))
+        all_good = len(np.flatnonzero(np.all(valid_2d_mask, axis=1)))
+        partially_bad = valid_2d_mask.shape[0] - all_bad - all_good
 
-        print("%d, %d, %d" % (all_bad, all_good, partially_bad))
+        print("all bad: %d, all good: %d, partially bad: %d" % (all_bad, all_good, partially_bad))
         plt.figure()
         plt.pie([all_good, partially_bad, all_bad], labels=['All Good',
                                                             'Partially bad',
                                                             'All Bad'])
+        plt.show()
+    
 
         # CREATE A PANDAS DATAFRAME OF MEANS FOR EACH HISTOGRAM!!
         print("Means of each histogram:")
         print(self.means_2d_dataframe)
 
+        #TODO: This is hard to 
         # Set up the matplotlib figure
         plt.figure()
         #fig, ax = plt.subplots(figsize=(12, 9))

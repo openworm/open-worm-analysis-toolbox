@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+
+JAH 2018/09 - this relies on unfinished code that looks like it was removed
+from the master branch.
+
+IT DOES NOT WORK!
+
 Created on Fri Jul 10 12:47:16 2015
 
 @author: mcurrie
@@ -159,7 +165,7 @@ class ShafferPlotDocument(PlotDocument):
         root_path = os.path.join(base_path, '30m_wait')
 
         exp_histogram_manager, ctl_histogram_manager = \
-            self.obtain_histograms(root_path, "pickled_histograms.dat")
+            self.obtain_histograms(root_path, "pickled_histograms2.dat")
 
         print("Done with Histogram generation.  Now let's calculate statistics.")
 
@@ -712,7 +718,8 @@ class ShafferPlotDocument(PlotDocument):
             Both instances of HistogramManager
 
         """
-        if os.path.isfile(pickle_file_path):
+        #JAH 2018/09 - bug needs to be fixed, missing pathplot managers ...
+        if False: #os.path.isfile(pickle_file_path):
             print("Found a pickled version of the histogram managers "
                   "at:\n%s\n" % pickle_file_path + "Let's attempt to "
                   "unpickle rather than re-calculate, to save time...")

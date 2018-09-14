@@ -2,6 +2,9 @@
 """
 Demonstrates loading and saving to a WCON file
 
+JAH: 2018/09 - this code does not work ... 
+It looks like it was never finished ...
+
 """
 import sys
 import os

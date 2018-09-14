@@ -133,8 +133,14 @@ class NormalizedWorm(WormPartition):
     @classmethod
     def from_normalized_array_factory(cls, skeleton, widths, ventral_contour, dorsal_contour):
         '''
-        I want to be able to construct a normalized worm by giving previously normalized data as input.
-        Probably some inputs could be made optional, but in that case it is better to use BasicWorm
+        
+        Constructs a normalized worm from normalized data.
+        
+        See Also
+        --------
+        from_BasicWorm_factory
+        from_schafer_file_factory
+        
         '''
         #check the dimensions are correct
         dat = (skeleton, ventral_contour, dorsal_contour, widths) #pack to make calculations easier

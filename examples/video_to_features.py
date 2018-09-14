@@ -69,41 +69,72 @@ def main():
     #bw = BasicWorm.from_h_contour_factory(h_ventral_contour, h_dorsal_contour)
     #bw.video_info = video_info
 
+
+    #feature_spec = mv.WormFeatures.get_feature_spec(extended=True)
+
+    VERBOSE = True
+    
+    RUN_FULL = False
+    #If true the normalized worm is computed from the basic worm input
+    #If false it is preloaded (much faster)
+
     # TEMPORARY----------------------------
     base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
     schafer_bw_file_path = os.path.join(
         base_path, "example_contour_and_skeleton_info.mat")
-    bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+    
+    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
+    control_path = os.path.join(base_path, '30m_wait', 'R')
+
+    
+    control_files = get_matlab_filepaths(control_path)
+    
+    if len(control_files) == 0:
+        raise Exception('Missing the example files in the "<example_root>/30m_wait/R" diretory')
+    
+    
+    nw_file_path = os.path.join(base_path, "example_video_norm_worm.mat")
+    
+    #example_video_norm_worm.mat
+    
     # -------------------------------------
 
     # TODO: get this line to work:
     #bw = example_worms()
+    
 
-    nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+    #TODO - we could support tierpsy calls which are probably better ...
+    if RUN_FULL:
+        print('Converting bacic worm to normalized worm')
+        bw = mv.BasicWorm.from_schafer_file_factory(schafer_bw_file_path)
+        nw = mv.NormalizedWorm.from_BasicWorm_factory(bw)
+    else:
+        nw = mv.NormalizedWorm.from_schafer_file_factory(nw_file_path)
 
     # DEBUG
     #wp = mv.NormalizedWormPlottable(nw, interactive=False)
     # wp.show()
     # return
 
-    wf = mv.WormFeaturesDos(nw)
-
-    base_path = os.path.abspath(mv.user_config.EXAMPLE_DATA_PATH)
-    control_path = os.path.join(base_path, '30m_wait', 'R')
-
-    experiment_files = [wf, wf]
-    control_files = get_matlab_filepaths(control_path)
+    print('Extracting features from normalized worm')
+    wf = mv.WormFeatures(nw)
+    experiment_features = [wf, wf]
 
     # Compute histograms on our files
-    experiment_histograms = mv.HistogramManager(experiment_files)
-    control_histograms = mv.HistogramManager(control_files)
+    experiment_histograms = mv.HistogramManager(experiment_features,verbose=VERBOSE)
+    
+    #Note this doesn't allow feature expansion since we are loading in histograms
+    #We would need to load first, maniuplate, then pass in to histogram creator
+    control_histograms = mv.HistogramManager(control_files,verbose=VERBOSE)
     experiment_histograms.plot_information()
 
+    print('Computing statistics on histograms')
     # Compute statistics
     stat = mv.StatisticsManager(experiment_histograms, control_histograms)
+    #print(stat[0])
     stat[0].plot(ax=None, use_alternate_plot=True)
 
-    print("Nonparametric p and q values are %.2f and %.2f, respectively." %
+    print("Nonparametric p and q values are %.5f and %.5f, respectively." %
           (stat.min_p_wilcoxon, stat.min_q_wilcoxon))
 
 

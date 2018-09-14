@@ -41,8 +41,9 @@ class Histogram(object):
 
     Attributes
     -----------------
-    data: numpy array
-    specs: Specs object
+    name
+    data: numpy array - this may contain NaN values
+    specs: open_worm_analysis_toolbox.features.worm_features.FeatureProcessingSpec
     histogram_type: str
     motion_type: str
     data_type: str
@@ -88,12 +89,33 @@ class Histogram(object):
               - only negative values are used
 
         """
+        
+        """
+        Example Feature:
+              name: morphology.length
+             value: Type::ndarray, Len: 4642
+  computation_time: 0.0
+      is_temporary: False
+              spec: Type::FeatureProcessingSpec, Len: 1
+ is_user_requested: True
+ missing_from_disk: False
+missing_dependency: False
+       empty_video: False
+         no_events: False
+         """
+                
         # The underlying data itself
         self.data = feature.value
+        #JAH: Any requirements on the data???
+        #   - ideally we would have a NaN version here
+        #   - self.valid_data
+        
+        #open_worm_analysis_toolbox.features.worm_features.FeatureProcessingSpec
         self.specs = feature.spec
 
-        # JAH TODO: Should this be added to the spec
-        # in the expansion?
+        self.name = self.specs.name
+
+        # JAH TODO: Should this be added to the spec in the expansion?
         # TODO: This should also work without expanded features, so this
         # would need to be in the default spec as well (or have defaults in
         # the code)
@@ -101,11 +123,8 @@ class Histogram(object):
         # Maybe this could be made generic such as "feature_manipulations"
         # with a list of strings that get concatenated together
         #
-        #=======================================
-        # "Expanded" features specifications
-        #self.histogram_type = histogram_type
-        #self.motion_type    = motion_type
-        #self.data_type      = data_type
+        #   Yes - although the name has been made unique by feature expansion
+        #   (if done)
 
         if self.data is not None:
             # Find a set of bins that will cover the data
@@ -144,6 +163,7 @@ class Histogram(object):
         """
         data = feature.value
         if data is None or not isinstance(data, np.ndarray) or data.size == 0:
+            #Is this what we want??? - what about just keeping meta data???
             return None
         else:
             return cls(feature)
@@ -233,16 +253,27 @@ class Histogram(object):
         function [bins,edges] = h__computeBinInfo(data,bin_width)
 
         """
+        bin_width = self.specs.bin_width
+        
         # Compute the data range.  We apply np.ravel because for some reason
         # with posture.bends.head.mean the data was coming in like:
         # >> self.data
         # array([[-33.1726576 ], [-33.8501644 ],[-32.60058523], ...])
         # Applying ravel removes any extraneous array structure so it becomes:
         # array([-33.1726576, -33.8501644, -32.60058523, ...])
-        min_data = min(np.ravel(self.data))
-        max_data = max(np.ravel(self.data))
+        min_data = np.nanmin(np.ravel(self.data))
+        max_data = np.nanmax(np.ravel(self.data))
+        
+        #Is this valid??????
+        #JAH 2018/09 - this is a bit of a patch ...
+        
+        #No valid data gives min and max as NaNs
+        if np.isnan(min_data):
+            #Not for arange exact stopping is not respected ...
+            self.bin_boundaries = np.arange(0,1.01*bin_width,bin_width)
+            return
 
-        bin_width = self.specs.bin_width
+        
 
         # Let's "snap the bins to a grid" if you will, so that they will
         # line up when we try to merge multiple histograms later.
@@ -273,9 +304,12 @@ class Histogram(object):
                             "set to MAX_NUMBER_BINS = " +
                             str(config.MAX_NUMBER_BINS))
 
+
+
         self.bin_boundaries = np.arange(min_boundary,
                                         max_boundary + bin_width,
                                         step=bin_width)
+
 
         # Because of the nature of floating point figures we can't guarantee
         # that these asserts work without the extra buffer of + self.bin_width
@@ -319,7 +353,11 @@ class Histogram(object):
         try:
             return self._counts
         except AttributeError:
-            self._counts, _ = np.histogram(self.data,
+            try:
+                self._counts, _ = np.histogram(self.data,
+                                           bins=self.bin_boundaries)
+            except ValueError:
+                self._counts, _ = np.histogram(self.data[~np.isnan(self.data)],
                                            bins=self.bin_boundaries)
 
             return self._counts
@@ -353,7 +391,7 @@ class Histogram(object):
         try:
             return self._mean
         except AttributeError:
-            self._mean = np.mean(self.data)
+            self._mean = np.nanmean(self.data)
 
             return self._mean
 
@@ -370,13 +408,15 @@ class Histogram(object):
             if num_samples == 1:
                 self._std = 0
             else:
+                self._std = np.nanstd(self.data)
+                #JAH 2018/09 => not handling nan properly, using nanstd instead
                 # We can optimize standard deviation computation
                 # since we've already calculated the mean above
-                self._std = np.sqrt \
-                    (
-                        (1 / (num_samples - 1)) *
-                        sum((self.data - self.mean)**2)
-                    )
+                #self._std = np.sqrt \
+                #    (
+                #        (1 / (num_samples - 1)) *
+                #        sum((self.data - self.mean)**2)
+                #    )
 
             return self._std
 
@@ -399,6 +439,7 @@ class MergedHistogram(Histogram):
 
     Extra attributes:
     --------------------
+    name
     mean_per_video: numpy array of floats
         The means of the original constituent histograms making up
         this merged histogram.
@@ -437,7 +478,8 @@ class MergedHistogram(Histogram):
         edges 2: 3.5,4.5,5.5,6.5
 
         Instead we might have:
-        edges 2: 3,4,5,6,7,8
+        edges 2: 3,4,5,6,7,8 (i.e. edges align - in this case they share
+                                  data between 3-4 and 4-5)
 
         This simplifies the merging process a bit. This is accomplished by
         always setting bin edges at multiples of the bin_width. This was
@@ -449,11 +491,24 @@ class MergedHistogram(Histogram):
 
         Returns
         ------------------
-        A Histogram object
+        A Histogram object or None
+        
+        See Also
+        --------
+        HistogramManager.merge_histograms
 
         """
+        
+        #Note: Some histograms may be none ...
+        histograms = [x for x in histograms if x is not None]
+        
+        if len(histograms) == 0:
+            return None
+        
+        
         # Create an output object with same meta properties
         merged_hist = cls(specs=histograms[0].specs)
+        merged_hist.name = histograms[0].name
 
         # Let's concatenate all the underlying data in case anyone downstream
         # wants to see it.  It's not needed for the bin and count calculation,
@@ -481,6 +536,9 @@ class MergedHistogram(Histogram):
 
         num_histograms = len(histograms)
         new_counts = np.zeros((num_histograms, len(new_bin_midpoints)))
+
+        start_indices = start_indices.astype(np.int64)
+        end_indices = end_indices.astype(np.int64)
 
         for i in range(num_histograms):
             cur_start = start_indices[i]

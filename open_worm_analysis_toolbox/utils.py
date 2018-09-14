@@ -1036,11 +1036,117 @@ def compute_normal_vectors(curve, clockwise_orientation=True):
     return normal_vector[0, :], normal_vector[1, :]
 
 
+def compute_q_values2(pvalues,
+                     vlambda=None):
+    
+    """
+    Translation of mafdr from Matlab by Jim Hokanson September 2018
+    
+    Only defaults have been translated, polychooser method NYI
+    
+    Inputs
+    ------
+    vlamda : default 0.01:0.01:0.95
+        Sets the tuning parameter lambda used to estimate the a-priori probability
+        that the null hypothesis is true. Must contain at least four elements 
+        all between 0 and 1
+    
+    """
+    
+    #lambda method
+    #=> bootstrap
+    #=> polynomial
+    
+    #Jim's version based on Matlab
+
+    p = np.array([x for x in pvalues if not np.isnan(x)], dtype=np.float)
+
+    if min(p) < 0 or max(p) > 1:
+        raise ValueError("p-values out of range")
+
+
+    if vlambda is None:
+        #In 2017b the default is lambda = (0.01:0.01:0.95);
+        #Old: vlambda = np.arange(0, 0.95, 0.05)
+        
+        #Note, arange does not include last value like Matlab does
+        #Thus by using a strange stop we ensure that we get 0.95
+        vlambda = np.arange(0.01, 0.955, 0.01)
+    else:
+        #TODO: Check length and values
+        #sorted as well????
+        pass
+
+    m = len(p)
+    
+    #bootstrap, polynomial
+    #NYI
+    bootflag = True
+    
+    pi0_all = _estimatePI0(p, vlambda)
+    
+    nan_idx = np.isnan(pi0_all)
+    
+    if bootflag:
+        pi0 = _bootstrapchooser(pi0_all[~nan_idx], vlambda[~nan_idx], p);
+    else:
+        #polychooser
+        raise Exception('Not yet implemented')
+    
+    if pi0 <= 0:
+        raise ValueError("The estimated pi0 <= 0 (%f)." % pi0)        
+        #error(message('bioinfo:mafdr:BadEstimatedPI0Value'));
+
+        
+    # Compute qvalues
+    #--------------------------------------
+    idx = np.argsort(p)
+    v = m*p
+    r = np.zeros(len(v))
+    r[idx] = np.arange(m)+1
+    
+    fdr = pi0*v/r
+    
+    fdr[fdr > 1] = 1
+    
+    qord = fdr[idx]
+
+    cur_min = qord[-1]
+    
+    #qord = cummin(qord,'reverse')  
+    for i in reversed(range(len(p))):
+        if qord[i] > cur_min:
+            qord[i] = cur_min
+        else:
+            cur_min = qord[i]
+            
+    
+    
+    qvalues = np.zeros(len(p))
+    qvalues[idx] = qord
+    
+    qvalues2 = np.full(len(pvalues),np.nan)
+    qvalues2[~np.isnan(pvalues)] = qvalues
+        
+    return qvalues2
+
+    
+
+    
+
 def compute_q_values(pvalues,
                      vlambda=None, pi0_method="smoother",
                      robust=False, smooth_df=3,
                      smooth_log_pi0=False, pi0=None):
     """
+    
+    Inputs
+    ------
+    vlambda :
+    pi0_method :
+        - "smoother"
+        - "bootstrap"
+    
     Compute false discovery rate (qvalues) qvalues after the method by
     Storey et al. (2002).
     Paper link: http://www.genomine.org/papers/directfdr.pdf
@@ -1067,13 +1173,16 @@ def compute_q_values(pvalues,
 
     """
 
-    if min(pvalues) < 0 or max(pvalues) > 1:
+    pvalues2 = np.array([x for x in pvalues if not np.isnan(x)], dtype=np.float)
+
+    if min(pvalues2) < 0 or max(pvalues2) > 1:
         raise ValueError("p-values out of range")
 
-    m = len(pvalues)
-    pvalues = np.array(pvalues, dtype=np.float)
+    m = len(pvalues2)
+    #pvalues = np.array(pvalues, dtype=np.float)
 
     if vlambda is None:
+        #In 2017b the default is lambda = (0.01:0.01:0.95);
         vlambda = np.arange(0, 0.95, 0.05)
 
     if pi0 is None:
@@ -1093,7 +1202,7 @@ def compute_q_values(pvalues,
             if vlambda < 0 or vlambda >= 1:
                 raise ValueError("vlambda must be within [0, 1).")
 
-            pi0 = (np.mean([x >= vlambda for x in pvalues])
+            pi0 = (np.mean([x >= vlambda for x in pvalues2])
                    / (1.0 - vlambda))
             pi0 = min(pi0, 1.0)
         else:
@@ -1101,7 +1210,7 @@ def compute_q_values(pvalues,
             pi0 = np.zeros(len(vlambda), np.float)
 
             for i in range(len(vlambda)):
-                pi0[i] = (np.mean([x >= vlambda[i] for x in pvalues])
+                pi0[i] = (np.mean([x >= vlambda[i] for x in pvalues2])
                           / (1.0 - vlambda[i]))
 
             if pi0_method == "smoother":
@@ -1123,7 +1232,7 @@ def compute_q_values(pvalues,
                 for i in range(100):
                     # sample pvalues
                     idx_boot = np.random.random_integers(0, m - 1, m)
-                    pvalues_boot = pvalues[idx_boot]
+                    pvalues_boot = pvalues2[idx_boot]
 
                     for x in range(len(vlambda)):
                         # compute number of pvalues larger than lambda[x]
@@ -1138,18 +1247,21 @@ def compute_q_values(pvalues,
             pi0 = min(pi0, 1.0)
 
     if pi0 <= 0:
+        #Matlab gives pi0 for the video_to_features input
+        import pdb
+        pdb.set_trace()
         raise ValueError("The estimated pi0 <= 0 (%f). Check that you have "
                          "valid p-values or use another vlambda method." % pi0)
 
     # Compute qvalues
     #--------------------------------------
-    idx = np.argsort(pvalues)
+    idx = np.argsort(pvalues2)
     # Monotonically decreasing bins, so that bins[i-1] > x >=  bins[i]
-    bins = np.unique(pvalues)[::-1]
+    bins = np.unique(pvalues2)[::-1]
 
     # v[i] = number of observations less than or equal to pvalue[i]
     # Could this be done more elegantly?
-    val2bin = len(bins) - np.digitize(pvalues, bins)
+    val2bin = len(bins) - np.digitize(pvalues2, bins)
     v = np.zeros(m, dtype=np.int)
     lastbin = None
     for x in range(m - 1, -1, -1):
@@ -1159,14 +1271,25 @@ def compute_q_values(pvalues,
         v[idx[x]] = c + 1
         lastbin = bin
 
-    qvalues = pvalues * pi0 * m / v
+    qvalues = pvalues2 * pi0 * m / v
     if robust:
-        qvalues /= (1.0 - (1.0 - pvalues)**m)
+        qvalues /= (1.0 - (1.0 - pvalues2)**m)
 
     # Bound qvalues by 1 and make them monotonic
     qvalues[idx[m - 1]] = min(qvalues[idx[m - 1]], 1.0)
     for i in range(m - 2, -1, -1):
         qvalues[idx[i]] = min(min(qvalues[idx[i]], qvalues[idx[i + 1]]), 1.0)
+
+    
+    #Fill back in to original space.
+    #This coudl probably be done using a mask operation ...
+    #qvalues2(pvalues == NaN) = qvalues
+    qvalues2 = np.full(len(pvalues), np.nan, dtype=np.float)
+    j = 0
+    for i,value in enumerate(pvalues):
+        if not np.isnan(value):
+            qvalues2[i] = qvalues[j]
+            j+=1
 
     return qvalues
 
@@ -1220,3 +1343,97 @@ def get_matlab_filepaths(root_path):
             matlab_filepaths.append(os.path.join(root, f))
 
     return matlab_filepaths
+
+def _estimatePI0(p,vlam):
+    
+    
+    #This is ecdf(p) in Matlab
+    #-----------------------------------------    
+    p_sort = np.sort(p)
+    p_uniq,ia = np.unique(p_sort,return_index=True)
+    
+    D = np.append(np.diff(ia),len(p)-ia[-1])
+    
+    tempN = np.cumsum(np.flip(D,0));
+    N = np.flip(tempN,0)
+    
+    F = np.append(0,1-np.cumprod(1-D/N))
+    p0 = np.append(p_uniq[0],p_uniq)
+    
+    #F,x in Matlab
+    #F,p0 = ecdf(p)
+    
+    #Final interpolation - back in mafdr
+    #--------------------------------------------------------------
+    pi0 = np.interp(vlam,p0,1-F,left=np.nan,right=np.nan)/(1-vlam)
+    
+    return pi0
+
+    #Comments from Matlab below ...
+    #    % p = 0.5*ones(100,1);
+    #    % 
+    #    % %    1  2   3   4   5   6   7   8   
+    #    % p = [0 0.1 0.2 0.2 0.3 0.3 0.3 0.5]';
+    #    
+    #    p2 = sort(p);
+    #    [p3,ia] = unique(p2);
+    #    %When sorted unique will give first index of output in p2
+    #    %which counts values for us ...
+    #    %
+    #    %   i.e. ia(1) is always 1, but if ia(2) is 4, then the first value is
+    #    %   repeated 3 times
+    #    
+    #    D = [diff(ia); length(p2)-ia(end)+1];
+    #    % N = cumsum([length(p); -1*D(1:end-1)]);
+    #    tempN = cumsum(D(end:-1:1));
+    #    N = tempN(end:-1:1);
+    #    
+    #    % [F2, p02] = ecdf(p);
+    #    
+    #    p0 = [p3(1); p3];
+    #    % D = 1; %# of unique values at each point
+    #    % N = length(p):-1:1); % of values still remaining
+    #    F = [0; 1-cumprod(1-D./N)];
+    #    %F: Kaplan-Meier estimate of the cumulative distribution function 
+    #    
+    #    %YI = interp1q(X,Y,XI)
+    #    %so basically we are interpreting the cdf 
+    #    %from its current values to some evenly spaced setting
+    #    pi0 = interp1q(p0, 1-F, lambda) ./ (1-lambda);
+
+def _bootstrapchooser(pi0, vlam, p):
+    
+    min_pi0 = np.min(pi0);
+
+    B = 100 # number of bootstrap replicates
+    m = len(p)
+    n = len(vlam)
+    
+    
+    # Get the indices of resampling, and extract these from the data
+    inds = np.array(np.round(np.random.uniform(0,m-1,B*m)),dtype=int)
+    p_boot = p[np.reshape(inds,(m,B))]
+    
+    mse = np.zeros(n)
+    mse_count = np.zeros(n)
+    
+    for i in range(B):
+        pi0_boot = _estimatePI0(p_boot[:,i],vlam)
+        mask = ~np.isnan(pi0_boot)
+        mse[mask] = mse[mask] + (pi0_boot[mask]-min_pi0)**2
+        mse_count[mask] = mse_count[mask]+1
+        
+    mse = (mse/mse_count)*np.max(mse_count)
+    mse[mse_count <= 0.5*np.max(mse_count)] = np.inf
+
+    minmse_idx = np.argmin(mse)
+    pi0 = pi0[minmse_idx]
+    
+    if pi0 > 1:
+      #warning(message('bioinfo:mafdr:PoorEstimatedPI0Value'));
+      pi0 = 1
+      
+    return pi0
+    
+    
+    

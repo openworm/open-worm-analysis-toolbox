@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+Module : feature_manipulations
+
+Public Methods:
+expand_mrc_features : 
 
 TODO: The processing for expand_mrc_features should go in its own module. Just
 the entry function should be here ...
@@ -12,6 +16,70 @@ from . import generic_features
 import copy
 import warnings
 import numpy as np
+
+def expand_mrc_features(old_features):
+    """
+    
+    Inputs
+    ------
+    old_features : open_worm_analysis_toolbox.features.worm_features.WormFeatures
+    
+    Feature Expansion:
+    ------------------
+    simple - no expansion
+    movement
+        - if not signed, then we have 4x based on how the worm is moving\
+            - all
+            - forward
+            - paused
+            - backward
+        - if signed, then we have 16x based on the features values and
+        based on how the worm is moving
+    event
+        - at some point we need to filter events :/
+        - When not signed, only a single value
+        - If signed then 4x, then we compute all, absolute, positive, negative
+
+    Outline
+    -------
+    Return a new set of [expanded] features in which the specs have been 
+    appropriately modified to indicate the change.
+    """
+
+    motion_modes = old_features.get_features('locomotion.motion_mode').value
+
+    num_frames = len(motion_modes)
+
+    move_mask = {}
+    move_mask["all"] = np.ones(num_frames, dtype=bool)
+    move_mask["forward"] = motion_modes == 1
+    move_mask["backward"] = motion_modes == -1
+    move_mask["paused"] = motion_modes == 0
+
+    all_features = []
+    
+    #Note iteration is defined as being over the features that are in the container
+    for cur_feature in old_features:
+
+        cur_spec = cur_feature.spec
+
+        if cur_spec.type == 'movement':
+            new_features = _expand_movement_features(cur_feature, move_mask, num_frames)
+            all_features.extend(new_features)
+        # elif cur_spec.type == 'simple':
+        #    all_features.append(copy.deepcopy(cur_feature))
+        elif cur_spec.type == 'event':
+            new_features = _expand_event_features(old_features,cur_feature,move_mask,num_frames)
+            all_features.extend(new_features)
+        else:
+            all_features.append(cur_feature.copy())
+
+    return old_features.copy(all_features)
+
+
+
+
+
 
 
 def _expand_event_features(old_features, e_feature, m_masks, num_frames):
@@ -54,6 +122,11 @@ def _expand_event_features(old_features, e_feature, m_masks, num_frames):
 
 def _create_new_event_feature(feature, data, d_type):
 
+    
+    # TODO: This seems like it should move into the spec class - at least
+    # the spec modification part ...
+
+    
     # TODO: Need to verify that this is correct
 
     FEATURE_NAME_FORMAT_STR = '%s.%s_data'
@@ -177,64 +250,4 @@ def _create_new_movement_feature(feature, m_masks, d_masks, m_type, d_type):
     return temp_feature
 
 
-def expand_mrc_features(old_features):
-    """
-    Feature Expansion:
-    ------------------
-    simple - no expansion
-    movement
-        - if not signed, then we have 4x based on how the worm is moving\
-            - all
-            - forward
-            - paused
-            - backward
-        - if signed, then we have 16x based on the features values and
-        based on how the worm is moving
-    event
-        - at some point we need to filter events :/
-        - When not signed, only a single value
-        - If signed then 4x, then we compute all, absolute, positive, negative
 
-    Outline
-    -------
-    Return a new set of features in which the specs have been appropriately
-    modified (need to implement a deep copy)
-    """
-
-    # Motion of the the worm's body
-    motion_types = ['all', 'forward', 'paused', 'backward']
-    # Value that the current feature is taking on
-    data_types = ['all', 'absolute', 'positive', 'negative']
-
-    motion_modes = old_features.get_features('locomotion.motion_mode').value
-
-    num_frames = len(motion_modes)
-
-    move_mask = {}
-    move_mask["all"] = np.ones(num_frames, dtype=bool)
-    move_mask["forward"] = motion_modes == 1
-    move_mask["backward"] = motion_modes == -1
-    move_mask["paused"] = motion_modes == 0
-
-    all_features = []
-    for cur_feature in old_features:
-
-        cur_spec = cur_feature.spec
-
-        if cur_spec.type == 'movement':
-            all_features.extend(
-                _expand_movement_features(
-                    cur_feature, move_mask, num_frames))
-        # elif cur_spec.type == 'simple':
-        #    all_features.append(copy.deepcopy(cur_feature))
-        elif cur_spec.type == 'event':
-            all_features.extend(
-                _expand_event_features(
-                    old_features,
-                    cur_feature,
-                    move_mask,
-                    num_frames))
-        else:
-            all_features.append(cur_feature.copy())
-
-    return old_features.copy(all_features)

@@ -152,7 +152,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         # [left,botton,width,height] as a proportion of
         # figure width and height
         frame_slider_axes = fig.add_axes([0.2, 0.02, 0.33, 0.02],
-                                         axisbg='lightgoldenrodyellow')
+                                         facecolor='lightgoldenrodyellow')
         self.frame_slider = Slider(frame_slider_axes, label='Frame#',
                                    valmin=1, valmax=self.nw.num_frames,
                                    valinit=1, valfmt=u'%d')

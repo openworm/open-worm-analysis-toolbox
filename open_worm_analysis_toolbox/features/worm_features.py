@@ -35,6 +35,7 @@ import pandas as pd
 
 from .. import utils
 
+from . import feature_manipulations
 from . import feature_processing_options as fpo
 from . import events
 from . import generic_features
@@ -840,6 +841,9 @@ class WormFeatures(object):
         Returns
         -------
         TODO: finish
+        
+        Example
+        -------
 
         """
         if isinstance(
@@ -857,6 +861,17 @@ class WormFeatures(object):
             output = self._features[feature_names]
 
         return output
+    
+    def get_expanded_features(self):
+        """
+        Returns a new WormFeatures class with expanded features
+        
+        TODO:
+            Support requesting only a subset of expanded features
+        """
+        #TODO: Support requesting only a subset of expanded features
+        
+        return feature_manipulations.expand_mrc_features(self)
 
     def _get_and_log_feature(self, feature_name, internal_request=False):
         """
@@ -938,6 +953,14 @@ class WormFeatures(object):
         this is trying to do and how to incorporate this into the current
         design. Most likely we would load via pandas and then have our current
         methods rely on processing of the loaded pandas data.
+        
+        JAH 8/2018 - this is used by the hisogram manager for providing
+        context to the linearized feature set ... I'm not sure if the design is
+        solid but that's one place it is used
+        
+        JAH 9/2018 - This is almost never correct to have extended be true
+        because of how features are computed. In makes assumptions about what
+        we've computed ...
 
         Parameters
         ----------
@@ -980,6 +1003,8 @@ class WormFeatures(object):
         #feature_spec = feature_spec[['remove_partial_events']].astype(bool)
         #feature_spec = feature_spec[['make_zero_if_empty']].astype(bool)
 
+        
+
         if not extended:
             feature_spec = feature_spec.set_index('sub-extended feature ID')
             return feature_spec
@@ -1005,7 +1030,7 @@ class WormFeatures(object):
             feature_spec_expanded = feature_spec_expanded.merge(data_types,
                                                                 on='is_signed',
                                                                 how='left')
-
+            
             feature_spec_expanded = \
                 feature_spec_expanded.set_index('sub-extended feature ID',
                                                 'motion_type', 'data_type')
@@ -1073,7 +1098,7 @@ def get_feature_specs(as_table=True):
 
 class FeatureProcessingSpec(object):
     """
-    Information on how to get a feature.
+    Information about a feature, including how to retrieve the feature.
 
     These are all loaded from a csv specificaton file. See the function
     get_feature_processing_specs which instatiates these specifications.
@@ -1081,10 +1106,11 @@ class FeatureProcessingSpec(object):
     Attributes
     ----------
     source :
-        - new - from the normalized worm
-        - mrc
+        - new - from the normalized worm (default for constructor)
+        - mrc - loaded from MRC file, not computed - TODO: Who specifies this?
     name : string
-        Feature name
+        Feature name.
+        *** This must be unique based on processing approach
     module_name : string
         Name of the module that contains the executing code
     module : module
@@ -1095,6 +1121,22 @@ class FeatureProcessingSpec(object):
         A method instance
     flags : string
         This is a string that can be passed to the class method
+    type :
+        - movement (really should be time-series)
+        - event
+        - expanded_movement
+        - 
+    category :
+    display_name :
+    short_display_name :
+    units :
+    bin_width :
+    is_signed :
+    has_zero_bin :
+    signing_field :
+    remove_partial_events :
+    make_zero_empty :
+    is_time_series :
 
     See Also
     --------
@@ -1104,6 +1146,8 @@ class FeatureProcessingSpec(object):
 
     # This is how I am resolving a string to a module.
     # Perhaps there is a better way ...
+    #
+    # These get used to specify what code should be called
     modules_dict = {'morphology_features': morphology_features,
                     'locomotion_features': locomotion_features,
                     'generic_features': generic_features,
@@ -1131,10 +1175,8 @@ class FeatureProcessingSpec(object):
         self.name = d['feature_name']
         self.module_name = d['module']
 
-        # TODO: Wrap this in a try clause with clear error if the module
+        # TODO: Wrap this in a try clause with a clear error if the module
         # hasn't been specified in the dictionary
-        self.module_name = self.module_name
-
         # We won't store these so as to facilitate pickeling
         #-----------------------------------------------------
         #self.module = self.modules_dict[self.module_name]
@@ -1165,10 +1207,20 @@ class FeatureProcessingSpec(object):
         self.make_zero_if_empty = d['make_zero_if_empty'] == '1'
         self.is_time_series = d['is_time_series'] == '1'
 
+
+    def create_modified_feature_spec(self):
+        #TODO: We should encapsulate feature modications
+        #- currently only for feature expansion
+        #- see TODO note in feature_manipulations
+        
+        #1) Should change name to be unique
+        #2) Should log feature being changed ...
+        pass
+
     def compute_feature(self, wf, internal_request=False):
         """
         Note, the only caller of this function should be from:
-            WormFeaturesDos._get_and_log_feature()
+            WormFeatures._get_and_log_feature()
 
         This method takes care of the logic of retrieving a feature.
 
@@ -1176,7 +1228,7 @@ class FeatureProcessingSpec(object):
 
         Arguments
         ---------
-        wf : WormFeaturesDos
+        wf : WormFeatures
             This is primarily needed to facilitate requesting additional
             features from the feature currently being computed
 

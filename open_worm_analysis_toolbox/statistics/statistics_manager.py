@@ -84,6 +84,8 @@ class StatisticsManager(object):
         Formerly seg_worm.stats.manager.initObject
 
         """
+        
+        #Note len is overloaded to refer to merged histograms ...
         assert(len(exp_histogram_manager) ==
                len(ctl_histogram_manager))
         num_features = len(exp_histogram_manager)
@@ -101,14 +103,16 @@ class StatisticsManager(object):
         # testing on the same subjects.  So we must calculate here across
         # all WormStatistics objects, then assign the values to the
         # individual WormStatistics objects.
-        self.q_studentst_array = utils.compute_q_values(self.p_studentst_array)
-        self.q_wilcoxon_array = utils.compute_q_values(self.p_wilcoxon_array)
+        
+        #Note, this doesn't expose the numerous q value options ...
+        self.q_studentst_array = utils.compute_q_values2(self.p_studentst_array)
+        self.q_wilcoxon_array = utils.compute_q_values2(self.p_wilcoxon_array)
         for feature_index in range(num_features):
             self.worm_statistics_objects[feature_index].q_studentst = \
                 self.q_studentst_array[feature_index]
             self.worm_statistics_objects[feature_index].q_wilcoxon = \
                 self.q_wilcoxon_array[feature_index]
-
+                
     def __getitem__(self, index):
         return self.worm_statistics_objects[index]
 
@@ -235,6 +239,9 @@ class WormStatistics(object):
             "control"
         USE_OLD_CODE: bool
             Use old code (i.e. Schafer Lab code)
+            
+        TODO: It should be clarified what USE_OLD_CODE means and also
+        exposed to the StatisticsManager
 
         Notes
         ------------------

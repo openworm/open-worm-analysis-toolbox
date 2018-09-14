@@ -18,7 +18,11 @@ from .version import __version__
 
 from .prefeatures.video_info import VideoInfo
 from .prefeatures.basic_worm import BasicWorm
+
+#Normalized Worm
 from .prefeatures.normalized_worm import NormalizedWorm
+
+
 from .prefeatures.worm_plotter import NormalizedWormPlottable
 
 # This is temporary; we will eventually remove it when the code is ready

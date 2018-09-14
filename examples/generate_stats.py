@@ -5,6 +5,10 @@ statistics generated from comparing a set of 20 Feature .mat Files:
 - 10 "Experiment" files and
 - 10 "Control" files.
 
+This can be a bit slow so we picke the results ...
+
+Pickled data saved in the /examples code folder as "pickled_histograms.dat"
+
 """
 import sys
 import os
@@ -114,6 +118,8 @@ def obtain_histograms(root_path, pickle_file_path):
         print('Loading features from disk: experiment_files')
         experiment_features = [
             mv.WormFeatures.from_disk(x) for x in experiment_files]
+
+        #List of open_worm_analysis_toolbox.features.worm_features.WormFeatures
 
         print('Starting feature expansion')
         new_experiment_features = [

@@ -2,6 +2,8 @@
 """
 An example of plotting an animation of a worm's skeleton and contour
 
+JAH: 2018/09 - this looks incorrect ...
+
 """
 
 import sys
