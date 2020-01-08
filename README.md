@@ -26,6 +26,8 @@ Contributors please see:
 Usage Example
 -------------
 
+To get an example data file (`example_contour_and_skeleton_info.mat`), go [here](https://github.com/openworm/open-worm-analysis-toolbox/blob/master/documentation/data_examples.md).
+
 ```Python
 import open_worm_analysis_toolbox as mv
 

@@ -64,7 +64,7 @@ setup(
     'open_worm_analysis_toolbox.statistics',
     'open_worm_analysis_toolbox.statistics.feature_metadata'],
     install_requires=['atlas', 'nose', 'pandas', 'statsmodels',
-                      'h5py', 'seaborn']
+                      'h5py', 'seaborn', 'opencv-python']
     # Actually also requires openCV, numpy, scipy, matplotlib and numpy
     # but I don't want to force pip to install these here since pip is bad
     # at that for those packages.
