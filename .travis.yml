@@ -35,13 +35,6 @@ before_install:
   # Diagnostic: list all installed Python modules
   - pydoc modules
 
-  # The next couple lines fix a crash with multiprocessing on Travis and 
-  # are not specific to using Miniconda
-  # If we are not using multithreading we can remove these, but perhaps it's best
-  # to keep them in for now.  - @MichaelCurrie, 2015-12-30
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-
   # Create a valid user_config.py file for open-worm-analysis-toolbox
   - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
