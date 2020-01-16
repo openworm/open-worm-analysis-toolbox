@@ -16,75 +16,23 @@ python:
 notifications:
   email: false
 
-env:
-  global:
-    # Dependencies
-    - DEPS_DIR="`readlink -f $TRAVIS_BUILD_DIR/..`"
-    - OPENCV_BUILD_DIR=$DEPS_DIR/opencv/build
+services:
+    - xvfb
  
 before_install:
   # Fix a matplotlib error
   # http://ryanvarley.uk/solutions/2014/05/14/how-to-solve-travis-ci-matplotlib-tclerror-no-display/
   - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start" 
   - echo `date`
 
-  # Anaconda installation
-  # See https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
-  - |
-      if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then 
-        MINICONDA_DIR=/home/travis/miniconda2
-        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh    
-      else
-        MINICONDA_DIR=/home/travis/miniconda3
-        wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-      fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-   
-  # Old - replaced with above as verbatim from Conda website   
-  # - chmod +x miniconda.sh
-  # - ./miniconda.sh -b
-  # - export PATH=$MINICONDA_DIR/bin:$PATH
-  # - conda update --yes conda
-  
-  # To get the correct version you have to do a conda install
-  # Old versions are at: http://repo.continuum.io/miniconda/ but don't 
-  # match Python versions and it seems like continuum doesn't want you 
-  # to try and match
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels h5py seaborn
+  # Create a valid user_config.py file for open-worm-analysis-toolbox. OWAT
+  # needs this to execute its main __init__.py
+  - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
-  # Diagnostic information
-  #----------------------------
-  - which python
-  - python --version
-  - cmake --version
-  - echo $PATH
-  - echo $MINICONDA_DIR
-  - echo $TRAVIS_PYTHON_VERSION
-  
-  # INSTALL OPENCV
-  #---------------------------------------
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION opencv
-  
-  
-  
+  - pip install .
 
   # Diagnostic: list all installed Python modules
   - pydoc modules
-
-  # The next couple lines fix a crash with multiprocessing on Travis and 
-  # are not specific to using Miniconda
-  # If we are not using multithreading we can remove these, but perhaps it's best
-  # to keep them in for now.  - @MichaelCurrie, 2015-12-30
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-
-  # Create a valid user_config.py file for open-worm-analysis-toolbox
-  - sudo /bin/cp $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/travis_config.txt $TRAVIS_BUILD_DIR/open_worm_analysis_toolbox/user_config.py
 
 install:
   - pip install --upgrade pip

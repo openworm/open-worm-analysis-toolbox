@@ -7,3 +7,4 @@ build/*
 dist/*
 open_worm_analysis_toolbox.egg*
 .pypirc
+*.mat
