@@ -951,7 +951,7 @@ class EventListWithFeatures(EventList):
         num_events_for_stats
         """
 
-        if ref_format is 'MRC':
+        if ref_format == 'MRC':
             frames = event_ref['frames']
 
             if isinstance(frames, h5py._hl.dataset.Dataset):
