@@ -104,7 +104,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
                                     1: 'g'}       # green
 
         # 2. create the figure
-        fig = plt.figure(figsize=(5, 5))
+        fig = plt.figure(figsize=(8, 8))
 
         # We have blit=True, so the animation only redraws the elements that
         # have changed.  This means that if the window is resized, everything
@@ -131,7 +131,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.ax1.plot(self.nw.skeleton[0, 0, :], self.nw.skeleton[0, 1, :])
         self.ax1.set_xlabel('x')
         self.ax1.set_ylabel('y')
-        #ax1.set_aspect(aspect='equal', adjustable='datalim')
+        self.ax1.set_aspect(aspect='equal', adjustable='box')
         # ax1.set_autoscale_on()
 
         self.annotation1a = \
@@ -167,8 +167,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         button_axes = fig.add_axes([0.8, 0.025, 0.1, 0.04])
         #ax4 = plt.subplot2grid((3, 3), (2, 2))
-        button = Button(button_axes, 'Pause',
-                        color='lightgoldenrodyellow', hovercolor='0.975')
+        self.pause_button = Button(button_axes, 'Pause',
+                                   color='lightgoldenrodyellow', hovercolor='0.975')
 
         def pause(event):
             if not self._paused:
@@ -181,11 +181,11 @@ class NormalizedWormPlottable(animation.TimedAnimation):
             # Toggle the paused state
             self._paused = 1 - self._paused
 
-        button.on_clicked(pause)
+        self.pause_button.on_clicked(pause)
 
         self.ax2 = plt.subplot2grid((3, 3), (0, 2))
         self.ax2.set_title('Morphology')
-        self.ax2.set_aspect(aspect='equal', adjustable='datalim')
+        self.ax2.set_aspect(aspect='equal', adjustable='box')
         self.annotation2 = self.ax2.annotate(
             "Worm head", xy=(
                 0, 0), xycoords='data', xytext=(
@@ -195,7 +195,7 @@ class NormalizedWormPlottable(animation.TimedAnimation):
         self.ax3 = plt.subplot2grid((3, 3), (1, 2))
         self.ax3.set_title('Orientation-free')
         # DON'T USE set_xbound, it changes dynmically
-        self.ax3.set_aspect(aspect='equal', adjustable='datalim')
+        self.ax3.set_aspect(aspect='equal', adjustable='box')
 
         # Length and Area over time
         self.ax4a = plt.subplot2grid((3, 3), (2, 0), rowspan=1, colspan=2)
@@ -313,11 +313,11 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self.line1W.set_data(self.nw.skeleton[:, 0, i],
                              self.nw.skeleton[:, 1, i])
-        self.line1W_head.set_data(self.nw.skeleton[0, 0, i],
-                                  self.nw.skeleton[0, 1, i])
+        self.line1W_head.set_data([self.nw.skeleton[0, 0, i]],
+                                  [self.nw.skeleton[0, 1, i]])
         self.line1C.set_data(self.nw.ventral_contour[:, 0, i],
                              self.nw.ventral_contour[:, 1, i])
-        self.patch1E.center = (self.nw.centre[:, i])  # skeleton centre
+        self.patch1E.center = (self.nw.centre[0, i], self.nw.centre[1, i])  # skeleton centre
         self.patch1E.angle = self.nw.angle[i]    # orientation
 
         # Set the values of our annotation text in the main subplot:
@@ -340,8 +340,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self.line2W.set_data(self.nw.centred_skeleton[:, 0, i],
                              self.nw.centred_skeleton[:, 1, i])
-        self.line2W_head.set_data(self.nw.centred_skeleton[0, 0, i],
-                                  self.nw.centred_skeleton[0, 1, i])
+        self.line2W_head.set_data([self.nw.centred_skeleton[0, 0, i]],
+                                  [self.nw.centred_skeleton[0, 1, i]])
         self.line2C.set_data(self.nw.centred_skeleton[:, 0, i] +
                              (self.nw.ventral_contour[:, 0, i] - self.nw.skeleton[:, 0, i]),
                              self.nw.centred_skeleton[:, 1, i] +
@@ -355,8 +355,8 @@ class NormalizedWormPlottable(animation.TimedAnimation):
 
         self.line3W.set_data(self.nw.orientation_free_skeleton[:, 0, i],
                              self.nw.orientation_free_skeleton[:, 1, i])
-        self.line3W_head.set_data(self.nw.orientation_free_skeleton[0, 0, i],
-                                  self.nw.orientation_free_skeleton[0, 1, i])
+        self.line3W_head.set_data([self.nw.orientation_free_skeleton[0, 0, i]],
+                                  [self.nw.orientation_free_skeleton[0, 1, i]])
 
         self.widths.set_data(np.arange(49), self.nw.widths[:, i])
         self.angles.set_data(np.arange(49), self.nw.angles[:, i])
