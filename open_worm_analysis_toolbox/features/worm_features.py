@@ -585,7 +585,7 @@ class WormPath(object):
             path_features.Coordinates.from_disk(path_var['coordinates'])
 
         # Make a call to utils loader
-        self.curvature = path_var['curvature'].value[:, 0]
+        self.curvature = path_var['curvature'][()][:, 0]
 
         return self
 

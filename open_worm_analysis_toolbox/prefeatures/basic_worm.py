@@ -221,9 +221,9 @@ class BasicWorm(JSON_Serializer):
 
         with h5py.File(data_file_path, 'r') as h:
             # These are all HDF5 'references'
-            all_ventral_contours_refs = h['all_vulva_contours'].value
-            all_dorsal_contours_refs = h['all_non_vulva_contours'].value
-            all_skeletons_refs = h['all_skeletons'].value
+            all_ventral_contours_refs = h['all_vulva_contours'][()]
+            all_dorsal_contours_refs = h['all_non_vulva_contours'][()]
+            all_skeletons_refs = h['all_skeletons'][()]
 
             is_stage_movement = utils._extract_time_from_disk(
                 h, 'is_stage_movement')
@@ -236,11 +236,11 @@ class BasicWorm(JSON_Serializer):
             for valid_frame, iFrame in zip(is_valid, range(is_valid.size)):
                 if valid_frame:
                     all_skeletons.append(
-                        h[all_skeletons_refs[iFrame][0]].value)
+                        h[all_skeletons_refs[iFrame][0]][()])
                     all_ventral_contours.append(
-                        h[all_ventral_contours_refs[iFrame][0]].value)
+                        h[all_ventral_contours_refs[iFrame][0]][()])
                     dorsal_contour.append(
-                        h[all_dorsal_contours_refs[iFrame][0]].value)
+                        h[all_dorsal_contours_refs[iFrame][0]][()])
                 else:
                     all_skeletons.append(None)
                     all_ventral_contours.append(None)

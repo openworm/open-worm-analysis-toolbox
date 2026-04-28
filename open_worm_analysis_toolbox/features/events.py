@@ -1014,7 +1014,7 @@ class EventListWithFeatures(EventList):
             # JAH: I found float was needed as the calculated frequency was also
             # of this type. I'm not sure why we lost the numpy array entry
             # for the calculated frequency ...
-            self.frequency = event_ref['frequency'].value[0][0]
+            self.frequency = event_ref['frequency'][()][0][0]
 
             if 'ratio' in event_ref.keys():
                 ratio = event_ref['ratio']
@@ -1023,7 +1023,7 @@ class EventListWithFeatures(EventList):
                 self.time_ratio = ratio['time'][0][0]
                 self.data_ratio = ratio['distance'][0][0]
             else:
-                self.time_ratio = event_ref['timeRatio'].value[0][0]
+                self.time_ratio = event_ref['timeRatio'][()][0][0]
                 self.data_ratio = np.NaN
                 self.distance_during_events = np.zeros(0)
         else:

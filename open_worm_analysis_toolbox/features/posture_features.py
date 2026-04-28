@@ -1054,7 +1054,7 @@ def load_eigen_worms():
     config.EIGENWORM_FILE)
 
     h = h5py.File(eigen_worm_file_path, 'r')
-    eigen_worms = h['eigenWorms'].value
+    eigen_worms = h['eigenWorms'][()]
 
     return np.transpose(eigen_worms)
 

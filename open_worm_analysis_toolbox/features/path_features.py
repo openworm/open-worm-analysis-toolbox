@@ -49,8 +49,8 @@ class Coordinates(Feature):
         self = cls.__new__(cls)
 
         # Use utils loader
-        self.x = c_data['x'].value[:, 0]
-        self.y = c_data['y'].value[:, 0]
+        self.x = c_data['x'][()][:, 0]
+        self.y = c_data['y'][()][:, 0]
 
         return self
 
@@ -92,7 +92,7 @@ class Range(object):
 
         # NOTE: This is of size nx1 for Matlab versions, might want to fix on
         # loading
-        self.value = np.squeeze(path_var['range'].value)
+        self.value = np.squeeze(path_var['range'][()])
 
         return self
 
@@ -339,8 +339,8 @@ class DurationElement(object):
 
         self = cls.__new__(cls)
         # TODO: Use utils loader
-        self.indices = saved_duration_elem['indices'].value[0]
-        self.times = saved_duration_elem['times'].value[0]
+        self.indices = saved_duration_elem['indices'][()][0]
+        self.times = saved_duration_elem['times'][()][0]
 
         return self
 
@@ -401,12 +401,12 @@ class Arena(object):
     def from_disk(cls, saved_arena_elem):
 
         self = cls.__new__(cls)
-        self.height = saved_arena_elem['height'].value[0, 0]
-        self.width = saved_arena_elem['width'].value[0, 0]
-        self.min_x = saved_arena_elem['min']['x'].value[0, 0]
-        self.min_y = saved_arena_elem['min']['y'].value[0, 0]
-        self.max_x = saved_arena_elem['max']['x'].value[0, 0]
-        self.max_y = saved_arena_elem['max']['y'].value[0, 0]
+        self.height = saved_arena_elem['height'][()][0, 0]
+        self.width = saved_arena_elem['width'][()][0, 0]
+        self.min_x = saved_arena_elem['min']['x'][()][0, 0]
+        self.min_y = saved_arena_elem['min']['y'][()][0, 0]
+        self.max_x = saved_arena_elem['max']['x'][()][0, 0]
+        self.max_y = saved_arena_elem['max']['y'][()][0, 0]
 
         return self
 

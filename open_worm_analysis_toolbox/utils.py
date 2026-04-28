@@ -674,7 +674,7 @@ def get_nested_h5_field(h, fields, resolve_value=True, is_matrix=False):
     if not resolve_value:
         return h
 
-    temp = h.value
+    temp = h[()]
 
     if is_matrix:
         return temp
@@ -692,7 +692,7 @@ def _extract_time_from_disk(parent_ref, name, is_matrix=False):
     This is for handling Matlab save vs Python save when we get to that point.
     """
 
-    temp = parent_ref[name].value
+    temp = parent_ref[name][()]
 
     if is_matrix:
         wtf = temp
