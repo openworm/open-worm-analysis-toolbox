@@ -608,7 +608,7 @@ class SkeletonCalculatorType1(object):
     #%%
     @staticmethod
     def h__getPartnersViaWalk(s1, e1, s2, e2, d, xy1, xy2):
-        """
+        r"""
 
         Intro
         -----

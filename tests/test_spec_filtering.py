@@ -34,7 +34,7 @@ def main():
     specs = mv.get_feature_specs()
 
     #    '^locomotion\.' => string that starts with 'locomotion.'
-    loco_specs = specs[specs['feature_name'].str.contains('^locomotion\.')]
+    loco_specs = specs[specs['feature_name'].str.contains(r'^locomotion\.')]
 
     #loco_names = loco_specs['feature_name']
 
