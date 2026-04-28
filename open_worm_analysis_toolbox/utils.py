@@ -160,7 +160,7 @@ def separated_peaks(x, dist, use_max, value_cutoff):
     # the fft ..., a point can't be a peak if it is smaller than either of its
     # neighbors
 
-    np_true = np.ones(1, dtype=np.bool)
+    np_true = np.ones(1, dtype=bool)
     if use_max:
         #                                           %> left                     > right
         # Matlab version:
@@ -1059,7 +1059,7 @@ def compute_q_values2(pvalues,
     
     #Jim's version based on Matlab
 
-    p = np.array([x for x in pvalues if not np.isnan(x)], dtype=np.float)
+    p = np.array([x for x in pvalues if not np.isnan(x)], dtype=float)
 
     if min(p) < 0 or max(p) > 1:
         raise ValueError("p-values out of range")
@@ -1173,7 +1173,7 @@ def compute_q_values(pvalues,
 
     """
 
-    pvalues2 = np.array([x for x in pvalues if not np.isnan(x)], dtype=np.float)
+    pvalues2 = np.array([x for x in pvalues if not np.isnan(x)], dtype=float)
 
     if min(pvalues2) < 0 or max(pvalues2) > 1:
         raise ValueError("p-values out of range")
@@ -1207,7 +1207,7 @@ def compute_q_values(pvalues,
             pi0 = min(pi0, 1.0)
         else:
 
-            pi0 = np.zeros(len(vlambda), np.float)
+            pi0 = np.zeros(len(vlambda), float)
 
             for i in range(len(vlambda)):
                 pi0[i] = (np.mean([x >= vlambda[i] for x in pvalues2])
@@ -1226,8 +1226,8 @@ def compute_q_values(pvalues,
             elif pi0_method == "bootstrap":
                 minpi0 = min(pi0)
 
-                mse = np.zeros(len(vlambda), np.float)
-                pi0_boot = np.zeros(len(vlambda), np.float)
+                mse = np.zeros(len(vlambda), float)
+                pi0_boot = np.zeros(len(vlambda), float)
 
                 for i in range(100):
                     # sample pvalues
@@ -1262,7 +1262,7 @@ def compute_q_values(pvalues,
     # v[i] = number of observations less than or equal to pvalue[i]
     # Could this be done more elegantly?
     val2bin = len(bins) - np.digitize(pvalues2, bins)
-    v = np.zeros(m, dtype=np.int)
+    v = np.zeros(m, dtype=int)
     lastbin = None
     for x in range(m - 1, -1, -1):
         bin = val2bin[idx[x]]
@@ -1284,7 +1284,7 @@ def compute_q_values(pvalues,
     #Fill back in to original space.
     #This coudl probably be done using a mask operation ...
     #qvalues2(pvalues == NaN) = qvalues
-    qvalues2 = np.full(len(pvalues), np.nan, dtype=np.float)
+    qvalues2 = np.full(len(pvalues), np.nan, dtype=float)
     j = 0
     for i,value in enumerate(pvalues):
         if not np.isnan(value):
