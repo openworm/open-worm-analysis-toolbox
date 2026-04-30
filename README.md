@@ -5,6 +5,7 @@
 
 | <img src="documentation/OpenWorm%20Analysis%20Toolbox%20logo.png" width="125"> | Open Worm Analysis Toolbox |
 ====================
+<img width="1201" alt="mv_in_overview" src="https://user-images.githubusercontent.com/1573896/44876903-5a885980-ac70-11e8-8a44-3ec40b047fc5.png">
 
 The **Open Worm Analysis Toolbox** is a Python port of the Schafer Lab's [Worm Analysis Toolbox 1.3.4](http://www.mrc-lmb.cam.ac.uk/wormtracker/index.php?action=analysis).
 
